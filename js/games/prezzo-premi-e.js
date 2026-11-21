@@ -178,7 +178,7 @@
       stile();
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [], tag = pub.tag || [];
       var fila = A.tessere(prod, { tcls: "pze-c5", cls: "pze-tes", extra: function (p, i) { return cartello(A, tag[i]); } }), ch = el("div", { "data-sacr": "2" });
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "✅ La Prova del 5" }));
+      A.sch.appendChild(A.testa("La Prova del 5"));
       A.sch.appendChild(fila);
       A.sch.appendChild(el("div", { class: "pz-sotto", text: "Il cartellino è giusto o sbagliato? Quanti sono giusti non si sa!", "data-sacr": "1" }));
       A.sch.appendChild(ch);
@@ -241,7 +241,7 @@
       var fila = A.tessere(prod, { tcls: "pze-c5", extra: function (p, i) { return [ cartello(A, tag[i]), el("span", { class: "pze-es", text: ok[i] ? "✓ giusto" : "era " + A.fmtE(p.prezzo || 0) }) ]; } }), gente = el("div", { class: "pze-gente" + (g.length > 5 ? " fitto" : "") });
       var banner = el("div", { class: "pz-sotto pze-bn", text: "Giriamo i cartellini…" });
       A.sch.classList.add("pze-fitto");
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "✅ La Prova del 5" }));
+      A.sch.appendChild(A.testa("La Prova del 5"));
       A.sch.appendChild(fila); A.sch.appendChild(gente); A.sch.appendChild(banner);
       var carte = fila.tessere;
       var righe = g.map(function (x) {
@@ -385,7 +385,7 @@
       stile();
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [], S = pub.S || [];
       var fila = A.tessere(prod, { tcls: "pze-c3", cls: "pze-tes", extra: function (p, k) { return numero(A, S[k] || ""); } }), ch = el("div", { "data-sacr": "2" });
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🧹 Togli la cifra" }));
+      A.sch.appendChild(A.testa("Togli la cifra"));
       A.sch.appendChild(fila);
       A.sch.appendChild(el("div", { class: "pz-sotto", text: "In ogni prezzo c'è una cifra di troppo: quale?", "data-sacr": "1" }));
       A.sch.appendChild(ch);
@@ -456,7 +456,7 @@
       } }), gente = el("div", { class: "pze-gente" + (g.length > 5 ? " fitto" : "") });
       var banner = el("div", { class: "pz-sotto pze-bn", text: "Via le cifre di troppo…" });
       A.sch.classList.add("pze-fitto");
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🧹 Togli la cifra" }));
+      A.sch.appendChild(A.testa("Togli la cifra"));
       A.sch.appendChild(fila); A.sch.appendChild(gente); A.sch.appendChild(banner);
       // il numero con la cifra in più e, sotto (nello stesso posto, ancora nascosto), il cartellino col prezzo vero
       var carte = fila.tessere.map(function (t, k) { return { c: t, num: sovs[k].num, sov: sovs[k].sov }; });

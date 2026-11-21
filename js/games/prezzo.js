@@ -1603,7 +1603,7 @@
     await ST.suSchermo(S, 600); if (!vivoK(R, k)) return;
     // (25 ott 2026, il proprietario: «abbiamo la scritta sopra con i due giochi, ma per cliccarli devi cliccare sotto»: chi sceglie
     //  li vede una volta sola, grandi e da toccare nel pannello; sul maxischermo li vede chi aspetta, e dopo la scelta tutti)
-    var carte = sc.opz.map(function (o) { var c = el("div", { class: "pz-gioco" }, [ el("span", { class: "i", text: o.icona }), el("b", { text: o.nome }), el("small", { text: o.spiega || o.regola }) ]); c._tipo = o.tipo; return c; });
+    var carte = sc.opz.map(function (o) { var c = el("div", { class: "pz-gioco" }, [ Z().iconaPremio(el, o.tipo, o.icona), el("b", { text: o.nome }), el("small", { text: o.spiega || o.regola }) ]); c._tipo = o.tipo; return c; });
     R.ui.carte = carte;
     schermo(R, [ el("div", { class: "pz-testa", text: "🎁 Gioco a premi" }),
       // (20 nov 2026: chi sceglie ha il pannello alzato fin sotto la testata: il titolo spuntava tagliato a metà sopra il pannello)
@@ -1616,7 +1616,7 @@
     if (!tocca) return attesa(R, (chi.bot ? "🤖 " : "") + chi.nome + " sta scegliendo…");
     var fine = R.cb.locale === "telefono" ? Date.now() + TL.scegli : fineVM(R);
     var bottoni = sc.opz.map(function (o) {
-      var b = el("button", { class: "pz-sc pz-scgioco", type: "button" }, [ el("span", { class: "i", text: o.icona }), el("b", { text: o.nome }), el("small", { text: o.spiega || o.regola }) ]);
+      var b = el("button", { class: "pz-sc pz-scgioco", type: "button" }, [ Z().iconaPremio(el, o.tipo, o.icona), el("b", { text: o.nome }), el("small", { text: o.spiega || o.regola }) ]);
       b.addEventListener("click", function () {
         if (b.disabled) return;
         bottoni.forEach(function (x) { x.disabled = true; }); b.classList.add("sel"); Z().vibra(12);
@@ -1642,7 +1642,7 @@
     ST.accendiSolo(S, -1); ST.tutteNormali(S);
     await ST.suSchermo(S, 600); if (!vivoK(R, k)) return;
     schermo(R, [ el("div", { class: "pz-testa", text: "🎁 Gioco a premi" + (vm.nPremio > 1 ? " · " + vm.iPremio + " di " + vm.nPremio : "") }),
-      el("div", { class: "pz-intro" + (pr.fai ? " come" : "") }, [ el("span", { class: "i", text: pr.icona }), el("b", { text: pr.nome }),
+      el("div", { class: "pz-intro" + (pr.fai ? " come" : "") }, [ Z().iconaPremio(el, pr.tipo, pr.icona), el("b", { text: pr.nome }),
         pr.fai ? el("div", { class: "pz-come" }, [
           el("div", { class: "r fai" }, [ el("i", { text: "👉 Come si gioca" }), el("span", { text: pr.fai }) ]),
           pr.es ? el("div", { class: "r es" }, [ el("i", { text: "💡 Esempio" }), el("span", { text: pr.es }) ]) : null,
@@ -1692,7 +1692,9 @@
       invia: function (m) { m = m || {}; if (m.ms == null) m.ms = Date.now() - t0; R.cb.mossa({ t: "premio", k: k, m: m }, o.io); },
       dorme: ST.dorme, vivo: function () { return vivoK(R, k); },
       fmtE: Z().fmtE, fmtN: Z().fmtN, FX: Z().FX, vibra: Z().vibra, scheda: function (p, opz) { return Z().scheda(R.t.el, p, opz); },
-      tessere: function (prods, opz) { return Z().tessere(R.t.el, prods, opz); }, miniprod: function (p) { return Z().miniprod(R.t.el, p); },
+      tessere: function (prods, opz) { return Z().tessere(R.t.el, prods, opz); },
+      // (21 nov 2026) la testata del gioco a premi col suo disegno; .dici(testo) cambia solo il titolo
+      testa: function (testo) { return Z().testaPremio(R.t.el, pr.tipo, testo, pr.icona); }, miniprod: function (p) { return Z().miniprod(R.t.el, p); },
       contachilometri: function (v, opz) { return Z().contachilometri(R.t.el, v, opz); },
       tastierino: function (opz) { return Z().tastierino(R.t.el, opz); }
     };

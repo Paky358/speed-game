@@ -120,7 +120,7 @@
       var el = A.el, pub = A.pub || {};
       var lista = el("div", { class: "pz-righe" + (A.giocatori.length > 4 ? " due" : "") });
       var titolo = el("div", { class: "pz-sotto", text: "🏁 Chi l'ha trovato" });
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🔼🔽 Più o meno" }));
+      A.sch.appendChild(A.testa("Più o meno"));
       var sk = A.scheda(pub.prod || {}, { cls: "media grande" }); A.sch.appendChild(sk);   // (25 ott: la scheda prende tutto lo spazio libero)
       A.sch.appendChild(titolo);
       A.sch.appendChild(lista);
@@ -167,7 +167,7 @@
       var el = A.el, riv = A.riv || {}, prod = riv.prod || {};
       var conta = A.contachilometri(prod.prezzo || 0, { grande: true });
       var righe = el("div", { class: "pz-righe" + (((riv.arrivi || []).length + (riv.altri || []).length) > 4 ? " due" : "") }), banner = el("div", { class: "pz-sotto" });
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🔼🔽 Più o meno" }));
+      A.sch.appendChild(A.testa("Più o meno"));
       A.sch.appendChild(A.miniprod(prod));
       A.sch.appendChild(conta.el); A.sch.appendChild(righe); A.sch.appendChild(banner);
       A.ST.FX.rullo(1.1); await A.dorme(1300); if (!A.vivo()) return;

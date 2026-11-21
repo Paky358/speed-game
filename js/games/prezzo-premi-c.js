@@ -142,7 +142,7 @@
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [];
       // (i riquadri si vedono a chi guarda e a chi ha finito: mentre il pannello è su, i prodotti stanno lì, una volta sola)
       var fila = A.tessere(prod, { fermo: true, cls: "pzc-lista" }), ch = el("div", { "data-sacr": "3" });
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🛒 La Spesa" }));
+      A.sch.appendChild(A.testa("La Spesa"));
       A.sch.appendChild(el("div", { class: "pzc-fascia", "data-sacr": "2" }, [ el("span", { text: "Spendi tra" }), el("b", { text: A.fmtE(pub.min || SP.min) + " e " + A.fmtE(pub.max || SP.max) }) ]));
       A.sch.appendChild(fila);
       A.sch.appendChild(el("div", { class: "pz-sotto", text: "🙈 I prezzi non si vedono: chi li conosce meglio?", "data-sacr": "1" }));
@@ -204,7 +204,7 @@
       var fila = A.tessere(prod, { extra: function (p, i, t) { t._tag = A.Z.cartellino(el, A.fmtE(p.prezzo || 0)); return t._tag; } }), corsie = el("div", { class: "pzc-corsie" + (g.length > 5 ? " fitto" : "") });
       var banner = el("div", { class: "pz-sotto pzc-bn", text: "I prezzi veri…" });
       A.sch.classList.add("pzb-fitto");
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🛒 La Spesa" }));
+      A.sch.appendChild(A.testa("La Spesa"));
       A.sch.appendChild(fila); A.sch.appendChild(corsie); A.sch.appendChild(banner);
       var tags = fila.tessere.map(function (t) { return t._tag; });
       // le corsie: da 0 € a un po' più del carrello più caro (almeno 30 €), con la fascia verde
@@ -341,7 +341,7 @@
     schermo: function (A) {
       stile();
       var el = A.el, pub = A.pub || {}, ch = el("div");
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🔐 La Cassaforte" }));
+      A.sch.appendChild(A.testa("La Cassaforte"));
       A.sch.appendChild(A.scheda(pub.prod || {}, { cls: "media grande" }));   // (25 ott: la scheda prende tutto lo spazio libero)
       A.sch.appendChild(el("div", { class: "pzc-mix pz-solo-giu" }, conPunto((pub.mix || []).join("")).map(function (c) { return el("span", { class: c === "." ? "pt" : "c", text: c }); }).concat([ el("span", { class: "eu", text: "€" }) ])));
       A.sch.appendChild(el("div", { class: "pz-sotto pz-solo-giu", text: "🔢 Le cifre del prezzo sono mescolate: rimettile in ordine!" }));
@@ -402,7 +402,7 @@
       var el = A.el, riv = A.riv || {}, prod = riv.prod || {}, vero = String(riv.vero || ""), g = riv.g || [];
       var conta = A.contachilometri(+vero || 0, {}), righe = el("div", { class: "pzc-casse" + (g.length > 5 ? " fitto" : "") }), banner = el("div", { class: "pz-sotto pzc-bn", text: "Le combinazioni…" });
       A.sch.classList.add("pzb-fitto");
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🔐 La Cassaforte" }));
+      A.sch.appendChild(A.testa("La Cassaforte"));
       A.sch.appendChild(A.miniprod(prod));
       var cbox = el("div", { style: "min-height:44px;display:flex;align-items:center" }, [ conta.el ]); conta.el.style.visibility = "hidden";
       A.sch.appendChild(cbox); A.sch.appendChild(righe); A.sch.appendChild(banner);

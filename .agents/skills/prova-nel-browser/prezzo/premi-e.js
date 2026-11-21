@@ -304,7 +304,7 @@
     var d = w.document, h = w.innerHeight, ww = w.innerWidth, guai = PZ.controllaVista(w);
     var pan = d.querySelector(".pz-pan.su"), basso = h - (pan ? pan.offsetHeight : 0), sch = d.querySelector(".st-sch-in .pz-sch");
     if (sch && d.querySelector(".st-mondo.st-quieto, .st-piatto")) [].forEach.call(sch.querySelectorAll(".pz-te,.pze-num,.pze-gente,.pze-g,.pze-bn,.pz-tab,.pz-tag"), function (e) {
-      var r = e.getBoundingClientRect(); if (!r.height) return;
+      var r = e.getBoundingClientRect(); if (!r.height || w.getComputedStyle(e).visibility === "hidden") return;   // (21 nov 2026: i riquadri nascosti apposta sotto il pannello non si misurano)
       if (r.bottom > basso + 2) guai.push(e.className.split(" ")[0] + " sotto il pannello (" + Math.round(r.bottom) + ">" + Math.round(basso) + ")");
       var sr = sch.getBoundingClientRect(); if (r.top < sr.top - 1) guai.push(e.className.split(" ")[0] + " tagliato in alto");
       if (r.left < -1 || r.right > ww + 1) guai.push(e.className.split(" ")[0] + " esce di lato");
@@ -312,7 +312,7 @@
     // i cartellini e i numeri non escono dalla loro carta
     if (sch) [].forEach.call(sch.querySelectorAll(".pze-c5 .pz-tag,.pze-c3 .pze-num,.pze-c3 .pz-tag"), function (e) {
       var c = e.closest(".pze-c5,.pze-c3").getBoundingClientRect(), r = e.getBoundingClientRect();
-      if (r.width && (r.left < c.left - 1 || r.right > c.right + 1)) guai.push("«" + e.textContent + "» esce dalla carta");
+      if (r.width && w.getComputedStyle(e).visibility !== "hidden" && (r.left < c.left - 1 || r.right > c.right + 1)) guai.push("«" + e.textContent + "» esce dalla carta");
     });
     if (pan) [].forEach.call(pan.querySelectorAll(".pze-r5,.pze-r3,.pze-fatto,.pze-t,.pze-gs,.pze-ant"), function (e) { var r = e.getBoundingClientRect(); if (r.height && (r.bottom > h + 1 || r.right > ww + 1 || r.left < -1)) guai.push(e.className.split(" ")[0] + " fuori dallo schermo"); });
     if (pan) [].forEach.call(pan.querySelectorAll(".pze-r5,.pze-r3"), function (e) { if (e.scrollWidth > e.clientWidth + 1) guai.push(e.className.split(" ")[0] + " troppo stretta (" + e.scrollWidth + ">" + e.clientWidth + ")"); });
@@ -320,7 +320,7 @@
     if (pan && (pan.querySelector(".pze-r5") || pan.querySelector(".pze-r3"))) {
       guai = guai.filter(function (g) { return !/^pannello alto/.test(g) && !/^pz-och sotto il pannello/.test(g); });   // (21 nov 2026: mentre si gioca il pannello copre apposta chi ha finito: la prova era rimasta a prima del 25 ott)
       if (pan.getBoundingClientRect().top < 50) guai.push("il pannello copre i tasti in alto (" + Math.round(pan.getBoundingClientRect().top) + ")");
-      if (sch && [].some.call(sch.querySelectorAll(".pze-tes .pz-te"), function (t) { return t.getBoundingClientRect().height > 0; })) guai.push("i prodotti si vedono due volte (sopra e nel pannello)");
+      if (sch && [].some.call(sch.querySelectorAll(".pze-tes .pz-te"), function (t) { return t.getBoundingClientRect().height > 0 && w.getComputedStyle(t).visibility !== "hidden"; })) guai.push("i prodotti si vedono due volte (sopra e nel pannello)");
       [].forEach.call(pan.querySelectorAll(".pze-r5,.pze-r3"), function (r) { var tx = r.querySelector(".tx"); if (!tx || tx.scrollWidth > tx.clientWidth + 1) guai.push("riga del pannello stretta"); });
     }
     return guai;
