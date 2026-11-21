@@ -144,12 +144,26 @@
   }
   // "Paky +100 · Luca +78" (solo chi è nel torneo: i bot no)
   // la Classifica della serata in una riga: "🏆 Serata: Paky 1° · Luca 2° · Giulia 3° · …" (a pari punti lo stesso posto)
-  function rigaSerataT(T, k) {
+  // (21 nov 2026: i primi k e SEMPRE anche il mio posto, io = il mio nome: «… · Paky 4°»; i «…» dove manca qualcuno)
+  function rigaSerataT(T, k, io) {
     var cl = classificaT(T), posti = [];
     if (!cl.length) return "";
     k = k || 3;
     cl.forEach(function (r, i) { posti.push(i && r.punti === cl[i - 1].punti ? posti[i - 1] : i + 1); });
-    return "🏆 Serata: " + cl.slice(0, k).map(function (r, i) { return r.nome + " " + posti[i] + "°"; }).join(" · ") + (cl.length > k ? " · …" : "");
+    var mio = -1; if (io) cl.forEach(function (r, i) { if (mio < 0 && stessoNome(r.nome, io)) mio = i; });
+    var pezzi = [], ult = -1;
+    cl.forEach(function (r, i) {
+      if (i >= k && i !== mio) return;
+      if (i > ult + 1) pezzi.push("…");
+      pezzi.push(r.nome + " " + posti[i] + "°"); ult = i;   // (nome e posto mai su due righe diverse)
+    });
+    if (ult < cl.length - 1) pezzi.push("…");
+    return "🏆 Serata: " + pezzi.join(" · ");
+  }
+  function mioNomeT(R) {
+    if (R.sala) { var m = sala && (sala.membri || []).filter(function (x) { return x.id === "host"; })[0]; return (m && m.nome) || ""; }
+    var g = salaG && salaG.myId ? (salaG.membri || []).filter(function (x) { return x.id === salaG.myId; })[0] : null;
+    return (g && g.nome) || (salaG && salaG.nome) || "";
   }
   function puntiRigaT(T, ass) {
     return (ass || []).filter(function (a) { return T.nomi.indexOf(a.nome) >= 0; }).map(function (a) { return a.nome + " +" + cifre(a.punti); }).join(" · ");
@@ -255,11 +269,12 @@
     if (R.nodo.isConnected) R.vista = true;
     var T = R.sala ? (sala && sala.torneo) : (salaG && salaG.torneo), U = T && T.ultima;
     // (deciso dal proprietario: in fondo a ogni fine partita la Classifica della serata, "🏆 Serata: Paky 1° · Luca 2° · …"; i primi tre, il resto col tocco)
-    var si = !!(U && (U.stanza + "|" + (U.giro || 0)) === R.chiave), k = 3, tx = si ? rigaSerataT(T, k) : "";
+    // (21 nov 2026: tutti quelli che ci stanno in DUE righe, e sempre il mio posto; prima i primi tre e «…» anche in 4)
+    var io = mioNomeT(R), si = !!(U && (U.stanza + "|" + (U.giro || 0)) === R.chiave), k = si ? Math.min(8, classificaT(T).length) : 0, tx = si ? rigaSerataT(T, k, io) : "";
     if (R.nodo.hidden !== !tx) R.nodo.hidden = !tx;
     if (R.tx.textContent !== tx) R.tx.textContent = tx;
-    // in una riga sola: se non ci sta (schermo piccolo, nomi lunghi) si tolgono nomi dal fondo (tutto nello stesso momento: niente lampeggio)
-    while (tx && k > 1 && R.nodo.isConnected && R.nodo.clientWidth && R.nodo.scrollWidth > R.nodo.clientWidth + 1) { tx = rigaSerataT(T, --k); R.tx.textContent = tx; }
+    // se non ci sta in due righe (schermo piccolo, nomi lunghi) si tolgono nomi dal fondo, mai il mio (tutto nello stesso momento: niente lampeggio)
+    while (tx && k > 1 && R.nodo.isConnected && R.tx.clientHeight && R.tx.scrollHeight > R.tx.clientHeight + 1) { tx = rigaSerataT(T, --k, io); R.tx.textContent = tx; }
     if (tx && !R.nodo.isConnected && !R.misura) { R.misura = 1; setTimeout(rigaPuntiOra, 60); }   // (appena la fine è sullo schermo: si misura)
   }
   function schermataPodioT(T, host) {

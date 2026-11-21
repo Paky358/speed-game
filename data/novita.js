@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 399,
+    data: "21 novembre 2026",
+    titolo: "Saletta, punteggi e fine partita: tanti ritocchi 🪟",
+    descrizione: [
+      "📜 In saletta chi entra legge di nuovo le regole scelte dall'host, nel riquadro «Sei dentro!» (un tocco le apre tutte). Se l'host le cambia, per qualche secondo c'è scritto cosa è cambiato (es. «✨ Cambiate: ⚡ Tutti insieme · 7 carte»).",
+      "🎉 Chi arriva a partita cominciata legge «Sei dentro! Giochi tra poco» sotto i punteggi, non più sopra i nomi. Quando entri lo dice il gioco.",
+      "🔝 Nella fila dei punteggi che scorre il tasto ‹ sta fermo da parte: il primo giocatore non gli passa più sotto. E le lettere come la «y» di Paky hanno di nuovo la gambetta.",
+      "🏆 A fine partita la riga «Serata» va a capo e dice tutti i posti che ci stanno, sempre anche il tuo. «Avete giocato con» va a capo invece di uscire dallo schermo.",
+      "📱 «Come giocate?» sta tutta nello schermo anche sui telefoni piccoli. Nelle impostazioni «Come si gioca» sta accanto a «Comincia», così le scelte hanno più posto, e in fondo la lista sfuma se sotto ce ne sono altre."
+    ]
+  },
+  {
     v: 398,
     data: "21 novembre 2026",
     titolo: "Mini Asta Fantacalcio: le parate vanno alte 🧤",

@@ -281,8 +281,8 @@
       ".stp-punti.via{display:none}.stp-esci-flt{display:none}",
       ".stp-punti.due{gap:4px;padding-top:calc(4px + env(safe-area-inset-top))}.stp-punti.due .stp-chip{height:34px;gap:4px}.stp-punti.due .stp-chip canvas{width:27px;height:27px}",
       ".stp-punti.due .stp-chip .n{font-size:10.5px}.stp-punti.due .stp-chip .p{font-size:13.5px}.stp-punti.due .stp-esci{height:34px}",
-      ".stp-punti.riga .stp-riga{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.stp-punti.riga .stp-riga::-webkit-scrollbar{display:none}",
-      ".stp-punti.riga .stp-chip{flex:1 0 auto;min-width:84px;max-width:150px}.stp-punti.riga .stp-chip .tx{flex:0 1 auto}.stp-punti.riga .stp-chip .p{overflow:visible;text-overflow:clip}.stp-punti.riga .stp-chip .n{max-width:76px}.stp-punti.riga .stp-esci{position:sticky;left:0;z-index:3;background:var(--o-carta-piena,#151a2e);box-shadow:inset 0 0 0 1px var(--o-filo,rgba(255,255,255,.1)),6px 0 8px -2px rgba(5,8,20,.85)}",   // (21 nov 2026: pieno, così il punteggio che scorre sotto non si vede attraverso)
+      ".stp-scorre{position:relative;display:flex;gap:5px;flex:1 1 auto;min-width:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.stp-scorre::-webkit-scrollbar{display:none}",
+      ".stp-punti.riga .stp-chip{flex:1 0 auto;min-width:84px;max-width:150px}.stp-punti.riga .stp-chip .tx{flex:0 1 auto}.stp-punti.riga .stp-chip .p{overflow:visible;text-overflow:clip}.stp-punti.riga .stp-chip .n{max-width:76px}.stp-punti.riga .stp-esci{background:var(--o-carta-piena,#151a2e)}",   // (21 nov 2026: il ‹ sta fuori dalla parte che scorre, vedi costruisciPunti)
       ".stp-punti.grandi .stp-chip{height:54px;gap:7px;padding-left:5px;border-radius:15px}.stp-punti.grandi .stp-chip canvas{width:42px;height:42px}",
       ".stp-punti.grandi .stp-chip .n{font-size:13px;color:var(--o-testo)}.stp-punti.grandi .stp-chip .p{font-size:14px;color:var(--o-tenue)}.stp-punti.grandi .stp-esci{height:54px}",
       ".stp-riga{display:flex;gap:5px;min-width:0}",
@@ -293,6 +293,7 @@
       ".stp-chip .tx{min-width:0;flex:1 1 auto;display:flex;flex-direction:column;line-height:1.08}",
       ".stp-chip .n{font-size:11px;font-weight:700;color:var(--o-tenue,#a6acc8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
       ".stp-chip .p{font-size:15px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}",
+      ".stp-chip .n,.stp-chip .p{padding-bottom:.16em;margin-bottom:-.16em}",   // (21 nov 2026: il gambo della «y» e della «p» non si taglia più; stessa altezza di prima)
       ".stp-chip .p.neg{color:#ff8d98}.stp-chip .p.testo{font-size:12px;font-weight:800;letter-spacing:-.01em}",
       ".stp-chip.tu .n{color:var(--o-testo,#fff)}",
       ".stp-chip.acceso{box-shadow:inset 0 0 0 2px var(--col),0 0 18px -4px var(--col);background-color:rgba(255,255,255,.07)}",
@@ -460,6 +461,8 @@
     S.puntiEl.classList.toggle("due", nRighe > 1 && !S.grandi);   // (su due righe i punteggi sono più bassi: più posto al gioco)
     for (var r = 0; r < nRighe; r++) { var rg = el("div", { class: "stp-riga" }); righe.push(rg); S.puntiEl.appendChild(rg); }
     if (righe.length) righe[0].appendChild(S.esciEl);
+    // (21 nov 2026, riga che scorre: il tasto ‹ sta fermo FUORI dalla parte che scorre, così il primo punteggio non gli passa sotto)
+    if (S.riga && righe.length) { var scorre = el("div", { class: "stp-scorre" }); righe[0].appendChild(scorre); righe[0] = scorre; }
     S.gioc.forEach(function (g, i) {
       var col = g.col || gtCol(g) || ST_COL[i % ST_COL.length], cv = el("canvas", { width: "64", height: "64" });
       var nome = el("span", { class: "n", text: g.nome }), pt = el("span", { class: "p", text: "0" });
@@ -538,7 +541,7 @@
   function inVista(S, i) {
     var X = S.L[i]; if (!S.riga || !X) return; var r = X.el.parentNode; if (!r) return;
     var a = X.el.offsetLeft, b = a + X.el.offsetWidth, l = r.scrollLeft, w = r.clientWidth;
-    if (a < l + 40) r.scrollLeft = Math.max(0, a - 40); else if (b > l + w) r.scrollLeft = b - w + 4;
+    if (a < l) r.scrollLeft = Math.max(0, a - 4); else if (b > l + w) r.scrollLeft = b - w + 4;   // (il ‹ non è più dentro la parte che scorre)
   }
   function faccia(S, i, f) { var X = S.L[i]; if (!X || X.faccia === (f || null)) return; X.faccia = f || null; mettiFaccia(S, X, i); }
   function tutteNormali(S) { S.L.forEach(function (X, i) { faccia(S, i, null); }); }

@@ -313,6 +313,14 @@
     if (n.textContent !== testo) n.textContent = testo;   // (stessa scritta: niente da rifare)
     n.className = "sg-pillola" + (colore ? " " + colore : "");
     if (durata) PILLOLE.t[k] = setTimeout(function () { pillola(k, null); }, durata);
+    postoPillole();
+  }
+  // (21 nov 2026) in partita le pillole stanno SOTTO la fila dei punteggi in alto (prima la coprivano: «Sei dentro!» sopra i nomi)
+  function postoPillole() {
+    var B = PILLOLE.box; if (!B) return;
+    var f = [].filter.call(document.querySelectorAll(".stp-punti:not(.via)"), function (x) { return x.isConnected && x.offsetHeight > 0; })[0];
+    var top = f ? Math.round(f.getBoundingClientRect().bottom + 6) + "px" : "";
+    if (B.style.top !== top) B.style.top = top;
   }
   // "⏳ Aspettiamo l'host…": l'host è uscito un attimo dall'app (chi è dentro lo aspetta 2 minuti)
   var hostVia = {};
@@ -1501,6 +1509,7 @@
       sotto: torn ? ("Serata a punti · " + cuore.nomeDifficolta(cuore.pesoGioco(g))) : (inSala ? "Sala · impostazioni" : (M ? M.icona + " " + M.nome + " · impostazioni" : "Impostazioni della partita")),
       indietro: function () { if (torn) cuore.schermataTorneoHub(); else if (inSala) cuore.salaScegliGioco(); else if (conAmici) schermataSala(g, modo ? { modo: modo } : null); else if (modiDi(g).length > 1) schermataModo(g); else tornaHome(); } });
     s.classList.add("prima-fissa");   // "Comincia" sempre a vista: se le scelte sono tante scorre solo il centro
+    s.classList.add("piede-fila");   // (21 nov 2026: «Come si gioca» accanto a «Comincia», non sopra: più posto alle scelte)
     if (!conAmici && !torn && !inSala) {
       if (online) s._contenuto.appendChild(el("p", { class: "modulo-nota sl-prima", text: "Scegli come giocare, poi apri la stanza: inviti gli amici col tasto 📤 e vi aspettate insieme nella saletta." }));
     } else if (inSala) {
@@ -1540,6 +1549,16 @@
     // modi[].diretto: quel modo non ha niente da scegliere qui (es. Palla Matta "Da solo": il livello si sceglie dopo) → si parte subito
     if (M && M.diretto && !torn && !inSala && !online) return comincia();
     mostra(s);
+    segnaAltroSotto(s);
+  }
+  // (21 nov 2026) le scelte che scorrono: in fondo una sfumatura con «⌄» finché sotto c'è altro (prima non si capiva che si poteva scorrere)
+  function segnaAltroSotto(s) {
+    var C = s._contenuto; if (!C) return;
+    function ora() { if (!C.isConnected) return; var altro = C.scrollHeight - C.scrollTop - C.clientHeight > 6; if (s.classList.contains("altro-sotto") !== altro) s.classList.toggle("altro-sotto", altro); }
+    C.addEventListener("scroll", ora, { passive: true });
+    window.addEventListener("resize", function rr() { if (!C.isConnected) return window.removeEventListener("resize", rr); ora(); });
+    requestAnimationFrame(ora); setTimeout(ora, 300); setTimeout(ora, 1200);
+    if (window.MutationObserver) new MutationObserver(function () { requestAnimationFrame(ora); }).observe(C, { childList: true, subtree: true, attributes: true, attributeFilter: ["class", "hidden"] });
   }
 
   function schermataScegliGioco() {
@@ -1651,6 +1670,20 @@
     if (io && io.omino && window.SGOmino) s._contenuto.appendChild(el("div", { class: "modo-avatar", html: SGOmino.svg(io.omino) }));
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Come si gioca", onclick: function () { schermataRegole(g, function () { schermataModo(g); }); } }));
     mostra(s);
+    adattaModo(s, griglia);
+  }
+  // (21 nov 2026) «Come giocate?» sta tutta nello schermo, senza scorrere: se non ci sta, prima i riquadri più bassi
+  // (come con 5 modi), poi via l'avatar in fondo (è solo per bellezza). Mai niente di più grande
+  function adattaModo(s, griglia) {
+    function sfora() { var H = window.innerHeight || document.documentElement.clientHeight; return document.documentElement.scrollHeight > H + 1 || s.scrollHeight > s.clientHeight + 1; }
+    function prova() {   // (si rifà dopo un attimo: i caratteri possono arrivare dopo; aggiunge soltanto, niente lampeggio)
+      if (!s.isConnected) return;
+      var av = s.querySelector(".modo-avatar");
+      if (!sfora()) return;
+      griglia.classList.add("tanti");
+      if (sfora() && av) av.hidden = true;
+    }
+    requestAnimationFrame(prova); setTimeout(prova, 150); setTimeout(prova, 700);
   }
   // l'ultimo modo scelto per ogni gioco (su questo telefono): nella prima schermata ha la scritta "l'ultima volta"
   function ultimoModo(g) { var o = leggiL("sg-ultimo-modo", {}); return (o && typeof o === "object" && o[g.id]) || null; }

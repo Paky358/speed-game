@@ -941,7 +941,8 @@
     // chi arriva tardi: la pillola dice la verità secondo il gioco (g.ritardatari): "turno"/"mano" = entra dal prossimo
     // turno o dalla prossima mano; "subito" = gioca già da adesso (Parola d'ordine: entra nella squadra più piccola);
     // "partita" (di partenza) = guarda ed entra alla prossima partita
-    var rit = R.P.g.ritardatari, dal = rit === "turno" ? "dal prossimo turno" : (rit === "mano" ? "dalla prossima mano" : (rit === "subito" ? "già da adesso" : null));
+    // (21 nov 2026: niente più «dal prossimo turno»: non tutti i giochi hanno i turni, e quando entri lo dice il gioco, più preciso)
+    var rit = R.P.g.ritardatari, dal = rit === "turno" ? "tra poco" : (rit === "mano" ? "dalla prossima mano" : (rit === "subito" ? "già da adesso" : null));
     var txF = cuore.aDue(R.P.g) ? "👀 Giocano in due: tu guardi" : (dal ? "✋ Partita in corso: giochi " + dal : "👀 Partita in corso: la guardi ed entri alla prossima");
     // (nei giochi a due la pillola resta 4 secondi e poi sparisce: per tutta la partita copriva il punteggio in alto, Scopa C1)
     var mostraP = fuori;
