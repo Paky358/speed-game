@@ -473,7 +473,7 @@
     if (!await W.aspetta(function () { return vm(C).fase === "lobby" && chiDi(C, "Marco"); }, 6000)) no("alla nuova partita Marco non è tra i giocatori");
     var idM = idDi(C, "Marco"), om = (vm(C).players || []).filter(function (p) { return p.id === idM; })[0].omino;
     if (!om) no("alla nuova partita Marco non ha l'avatar (nella saletta)");
-    if (avM && JSON.stringify(om) !== JSON.stringify(avM)) no("alla nuova partita Marco ha un avatar diverso dal suo");
+    if (avM && (om.g === 1 && avM.g === 1 ? om.e !== avM.e : JSON.stringify(om) !== JSON.stringify(avM)))   // (coi gettoni il colore lo decide la stanza: conta l'emoji) no("alla nuova partita Marco ha un avatar diverso dal suo");
     nota(N, "Marco, arrivato sulla fine, entra alla nuova partita col suo avatar anche dopo la ricarica dell'host");
     senzaErrori();
     return N.join(" · ");

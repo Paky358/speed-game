@@ -26,6 +26,10 @@
     { nome: "Blu", em: "🔵", col: "#1c7ed6", chiaro: "#d0ebff" },
     { nome: "Verdi", em: "🟢", col: "#2f9e44", chiaro: "#d3f9d8" }
   ];
+  // 😀 il gettone di chi gioca prende il colore della SUA squadra (20 nov 2026: prima ognuno aveva il suo colore e Giulia,
+  // dei Blu, aveva il cerchio rosso). Solo per i gettoni: un avatar di prima resta com'è
+  var GT_SQ = ["rosso", "blu", "verde"];
+  function omSq(cfg, k) { return cfg && cfg.g === 1 && GT_SQ[k] ? Object.assign({}, cfg, { k: GT_SQ[k] }) : cfg; }
   // quante parole per squadra: chi comincia ne ha una in più
   // (25 = il classico 5x5; 20 = 5x4: caselle più grandi e partite più corte)
   var DIVISIONE = {
@@ -1608,6 +1612,11 @@
     var umani = vm.players.filter(function (p) { return !p.bot; }), presenti = umani.filter(function (p) { return !p.via; }).length;
     var serie = testoSerie(vm);
     if (serie) box.appendChild(el("div", { class: "or-serie", text: serie }));   // 🏆 com'è andata finora stasera
+    // (20 nov 2026, il proprietario: «voglio assolutamente che sia intuitivo il modo per cambiare squadra»; scelta la A: i campi
+    // delle squadre affiancati come su codenames.game). Contro il Bot resta la riga di prima (c'è una squadra sola)
+    var campi = !vm.vsBot;
+    if (campi) squadreCampi(el, box, vm, cb, io);
+    else {
     // (22 ott 2026, p17: a 360x640 l'host vede tutte le squadre senza scorrere: una riga per squadra col suo segno, i nomi di
     // fila, «Vengo qui» in fondo alla riga; «👑 Faccio io il capo» e «🔀 Squadre a caso» insieme in una riga sotto)
     for (var k = 0; k < vm.nsq; k++) (function (k) {
@@ -1629,6 +1638,7 @@
     if (io && io.team >= 0 && vm.capo[io.team] !== cb.myId && !(vm.vsBot && io.team !== 0)) tastiSq.appendChild(el("button", { class: "or-sq-b", text: "👑 Faccio io il capo", onclick: function () { cb.manda({ t: "capo" }); } }));
     if (cb.sonoHost && !vm.vsBot) tastiSq.appendChild(el("button", { class: "or-sq-b", text: "🔀 Squadre a caso", onclick: function () { cb.manda({ t: "mischia" }); } }));
     if (tastiSq.firstChild) box.appendChild(tastiSq);
+    }
     // 🤖 in pochi: un tocco e si gioca contro il Bot (e se arrivano gli amici, un tocco e si torna alle squadre)
     if (cb.sonoHost && !vm.vsBot && vm.nsq === 2 && presenti >= 2 && presenti < MIN)
       box.appendChild(el("button", { class: "btn btn-primario btn-piccolo or-vsbot", text: "🤖 Siete in " + presenti + ": giocate contro il Bot", onclick: function () { cb.manda({ t: "vsbot", si: 1 }); } }));
@@ -1653,11 +1663,55 @@
       : cb.sonoHost ? info.filter(function (x) { return /^📝|Ritmo veloce/.test(x); }).join(" · ") : "Ognuno sceglie la sua squadra; il capo ha la 👑." + coda;
     t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: min,
       vuoti: Math.max(0, min - umani.length),   // solo i posti che mancano per cominciare
-      giocatori: umani.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: vm.hostId ? p.id === vm.hostId : i === 0, tu: p.id === cb.myId }; }),
+      giocatori: (!campi ? umani : umani.slice().sort(function (a, b) { return (a.team < 0 ? 9 : a.team) - (b.team < 0 ? 9 : b.team); }))   // (sul palco vicini quelli della stessa squadra)
+        .map(function (p, i) { return { id: p.id, nome: p.nome, omino: omSq(p.omino, p.team) || null, host: vm.hostId ? p.id === vm.hostId : p === umani[0], tu: p.id === cb.myId }; }),
       extra: [ box ], puoComincia: ok,
       spettatore: !cb.sonoHost && !io && (vm.guarda || []).indexOf(cb.myId) >= 0 ? "👀 Questa volta guardi" : null,   // nella Sala: non scelto, guarda
       nota: ok ? notaOk : nota, testoComincia: "Comincia ▶",
       attesa: "Scegli la squadra: comincia l'host!", onComincia: cb.onComincia, onEsci: cb.onEsci });
+  }
+  // ---- le squadre nella saletta (20 nov 2026): un campo per squadra, affiancati come su codenames.game. In alto il capo, sotto
+  // gli altri, in fondo «Entra nei Rossi» (o, nel tuo campo, «👑 Faccio io il capo»). Il tuo campo è acceso del suo colore ----
+  var FACCE_L = {};
+  function facciaL(el, cfg, nome, k, cls) {
+    var c = omSq(cfg, k), src = null;
+    if (c && window.SGOmino) {
+      var kk = JSON.stringify(c);
+      if (!FACCE_L[kk]) {
+        var svg = SGOmino.svg(c, { busto: true });
+        if (SGOmino.illustrato && SGOmino.illustrato()) svg = svg.replace("viewBox='66 13 68 69.6'", "viewBox='76 9 48 48'");
+        FACCE_L[kk] = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+      }
+      src = FACCE_L[kk];
+    }
+    return el("span", { class: "or-f" + (cls ? " " + cls : "") }, [ src ? el("img", { src: src, alt: "" }) : el("b", { text: String(nome || "?").charAt(0).toUpperCase() }) ]);
+  }
+  function squadreCampi(el, box, vm, cb, io) {
+    var mia = io && io.team >= 0 ? io.team : -1, capoIo = mia >= 0 && vm.capo[mia] === cb.myId;
+    function membri(k) { var m = vm.players.filter(function (p) { return p.team === k && !p.bot; }); m.sort(function (a, b) { return (b.id === vm.capo[k]) - (a.id === vm.capo[k]); }); return m; }
+    function vai(k) { cb.manda({ t: "squadra", s: k }); }
+    function capo() { cb.manda({ t: "capo" }); }
+    function nomeDi(p) { return p.id === cb.myId ? "Tu" : p.nome; }
+    {
+      box.classList.add("or-campi", "n" + vm.nsq);
+      var riga = el("div", { class: "or-campi-riga" });
+      for (var k = 0; k < vm.nsq; k++) (function (k) {
+        var mem = membri(k), cp = mem[0] && mem[0].id === vm.capo[k] ? mem[0] : null, qui = mia === k;
+        var capoEl = el("div", { class: "or-campo-capo" }, cp ? [ facciaL(el, cp.omino, cp.nome, k), el("span", { class: "or-campo-n", text: nomeDi(cp) }), el("small", { text: "👑 CAPO" }) ]
+          : [ el("span", { class: "or-campo-vuoto", text: "👑 Manca il capo" }) ]);
+        var altri = el("div", { class: "or-campo-altri" }, mem.filter(function (p) { return p !== cp; }).map(function (p) {
+          return el("div", { class: "or-campo-p" + (p.id === cb.myId ? " tu" : "") }, [ facciaL(el, p.omino, p.nome, k), el("span", { class: "or-campo-n", text: nomeDi(p) }) ]);
+        }));
+        if (!mem.length) altri.appendChild(el("div", { class: "or-campo-vuoto", text: "Nessuno: servono 2" }));
+        var piede = qui ? (capoIo ? el("div", { class: "or-campo-qui", text: "✓ Sei il capo" }) : el("button", { class: "or-campo-b capo", text: vm.nsq === 3 ? "👑 Faccio io" : "👑 Faccio io il capo", onclick: capo }))
+          : io ? el("button", { class: "or-campo-b", onclick: function () { vai(k); } }, [ document.createTextNode(vm.nsq === 3 ? "Entra ›" : "Entra nei " + SQ[k].nome) ]) : null;   // (a 3 squadre le colonne sono strette: «Entra ›» su una riga)
+        riga.appendChild(el("div", { class: "or-campo s" + k + (qui ? " mia" : ""), style: "--c:" + SQ[k].col }, [
+          el("div", { class: "or-campo-testa" }, [ segno(k), el("b", { text: SQ[k].nome }), qui ? el("span", { class: "or-campo-tu", text: "LA TUA" }) : el("span", { class: "or-campo-num", text: String(mem.length) }) ]),
+          capoEl, altri, piede ]));
+      })(k);
+      box.appendChild(riga);
+    }
+    if (cb.sonoHost) box.appendChild(el("div", { class: "or-sq-tasti" }, [ el("button", { class: "or-sq-b", text: "🔀 Squadre a caso", onclick: function () { cb.manda({ t: "mischia" }); } }) ]));
   }
   // Lo schermo di gioco nello STUDIO TV (come gli altri giochi di Quiz & parole):
   // - in alto, ai lati del maxischermo, i capi sui loro podi (del colore della squadra);
@@ -2049,10 +2103,17 @@
       apriChat(ui, false);
       if (parole && parole.length) lampoParole(ui, parole);
     });
+    // 💬 (20 nov 2026, il proprietario: «che in partita si capisca che c'è una chat con le parole scritte di tutti e il numero»;
+    // scelta la A) chiusa, la striscia dice cos'è, «💬 Chat della partita · Apri ▲», e sotto mette in fila gli indizi di tutte le
+    // squadre col numero e il colore (quante parole giuste ha fatto trovare). Un tocco la apre sopra il tabellone, come prima
+    ui.chAi = el("div", { class: "or-chA-ind" });
+    ui.chA = el("div", { class: "or-chA" }, [ el("div", { class: "or-chA-testa" }, [ el("b", { text: "💬 Chat della partita" }), el("span", { class: "or-chA-apri", text: "Apri ▲" }) ]), ui.chAi ]);
+    ui.chA.addEventListener("click", function () { apriChat(ui, true); });
+    ui.chat.appendChild(ui.chA); ui.chat.classList.add("pA");
     ST.vuota(S.sch);
     S.sch.appendChild(el("div", { class: "or-sch" }, [ pannelli, ui.indZona, ui.tab, ui.chat ]));
     // le scritte delle caselle si rimisurano quando il tabellone cambia misura (la barra in basso cresce o cala)
-    try { if (window.ResizeObserver) { ui.roTab = new ResizeObserver(function () { if (!ui.S.vivo()) { ui.roTab.disconnect(); return; } adattaScritte(ui); }); ui.roTab.observe(ui.tab); } } catch (e) {}
+    try { if (window.ResizeObserver) { ui.roTab = new ResizeObserver(function () { if (!ui.S.vivo()) { ui.roTab.disconnect(); return; } adattaScritte(ui); interiStriscia(ui); }); ui.roTab.observe(ui.tab); } } catch (e) {}
     // i banconi delle squadre e la vignetta del capo, nello studio
     ui.banchiEl = el("div", { class: "or-banchi" }); S.mondo.appendChild(ui.banchiEl);
     for (k = 0; k < (ST.piatto ? 0 : vm.nsq); k++) {   // (senza studio niente banconi: le squadre sono sul tabellone)
@@ -2126,6 +2187,34 @@
       if (C.w.style.fontSize !== tx) C.w.style.fontSize = tx;
       if (C.w.style.transform !== tr) C.w.style.transform = tr;
     });
+  }
+  // 💬 gli indizi di tutti, in ordine: { k, p, num, z, ok = parole giuste trovate con quell'indizio }
+  function indiziTutti(vm) {
+    var l = [], cur = null;
+    (vm.log || []).forEach(function (e) {
+      if (e.t === "ind") { cur = { k: e.k, p: e.p, num: e.num, z: e.z, ok: 0 }; l.push(cur); }
+      else if (e.t === "gira" && cur && e.k === cur.k && e.c === e.k) cur.ok++;
+    });
+    return l;
+  }
+  function chipIndizio(ui, x, cls) {
+    return ui.el("span", { class: "or-ch-c s" + x.k + (cls ? " " + cls : ""), style: "--c:" + SQ[x.k].col }, [ segno(x.k), ui.el("b", { text: x.p + " " + numTx(x.num, x.z) }) ]
+      .concat(x.ok ? [ ui.el("small", { text: "✓" + x.ok }) ] : []));
+  }
+  function striscia(ui, vm) {   // la striscia della chat chiusa: gli indizi in fila, il più nuovo per primo a sinistra
+    var L = indiziTutti(vm), kk = L.map(function (x) { return x.k + x.p + x.num + "/" + x.ok; }).join(",");
+    if (ui.kChP === kk) return; ui.kChP = kk;
+    while (ui.chAi.firstChild) ui.chAi.removeChild(ui.chAi.firstChild);
+    if (!L.length) ui.chAi.appendChild(ui.el("span", { class: "or-chA-vuoto", text: "Qui gli indizi di tutte le squadre" }));
+    L.slice().reverse().forEach(function (x, i) { ui.chAi.appendChild(chipIndizio(ui, x, i === 0 ? "ultimo" : "")); });
+    interiStriscia(ui);
+  }
+  // (il Cervello, 20 nov: «che si legga sempre intero») un indizio che non ci sta tutto nella striscia non si mostra a metà
+  function interiStriscia(ui) {
+    if (!ui.chAi) return;
+    var W = ui.chAi.clientWidth; if (!W) return;
+    [].forEach.call(ui.chAi.children, function (c) { c.style.display = ""; });
+    [].forEach.call(ui.chAi.children, function (c, i) { if (i && c.offsetLeft - ui.chAi.offsetLeft + c.offsetWidth > W + 0.5) c.style.display = "none"; });
   }
   // la chat si apre (sopra il tabellone, dall'alto del tabellone fino alla barra) o si chiude (la striscia con le ultime 2 righe)
   function apriChat(ui, si) {
@@ -2328,7 +2417,8 @@
   function srcFaccia(ui, id) {
     var cfg = (ui.cb.omini && ui.cb.omini() || {})[id];
     if (!cfg || !window.SGOmino) return null;
-    var k = id + "|" + JSON.stringify(cfg).length;
+    var pT = ui.vm && trova(ui.vm, id); if (pT) cfg = omSq(cfg, pT.team);   // (il cerchio del colore della squadra)
+    var k = id + "|" + JSON.stringify(cfg).length + "|" + (cfg.k || "");
     // (7 nov 2026: nei tondini piccoli il «viso largo», testa e collo, così la faccia si riconosce; il busto la faceva minuscola)
     if (!ui.facce[k]) {
       var svg = SGOmino.svg(cfg, { busto: true });
@@ -2370,7 +2460,7 @@
     if (e.t === "sis") return el("div", { class: "or-l sis" }, [ el("span", { text: e.testo || "" }) ]);   // avvisi: capo nuovo, turno saltato, tempo scaduto, riepilogo
     // (il nome col colore della squadra: --c e la classe k0/k1/k2, così sul tavolo blu notte prende la versione chiara)
     var testa = [ faccia(ui, e.id, e.nome), el("span", { class: "or-l-nome k" + e.k, style: "--c:" + col, text: e.nome }) ];
-    if (e.t === "ind") return el("div", { class: "or-l" }, testa.concat([ el("span", { class: "or-l-txt", text: "👑" }), el("span", { class: "or-l-ind" + (String(e.p).length > 12 ? " lungo" : ""), text: e.p + " " + numTx(e.num, e.z) }) ]));
+    if (e.t === "ind") return el("div", { class: "or-l" }, testa.concat([ el("span", { class: "or-l-txt", text: "👑" }), el("span", { class: "or-l-ind k" + e.k + (String(e.p).length > 12 ? " lungo" : ""), style: "--c:" + col, text: e.p + " " + numTx(e.num, e.z) }) ]));
     if (e.t === "passo") return el("div", { class: "or-l" }, testa.concat([ el("span", { class: "or-l-txt", text: "passa" }) ]));
     var esito = e.oro ? "⭐ d'oro: si continua!" : e.c === "x" ? "💣 la parola nera!" : e.c === e.k ? (e.fin ? "✓ · finiti i tentativi" : "✓") : e.c === "n" ? "di nessuno" :
       vm.vsBot && e.c === 1 ? "era di " + nomeBot(vm) : "era dei " + SQ[e.c].nome;   // (contro il Bot i Blu non ci sono: c'è lui)
@@ -2541,6 +2631,7 @@
     }
     // la striscia della chat: finché c'è solo «Cominciano i Rossi», grande col colore e il segno della squadra
     ui.log.classList.toggle("solo", ui.log.children.length <= 1);
+    striscia(ui, vm);
     // la chat aperta si chiude da sola quando cambia il turno o finisce la partita (il tabellone torna in vista)
     var kt = vm.fase + "|" + vm.turno + "|" + vm.passo;
     if (ui.kTurnoChat !== kt) { ui.kTurnoChat = kt; if (ui.chatAperta) apriChat(ui, false); }
@@ -3220,6 +3311,21 @@
       // (finché è l'unica riga: «▲ COMINCIANO I ROSSI», grande col colore e il segno della squadra, in mezzo alla striscia)
       ".or-log.solo{justify-content:center}.or-log.solo .or-l.via{font-size:1.02rem;font-weight:900;letter-spacing:.07em;text-transform:uppercase;gap:7px}",
       ".or-l-pens{row-gap:3px}.or-chat.aperta .or-l-pens{flex-wrap:wrap}.or-l-nasc{font-weight:800;color:#8a8576;font-size:.72rem}",
+      // 💬 (20 nov 2026) l'indizio come gettone: segno e parola col colore della squadra, quante trovate
+      ".or-ch-c{flex:none;display:inline-flex;align-items:center;gap:4px;border-radius:8px;padding:2px 7px;background:color-mix(in srgb,var(--c) 30%,rgba(13,16,32,.8));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 70%,transparent);color:#fff;font-size:.74rem;white-space:nowrap}",
+      ".or-ch-c .or-sg{width:.7em;height:.7em}.or-ch-c b{font-weight:900;letter-spacing:.02em}.or-ch-c small{font-weight:900;color:#8ce99a}",
+      ".or-ch-c.ultimo{background:var(--c)}",
+      ".or-chA-apri{margin-left:auto;font-size:.7rem;font-weight:900;color:var(--on-sec,#a6acc8)}",
+      ".or-chA-vuoto{font-size:.72rem;font-weight:700;color:var(--on-sec,#a6acc8)}",
+      // la striscia della chat: la scritta e gli indizi in fila
+      ".or-studio .or-l .or-l-ind{background:color-mix(in srgb,var(--c) 45%,rgba(13,16,32,.8));box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 80%,transparent)}",
+      ".or-chat.pA .or-log{visibility:hidden}.or-chat.pA.aperta .or-log{visibility:visible}",
+      ".or-chA{position:absolute;inset:0;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;gap:4px;padding:5px 9px;border-radius:14px;background:rgba(255,255,255,.07);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.12);cursor:pointer;-webkit-tap-highlight-color:transparent}",
+      ".or-chat.pA.aperta .or-chA{visibility:hidden}",
+      // (a fine partita la striscia torna quella di prima: il riepilogo, «🔎 Più parole trovate…», «💣 La parola nera era…»)
+      ".or-fine-v .or-chat.pA .or-chA{visibility:hidden}.or-fine-v .or-chat.pA .or-log{visibility:visible}",
+      ".or-chA-testa{display:flex;align-items:center;gap:6px;font-size:.72rem;color:#fff}",
+      ".or-chA-ind{display:flex;gap:5px;overflow:hidden;min-width:0;justify-content:flex-start}",
       // ---- il mio ruolo, in alto tra ‹ e la musica (sparisce quando la telecamera va sui podi: lì c'è «IN ONDA») ----
       ".or-ruolo{position:absolute;left:50%;top:calc(13px + env(safe-area-inset-top));transform:translateX(-50%);z-index:25;max-width:calc(100% - 104px);box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.74rem;font-weight:900;line-height:1.2;color:#fff;background:rgba(0,0,0,.5);border-radius:999px;padding:4px 11px;pointer-events:none;box-shadow:inset 0 0 0 2px var(--c,transparent);transition:opacity .3s}",
       ".or-ruolo:empty{display:none}.st-rec.on~.or-ruolo{opacity:0}",
@@ -3325,6 +3431,24 @@
       ".or-vuota{font-size:.8rem;opacity:.7}",
       ".or-sq-b{flex:none;min-height:26px;border:0;border-radius:999px;padding:2px 9px;background:rgba(255,255,255,.14);color:#fff;font:inherit;font-size:.72rem;font-weight:900;white-space:nowrap;cursor:pointer;touch-action:manipulation}",
       ".or-sq-tasti{display:flex;gap:6px;justify-content:center;flex-wrap:wrap}",
+      // (20 nov 2026) le faccine piccole delle squadre
+      ".or-squadre .or-f{width:22px;height:22px;flex:none}.or-squadre .or-f.capo{box-shadow:0 0 0 2px #ffd43b}",
+      // i campi delle squadre affiancati
+      ".or-campi-riga{display:flex;gap:6px;align-items:stretch}",
+      ".or-campo{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:4px;border-radius:14px;padding:6px 6px 6px;background:rgba(255,255,255,.06);box-shadow:inset 0 3px 0 var(--c),inset 0 0 0 1px rgba(255,255,255,.1)}",
+      ".or-campo.mia{background:color-mix(in srgb,var(--c) 26%,rgba(13,16,32,.7));box-shadow:inset 0 0 0 2px var(--c)}",
+      ".or-campo-testa{display:flex;align-items:center;gap:4px;font-size:.88rem;color:#fff}.or-campo-testa b{flex:1;min-width:0}.or-campo-testa .or-sg{width:.8em;height:.8em}",
+      ".or-campo.s0 .or-campo-testa .or-sg{color:#ff6b6b}.or-campo.s1 .or-campo-testa .or-sg{color:#74c0fc}.or-campo.s2 .or-campo-testa .or-sg{color:#69db7c}",
+      ".or-campo-num{font-size:.72rem;font-weight:900;color:rgba(255,255,255,.6)}.or-campo-tu{font-size:.6rem;font-weight:900;letter-spacing:.06em;background:var(--c);color:#fff;border-radius:999px;padding:1px 6px}",
+      ".or-campi.n3 .or-campo-capo small{display:none}.or-campi.n3 .or-campo-capo .or-f{box-shadow:0 0 0 2px #ffd43b}.or-campi.n3 .or-campo-tu{font-size:0;padding:1px 4px}.or-campi.n3 .or-campo-tu:after{content:'✓';font-size:.7rem}.or-campi.n3 .or-campo-testa{font-size:.82rem}",
+      ".or-campo-capo{display:flex;align-items:center;gap:5px;min-width:0;padding:3px 5px;border-radius:10px;background:rgba(255,212,59,.12)}.or-campo-capo small{margin-left:auto;font-size:.56rem;font-weight:900;color:#ffd43b;white-space:nowrap}",
+      ".or-campo-altri{display:flex;flex-direction:column;gap:3px;flex:1}",
+      ".or-campo-p{display:flex;align-items:center;gap:5px;min-width:0;padding:0 5px}",
+      ".or-campo-n{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.8rem;font-weight:800;color:#fff}.or-campo-p.tu .or-campo-n{text-decoration:underline;text-decoration-color:var(--c);text-decoration-thickness:2px;text-underline-offset:3px}",
+      ".or-campo-vuoto{font-size:.72rem;font-weight:700;color:rgba(255,255,255,.55);padding:2px 5px}",
+      ".or-campo-b{border:0;border-radius:10px;min-height:32px;padding:3px 6px;font:inherit;font-size:.76rem;font-weight:900;line-height:1.1;color:#fff;background:var(--c);box-shadow:inset 0 1px 0 rgba(255,255,255,.3);cursor:pointer;touch-action:manipulation}",
+      ".or-campo-b.capo{background:rgba(255,255,255,.12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}",
+      ".or-campo-qui{min-height:32px;display:flex;align-items:center;justify-content:center;font-size:.76rem;font-weight:900;color:#ffd43b}",
       // ---- le tue parole nelle impostazioni: una alla volta, ognuna con la sua ✕ ----
       ".or-aggiungi{display:flex;gap:6px;align-items:center}.or-aggiungi .link-campo{flex:1;min-width:0;margin:0}",
       ".or-esito{min-height:1.2em;margin:4px 0 0}",

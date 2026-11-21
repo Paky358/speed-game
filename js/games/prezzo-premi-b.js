@@ -203,9 +203,14 @@
   }
 
   PREMI.troppo = {
-    nome: "È troppo!", icona: "✋", ordine: 4,
+    nome: "È troppo!", icona: "✋", ordine: 4, fattiSegreti: true,   // (20 nov 2026: chi si è fermato si vede solo quando ti sei fermato anche tu, vedi prezzo.js leggii)
     regola: "I prezzi salgono: tocca «È TROPPO!» appena superano quello vero. Né prima, né tardi!",
+    aiuto: "💸 Fermalo al momento giusto",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "Il prezzo sale da solo, un passo alla volta: tocca «È troppo!» appena supera il prezzo vero. Subito dopo vale 600 punti, poi 450, 350… Se tocchi prima che lo superi, prendi poco.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
+    // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
+    fai: "Sul telefono passano prezzi sempre più alti. Tocca «✋ È troppo!» appena il prezzo supera quello vero.",
+    es: "Pensi che costi 3.000 € → passano 2.500… 2.800… 3.200 → tocca adesso!",
+    pt: "Subito dopo il prezzo vero: 600 punti, poi 450, 350, 250. Se tocchi troppo presto: 200, poi 100.",
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -271,7 +276,7 @@
       var tacche = el("div", { class: "pzb-tr-tacche" }), t = [];
       for (var k = 0; k < TR.N; k++) { var ti = el("i"); t.push(ti); tacche.appendChild(ti); }
       var fermi = el("div", { class: "pz-tab fitto" });
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "✋ È troppo!" }));
+      A.sch.appendChild(A.testa("È troppo!"));
       A.sch.appendChild(A.scheda(pub.prod || {}, { cls: "grande" }));   // (25 ott: la scheda prende tutto lo spazio libero)
       A.sch.appendChild(el("div", { class: "pzb-tr-big" }, [ nN, nP ]));
       A.sch.appendChild(tacche);
@@ -301,6 +306,9 @@
       function aggiorna(p) {
         sincro(p, A);
         if (locale) return;   // sullo stesso telefono non si dice chi si è fermato (a turno lo vedrebbe chi viene dopo)
+        // (20 nov 2026) online chi si è fermato si vede solo dopo che ti sei fermato anche tu: se no il primo che si ferma
+        // fa da spia agli altri («il prezzo vero è qui vicino»). Chi guarda (A.io vuoto) li vede subito.
+        if (A.io != null && (p.fermi || []).indexOf(A.io) < 0) return;
         (p.fermi || []).forEach(function (fid) {
           if (visti[fid]) return; visti[fid] = 1;
           fermi.appendChild(el("div", { class: "pz-och" }, [ A.fac(fid, "pensa"), el("span", { class: "nm", text: "✋ " + A.nome(fid).slice(0, 8) }) ]));
@@ -324,7 +332,7 @@
       if (insieme) {
         // tutti insieme intorno al telefono: un bottone a testa
         var testa = A.pan.parentNode && A.pan.parentNode.querySelector(".pz-pan-testa .tx");
-        if (testa) testa.textContent = "✋ È troppo! · tutti insieme";
+        if (testa) testa.textContent = "💸 Tutti insieme: fermatelo in tempo";   // (21 nov 2026, scelta C: il nome del gioco è già in alto)
         var gr = el("div", { class: "pzb-tr-griglia" + (A.giocatori.length === 3 ? " tre" : "") });
         A.giocatori.forEach(function (g) {
           var b = el("button", { class: "pzb-tr-bt attesa" }, [ el("span", { class: "chi" }, [ A.fac(g.id), el("span", { text: g.nome }) ]), el("b", { text: "✋ È TROPPO!" }) ]);
@@ -356,7 +364,7 @@
         }
         mandato = true; clearInterval(tid);
         A.invia({ i: i });
-        btn.className = "pzb-tr-btn fatto"; testoBtn(btn, "✋ Fermato!", "a " + A.fmtE(scala[i]));
+        btn.className = "pzb-tr-btn fatto"; testoBtn(btn, "✋ Stop!", "a " + A.fmtE(scala[i]));
         nota.textContent = "Vediamo se era il momento giusto… 🤞";
         A.vibra(30); A.FX.toc(990);
       }
@@ -366,13 +374,13 @@
           var tutti = {};
           A.giocatori.forEach(function (g) {
             tutti[g.id] = tocchi[g.id] != null ? tocchi[g.id] : -1;
-            if (tocchi[g.id] == null) { var b = bts[g.id]; b.className = "pzb-tr-bt niente"; b.lastChild.textContent = "😶 Mai fermato"; }
+            if (tocchi[g.id] == null) { var b = bts[g.id]; b.className = "pzb-tr-bt niente"; b.lastChild.textContent = "😶 Nessuno stop"; }
           });
           A.invia({ tutti: tutti, ord: ord });
           nota.textContent = "Vediamo chi si è fermato al momento giusto… 🤞";
         } else {
           A.invia({ i: -1 });
-          btn.className = "pzb-tr-btn niente"; testoBtn(btn, "😶 Non ti sei fermato", "pensavi che costasse ancora di più!");
+          btn.className = "pzb-tr-btn niente"; testoBtn(btn, "😶 Niente stop", "pensavi che costasse ancora di più!");
         }
       }
       var ultimo = null;
@@ -405,7 +413,7 @@
       var su = function (i) { return ids.filter(function (id) { return tocchi[id] === i; }); };
       var mai = ids.filter(function (id) { return !(tocchi[id] >= 0); });
       var banner = el("div", { class: "pz-sotto", text: "Dove vi siete fermati…" });
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "✋ È troppo!" }));
+      A.sch.appendChild(A.testa("È troppo!"));
       A.sch.appendChild(A.miniprod(prod));
       var contaBox = el("div", { style: "min-height:52px;display:flex;align-items:center" }, [ conta.el ]);
       conta.el.style.visibility = "hidden";
@@ -446,14 +454,14 @@
       var me = A.io;
       if (giusti.length) {
         banner.className = "pz-banner oro pzb-ban-s";
-        banner.textContent = giusti.length === 1 && giusti[0] === me && A.locale !== "telefono" ? "🎯 Ti sei fermato al momento giusto!" : "🎯 Giusto in tempo: " + minus(elenco(A, giusti)) + "!";
+        banner.textContent = giusti.length === 1 && giusti[0] === me && A.locale !== "telefono" ? "🎯 Stop al momento giusto!" : "🎯 Giusto in tempo: " + minus(elenco(A, giusti)) + "!";
         A.ST.pubblico(A.S, "ovazione"); A.ST.coriandoli();
         if (giusti.indexOf(me) >= 0 || (A.locale === "telefono" && giusti.length)) A.vibra([30, 40, 70]);
       } else if (dopo.length) {
         var mn = Math.min.apply(null, dopo.map(function (id) { return tocchi[id]; }));
         banner.className = "pz-banner pzb-ban-s";
         var vicini = dopo.filter(function (id) { return tocchi[id] === mn; }), conMe = A.locale !== "telefono" && vicini.indexOf(me) >= 0;
-        banner.textContent = "😅 Nessuno al primo sopra: " + (vicini.length > 1 ? (conMe ? "i più vicini siete " : "i più vicini sono ") : conMe ? "il più vicino sei " : "il più vicino è ") + minus(elenco(A, vicini));
+        banner.textContent = "😅 Nessuno subito dopo il prezzo vero: " + (vicini.length > 1 ? (conMe ? "ci andate più vicino " : "ci vanno più vicino ") : conMe ? "ci vai più vicino " : "ci va più vicino ") + minus(elenco(A, vicini));
         A.ST.pubblico(A.S, "applauso");
       } else {
         banner.className = "pz-banner no pzb-ban-s";
@@ -592,7 +600,12 @@
   PREMI.plinko = {
     nome: "Plinko", icona: "🟡", ordine: 5,
     regola: "Ogni prezzo indovinato vale +50 e un gettone. Poi lasciali cadere: in mezzo c'è il 200!",
+    aiuto: "🤔 Indovina e vinci i gettoni",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "Tre domande: dei due prezzi, qual è quello giusto? Ogni risposta giusta vale 50 punti e un gettone. Poi lasci cadere i gettoni nel Plinko: la casella in mezzo vale 200!",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
+    // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
+    fai: "Prima 3 domande: tra due prezzi, tocca quello giusto. Poi scegli dove far cadere i tuoi gettoni tra i chiodini.",
+    es: "2 risposte giuste → 100 punti e 3 gettoni (uno ce l'hai sempre).",
+    pt: "Ogni gettone vale la casella dove cade: 200 in mezzo, poi 50, 25 e 10. Accanto al 200: 0.",
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -670,7 +683,7 @@
       var el = A.el, pub = A.pub || {};
       A.sch.classList.add("pzb-fitto");
       var box = el("div", { class: "pzb-pl-board" }), chips = el("div", { class: "pzb-pl-chips" }), ch = {}, attesa = {};
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🟡 Plinko" }));
+      A.sch.appendChild(A.testa("Plinko"));
       A.sch.appendChild(box);
       A.sch.appendChild(chips);
       A.giocatori.forEach(function (g) {
@@ -847,7 +860,7 @@
       var el = A.el, riv = A.riv || {}, gett = riv.gett || [], ids = riv.ids || [], punti = A.punti || {};
       A.sch.classList.add("pzb-fitto");
       var box = el("div", { class: "pzb-pl-board" }), chips = el("div", { class: "pzb-pl-chips" }), banner = el("div", { class: "pz-sotto", text: "Tutti i gettoni cadono insieme!" });
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🟡 Plinko" }));
+      A.sch.appendChild(A.testa("Plinko"));
       A.sch.appendChild(box); A.sch.appendChild(chips); A.sch.appendChild(banner);
       var tot = {}, ch = {}, giusti = riv.giusti || {};
       ids.forEach(function (id) {

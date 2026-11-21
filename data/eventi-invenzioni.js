@@ -186,7 +186,7 @@
     { anno: 1908, titolo: "Esce dalla fabbrica la prima Ford Modello T", fatto: "Più tardi Ford disse che si poteva averla di qualunque colore, purché fosse nero." },
     { anno: 1914, titolo: "A Cleveland si accende il primo semaforo elettrico", fatto: "Aveva solo il rosso e il verde: il semaforo a tre colori arrivò qualche anno dopo." },
     { anno: 1926, titolo: "Il dirigibile Norge di Umberto Nobile sorvola il Polo Nord", fatto: "A bordo c'era anche Amundsen, ma il dirigibile l'aveva progettato e lo pilotava un ingegnere italiano." },
-    { anno: 1928, titolo: "Viene venduto per la prima volta il pane già affettato", fatto: "Succede in un forno del Missouri: da lì il modo di dire americano 'la cosa migliore dopo il pane a fette'." },
+    { anno: 1928, titolo: "Viene venduto per la prima volta il pane già affettato", fatto: "Succede in un forno del Missouri: da lì il modo di dire americano «la cosa migliore dopo il pane a fette»." },
     { anno: 1934, titolo: "Fermi e i ragazzi di via Panisperna scoprono i neutroni lenti", fatto: "Rallentati dalla paraffina, i neutroni diventavano molto più efficaci: anche per questo Fermi vinse il Nobel." },
     { anno: 1938, titolo: "László Bíró brevetta per la prima volta la sua penna a sfera", fatto: "Faceva il giornalista: l'idea gli venne guardando l'inchiostro dei giornali, che si asciugava subito." },
     { anno: 1938, titolo: "La Nestlé lancia il caffè solubile Nescafé", fatto: "Nasce in Svizzera per non buttare via il caffè che il Brasile produceva in eccesso." },

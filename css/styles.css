@@ -1335,6 +1335,7 @@ body.sg-riposo .om-tutto, body.sg-riposo .om-occhi, body.sg-riposo .om-faro, bod
 .sl-fumetto::after{ content:""; position:absolute; left:calc(50% + var(--coda, 0px)); top:100%; margin-left:-7px; border:7px solid transparent; border-top-color:#fff8e8; border-bottom:0; }
 .sl-fumetto.va{ background:#dfe5ff; font-size:.8rem; animation-duration:1.3s; }
 .sl-fumetto.va::after{ border-top-color:#dfe5ff; }
+.sl-fumetto.sotto::after{ display:none; }   /* (20 nov 2026: il fumetto sotto il nome, per non coprire i nomi degli altri) */
 @keyframes slFumetto{ 0%{ opacity:0; transform:translateX(-50%) scale(.4); } 12%{ opacity:1; transform:translateX(-50%) scale(1.07); } 20%{ transform:translateX(-50%) scale(1); }
   82%{ opacity:1; transform:translateX(-50%) scale(1); } 100%{ opacity:0; transform:translateX(-50%) translateY(-6px) scale(.96); } }
 
@@ -4439,6 +4440,9 @@ html.tastiera .gt-cerca-riga{ margin-top:0; }
 /* il gettone ha già il suo anello colorato: nei quadretti della Mini Asta niente secondo anello né fondo */
 .gettoni .st-gio-faccia{ box-shadow:none !important; background:none !important; }
 /* fine partita in tanti (ripasso B16, 12 nov 2026): i tasti attaccati al fondo, la classifica scorre sopra */
+/* (20 nov 2026, il proprietario: «non ingrandiamo per riempire») sul telefono alto i tasti di fine stanno subito sotto la classifica,
+   non in fondo allo schermo con mezzo schermo vuoto in mezzo; con la classifica lunga restano attaccati al fondo come prima */
+.schermata.fine-piede-giu > .contenuto{ flex:0 1 auto; }
 .schermata.fine-piede-giu > .piede{ position:sticky; bottom:0; z-index:3; padding:8px 0 calc(6px + env(safe-area-inset-bottom)); background:var(--o-fondo, #0d1020); box-shadow:0 -12px 14px -8px var(--o-fondo, #0d1020); }
 
 /* =========================================================

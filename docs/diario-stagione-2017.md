@@ -830,3 +830,77 @@ Cartella di appoggio (fuori dal progetto): `D:\SG-stagione-lavoro` (raccolta da 
 - Oggi: data/fanta-ruoli.js, dalla pagina delle quotazioni di Fantacalcio.it letta il 19 nov (`D:\SG-stagione-lavoro\ricerca\mantra-d\oggi.txt`), 110 difensori su 110 (Ramon: Dc).
 - Stagioni 2015-16 → 2025-26: campo RUOLI di data/fanta-<anno>.js, dalla colonna Mantra della raccolta di fantacalcio.it (`mantra-difensori.js`; genera.js li mette anche lui da ora): tutti i difensori, anche quelli X, hanno il ruolo, nessuno senza (non è servito l'aiutante).
 - Difensori (col ruolo / con la fascia Dd-Ds-E / solo centrali): oggi 110 (66/44), 2015-16 92 (50/42), 2016-17 84 (45/39), 2017-18 95 (56/39), 2018-19 91 (49/42), 2019-20 99 (61/38), 2020-21 113 (63/50), 2021-22 107 (69/38), 2022-23 110 (67/43), 2023-24 112 (67/45), 2024-25 107 (64/43), 2025-26 112 (61/51).
+
+## 19 nov: BATTITORI 2025-26 dal Deep Research (con le caselle «non so» cercate dall'aiutante)
+- Regole: angoli e punizioni da Gemini solo se il calciatore è nel gioco con quella squadra in quella stagione (chi ha cambiato squadra a gennaio vale dove ha finito);
+  «non so» o fuori dal gioco = resta la stima (il primo nome della stima non ancora usato). Rigori: il 1° resta chi ne ha tirati di più nei dati di fantacalcio.it
+  (Gemini solo se nessuno ne ha tirati); 2° e 3° da Gemini. Le caselle ancora «non so» e i nomi scartati: `D:\SG-stagione-lavoro\ricerca\gemini-dr\non-so.txt`.
+- **2025-26**: 65 cambi; 42 caselle «non so» (di cui 18 nomi scartati)
+  - Atalanta angoli: Zalewski, Pasalic → Zalewski, Bernasconi, Samardzic
+  - Atalanta punizioni: De Ketelaere, Zalewski → Zalewski, De Ketelaere
+  - Atalanta punizioni (ricerca): Zalewski, De Ketelaere → Zalewski, Ederson D.S., De Ketelaere
+  - Atalanta rigori (ricerca): Scamacca, Ederson D.S. → Scamacca, Ederson D.S., Krstovic
+  - Bologna angoli: Rowe, Miranda J. → Miranda J., Moro N., Bernardeschi
+  - Bologna punizioni: Orsolini, Cambiaghi → Moro N., Bernardeschi, Orsolini
+  - Bologna punizioni (ricerca): Moro N., Bernardeschi, Orsolini → Moro N., Bernardeschi, Miranda J.
+  - Bologna rigori (ricerca): Orsolini, Bernardeschi → Orsolini, Bernardeschi, Castro S.
+  - Cagliari angoli: Palestra, Gaetano → Esposito Se., Obert, Palestra
+  - Cagliari angoli (ricerca): Esposito Se., Obert, Palestra → Esposito Se., Obert, Gaetano
+  - Cagliari rigori (ricerca): Esposito Se., Gaetano, Borrelli → Esposito Se., Mina, Gaetano
+  - Como angoli: Paz N., Da Cunha → Da Cunha, Baturina, Paz N.
+  - Como punizioni: Paz N., Rodriguez Je. → Paz N., Baturina, Da Cunha
+  - Cremonese angoli: Vandeputte, Zerbin → Vandeputte, Pezzella Giu., Maleh
+  - Cremonese punizioni (ricerca): Bonazzoli, Vandeputte → Bonazzoli, Pezzella Giu., Vandeputte
+  - Cremonese rigori (ricerca): Bonazzoli, Vardy, Thorsby → Bonazzoli, Vandeputte, Vardy
+  - Fiorentina angoli: Gudmundsson A., Fagioli → Fagioli, Mandragora, Gudmundsson A.
+  - Fiorentina punizioni: Mandragora, Gudmundsson A. → Mandragora, Gudmundsson A., Fagioli
+  - Genoa punizioni: Malinovskyi, Ekuban → Malinovskyi, Martin, Vitinha O.
+  - Genoa angoli (ricerca): Martin, Malinovskyi → Martin, Malinovskyi, Messias
+  - Inter angoli: Dimarco, Barella → Dimarco, Calhanoglu, Barella
+  - Inter punizioni: Barella, Calhanoglu → Dimarco, Calhanoglu, Barella
+  - Inter rigori (ricerca): Calhanoglu, Zielinski → Calhanoglu, Zielinski, Martinez L.
+  - Juventus angoli: McKennie, Conceicao → Yildiz, Koopmeiners, McKennie
+  - Juventus punizioni: Yildiz, McKennie → Vlahovic, Koopmeiners, Cambiaso
+  - Juventus rigori: Yildiz, Vlahovic, David → Yildiz, Locatelli, Vlahovic
+  - Juventus angoli (ricerca): Yildiz, Koopmeiners, McKennie → Yildiz, Koopmeiners, Cambiaso
+  - Lazio angoli: Basic, Cataldi → Cataldi, Zaccagni, Pellegrini Lu.
+  - Lazio punizioni: Pedro, Cataldi → Cataldi, Pellegrini Lu., Pedro
+  - Lazio punizioni (ricerca): Cataldi, Pellegrini Lu., Pedro → Cataldi, Pellegrini Lu., Zaccagni
+  - Lazio angoli (ricerca): Cataldi, Zaccagni, Pellegrini Lu. → Zaccagni, Cataldi, Pellegrini Lu.
+  - Lecce punizioni: Banda, Coulibaly L. → Banda, Coulibaly L., Veiga D.
+  - Lecce rigori (ricerca): Stulic, Banda, Coulibaly L. → Stulic, Cheddira, Banda
+  - Milan angoli: Pulisic, Rabiot → Modric, Bartesaghi, Ricci S.
+  - Milan punizioni: Pulisic, Leao → Modric, Bartesaghi, Pulisic
+  - Napoli angoli: Politano, Spinazzola → Politano, Elmas, Spinazzola
+  - Napoli punizioni: Giovane, McTominay → De Bruyne, McTominay, Politano
+  - Napoli angoli (ricerca): Politano, Elmas, Spinazzola → Politano, Elmas, Gutierrez
+  - Parma angoli: Nicolussi Caviglia, Valeri → Valeri, Bernabè, Nicolussi Caviglia
+  - Parma punizioni: Nicolussi Caviglia, Bernabè → Bernabè, Valeri, Nicolussi Caviglia
+  - Parma rigori (ricerca): Pellegrino M., Bernabè, Keita M. → Pellegrino M., Valeri, Bernabè
+  - Pisa angoli: Leris, Angori → Angori, Tramoni M., Leris
+  - Pisa punizioni: Leris, Moreo → Tramoni M., Angori, Leris
+  - Pisa angoli (ricerca): Angori, Tramoni M., Leris → Angori, Tramoni M., Aebischer
+  - Roma angoli: Pisilli, Rensch → Dybala, Soulè, Pellegrini Lo.
+  - Roma punizioni: Malen, Soulè → Dybala, Soulè, Pellegrini Lo.
+  - Sassuolo angoli: Volpato, Thorstvedt → Laurientè, Volpato, Thorstvedt
+  - Sassuolo punizioni: Laurientè, Berardi → Laurientè, Berardi, Lipani
+  - Sassuolo rigori: Berardi, Nzola, Pinamonti → Berardi, Pinamonti, Nzola
+  - Sassuolo angoli (ricerca): Laurientè, Volpato, Thorstvedt → Laurientè, Berardi, Volpato
+  - Sassuolo rigori (ricerca): Berardi, Pinamonti, Nzola → Berardi, Pinamonti, Laurientè
+  - Torino angoli: Vlasic, Pedersen → Lazaro, Vlasic, Pedersen
+  - Torino punizioni: Vlasic, Adams C. → Vlasic, Coco, Adams C.
+  - Torino angoli (ricerca): Lazaro, Vlasic, Pedersen → Lazaro, Casadei, Vlasic
+  - Torino punizioni (ricerca): Vlasic, Coco, Adams C. → Vlasic, Coco, Casadei
+  - Torino rigori (ricerca): Vlasic, Zapata D. → Vlasic, Zapata D., Simeone
+  - Udinese angoli: Zaniolo, Atta → Zaniolo, Miller L., Atta
+  - Udinese punizioni: Zaniolo, Atta → Ekkelenkamp, Zaniolo, Piotrowski
+  - Udinese angoli (ricerca): Zaniolo, Miller L., Atta → Zaniolo, Miller L., Ekkelenkamp
+  - Udinese rigori (ricerca): Davis K., Solet → Davis K., Solet, Zaniolo
+  - Verona angoli: Bernede, Bradaric → Bradaric, Frese, Bernede
+  - Verona punizioni: Bernede, Gagliardini → Orban G., Frese, Bernede
+  - Verona angoli (ricerca): Bradaric, Frese, Bernede → Bradaric, Frese, Belghali
+  - Verona punizioni (ricerca): Orban G., Frese, Bernede → Orban G., Frese, Belghali
+  - Verona rigori (ricerca): Orban G., Bernede, Gagliardini → Orban G., Sarr A., Bernede
+- I tre nomi da guardare del Cervello tornano coi rigori VERI di fantacalcio.it 2025-26: Lazio Pedro 2/2 (e Cataldi 2/2), Juventus Yildiz 2 tirati (il più alto; Vlahović 1/1), Udinese Solet 1/1 (dopo Davis 4/4). Yıldız prima veniva scartato per la «ı» turca: genera.js ora la legge come «i».
+- Caselle «non so»: l'aiutante Sonnet ne ha trovate 27 su 43 (`ricerca/gemini-dr/non-so-risultati-2025-26.txt`; quasi tutte dalla gerarchia di Fantamaster 2025-26, rigori da Goal dell'8 feb 2026 e Sky), applicate con `non-so-applica.txt`. Lazio 1° angoli: Gemini diceva Cataldi, Fantamaster Zaccagni → Zaccagni 1°, Cataldi 2° (Cataldi qualche angolo lo batte). Restano 16 «non so» (stima).
+- genera.js scrive anche `ricerca/gemini-dr/<stagione>-origine.json` (da dove viene ogni battitore: dati, Gemini, aiutante con la fonte, stima): lo usa il riepilogo finale `D:\SG-stagione-lavoro\riepilogo-stagioni.html` (`node riepilogo.js`). I dati delle altre stagioni restano identici (controllato con confronta-dati.js).

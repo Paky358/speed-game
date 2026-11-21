@@ -18,6 +18,83 @@ window.SG_NOVITA = [
     ]
   },
   {
+    v: 395,
+    data: "21 novembre 2026",
+    titolo: "Il Prezzo è Giusto: i giochi a premi coi loro disegni 🏷️",
+    descrizione: [
+      "🎨 Ogni gioco a premi ha il suo disegno al posto dell'emoji, nello stile dell'app: le frecce di Più o meno, la montagna dell'Alpinista, la mano di È troppo!, i chiodini del Plinko, il carrello, la cassaforte, i dadi, il bersaglio e gli altri. Si vedono nella scelta, nelle regole e in alto mentre si gioca, anche senza rete.",
+      "🌙 Le schede per scegliere il gioco a premi sono scure come il resto dell'app (prima erano bianche).",
+      "👀 Nell'Offerta con le offerte a vista la regola è scritta chiara: «si può offrire 1 € più di un altro» (10 centesimi sui prezzi piccoli; prima «occhio al +1 €», che capiva solo chi conosce il programma). Anche nelle regole del gioco.",
+      "🛍️ La Vetrina finale, mentre si presenta un pezzo alla volta, sta al centro dello schermo, non più tutta in alto con mezzo schermo vuoto sotto. I pezzi restano grandi come prima, un pezzo da solo nella sua riga sta al centro, e quelli già usciti scivolano piano al loro posto.",
+      "💡 Nei giochi a premi il pannello non ripete il nome del gioco, che è già scritto in alto: al suo posto una frase che ricorda cosa fare (es. «⬆️ Dal meno caro al più caro» in Mettili in ordine, «💸 Fermalo al momento giusto» in È troppo!)."
+    ]
+  },
+  {
+    v: 394,
+    data: "21 novembre 2026",
+    titolo: "La linea del tempo: tanti ritocchi 📜",
+    descrizione: [
+      "🎨 Nel risultato di «⚡ Tutti insieme» il riquadro dell'anno è rosso se l'hai sbagliata (prima era sempre verde). Chi guarda vede verde e coriandoli solo se qualcuno l'ha messa giusta, con «✅ Giusta per 2 su 4» o «❌ Nessuno l'ha messa giusta» al posto dell'anno ripetuto: anche in «🧍 Ognuno la sua linea» e sullo stesso telefono.",
+      "⏩ Quando arriva la carta nuova non resta più sullo schermo il «⏩ Avanti» della carta di prima con «Si va avanti tra 0…».",
+      "🧍 Ognuno la sua linea: sotto la carta «Messe bene: 3 su 10» (prima «Nella tua linea: 0 su 10» anche con le due carte di partenza già in linea); nello spareggio si legge cosa succede («la prossima carta la giocano solo loro»); chi ha finito legge «Tocca chi vuoi guardare» e «Sta scegliendo… · messe bene 4 su 5». Le regole dicono che si parte con due carte.",
+      "🤫 Le spiegazioni non dicono più l'età («Ha 18 anni»): da lì si risaliva all'anno. Riscritte 15 carte, tra cui Pausini, Morandi, Nada, Pelé, Comaneci e Tiger Woods.",
+      "📸 Foto nuove: la Coca-Cola col suo inventore John Pemberton (prima una bottiglia di oggi, che ingannava sull'epoca) e la Pascalina intera e chiara (prima era su fondo nero).",
+      "👋 Chi arriva tardi legge «Entri al prossimo giro» anche mentre si guarda il risultato; chi guarda soltanto non legge più «sbrigati!»; in saletta gli amici leggono «Aspetta che Paky faccia partire la partita».",
+      "📐 Con poche carte la linea sta al centro dello spazio libero, non tutta in alto. Nell'elenco dei risultati e in «📍 Andava qui» nomi e titoli vanno a capo invece di tagliarsi («Luca (tu)»). In alto il ✅/❌ non copre più l'ultima lettera del nome e il tasto «‹» non lascia vedere sotto il punteggio che scorre.",
+      "📱 Sullo stesso telefono, mentre il telefono passa a chi può rubare, sotto non resta «Tocca a te» col tempo che corre; durante il risultato non resta acceso un giocatore sbagliato."
+    ]
+  },
+  {
+    v: 393,
+    data: "21 novembre 2026",
+    titolo: "Il Prezzo è Giusto: regole chiare e tanti ritocchi 🏷️",
+    descrizione: [
+      "🎁 Prima di ogni gioco a premi la spiegazione ha tre riquadri: «👉 Come si gioca», «💡 Esempio» e «🏆 Punti». Resta più a lungo, tra 24 e 28 secondi a seconda del gioco (prima 10): chi non l'ha mai giocato capisce bene, chi lo conosce tocca «⏩ Avanti».",
+      "✋ È troppo!: chi si è già fermato si vede solo dopo che ti sei fermato anche tu. Prima il primo che si fermava faceva capire agli altri che il prezzo vero era lì vicino.",
+      "🎡 Ruota del 100: finito il tuo giro compare «Hai fatto 45 · aspettiamo gli altri…» col conto alla rovescia (prima sembrava tutto fermo).",
+      "👋 Chi arriva a puntata cominciata legge dove entra davvero: alla prossima Offerta, alla Ruota o alla Vetrina, oppure «La puntata sta finendo: giochi dalla prossima».",
+      "📱 Niente più scritte coperte o tagliate: la barra in basso e la targhetta di chi guarda lasciano sempre il loro posto, i titoli lunghi vanno su due righe, il carrello mostra tutti i premi interi, i punti dei risultati stanno nella riga giusta e il nome di chi vince non si accorcia mai in «P…», sul telefono basso la spiegazione dei giochi a premi si stringe invece di tagliarsi, in tanti la foto dell'Offerta si abbassa perché si vedano tutte le offerte, in Più o meno la scheda non sale più sul titolo, i nomi dei prodotti non si spezzano a metà («salvadana-io»), il prezzo a cifre ha il punto e la virgola al loro posto.",
+      "🧩 Ritocchi: in 5 o più i tasti dei giochi a premi hanno più spazio, i riquadri alti tengono foto e scritte insieme al centro, il luogo non si ripete («…un trullo di Alberobello · ad Alberobello», «Il 730 fatto al CAF · al CAF»), frasi giuste per tutti (non più «Ti sei fermato» o «Sei caduto»), cinque foto sbagliate sistemate (la bici Bianchi ora è celeste), nell'Alpinista le pedine partono a ventaglio (prima in 6 erano un mucchio solo), nel carrello in tanti foto e premi prendono tutta la larghezza del riquadro."
+    ]
+  },
+  {
+    v: 392,
+    data: "20 novembre 2026",
+    titolo: "Parola d'ordine: squadre e chat più chiare 🔤",
+    descrizione: [
+      "👥 Nella saletta ogni squadra ha il suo riquadro, uno accanto all'altro: in alto il capo con la 👑, sotto gli altri. La tua squadra è accesa del suo colore e in fondo alle altre c'è «Entra nei Rossi»: un tocco e cambi squadra. Nella tua c'è «👑 Faccio io il capo».",
+      "🎨 Il cerchio di ognuno prende il colore della sua squadra, nella saletta e in partita: niente più cerchi rossi nei Blu. Sul palco quelli della stessa squadra stanno vicini.",
+      "💬 In partita la striscia in basso dice «Chat della partita · Apri ▲» e mette in fila gli indizi di tutte le squadre, col numero e il loro colore, e quante parole hanno fatto trovare (✓). Toccandola si apre la chat intera, con gli indizi colorati della loro squadra.",
+      "🗨️ In tutte le salette i fumetti («Tocca il tuo avatar per le reazioni», «Ciao Marco! 👋») non coprono più i nomi degli altri."
+    ]
+  },
+  {
+    v: 391,
+    data: "20 novembre 2026",
+    titolo: "La Balla Colossale: i ritocchi 🤥",
+    descrizione: [
+      "✍️ La balla può essere lunga fino a 50 lettere, e sotto il campo vedi da subito, ben leggibile, quante ne restano: «50 lettere», «ancora 12 lettere»… fino a «niente più lettere».",
+      "📏 Niente più cose ingrandite per riempire lo schermo: classifica e podio stanno in alto con «Avanti» subito sotto, la scelta dell'argomento al centro, le balle lunghe si leggono intere senza coprire niente.",
+      "👀 Chi guarda col link vede tutta la rivelazione, senza la targhetta sopra; chi non vota legge le risposte grandi quanto c'è posto.",
+      "🔢 In tanti, nei riquadri in alto resta solo il simbolo (✅, ✍️) quando la parola non ci sta; nei premi a pari merito ci sono tutte le faccine.",
+      "🏁 A fine partita online, in tutti i giochi, i tasti stanno subito sotto la classifica (non più in fondo allo schermo)."
+    ]
+  },
+  {
+    v: 390,
+    data: "20 novembre 2026",
+    titolo: "La Balla Colossale rifatta 🤥",
+    descrizione: [
+      "🎭 La rivelazione è uno spettacolo: prima le balle a cui non ha creduto nessuno, poi le altre una alla volta al centro, dalla meno votata alla più votata. Per ognuna escono le facce di chi ci è cascato, il timbro BALLA! e chi l'ha scritta, coi punti che volano sul suo punteggio.",
+      "✅ La verità arriva sempre per ultima, col timbro VERO!, e la parola giusta si stampa dentro il giornale.",
+      "🏆 Dopo ogni round la classifica vera: posizioni, frecce di chi sale e chi scende, quanto ha preso ognuno e la frase del momento («Giulia passa in testa!»). Prima dell'ultimo round l'annuncio della Balla Finale a punti tripli.",
+      "🥇 Alla fine il podio coi primi tre e i premi della serata (Re delle balle, Detective, Credulone, Balla d'oro) tutti in una schermata.",
+      "💯 Punti da quiz televisivo: la verità vale 200, ogni amico ingannato 100 (nella Balla Finale 600 e 300). Chi vince è lo stesso di prima: cambia solo come si leggono.",
+      "🗳️ Al voto il foglio è pieno (dietro non si legge più il giornale), la notizia sta sempre in alto e le risposte sono più grandi; la tua è spenta.",
+      "📱 Sul telefono piccolo con la tastiera aperta «Fatto!» non copre più la balla, e chi ricarica la pagina dopo aver scritto rilegge la sua balla."
+    ]
+  },
+  {
     v: 389,
     data: "20 novembre 2026",
     titolo: "Mini Asta Fantacalcio: la telecamera come in TV 🎥",

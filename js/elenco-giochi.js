@@ -71,7 +71,7 @@
   pezzo("lanterne", "js/games/lanterne.js");
   pezzo("lunghezza", "data/lunghezza-scale.js data/lunghezza-parole.js js/games/lunghezza.js");
   pezzo("chidinoi", "data/chidinoi-1.js data/chidinoi-2.js data/chidinoi-3.js data/chidinoi-4.js data/chidinoi-5.js js/chidinoi-arte.js js/chidinoi-foto.js js/games/chidinoi.js");
-  pezzo("prezzo", "data/prezzo-1.js data/prezzo-2.js data/prezzo-3.js data/prezzo-4.js data/prezzo-5.js data/prezzo-6.js data/prezzo-7.js data/prezzo-foto.js js/games/prezzo-scena.js js/games/prezzo.js js/games/prezzo-premi-piu.js js/games/prezzo-premi-a.js js/games/prezzo-premi-b.js js/games/prezzo-premi-c.js js/games/prezzo-premi-d.js js/games/prezzo-premi-e.js", "studio");
+  pezzo("prezzo", "data/prezzo-1.js data/prezzo-2.js data/prezzo-3.js data/prezzo-4.js data/prezzo-5.js data/prezzo-6.js data/prezzo-7.js data/prezzo-foto.js js/games/prezzo-disegni.js js/games/prezzo-scena.js js/games/prezzo.js js/games/prezzo-premi-piu.js js/games/prezzo-premi-a.js js/games/prezzo-premi-b.js js/games/prezzo-premi-c.js js/games/prezzo-premi-d.js js/games/prezzo-premi-e.js", "studio");
   pezzo("unaparola", "data/unaparola-parole.js js/games/unaparola.js");
   pezzo("dadoveviene", "data/dadoveviene-paesi.js data/dadoveviene-carte.js js/games/dadoveviene.js");
   pezzo("memata", "data/memata.js js/games/memata.js");

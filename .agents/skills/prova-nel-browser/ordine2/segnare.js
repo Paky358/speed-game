@@ -423,7 +423,9 @@
   // ---------------- o2s4 ----------------
   COPIONE.aggiungi("o2s4", { nome: "Parola d'ordine: mazzi (Classico e 🌶️ Serata), parole sorelle mai insieme, memoria di 30 giorni", fai: async function () {
     var N = [];
-    var P = await W.apriTel("Paky", { x: 0 }), O = P.__ORDINE;
+    var P = await W.apriTel("Paky", { x: 0 });
+    P.SGCuore.precarica("ordine"); await W.aspetta(function () { return P.__ORDINE && P.__ORDINE.mazzoDa; }, 10000);   // (dal 4 nov i giochi si scaricano quando servono)
+    var O = P.__ORDINE;
     if (!O || !O.mazzoDa) no("non trovo gli aiuti del gioco (window.__ORDINE.mazzoDa)");
     // i mazzi
     if (JSON.stringify(O.MAZZI.map(function (m) { return m[0]; })) !== JSON.stringify(["classico", "serata"])) no("i mazzi sono " + JSON.stringify(O.MAZZI));

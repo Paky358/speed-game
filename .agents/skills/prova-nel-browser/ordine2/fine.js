@@ -174,7 +174,7 @@
     await gira(C, ind0, mie[2]);
     var c1 = await cartelloSuTutti(X.nomi, /giusta!.*Finiti i tentativi/, 2000);
     if (c1.indexOf("Tocca ai " + SQN[k1]) < 0) no("la scritta dei tentativi finiti non dice a chi tocca («" + c1 + "»)");
-    if (!/finiti i tentativi/.test(T(W.finestra("Paky")))) no("nella chat la riga non dice «finiti i tentativi»");
+    if (!/finiti i tentativi/.test(logTx(W.finestra("Paky"))))   /* (la chat chiusa ora mostra gli indizi: le righe si leggono aprendola) */ no("nella chat la riga non dice «finiti i tentativi»");
     nota(N, "«" + c1 + "» su 4 telefoni");
     await W.dorme(1700);
     if (cart(W.finestra("Paky"))) no("la scritta grande resta sopra il tabellone più di un secondo e mezzo («" + cart(W.finestra("Paky")) + "»)");
@@ -308,7 +308,7 @@
     W.reteDi("Giulia").invia({ t: "capo" });
     if (!await W.aspetta(function () { return vm(C).capo[0] === idDi(C, "Giulia"); }, 4000)) no("Giulia non diventa capo");
     // la saletta: «contro il Bot», mai «contro Matt»
-    var tP = await W.aspetta(function () { var t = T(P); return /Voi contro il Bot \(🤖 /.test(t) && /Tutti insieme contro il Bot/.test(t) && t; }, 4000);
+    var tP = await W.aspetta(function () { var t = T(P) + " " + ((P.document.querySelector(".sl-nota") || {}).textContent || ""); return /Voi contro il Bot \(🤖 /.test(t) && /Tutti insieme contro il Bot/.test(t) && t; }, 4000);
     if (!tP) no("la saletta non dice «Voi contro il Bot (🤖 …)» e «Tutti insieme contro il Bot» («" + T(P).slice(0, 300) + "»)");
     if (tP.indexOf("contro " + bot) >= 0) no("la saletta dice ancora «contro " + bot + "»");
     if (/Cosa intendevi\?\./.test(tP)) no("in saletta c'è «Cosa intendevi?.»");
@@ -422,7 +422,9 @@
   COPIONE.aggiungi("o2f3", { nome: "Parola d'ordine: la fine resta con chi ricarica e col vice, clessidra rossa, «?.», Copia tutte senza finestra del browser", fai: async function () {
     var N = [], amici = ["Giulia", "Luca", "Sara"];
     var X = await partita(amici, { Luca: 0, Giulia: 1, Sara: 1 }, ["Luca", "Giulia"]), C = X.C, P = X.P;
-    if (!/Cosa intendevi\?/.test(T(P)) || /Cosa intendevi\?\./.test(T(P))) no("in saletta «" + (T(P).match(/[^·]*Cosa intendevi[^·]*/) || [""])[0] + "»");
+    var wGn = W.finestra("Giulia"), tN = T(wGn) + " " + ((wGn.document.querySelector(".sl-nota") || {}).textContent || "");   // (la nota di un amico: quella dell host, pronti a partire, dice solo le parole vostre)   // (dal 7 nov la nota della saletta è nascosta quando si può partire)
+    // (dal 7 nov la saletta mostra solo la prima frase della nota: si controlla solo che non ci sia «?.»)
+    if (/Cosa intendevi\?\./.test(tN)) no("in saletta «" + (tN.match(/[^·]*Cosa intendevi[^·]*/) || [""])[0] + "»");
     await comincia(X);
     // la clessidra: le cifre rosse negli ultimi 10 secondi (lo stile vero del gioco, sul tavolo vero)
     var wG = W.finestra("Giulia"), I = wG.document.querySelector(".or-ind");

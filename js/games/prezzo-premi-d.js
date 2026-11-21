@@ -63,7 +63,7 @@
     svuota(box); box.className = "pz-tab" + (A.giocatori.length > 4 ? " fitto" : "");
     A.giocatori.forEach(function (g) {
       var ok = fatti.indexOf(g.id) >= 0;
-      box.appendChild(A.el("span", { class: "pz-och" + (ok ? " ok" : " aspetta") }, [ A.fac(g.id), A.el("span", { text: A.nome(g.id) }), A.el("span", { class: "v", text: ok ? "✅" : "…" }) ]));
+      box.appendChild(A.el("span", { class: "pz-och" + (ok ? " ok" : " aspetta") }, [ A.fac(g.id), A.el("span", { class: "nm", text: A.nome(g.id) }), A.el("span", { class: "v", text: ok ? "✅" : "…" }) ]));
     });
   }
   function aggChips(A, box, fatti) {
@@ -135,7 +135,12 @@
   PREMI.dadi = {
     nome: "Il Gioco dei Dadi", icona: "🎲", ordine: 8,
     regola: "Un dado per ogni cifra del prezzo: la cifra vera è più alta, uguale o più bassa?",
+    aiuto: "🎲 Cifra per cifra, contro il dado",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "Ogni cifra del prezzo ha il suo dado: per ognuna dì se la cifra vera è ⬆️ più alta, = uguale o ⬇️ più bassa del dado. La prima cifra vale 200 punti, le altre 60, +150 se le indovini tutte.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
+    // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
+    fai: "Sopra ogni cifra del prezzo c'è un dado. Per ogni cifra dì se quella vera è ⬆️ più alta, = uguale o ⬇️ più bassa.",
+    es: "Il primo dado è 3 e pensi che costi 2.500 € → la prima cifra (2) è ⬇️ più bassa.",
+    pt: "Prima cifra giusta 200 punti, le altre 60 l'una, +150 se le indovini tutte.",
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -177,7 +182,7 @@
     schermo: function (A) {
       stile();
       var el = A.el, pub = A.pub || {}, dd = pub.dadi || [], ch = el("div"), fila = rigaDadi(el, dd, false);
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🎲 Il Gioco dei Dadi" }));
+      A.sch.appendChild(A.testa("Il Gioco dei Dadi"));
       A.sch.appendChild(A.scheda(pub.prod || {}, { cls: "media grande" }));   // (25 ott: la scheda prende tutto lo spazio libero)
       fila.el.classList.add("pz-solo-giu");   // (mentre si gioca i dadi stanno nel pannello: sopra non si ripetono)
       A.sch.appendChild(fila.el);
@@ -243,7 +248,7 @@
       var el = A.el, riv = A.riv || {}, prod = riv.prod || {}, vero = String(riv.vero || ""), dd = riv.dadi || [], g = riv.g || [];
       var fila = rigaDadi(el, dd, true), righe = el("div", { class: "pzd-righe" + (g.length > 5 ? " fitto" : "") }), banner = el("div", { class: "pz-sotto pzd-bn", text: "Le cifre vere…" });
       A.sch.classList.add("pzb-fitto");
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🎲 Il Gioco dei Dadi" }));
+      A.sch.appendChild(A.testa("Il Gioco dei Dadi"));
       A.sch.appendChild(A.miniprod(prod));
       A.sch.appendChild(fila.el); A.sch.appendChild(righe); A.sch.appendChild(banner);
       var rr = g.map(function (x) {
@@ -329,7 +334,12 @@
   PREMI.mirino = {
     nome: "Il Mirino", icona: "🎯", ordine: 9,
     regola: "La finestrella sale sulla scala dei prezzi: fermala quando c'è dentro il prezzo giusto!",
+    aiuto: "🎯 Il prezzo dentro la finestrella",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "Una finestrella sale sulla scala dei prezzi: tocca «Stop!» quando il prezzo vero ci sta dentro. Dentro 600 punti, appena fuori 350, più lontano meno.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
+    // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
+    fai: "Una finestrella sale sulla scala dei prezzi: tocca «🎯 Stop!» quando il prezzo vero ci sta dentro. Si tocca una volta sola.",
+    es: "Scala da 100 a 1.100 € e pensi che costi 600 € → Stop quando la finestrella arriva a 600.",
+    pt: "Prezzo dentro: 600 punti. Appena fuori: 350, poi 200 e 75.",
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -376,7 +386,7 @@
     schermo: function (A) {
       stile();
       var el = A.el, pub = A.pub || {}, ch = el("div");
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🎯 Il Mirino" }));
+      A.sch.appendChild(A.testa("Il Mirino"));
       A.sch.appendChild(A.scheda(pub.prod || {}, { cls: "media grande" }));   // (25 ott: la scheda prende tutto lo spazio libero)
       A.sch.appendChild(el("div", { class: "pzd-tra pz-solo-giu" }, [ el("span", { text: "📏 Il prezzo è tra" }), el("b", { text: A.fmtE(pub.a || 0) + " e " + A.fmtE(pub.b || 0) }) ]));
       A.sch.appendChild(el("div", { class: "pz-sotto pzd-sotto pz-solo-giu", text: "🎯 La finestrella sale: fermala quando c'è dentro il prezzo!" }));
@@ -437,7 +447,7 @@
       var frec = el("div", { class: "pzd-frec" }, [ el("i", { class: "ln" }), tag ]);
       var banner = el("div", { class: "pz-sotto pzd-bn", text: "Le finestrelle di tutti…" });
       A.sch.classList.add("pzb-fitto");
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🎯 Il Mirino" }));
+      A.sch.appendChild(A.testa("Il Mirino"));
       A.sch.appendChild(A.miniprod(prod));
       A.sch.appendChild(el("div", { class: "pzd-rv" + (g.length > 5 ? " fitto" : "") }, [ etichette(A, a, b), el("div", { class: "pzd-rtrk" }, [ cols, frec ]) ]));
       A.sch.appendChild(el("div", { class: "pzd-rfw" + (g.length > 5 ? " fitto" : "") }, [ el("span"), facce ]));
@@ -474,7 +484,7 @@
         var vic = g.slice().sort(function (x, y) { return x.d - y.d; })[0], vicini = vic ? g.filter(function (x) { return Math.abs(x.d - vic.d) < 1e-9; }) : [];
         banner.className = "pz-banner pzd-bn";
         banner.textContent = !vic ? "😅 Nessuno l'ha preso!" : vicini.length > 1 ? "😅 Nessuno l'ha preso: i più vicini sono " + elenco(A, vicini.map(function (x) { return x.id; }))
-          : "😅 Nessuno l'ha preso: " + (eTu(A, vic.id) ? "il più vicino sei tu" : "il più vicino è " + A.nome(vic.id));
+          : "😅 Nessuno l'ha preso: " + (eTu(A, vic.id) ? "ci vai più vicino tu" : "ci va più vicino " + A.nome(vic.id));
         A.ST.pubblico(A.S, vic && vic.pt ? "applauso" : "ohh"); if (!(vic && vic.pt)) A.FX.trombone();
       }
       await A.dorme(TM.esito + TM.fine);

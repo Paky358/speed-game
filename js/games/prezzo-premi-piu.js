@@ -50,7 +50,12 @@
   PREMI.piuomeno = {
     nome: "Più o meno", icona: "🔼🔽", ordine: 1,
     regola: "Scrivi un prezzo: il telefono ti dice ⬆️ più su o ⬇️ più giù. Chi lo trova per primo vince!",
+    aiuto: "↕️ Più su o più giù?",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "Scrivi un prezzo: ti diciamo se quello vero è ⬆️ più su o ⬇️ più giù, e riprovi. Chi lo trova prima vince: 400 punti al primo, 300 al secondo, 250 al terzo, 200 agli altri che lo trovano.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
+    // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
+    fai: "Scrivi quanto costa: il telefono ti dice se il prezzo vero è ⬆️ più su o ⬇️ più giù, e riprovi. Basta andarci vicino.",
+    es: "Scrivi 50 € → «⬆️ più su». Scrivi 90 € → «⬇️ più giù». Scrivi 70 € → «🎯 Preso!»",
+    pt: "Il primo che lo trova 400 punti, il secondo 300, il terzo 250, gli altri 200.",
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -115,8 +120,8 @@
       var el = A.el, pub = A.pub || {};
       var lista = el("div", { class: "pz-righe" + (A.giocatori.length > 4 ? " due" : "") });
       var titolo = el("div", { class: "pz-sotto", text: "🏁 Chi l'ha trovato" });
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🔼🔽 Più o meno" }));
-      A.sch.appendChild(A.scheda(pub.prod || {}, { cls: "media grande" }));   // (25 ott: la scheda prende tutto lo spazio libero)
+      A.sch.appendChild(A.testa("Più o meno"));
+      var sk = A.scheda(pub.prod || {}, { cls: "media grande" }); A.sch.appendChild(sk);   // (25 ott: la scheda prende tutto lo spazio libero)
       A.sch.appendChild(titolo);
       A.sch.appendChild(lista);
       var visti = {};
@@ -124,7 +129,7 @@
         (p.arrivi || []).forEach(function (a, i) {
           if (visti[a.id]) return; visti[a.id] = 1;
           var r = el("div", { class: "pz-riga su giusto" }, [ el("span", { class: "nm", style: "flex:0 0 auto", text: (i + 1) + "°" }), A.fac(a.id), el("span", { class: "nm", text: A.nome(a.id) }), el("span", { class: "v", text: sec(a.ms) }) ]);
-          lista.appendChild(r); A.FX.din();
+          lista.appendChild(r); A.FX.din(); if (sk._adatta) setTimeout(sk._adatta, 30);   // (21 nov 2026: con le righe sotto la scheda si stringe, «corta»)
         });
         titolo.textContent = (p.arrivi || []).length ? "🏁 Chi l'ha trovato" : "🏁 Nessuno l'ha ancora trovato…";
       }
@@ -162,7 +167,7 @@
       var el = A.el, riv = A.riv || {}, prod = riv.prod || {};
       var conta = A.contachilometri(prod.prezzo || 0, { grande: true });
       var righe = el("div", { class: "pz-righe" + (((riv.arrivi || []).length + (riv.altri || []).length) > 4 ? " due" : "") }), banner = el("div", { class: "pz-sotto" });
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🔼🔽 Più o meno" }));
+      A.sch.appendChild(A.testa("Più o meno"));
       A.sch.appendChild(A.miniprod(prod));
       A.sch.appendChild(conta.el); A.sch.appendChild(righe); A.sch.appendChild(banner);
       A.ST.FX.rullo(1.1); await A.dorme(1300); if (!A.vivo()) return;

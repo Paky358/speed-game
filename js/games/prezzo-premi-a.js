@@ -49,7 +49,7 @@
     box.className = "pz-tab" + (A.giocatori.length > 4 ? " fitto" : "");
     A.giocatori.forEach(function (g) {
       var t = testo(g.id);
-      box.appendChild(A.el("span", { class: "pz-och" + (t.ok ? " ok" : " aspetta") }, [ A.fac(g.id), A.el("span", { text: A.nome(g.id) }), A.el("span", { class: "v", text: t.tx }) ]));
+      box.appendChild(A.el("span", { class: "pz-och" + (t.ok ? " ok" : " aspetta") }, [ A.fac(g.id), A.el("span", { class: "nm", text: A.nome(g.id) }), A.el("span", { class: "v", text: t.tx }) ]));
     });
   }
   function aggChips(A, box, testo) {
@@ -121,7 +121,12 @@
   PREMI.alpinista = {
     nome: "L'Alpinista", icona: "🧗", ordine: 2,
     regola: "Scrivi 3 prezzi: più sbagli, più sali. Oltre la vetta cadi dal burrone!",
+    aiuto: "✍️ Ogni errore lo fa salire",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "Scrivi il prezzo di 3 prodotti, uno dopo l'altro. Ogni errore fa salire l'alpinista: se supera la vetta cade e fai 0. Più resta in basso, più punti: fino a 550, +200 se li indovini tutti e tre.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
+    // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
+    fai: "Scrivi il prezzo di 3 prodotti, uno dopo l'altro. Più sbagli, più l'alpinista sale la montagna: se va oltre la vetta, cade giù.",
+    es: "Costa 10 € e scrivi 12 € → hai sbagliato di poco: l'alpinista sale di qualche passo.",
+    pt: "Più resta in basso, più punti: fino a 550. Tutti e tre quasi giusti: +200. Se cade: 0.",
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -177,20 +182,20 @@
     // il maxischermo mentre si gioca: il prodotto che stai prezzando (chi guarda: tutti e 3) e chi è a che punto
     schermo: function (A) {
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [];
-      var testa = el("div", { class: "pz-testa", text: "🧗 L'Alpinista" });
+      var testa = A.testa("L'Alpinista");
       var cur = el("div", { class: "pza-cur" }), tre = el("div", { class: "pza-tre" }), ch = el("div", { "data-sacr": "2" });
       A.sch.appendChild(testa); A.sch.appendChild(cur); A.sch.appendChild(tre); A.sch.appendChild(ch);
       var dots = prod.map(function (p, i) { var d = el("span", { class: "pza-dot" }, [ el("b", { text: String(i + 1) }), Z().figura(el, p, "") ]); tre.appendChild(d); return d; });
       function stato(id) { var n = ((A.pub || {}).n || {})[id] || 0; return { tx: n >= prod.length ? "✅" : n + "/" + prod.length, ok: n >= prod.length }; }
       chips(A, ch, pub, stato);
       function tutti() {
-        svuota(cur); testa.textContent = "🧗 L'Alpinista";
+        svuota(cur); testa.dici("L'Alpinista");
         var g = A.tessere(prod, { num: true, fermo: true });
         cur.appendChild(g); cur.classList.add("pieno"); tre.hidden = true; g.adatta();
       }
       function mostra(i, mie) {
         i = Math.max(0, Math.min(prod.length - 1, i));
-        testa.textContent = "🧗 L'Alpinista · " + (i + 1) + " di " + prod.length;
+        testa.dici("L'Alpinista · " + (i + 1) + " di " + prod.length);
         svuota(cur); cur.classList.add("pieno"); var s = A.scheda(prod[i], { cls: "media grande" }); s.classList.add("pza-entra"); cur.appendChild(s);
         tre.hidden = false;
         dots.forEach(function (d, j) { d.classList.toggle("ok", !!(mie && mie[j] != null)); d.classList.toggle("ora", j === i); });
@@ -236,7 +241,7 @@
     },
     rivela: async function (A) {
       var el = A.el, riv = A.riv || {}, prod = riv.prod || [], g = riv.g || [];
-      var testa = el("div", { class: "pz-testa", text: "🧗 L'Alpinista" });
+      var testa = A.testa("L'Alpinista");
       var alto = el("div", { class: "pza-alto" }), monte = el("div", { class: "pza-monte" }), banner = el("div", { class: "pz-sotto pza-bn", text: "Tutti ai piedi della montagna…" });
       monte.innerHTML = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' +
         '<defs><linearGradient id="pzaRoccia" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a1887f"/><stop offset="1" stop-color="#4e342e"/></linearGradient></defs>' +
@@ -285,13 +290,14 @@
         var c = el("span", { class: "pza-alp" }, [ A.fac(x.id) ]);
         c.style.width = c.style.height = FAC + "px"; c.style.zIndex = String(10 + j);
         c.style.setProperty("--col", COLORI[j % COLORI.length]);
-        var off = (j - (n - 1) / 2) * Math.min(7, 40 / Math.max(1, n));
+        var off = (j - (n - 1) / 2) * Math.min(FAC * 0.8, 120 / Math.max(1, n));   // (21 nov 2026: a ventaglio, prima in 6 erano un mucchio solo)
         av[x.id] = { el: c, ox: nx * off, oy: ny * off }; pos[x.id] = 0;
         monte.appendChild(c); metti(x.id, 0);
       });
       function metti(id, s) {
         var a = av[id], u = Math.min(s, ALP.vetta) / ALP.vetta;
         var x = B.x + dx * u + a.ox - FAC / 2, y = B.y + dy * u + a.oy - FAC;
+        x = Math.max(2, Math.min(W - FAC - 2, x)); y = Math.max(0, Math.min(H - FAC, y));   // (21 nov 2026: mai fuori dalla montagna: in 6 il primo era tagliato a sinistra)
         a.el.style.transform = "translate(" + Math.round(x) + "px," + Math.round(y) + "px)";
       }
       function cade(id) {
@@ -310,7 +316,7 @@
       }
       await A.dorme(840); if (!A.vivo()) return;
       for (var i = 0; i < prod.length; i++) {
-        testa.textContent = "🧗 L'Alpinista · " + (i + 1) + " di " + prod.length;
+        testa.dici("L'Alpinista · " + (i + 1) + " di " + prod.length);
         var conta = i ? prodotto(i) : conta0;
         g.forEach(function (x) { var o = voci[x.id]; o.v.textContent = giu[x.id] ? "💥" : "…"; o.ps.textContent = ""; o.c.className = "pz-och aspetta"; });
         banner.textContent = "Quanto costa?";
@@ -342,7 +348,7 @@
         if (cadeQui) {
           var caduti = g.filter(function (x) { return giu[x.id] && add[x.id] && !detti[x.id]; });
           caduti.forEach(function (x) { detti[x.id] = 1; });
-          banner.textContent = caduti.length === 1 ? "💥 " + frase(A, caduti[0].id, "Sei caduto dal burrone!", "è caduto dal burrone!") : "💥 Giù dal burrone: " + caduti.map(function (x) { return A.nome(x.id); }).join(", ") + "!";
+          banner.textContent = caduti.length === 1 ? "💥 " + frase(A, caduti[0].id, "Giù dal burrone!", "vola giù dal burrone!") : "💥 Giù dal burrone: " + caduti.map(function (x) { return A.nome(x.id); }).join(", ") + "!";
           banner.classList.remove("pza-scuoti"); void banner.offsetWidth; banner.classList.add("pza-scuoti");
           await A.dorme(1500); if (!A.vivo()) return;
         }
@@ -353,7 +359,7 @@
         if (giu[x.id]) return;
         var a = av[x.id]; svuota(a.el); a.el.appendChild(A.fac(x.id, x.tot === 0 ? "evviva" : "esulta"));
       });
-      testa.textContent = "🧗 L'Alpinista";
+      testa.dici("L'Alpinista");
       var ord = g.slice().sort(function (a, b) { return (a.giu - b.giu) || (a.tot - b.tot) || (a.ms - b.ms); });
       var vetta = ord.filter(function (x) { return !x.giu && x.tot === 0; }), primo = ord[0];
       banner.classList.remove("pza-scuoti");
@@ -405,7 +411,12 @@
   PREMI.ordine = {
     nome: "Mettili in ordine", icona: "📊", ordine: 3,
     regola: "Tocca due prodotti per scambiarli: dal meno caro in alto al più caro in basso.",
+    aiuto: "⬆️ Dal meno caro al più caro",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "Metti 5 prodotti in fila, dal meno caro in alto al più caro in basso: tocca due prodotti per scambiarli di posto. 70 punti per ogni prodotto al posto giusto, +100 se sono tutti giusti.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
+    // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
+    fai: "5 prodotti in colonna. Tocca un prodotto e poi un altro per scambiarli: in alto il meno caro, in fondo il più caro.",
+    es: "In alto il caffè (3 €), poi le cuffie (80 €), in fondo la bici (400 €).",
+    pt: "70 punti per ogni prodotto al posto giusto, +100 se sono tutti giusti.",
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -470,7 +481,7 @@
     // sopra e sotto le cose… così abbiamo tutto più largo»). Li vede chi guarda e chi ha finito.
     schermo: function (A) {
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [];
-      var testa = el("div", { class: "pz-testa", text: "📊 Mettili in ordine" }), ch = el("div", { "data-sacr": "2" });
+      var testa = A.testa("Mettili in ordine"), ch = el("div", { "data-sacr": "2" });
       var g = A.tessere(prod, { num: true, fermo: true, cls: "pza-lista" });
       A.sch.appendChild(testa); A.sch.appendChild(g); A.sch.appendChild(el("div", { class: "pz-sotto pza-aiuto", text: "1 = il meno caro · " + prod.length + " = il più caro", "data-sacr": "1" })); A.sch.appendChild(ch);
       function stato(id) { var f = ((A.pub || {}).fatti || []).indexOf(id) >= 0; return { tx: f ? "✅" : "…", ok: f }; }
@@ -540,7 +551,7 @@
     },
     rivela: async function (A) {
       var el = A.el, riv = A.riv || {}, prod = riv.prod || [], giusto = riv.giusto || [], g = riv.g || [];
-      var testa = el("div", { class: "pz-testa", text: "📊 Mettili in ordine" });
+      var testa = A.testa("Mettili in ordine");
       var fila = A.tessere(giusto.map(function (j) { return prod[j] || {}; }), { num: true, extra: function (p, pos, t) { t._tag = A.Z.cartellino(el, A.fmtE(p.prezzo || 0)); return t._tag; } });
       var golf = el("div", { class: "pza-golf" }), banner = el("div", { class: "pz-sotto pza-bn", text: "Dal meno caro al più caro…" });
       A.sch.appendChild(testa); A.sch.appendChild(fila); A.sch.appendChild(golf); A.sch.appendChild(banner);
@@ -590,10 +601,10 @@
       var best = g.slice().sort(function (a, b) { return b.n - a.n || a.ms - b.ms; })[0];
       if (buche.length) {
         banner.className = "pz-banner oro pza-bn";
-        banner.textContent = buche.length === 1 ? "⛳ Buca in uno! " + (eTu(A, buche[0].id) ? "Bravissimo!" : A.nome(buche[0].id) + "!") : "⛳ Buca in uno per " + buche.length + "!";
+        banner.textContent = buche.length === 1 ? "⛳ Buca in uno! " + (eTu(A, buche[0].id) ? "Che colpo!" : A.nome(buche[0].id) + "!") : "⛳ Buca in uno per " + buche.length + "!";
       } else if (best && best.n >= 3) {
         banner.className = "pz-banner pza-bn";
-        banner.textContent = "🏌️ " + frase(A, best.id, "Ci sei andato più vicino: " + best.n + " su 5!", "ci va più vicino: " + best.n + " su 5!");
+        banner.textContent = "🏌️ " + frase(A, best.id, "Ci vai più vicino tu: " + best.n + " su 5!", "ci va più vicino: " + best.n + " su 5!");
         A.ST.pubblico(A.S, "applauso");
       } else {
         banner.className = "pz-banner no pza-bn";
@@ -641,7 +652,7 @@
       ".pz-pan:has(.pza-ord) .pz-premio-pan{flex:1 1 0;min-height:0;display:flex;flex-direction:column}.pz-pan .pza-ord{flex:1 1 0;min-height:0}.pz-pan .pza-ord .pza-or{flex:1 1 auto}",
       ".pza-or{position:relative;display:flex;align-items:center;gap:8px;min-height:clamp(40px,calc(var(--alt,640px) * .062),52px);padding:4px 10px 4px 4px;box-sizing:border-box;border:0;border-radius:12px;font:inherit;text-align:left;color:#1d1b3a;background:linear-gradient(#fff,#eceef8);box-shadow:inset 0 -3px 0 rgba(14,18,44,.25);cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .28s cubic-bezier(.3,1.3,.5,1),box-shadow .15s;will-change:transform}",
       ".pza-or .nb{flex:0 0 46px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;color:#b0184f}.pza-or .nb b{font-size:17px}.pza-or .nb small{font-size:8.5px;font-weight:900;text-transform:uppercase;letter-spacing:.02em;margin-top:2px}",
-      ".pza-or .e{flex:0 0 auto;font-size:clamp(31px,calc(var(--alt,640px) * .085),72px);line-height:1}",   // (sui telefoni alti le righe crescono)
+      ".pza-or .e{flex:0 0 auto;font-size:clamp(28px,calc(var(--alt,640px) * .075),68px);line-height:1}",   // (sui telefoni alti le righe crescono; 20 nov 2026: un po' più piccole, a 640 la quinta riga finiva sotto «Fatto!»)
       ".pza-or .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;overflow-wrap:break-word}.pza-or .n{font-weight:800;font-size:clamp(14px,calc(var(--alt,640px) * .022),19px);line-height:1.15}",
       ".pza-or .ds{font-size:clamp(12px,calc(var(--alt,640px) * .0175),15.5px);font-weight:600;color:#4c4a66;line-height:1.2}.pza-or.sel .ds{color:#5c3c00}",
       ".pza-or.sel{background:linear-gradient(#ffe6ee,#ffc4d6);box-shadow:0 0 0 3px #ff4f86,0 4px 14px rgba(224,34,90,.5);z-index:2}",

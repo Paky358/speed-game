@@ -1542,7 +1542,7 @@
         // la carta di partenza dell'altro non c'è nella mia linea
         Object.keys(partenza).forEach(function (n) { if (n !== chi && vista.split(" | ").indexOf(partenza[n]) >= 0) no(chi + " vede nella sua linea la carta di partenza di " + n); });
         if (Object.keys(partenza).length === 2 && partenza.Paky === partenza.Giulia) no("la carta di partenza è la stessa per tutti e due");
-        if (!/Nella tua linea: \d+ su 5|Spareggio/.test(stato())) no("sotto «Tocca a te» non c'è «Nella tua linea: … su 5» («" + stato() + "»)");
+        if (!/Messe bene: \d+ su 5|Spareggio/.test(stato())) no("sotto «Tocca a te» non c'è «Messe bene: … su 5» («" + stato() + "»)");
         var anni = [].map.call(P.document.querySelectorAll(".st-sch-in .tl-asse > .tl-ev .anno"), function (a) { var t2 = a.textContent; return /a\.C\./.test(t2) ? -parseInt(t2, 10) : parseInt(t2, 10); });
         var l2 = anni.map(function (a) { return { anno: a }; }), ok = gapOk(l2, Y), ko = gapKo(l2, Y);
         // Paky sempre giusta; Giulia sbaglia la seconda e la quarta carta

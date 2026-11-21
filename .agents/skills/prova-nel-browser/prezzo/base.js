@@ -24,6 +24,13 @@
   "use strict";
   var W = window, A = COPIONE.aiuti, T = A.T, no = A.no;
   function vm(C) { return W.vmDi(C) || {}; }
+  // (dal 4 nov 2026 i giochi si scaricano quando servono: le prove che guardano le regole senza aprire il gioco lo fanno arrivare prima)
+  W.pzPronto = async function (w) {
+    if (w.SGCuore && w.SGCuore.precarica) w.SGCuore.precarica("prezzo");
+    var ok = await W.aspetta(function () { var P = w.SG_PREZZO_PREMI; return w.__prezzo && w.SGPrezzoScena && w.SG_PREZZO && P && P.piuomeno && P.alpinista && P.ordine && P.troppo && P.plinko && P.spesa && P.cassaforte && P.dadi && P.mirino && P.prova5 && P.togli; }, 20000);
+    if (!ok) no("il gioco non arriva (window.__prezzo, SGPrezzoScena o i giochi a premi)");
+    return w;
+  };
 
   // ---- la spia: le regole della prova (w.__imp) entrano nelle impostazioni del gioco ----
   if (!W.__prepPrezzo) {
@@ -168,7 +175,7 @@
 
   // ===================== pz1: le regole =====================
   COPIONE.aggiungi("pz1", { nome: "Prezzo: le regole senza grafica e i prodotti", fai: async function () {
-    var w = await W.apriTel("Paky", { x: 0 }), P = w.__prezzo, Z = w.SGPrezzoScena, note = [];
+    var w = await W.pzPronto(await W.apriTel("Paky", { x: 0 })), P = w.__prezzo, Z = w.SGPrezzoScena, note = [];
     if (!P || !Z) no("non vedo le regole (window.__prezzo) o la scena (SGPrezzoScena)");
     // i prezzi all'italiana
     [[1129, "1.129 €"], [6.99, "6,99 €"], [0.3, "0,30 €"], [15950, "15.950 €"], [2, "2 €"], [1.25, "1,25 €"], [240000, "240.000 €"]].forEach(function (x) { if (Z.fmtE(x[0]) !== x[1]) no("fmtE(" + x[0] + ") = " + Z.fmtE(x[0]) + " invece di " + x[1]); });
@@ -380,7 +387,7 @@
       // Sara arriva a partita cominciata: guarda, col suo id nella foto, ed entra al prossimo oggetto
       var Sw = await W.apriTel("Sara", { hash: "gioco=prezzo&stanza=" + C, x: 370 });
       if (!await W.aspetta(function () { return (vm(C).arrivi || []).some(function (a) { return a.nome === "Sara"; }); }, 10000)) no("Sara arrivata tardi non è tra chi arriva (" + JSON.stringify(vm(C).arrivi) + ")");
-      if (!await W.aspetta(function () { return /Entri al prossimo oggetto/.test(T(Sw)); }, 30000)) no("Sara non legge «Entri al prossimo oggetto» (" + T(Sw).slice(-160) + ")");
+      if (!await W.aspetta(function () { return /Ci sei! Entri (al prossimo oggetto|alla prossima Offerta|alla Ruota del 100|alla Vetrina finale)/.test(T(Sw)); }, 30000)) no("Sara non legge dove entra («Entri al prossimo oggetto», «alla prossima Offerta»…) (" + T(Sw).slice(-160) + ")");
       await giocaTutti(["Paky", "Luca"], function () { return (vm(C).players || []).some(function (p) { return p.nome === "Sara"; }); }, { ms: 90000 });
       if (!(vm(C).players || []).some(function (p) { return p.nome === "Sara"; })) no("Sara non entra al prossimo oggetto");
       if (!await W.aspetta(function () { return Sw.document.querySelectorAll(".st-leggio, .stp-chip").length === 3; }, 8000)) no("sul telefono di Sara i leggii non sono 3");
@@ -412,11 +419,15 @@
     else if (pan && pan.offsetHeight > h * 0.66) guai.push("pannello alto " + pan.offsetHeight + " su " + h);
     var sch = d.querySelector(".st-sch-in .pz-sch");
     if (sch && !d.querySelector(".st-mondo.st-quieto, .st-piatto")) return guai;   // (la telecamera non è sul maxischermo)
+    // (21 nov 2026: i pannelli che salgono fin sotto il titolo coprono apposta il maxischermo: sotto non si misura niente; le prove erano rimaste a prima del 25 ott)
+    if (pan && pan.querySelector(".pz-giochi-pan,.pzc-spesa,.pza-ord,.pze-lista")) return guai;
     if (sch) [].forEach.call(sch.querySelectorAll(".pz-scheda,.pz-riga,.pz-cl,.pz-car,.pz-te,.pz-och,.pz-rg,.pz-rcard,.pz-rpag,.pz-conta,.pz-banner,.pz-gioco,.pz-intro,.pz-testa"), function (e) {
       var r = e.getBoundingClientRect(); if (!r.height) return;
       if (r.bottom > basso + 2) guai.push((e.className.split(" ")[0]) + " sotto il pannello (" + Math.round(r.bottom) + ">" + Math.round(basso) + ")");
       if (r.left < -1 || r.right > w.innerWidth + 1) guai.push((e.className.split(" ")[0]) + " esce di lato");
     });
+    // (21 nov 2026: niente tagliato in fondo al maxischermo, come la riga «Si gioca tutti insieme!» sotto le regole sul telefono basso)
+    if (sch) { var sb = sch.getBoundingClientRect().bottom; [].forEach.call(sch.children, function (e) { var r = e.getBoundingClientRect(); if (!r.height || w.getComputedStyle(e).visibility === "hidden" || w.getComputedStyle(e).display === "none") return; if (r.bottom > sb + 2) guai.push((String(e.className).split(" ")[0] || e.tagName) + " tagliato in fondo (" + Math.round(r.bottom) + ">" + Math.round(sb) + ")"); }); }
     // (24 ott: la descrizione sempre intera nei riquadri dei prodotti)
     if (sch) [].forEach.call(sch.querySelectorAll(".pz-te"), function (t) { if (t.clientHeight && (t.scrollHeight > t.clientHeight + 1 || t.scrollWidth > t.clientWidth + 1)) guai.push("riquadro tagliato: " + ((t.querySelector(".tx b") || {}).textContent || "?")); });
     if (sch && sch.querySelector(".pz-tes.scorre")) guai.push("riquadri troppo stretti: lo spazio scorre");
@@ -465,7 +476,7 @@
   // (qui se ne registra un secondo finto, copia di «Più o meno», e si tolgono tutti gli altri giochi a premi arrivati dopo,
   //  così i due che escono sono per forza «Più o meno» e il finto)
   COPIONE.aggiungi("pz10", { nome: "Prezzo: 🤖 Contro il Bot, con due giochi a premi chi vince l'Offerta sceglie", fai: async function () {
-    var w = await W.apriTel("Paky", { x: 0, spiaPrezzo: true, prima: function (w2) { w2.__imp = { formato: "tv", durata: "puntata", offerte: "vista", liv: "facile", nBot: 1 }; } });
+    var w = await W.pzPronto(await W.apriTel("Paky", { x: 0, spiaPrezzo: true, prima: function (w2) { w2.__imp = { formato: "tv", durata: "puntata", offerte: "vista", liv: "facile", nBot: 1 }; } }));   // (i giochi si scaricano quando servono)
     if (!await W.aspetta(function () { return w.SG_PREZZO_PREMI && w.SG_PREZZO_PREMI.piuomeno; }, 5000)) no("«Più o meno» non è registrato");
     w.SG_PREZZO_PREMI.finto = Object.assign({}, w.SG_PREZZO_PREMI.piuomeno, { nome: "Il Finto", icona: "🧪", regola: "Una copia di Più o meno, per la prova" });
     Object.keys(w.SG_PREZZO_PREMI).forEach(function (k) { if (k !== "piuomeno" && k !== "finto") delete w.SG_PREZZO_PREMI[k]; });

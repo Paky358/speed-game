@@ -63,7 +63,7 @@
     svuota(box); box.className = "pz-tab" + (A.giocatori.length > 4 ? " fitto" : "");
     A.giocatori.forEach(function (g) {
       var ok = fatti.indexOf(g.id) >= 0;
-      box.appendChild(A.el("span", { class: "pz-och" + (ok ? " ok" : " aspetta") }, [ A.fac(g.id), A.el("span", { text: A.nome(g.id) }), A.el("span", { class: "v", text: ok ? "✅" : "…" }) ]));
+      box.appendChild(A.el("span", { class: "pz-och" + (ok ? " ok" : " aspetta") }, [ A.fac(g.id), A.el("span", { class: "nm", text: A.nome(g.id) }), A.el("span", { class: "v", text: ok ? "✅" : "…" }) ]));
     });
   }
   function aggChips(A, box, fatti) {
@@ -125,7 +125,12 @@
   PREMI.prova5 = {
     nome: "La Prova del 5", icona: "✅", ordine: 10,
     regola: "Cinque cartellini: per ognuno, il prezzo è giusto o sbagliato? Quanti sono giusti non si sa!",
-    spiega: "Cinque prodotti col cartellino: per ognuno dì se il prezzo è ✓ giusto o ✗ sbagliato (quanti sono giusti non si sa). 3 indovinati 200 punti, 4 indovinati 400, tutti e 5 700.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
+    aiuto: "🔍 Quanti sono giusti? Non si sa",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
+    spiega: "Cinque prodotti col cartellino: per ognuno dì se il prezzo è ✓ giusto o ✗ sbagliato (quanti sono giusti non si sa). 3 giusti: 200 punti · 4 giusti: 400 · tutti e 5 giusti: 700.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
+    // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
+    fai: "5 prodotti, ognuno col suo cartellino. Per ognuno tocca ✓ se il prezzo è giusto o ✗ se è sbagliato. Quanti sono giusti non si sa.",
+    es: "Latte a 1,79 € → ✓ giusto. Bicicletta a 99 € → ✗ sbagliato (costa di più).",
+    pt: "3 risposte giuste: 200 punti · 4: 400 · tutte e 5: 700.",
     min: 1, max: 8, locale: true,
     _P5: P5, _falso: cartellinoFalso,   // (per la simulazione e le prove)
 
@@ -173,7 +178,7 @@
       stile();
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [], tag = pub.tag || [];
       var fila = A.tessere(prod, { tcls: "pze-c5", cls: "pze-tes", extra: function (p, i) { return cartello(A, tag[i]); } }), ch = el("div", { "data-sacr": "2" });
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "✅ La Prova del 5" }));
+      A.sch.appendChild(A.testa("La Prova del 5"));
       A.sch.appendChild(fila);
       A.sch.appendChild(el("div", { class: "pz-sotto", text: "Il cartellino è giusto o sbagliato? Quanti sono giusti non si sa!", "data-sacr": "1" }));
       A.sch.appendChild(ch);
@@ -236,7 +241,7 @@
       var fila = A.tessere(prod, { tcls: "pze-c5", extra: function (p, i) { return [ cartello(A, tag[i]), el("span", { class: "pze-es", text: ok[i] ? "✓ giusto" : "era " + A.fmtE(p.prezzo || 0) }) ]; } }), gente = el("div", { class: "pze-gente" + (g.length > 5 ? " fitto" : "") });
       var banner = el("div", { class: "pz-sotto pze-bn", text: "Giriamo i cartellini…" });
       A.sch.classList.add("pze-fitto");
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "✅ La Prova del 5" }));
+      A.sch.appendChild(A.testa("La Prova del 5"));
       A.sch.appendChild(fila); A.sch.appendChild(gente); A.sch.appendChild(banner);
       var carte = fila.tessere;
       var righe = g.map(function (x) {
@@ -266,7 +271,7 @@
         banner.textContent = tutte.length === 1 ? (eTu(A, tutte[0].id) ? "🏆 Tutti e 5 giusti!" : "🏆 Tutti e 5 per " + A.nome(tutte[0].id) + "!") : "🏆 Tutti e 5 per " + elenco(A, tutte.map(function (x) { return x.id; })) + "!";
       } else if (meglio && meglio.n >= 3) {
         banner.className = "pz-banner pze-bn";
-        banner.textContent = "👏 " + (pari.length > 1 ? "I migliori: " + elenco(A, pari) : eTu(A, meglio.id) ? "Il migliore sei tu" : "Il migliore è " + A.nome(meglio.id)) + ": " + meglio.n + " su " + n;
+        banner.textContent = "👏 " + (pari.length > 1 ? "Fanno meglio di tutti " + elenco(A, pari) : eTu(A, meglio.id) ? "Fai meglio di tutti tu" : "Fa meglio di tutti " + A.nome(meglio.id)) + ": " + meglio.n + " su " + n;
         A.ST.pubblico(A.S, "applauso");
       } else {
         banner.className = "pz-banner no pze-bn"; banner.textContent = "😱 Cartellini difficili!";
@@ -320,7 +325,12 @@
   PREMI.togli = {
     nome: "Togli la cifra", icona: "🧹", ordine: 11,
     regola: "In ogni prezzo c'è una cifra di troppo (mai la prima né l'ultima): toccala e toglila!",
+    aiuto: "👀 In ogni prezzo, una cifra in più",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "In ogni prezzo c'è una cifra in più (mai la prima né l'ultima): toccala per toglierla. 120 punti per ogni prezzo giusto, +300 se li fai giusti tutti e tre.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
+    // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
+    fai: "In ogni prezzo c'è una cifra di troppo, mai la prima né l'ultima. Toccala per toglierla: vedi subito il prezzo che viene.",
+    es: "Vedi 2 7 4 9 € e pensi che costi 249 € → togli il 7.",
+    pt: "120 punti per ogni prezzo giusto, +300 se li fai giusti tutti e tre.",
     min: 1, max: 8, locale: true,
     _TG: TG, _strizza: strizza, _togliA: togliA, _verosimile: verosimile,   // (per la simulazione e le prove)
 
@@ -375,7 +385,7 @@
       stile();
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [], S = pub.S || [];
       var fila = A.tessere(prod, { tcls: "pze-c3", cls: "pze-tes", extra: function (p, k) { return numero(A, S[k] || ""); } }), ch = el("div", { "data-sacr": "2" });
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🧹 Togli la cifra" }));
+      A.sch.appendChild(A.testa("Togli la cifra"));
       A.sch.appendChild(fila);
       A.sch.appendChild(el("div", { class: "pz-sotto", text: "In ogni prezzo c'è una cifra di troppo: quale?", "data-sacr": "1" }));
       A.sch.appendChild(ch);
@@ -446,7 +456,7 @@
       } }), gente = el("div", { class: "pze-gente" + (g.length > 5 ? " fitto" : "") });
       var banner = el("div", { class: "pz-sotto pze-bn", text: "Via le cifre di troppo…" });
       A.sch.classList.add("pze-fitto");
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🧹 Togli la cifra" }));
+      A.sch.appendChild(A.testa("Togli la cifra"));
       A.sch.appendChild(fila); A.sch.appendChild(gente); A.sch.appendChild(banner);
       // il numero con la cifra in più e, sotto (nello stesso posto, ancora nascosto), il cartellino col prezzo vero
       var carte = fila.tessere.map(function (t, k) { return { c: t, num: sovs[k].num, sov: sovs[k].sov }; });
@@ -480,7 +490,7 @@
         banner.textContent = tutti.length === 1 ? (eTu(A, tutti[0].id) ? "🏆 Tutti e tre giusti!" : "🏆 Tutti e tre per " + A.nome(tutti[0].id) + "!") : "🏆 Tutti e tre per " + elenco(A, tutti.map(function (x) { return x.id; })) + "!";
       } else if (meglio && meglio.n) {
         banner.className = "pz-banner pze-bn";
-        banner.textContent = "👏 " + (pari.length > 1 ? "I migliori: " + elenco(A, pari) : eTu(A, meglio.id) ? "Il migliore sei tu" : "Il migliore è " + A.nome(meglio.id)) + ": " + meglio.n + " su " + n;
+        banner.textContent = "👏 " + (pari.length > 1 ? "Fanno meglio di tutti " + elenco(A, pari) : eTu(A, meglio.id) ? "Fai meglio di tutti tu" : "Fa meglio di tutti " + A.nome(meglio.id)) + ": " + meglio.n + " su " + n;
         A.ST.pubblico(A.S, "applauso");
       } else {
         banner.className = "pz-banner no pze-bn"; banner.textContent = "😱 Nessun prezzo giusto!";

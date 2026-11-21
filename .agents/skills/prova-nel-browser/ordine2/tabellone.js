@@ -582,11 +582,11 @@
         var cont = d.querySelector(".saletta-schermo > .contenuto"); if (!cont) no(cosa + ": niente saletta");
         cont.scrollTop = 0; await W.dorme(100);
         var cr = cont.getBoundingClientRect(), out = [];
-        [].forEach.call(d.querySelectorAll(".or-sq, .or-sq-tasti button, .or-squadre > button"), function (e) {
+        [].forEach.call(d.querySelectorAll(".or-sq, .or-campo, .or-campo-b, .or-sq-tasti button, .or-squadre > button"), function (e) {
           var r = e.getBoundingClientRect(); if (r.top < cr.top - 1 || r.bottom > cr.bottom + 1) out.push("«" + e.textContent.trim().slice(0, 30) + "» (" + Math.round(r.top) + "-" + Math.round(r.bottom) + ", visibile " + Math.round(cr.top) + "-" + Math.round(cr.bottom) + ")");
         });
         if (out.length) no(cosa + ": a 360x640 non si vede senza scorrere " + out.join(", "));
-        return d.querySelectorAll(".or-sq").length;
+        return d.querySelectorAll(".or-sq, .or-campo").length;
       } finally { rimetti(); }
     }
     // 1. in 6 a 2 squadre

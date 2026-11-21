@@ -180,15 +180,38 @@
     box.appendChild(figura(el, prod, "pz-foto", 500, "pz-emo"));
     box.appendChild(el("div", { class: "pz-nome", text: prod.nome || "" }));
     if (prod.desc && !opz.senzaDesc) box.appendChild(el("div", { class: "pz-desc", text: prod.desc }));
-    if (prod.dove) box.appendChild(el("div", { class: "pz-dove", text: "📍 " + prod.dove }));
+    if (doveDi(prod)) box.appendChild(el("div", { class: "pz-dove", text: "📍 " + doveDi(prod) }));
     if (opz.conPrezzo && prod.prezzo != null) box.appendChild(cartellino(el, fmtE(prod.prezzo)));
     if (opz.cur && prod.cur) box.appendChild(el("div", { class: "pz-cur", text: "💡 " + prod.cur }));
+    // (21 nov 2026) la scheda grande in poco spazio (pannello alzato sul telefono basso, con «Chi l'ha trovato» sotto): via la categoria
+    // e foto più bassa (classe «corta»), così niente sale sul titolo né scende sotto le righe; la descrizione resta sempre
+    if ((" " + (opz.cls || "") + " ").indexOf(" grande ") >= 0 && window.ResizeObserver) {
+      var pend = false, oss = null, corta = function () { pend = false; if (!box.isConnected) { if (oss && !document.body.contains(box)) { oss.disconnect(); } return; } box.classList.remove("corta", "nofoto"); if (box.scrollHeight > box.clientHeight + 1) box.classList.add("corta"); if (box.scrollHeight > box.clientHeight + 1) box.classList.add("nofoto"); };
+      try { oss = new ResizeObserver(function () { if (pend) return; pend = true; setTimeout(corta, 16); }); oss.observe(box); } catch (e) {}   // (setTimeout: requestAnimationFrame a volte non arriva)
+      box._adatta = corta; setTimeout(corta, 60); setTimeout(corta, 700);   // (anche senza avvisi di misura: chi aggiunge righe sotto chiama box._adatta)
+    }
     return box;
   }
+  // il «dove» solo se la descrizione non lo dice già (20 nov 2026: «…un trullo di Alberobello · ad Alberobello»)
+  function doveDi(p) {
+    var d = String((p && p.dove) || "").trim(); if (!d) return "";
+    var parole = d.replace(/^(a|ad|al|allo|alla|ai|agli|alle|in|nel|nello|nella|nei|negli|nelle|da|dal|dallo|dalla|dai|su|sul|sulla|sui|di|del|della|dei)\s+/i, "").toLowerCase();
+    if (parole.length < 3) return d;
+    // (21 nov 2026: anche se il luogo è già nel nome, «Il 730 fatto al CAF»; solo a parola intera: «a Roma» resta con «Foro Romano», «a Venezia» con «veneziana»)
+    var testo = " " + (String(p.desc || "") + " " + String(p.nome || "")).toLowerCase() + " ", i = testo.indexOf(parole);
+    while (i >= 0) {
+      if (!lettera(testo.charAt(i - 1)) && !lettera(testo.charAt(i + parole.length))) return "";
+      i = testo.indexOf(parole, i + 1);
+    }
+    return d;
+  }
+  function lettera(c) { return !!c && c.toLowerCase() !== c.toUpperCase() || (c >= "0" && c <= "9");
+  }
+  function sottoDi(p) { return [p && p.desc, doveDi(p)].filter(Boolean).join(" · "); }
   function cartellino(el, testo, cls) { return el("span", { class: "pz-tag" + (cls ? " " + cls : ""), text: testo }); }
   // il nome e, sotto, la descrizione (nelle rivelazioni di un prodotto solo)
   function miniprod(el, p) {
-    p = p || {}; var sotto = [p.desc, p.dove].filter(Boolean).join(" · ");
+    p = p || {}; var sotto = sottoDi(p);
     return el("div", { class: "pz-miniprod" }, [ figura(el, p, "e"), el("span", { class: "tx" }, [ el("span", { class: "n", text: p.nome || "" }), sotto ? el("small", { text: sotto }) : null ]) ]);
   }
 
@@ -206,10 +229,10 @@
   function tessere(el, prods, opz) {
     opz = opz || {}; prods = prods || [];
     var base = "pz-tes" + (opz.cls ? " " + opz.cls : "") + (opz.fermo ? " fermo" : "");
-    var g = el("div", { class: base }), n = prods.length, posti = prods.map(function (p, i) { return i; }), ult = "";
+    var g = el("div", { class: base }), n = prods.length, posti = prods.map(function (p, i) { return i; }), ult = "", spezzaOn = false;
     g.tessere = prods.map(function (p, i) {
       p = p || {};
-      var sotto = [p.desc, p.dove].filter(Boolean).join(" · "), fo = figura(el, p, "fo", 500, "fo emo"), im = fo.querySelector("img");
+      var sotto = sottoDi(p), fo = figura(el, p, "fo", 500, "fo emo"), im = fo.querySelector("img");
       // (la foto non arriva: al suo posto l'emoji, e si rifà la misura)
       if (im) { im.addEventListener("error", function () { setTimeout(function () { g.adatta(true); }, 0); }); im.addEventListener("load", function () { if (ult) copri(); }); }
       var t = el("div", { class: "pz-te" + (opz.tcls ? " " + opz.tcls : "") + (p.cls ? " " + p.cls : "") }, [
@@ -222,7 +245,7 @@
       g.appendChild(t); return t;
     });
     function metti(c, f) {
-      g.className = base + " " + f.charAt(0) + " " + f + " c" + c;
+      g.className = base + (spezzaOn ? " spezza" : "") + " " + f.charAt(0) + " " + f + " c" + c;
       g.style.setProperty("--cols", c);
       g.style.gridTemplateRows = "repeat(" + Math.ceil(n / c) + ",minmax(0,1fr))";
       // (in due colonne, se sono dispari, l'ultimo prende tutta la riga e ha la foto di lato)
@@ -250,9 +273,10 @@
       // (i riquadri nascosti, come nella Spesa mentre si gioca: le scritte tornano tutte)
       if (!W || !H) { sacr.forEach(function (x) { x.style.display = ""; }); ult = ""; return; }
       var chiave = W + "x" + H; if (chiave === ult && !forza) return;
-      // (l'emoji dei prodotti senza foto torna alla misura di partenza, se no falsa le prove)
-      g.tessere.forEach(function (t) { var fo = t.querySelector(".fo"); if (fo) fo.style.fontSize = ""; });
-      sacr.forEach(function (x) { x.style.display = ""; });
+      // (l'emoji dei prodotti senza foto torna alla misura di partenza, se no falsa le prove; con «solo» si misura con tutti i riquadri)
+      g.tessere.forEach(function (t) { var fo = t.querySelector(".fo"); if (fo) { fo.style.fontSize = ""; fo.style.flex = ""; } t.classList.remove("centro"); t.style.display = t.style.gridColumn = t.style.justifySelf = t.style.width = ""; });
+      g.style.alignContent = "";
+      sacr.forEach(function (x) { x.style.display = ""; }); spezzaOn = false;
       function cerca() {
         var best = null;
         (n === 1 ? [1] : [2, 1]).forEach(function (c) {
@@ -270,6 +294,7 @@
       while (via < sacr.length && (!best || best.f === "t2" || best.f === "t3")) { sacr[via++].style.display = "none"; best = cerca() || best; }
       if (via && primo && best && best.f === primo.f && best.c === primo.c) { sacr.forEach(function (x) { x.style.display = ""; }); best = cerca(); }
       // (non ci sta niente: la forma più piccola, e i riquadri crescono quanto serve; lo spazio scorre, ma niente si taglia)
+      if (!best) { spezzaOn = true; best = cerca(); }   // (la classe la rimette metti(), che riscrive tutte le classi)
       if (!best) best = { c: 1, f: "t3", scorre: true };
       metti(best.c, best.f); g.classList.toggle("scorre", !!best.scorre); ult = g.clientWidth + "x" + g.clientHeight;
       // l'emoji (prodotti senza foto) grande quanto il suo posto
@@ -277,15 +302,22 @@
         var fo = t.querySelector(".fo.emo"); if (!fo) return;
         fo.style.fontSize = best.f.charAt(0) === "t" ? "" : Math.max(22, Math.min(90, fo.clientHeight * 0.72, fo.clientWidth * 0.6)) + "px";
       });
-      copri();
+      copri(); soloSu();   // (con «solo»: si nasconde dopo aver misurato foto ed emoji con tutti i riquadri al loro posto)
     };
     // la foto riempie tutto il suo spazio quando ha quasi la stessa forma (si taglia appena un bordo), se no si vede intera
     function copri() {
-      var piccola = g.classList.contains("t");
+      var piccola = g.classList.contains("t"), riga = g.classList.contains("o");
       g.tessere.forEach(function (t) {
-        var fo = t.querySelector(".fo"), im = fo && fo.querySelector("img"); if (!fo) return;
+        var fo = t.querySelector(".fo"), im = fo && fo.querySelector("img"); if (!fo || t.style.display === "none") return;   // (un riquadro nascosto da «solo» si misura quando compare)
+        fo.style.flex = ""; t.classList.remove("centro");
         var r = im && im.naturalWidth && fo.clientHeight ? (fo.clientWidth / fo.clientHeight) / (im.naturalWidth / im.naturalHeight) : 0;
         fo.classList.toggle("copre", !piccola && r > 0.78 && r < 1.3);
+        // (20 nov 2026) riquadro alto e foto larga: la foto sta subito sopra le scritte e il gruppo va al centro del riquadro
+        // (prima la foto restava in mezzo al suo spazio, con un vuoto bianco sopra e sotto). Niente si ingrandisce.
+        if (!piccola && !riga && !t.classList.contains("largo") && r && r <= 0.78) {
+          var hImg = Math.ceil(fo.clientWidth * im.naturalHeight / im.naturalWidth);
+          if (fo.clientHeight - hImg > 12) { fo.style.flex = "0 0 " + hImg + "px"; t.classList.add("centro"); }
+        }
       });
     }
     g.ordina = function (l) {
@@ -298,6 +330,30 @@
         if (!ciStanno()) g.adatta(true);
       }
     };
+    // (21 nov 2026, scelta B del proprietario) la Vetrina che si presenta un pezzo alla volta: si vedono solo i primi m,
+    // grandi come quando ci sono tutti (niente si ingrandisce), e il gruppo sta al centro dello spazio invece che in alto
+    // con un vuoto sotto. «scorri»: quelli già in vista scivolano al loro posto nuovo (solo transform). null = tutti, come sempre.
+    g.solo = function (m, scorri) {
+      var prima = scorri && g._solo != null ? posti.slice(0, g._solo).map(function (j) { var t = g.tessere[j], r = t.getBoundingClientRect(); return [t, r.left, r.top]; }) : [];
+      g._solo = m == null ? null : m; soloSu(); if (ult) copri();
+      prima.forEach(function (x) {
+        var r = x[0].getBoundingClientRect(), dx = x[1] - r.left, dy = x[2] - r.top;
+        if ((Math.abs(dx) > 1 || Math.abs(dy) > 1) && x[0].animate) x[0].animate([ { transform: "translate(" + dx + "px," + dy + "px)" }, { transform: "none" } ], { duration: 380, easing: "cubic-bezier(.2,.8,.3,1)" });
+      });
+    };
+    function soloSu() {
+      var m = g._solo;
+      g.tessere.forEach(function (t) { t.style.gridColumn = t.style.justifySelf = t.style.width = ""; });
+      if (m == null || !ult || g.classList.contains("scorre")) { if (m == null) g.tessere.forEach(function (t) { t.style.display = ""; }); return; }
+      var c = g.classList.contains("c2") ? 2 : 1, righe = Math.ceil(n / c), gap = parseFloat(getComputedStyle(g).rowGap) || 0;
+      g.style.gridTemplateRows = "repeat(" + righe + ",minmax(0,1fr))"; g.style.alignContent = "";
+      posti.forEach(function (j) { g.tessere[j].style.display = ""; });
+      var h = (g.clientHeight - gap * (righe - 1)) / righe; if (!(h > 0)) return;
+      posti.forEach(function (j, pos) { if (pos >= m) g.tessere[j].style.display = "none"; });
+      g.style.gridTemplateRows = "repeat(" + Math.max(1, Math.ceil(m / c)) + "," + h.toFixed(2) + "px)"; g.style.alignContent = "center";
+      // (in due colonne, un pezzo da solo nella sua riga mentre gli altri devono ancora uscire: al centro anche di lato, stessa misura)
+      if (c === 2 && m % 2 === 1 && m < n) { var t1 = g.tessere[posti[m - 1]]; t1.style.gridColumn = "1 / -1"; t1.style.justifySelf = "center"; t1.style.width = "calc((100% - " + (parseFloat(getComputedStyle(g).columnGap) || 0) + "px) / 2)"; }
+    }
     // (si rifà al fotogramma dopo, mai dentro l'avviso del browser: se no «ResizeObserver loop»)
     if (window.ResizeObserver) {
       var pend = false, oss = new ResizeObserver(function () {
@@ -326,7 +382,7 @@
         var cel = el("div", { class: "cif gira" }, [str]); cel._d = +ch; cel._str = str;
         str.style.animationDelay = (-Math.random() * 0.3).toFixed(2) + "s";
         cifre.push(cel); box.appendChild(cel);
-      } else box.appendChild(el("div", { class: "sep", text: ch }));
+      } else box.appendChild(el("div", { class: "sep" + (ch === "." ? " mi" : ""), text: ch }));
     });
     box.appendChild(el("div", { class: "eur", text: "€" }));
     function ferma(c) { c.classList.remove("gira"); c._str.style.transform = "translateY(" + (-c._d * 5) + "%)"; c.classList.add("ferma"); }
@@ -597,7 +653,12 @@
       // (riempi in prezzo.js: sui telefoni alti tutto si ingrandisce finché lo spazio c'è)
       ".pz-sch.riempi>*{zoom:var(--pz-z,1)}.pz-sch.riempi.alto{padding-top:40px}",
       // (chi guarda soltanto: la barra in basso lascia il posto alla targhetta del core, come nella Balla)
-      ".st-vista.st-con-targa .st-barra{padding-bottom:calc(64px + env(safe-area-inset-bottom))}.st-vista.st-con-targa.con-barra .st-sch-in{padding-bottom:152px}",   // (in alto i tasti tondi: il titolo resta sotto)
+      ".st-vista.st-con-targa .st-barra{padding-bottom:calc(64px + env(safe-area-inset-bottom))}.st-vista.st-con-targa.con-barra .st-sch-in{padding-bottom:152px}",
+      // (20 nov 2026) lo spazio sotto lo schermo segue l'altezza vera della barra (--pz-barra, misurata in prezzo.js); chi guarda ha
+      // sempre il posto della targhetta, anche senza barra (prima la targhetta copriva il totale della vetrina e l'ultima riga)
+      ".st-vista.pz-vista.con-barra:not(.pz-con-pan) .st-sch-in{padding-bottom:max(104px,calc(var(--pz-barra,104px) + 6px))}",
+      ".st-vista.pz-vista.st-con-targa:not(.pz-con-pan):not(.con-barra) .st-sch-in{padding-bottom:calc(76px + env(safe-area-inset-bottom))}",
+      ".st-vista.pz-vista.st-con-targa.con-barra:not(.pz-con-pan) .st-sch-in{padding-bottom:max(152px,calc(var(--pz-barra,152px) + 6px))}",   // (in alto i tasti tondi: il titolo resta sotto)
       // (la scritta grande in basso, «E per voi…», non copre la lista: le si lascia il suo spazio)
       ".pz-sch.con-terzo{padding-bottom:calc(170px + env(safe-area-inset-bottom))}",   // (la scritta in basso dello studio sta a 104 px dal fondo ed è alta circa 58: i riquadri si fermano sopra)
       ".pz-testa{display:flex;align-items:center;justify-content:center;gap:8px;min-height:30px;margin:0 40px;font-size:13px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:var(--o-oro-testo)}",
@@ -626,7 +687,8 @@
       ".pz-scheda.piccola .pz-foto{height:46px}.pz-scheda.media .pz-foto{height:clamp(54px,calc(var(--alt,640px) * .1),90px)}",
       // la scheda grande (25 ott 2026, i giochi a premi con un prodotto solo): prende tutto lo spazio libero dello schermo e la
       // foto cresce con lei; nome e descrizione più grandi. Se lo spazio è poco la foto si stringe, le scritte restano intere.
-      ".pz-sch .pz-scheda.grande{flex:1 1 auto;min-height:0;width:min(420px,94%);justify-content:center;gap:4px}",
+      ".pz-sch .pz-scheda.grande{flex:1 1 auto;min-height:0;width:min(420px,94%);justify-content:center;justify-content:safe center;gap:4px}",
+      ".pz-scheda.grande.corta{gap:2px;padding-top:6px;padding-bottom:6px}.pz-scheda.grande.corta .pz-cat{display:none}.pz-scheda.grande.corta .pz-foto,.pz-scheda.grande.corta .pz-emo{min-height:30px}.pz-scheda.grande.corta .pz-nome{font-size:16px}.pz-scheda.grande.corta .pz-desc{font-size:12.5px;line-height:1.2}.pz-scheda.grande.corta .pz-dove{font-size:12px}.pz-scheda.grande.nofoto .pz-foto,.pz-scheda.grande.nofoto .pz-emo{display:none}",
       ".pz-scheda.grande .pz-foto{flex:1 1 0;min-height:56px;height:auto;width:100%}.pz-scheda.grande .pz-foto img{max-height:100%;max-width:100%}",
       ".pz-scheda.grande .pz-emo{flex:1 1 0;min-height:56px;height:auto;width:100%;background:none;font-size:clamp(48px,calc(var(--alt,640px) * .1),96px)}",
       ".pz-scheda.grande .pz-nome{font-size:clamp(17px,calc(var(--alt,640px) * .026),23px)}.pz-scheda.grande .pz-desc{font-size:clamp(13px,calc(var(--alt,640px) * .019),16.5px)}.pz-scheda.grande .pz-dove{font-size:clamp(12.5px,calc(var(--alt,640px) * .017),15px)}",
@@ -662,6 +724,9 @@
       "@keyframes pzRotola{from{transform:translateY(0)}to{transform:translateY(-50%)}}",
       ".pz-conta .cif.ferma{background:linear-gradient(#2a1f66,#0b0724 45%,#0b0724 55%,#2a1f66)}",
       ".pz-conta .sep{width:.32em;text-align:center}.pz-conta .eur{margin-left:.18em;color:#fff}",
+      // (20 nov 2026) il punto delle migliaia disegnato a metà tra le due cifre: col carattere del telefono finiva attaccato alla cifra dopo («7 .250»)
+      ".pz-conta .sep:not(.mi){display:flex;align-items:flex-end;justify-content:center;width:.3em;align-self:stretch;padding-bottom:.08em;box-sizing:border-box;font-family:var(--o-tit,system-ui),sans-serif;overflow:visible}",   // (la virgola dei centesimi in mezzo, col carattere dell'app)
+      ".pz-conta .sep.mi{position:relative;align-self:stretch;width:.26em;color:transparent;overflow:hidden}.pz-conta .sep.mi::before{content:'';position:absolute;left:50%;bottom:.2em;width:.13em;height:.13em;margin-left:-.065em;border-radius:50%;background:currentColor;background:#ffe066}",
       // la barra del tempo
       ".pz-tempo{display:flex;align-items:center;gap:8px}.pz-tempo .b{flex:1;height:7px;border-radius:4px;background:rgba(255,255,255,.18);overflow:hidden}",
       ".pz-tempo .b i{display:block;height:100%;width:100%;background:var(--o-oro);transform-origin:0 50%;will-change:transform;transition:transform .2s linear}",
@@ -671,12 +736,13 @@
       // il pannello in basso
       ".pz-pan{position:absolute;left:0;right:0;bottom:0;z-index:23;box-sizing:border-box;display:flex;flex-direction:column;gap:7px;padding:9px 12px calc(10px + env(safe-area-inset-bottom));",
         "border-radius:22px 22px 0 0;background:linear-gradient(#1c2140f2,#10142af7 40%);box-shadow:0 -10px 30px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.25);color:#fff;",
-        "transform:translateY(105%);transition:transform .32s cubic-bezier(.3,1.2,.5,1);user-select:none;-webkit-user-select:none;touch-action:manipulation}",
-      ".pz-pan.su{transform:none}",
+        "transform:translateY(105%);transition:transform .32s cubic-bezier(.3,1.2,.5,1),visibility 0s linear .36s;visibility:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}",
+      ".pz-pan.su{transform:none;visibility:visible;transition:transform .32s cubic-bezier(.3,1.2,.5,1),visibility 0s}",   // (20 nov 2026: sceso non si vede mai: la scelta del gioco a premi lasciava sporgere una carta in fondo)
       ".pz-pan-testa{display:flex;align-items:center;gap:8px;font-weight:900;font-size:15px;min-height:26px}",
       ".pz-pan-testa .fac{width:28px;height:28px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.15);flex:0 0 auto}.pz-pan-testa .fac svg{width:100%;height:100%;display:block}",
       ".pz-pan-testa .tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
-      ".pz-pan-testa .pz-tempo{flex:0 0 42%}",
+      ".pz-pan-testa.due .tx{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;font-size:13.5px;line-height:1.15}",   // (20 nov 2026: su due righe invece dei puntini)
+      ".pz-pan-testa .pz-tempo{flex:0 0 42%}.pz-pan-testa.due .pz-tempo{flex-basis:32%}",   // (21 nov 2026: col titolo su due righe la barra lascia più posto alle parole)
       ".pz-nota{margin:0;text-align:center;font-weight:800;color:var(--o-tenue);font-size:14px;line-height:1.35}",
       ".pz-nota.forte{color:var(--o-oro-testo);font-size:16px}",
       // il tastierino
@@ -714,9 +780,9 @@
       // la rivelazione: le righe delle offerte
       ".pz-righe{display:flex;flex-direction:column;gap:5px;width:100%;max-width:420px}",
       ".pz-righe.due{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:5px}",
-      ".pz-riga{position:relative;display:flex;align-items:center;gap:7px;padding:3px 8px 3px 3px;border-radius:12px;background:rgba(255,255,255,.09);text-align:left;opacity:0;transform:translateY(10px);transition:opacity .25s,transform .35s cubic-bezier(.3,1.5,.5,1)}",
-      ".pz-riga.su{opacity:1;transform:none}",
-      ".pz-riga .fac{width:28px;height:28px}.pz-riga .nm{flex:1;min-width:0;font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".pz-riga{position:relative;display:flex;flex-wrap:wrap;justify-content:flex-end;row-gap:2px;align-items:center;gap:7px;padding:3px 8px 3px 3px;border-radius:12px;background:rgba(255,255,255,.09);text-align:left;opacity:0;transform:translateY(10px);transition:opacity .25s,transform .35s cubic-bezier(.3,1.5,.5,1)}",
+      ".pz-riga.su{opacity:1;transform:none}",   // (21 nov 2026: il nome non si accorcia mai a «P…» per far posto a cifra, «sotto» e punti: se non ci stanno, vanno a capo a destra)
+      ".pz-riga .fac{width:28px;height:28px}.pz-riga .nm{flex:1 0 auto;min-width:0;max-width:calc(100% - 40px);font-weight:800;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       ".pz-riga .v{font-weight:900;font-size:15px;color:var(--o-oro-testo);white-space:nowrap}",
       ".pz-riga .bd{flex:0 0 auto;font-size:11px;font-weight:900;border-radius:99px;padding:2px 7px;white-space:nowrap}",
       ".pz-riga .bd:empty{display:none}",
@@ -724,8 +790,8 @@
       ".pz-riga.sopra .bd{background:#e03131;color:#fff;transform:rotate(-6deg)}",
       ".pz-riga.giusto{background:rgba(255,79,134,.3);box-shadow:0 0 0 2px var(--o-oro)}.pz-riga.giusto .bd{background:var(--n-lampone);color:#fff}",
       ".pz-riga.vince{background:rgba(52,209,122,.3);box-shadow:0 0 0 2px var(--o-verde)}",
-      ".pz-riga .pt{position:absolute;right:6px;top:-9px;font-size:12px;font-weight:900;color:var(--o-verde-testo);background:var(--o-verde);border-radius:99px;padding:0 6px;animation:pzPop .35s both}",
-      ".pz-righe.due .pz-riga{flex-wrap:wrap;row-gap:0}.pz-righe.due .pz-riga .nm{flex:1 1 calc(100% - 30px)}.pz-clas.due .pz-cl{flex-wrap:wrap;row-gap:0}.pz-clas.due .pz-cl .nm{flex:1 1 calc(100% - 52px)}.pz-clas.due .pz-cl .pt{margin-left:auto}",
+      ".pz-riga .pt{flex:0 0 auto;font-size:12px;font-weight:900;color:var(--o-verde-testo);background:var(--o-verde);border-radius:99px;padding:1px 7px;animation:pzPop .35s both}",   // (20 nov 2026: dentro la sua riga; prima stava a cavallo del bordo e sembrava della riga sopra)
+      ".pz-righe.due .pz-riga{flex-wrap:wrap;row-gap:0;justify-content:flex-start}.pz-righe.due .pz-riga .nm{flex:1 1 calc(100% - 30px)}.pz-clas.due .pz-cl{flex-wrap:wrap;row-gap:0}.pz-clas.due .pz-cl .nm{flex:1 1 calc(100% - 52px)}.pz-clas.due .pz-cl .pt{margin-left:auto}",
       ".pz-righe.due .pz-riga .nm{font-size:12.5px}.pz-righe.due .pz-riga .v{font-size:13px}.pz-righe.due .pz-riga .fac{width:22px;height:22px}.pz-righe.due .pz-riga .bd{font-size:9.5px;padding:1px 5px}",
       ".pz-banner{font-size:24px;font-weight:900;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.4);animation:pzPop .45s cubic-bezier(.3,1.6,.5,1) both}",
       ".pz-banner.oro{color:var(--o-oro-testo);font-size:30px;font-family:inherit}.pz-banner.no{color:var(--o-rosso-testo)}",
@@ -745,10 +811,17 @@
       ".pz-clas.due .pz-cl{padding:3px 6px 3px 3px;gap:5px}.pz-clas.due .pz-cl .fac{width:26px;height:26px}.pz-clas.due .pz-cl .nm{font-size:13px}.pz-clas.due .pz-cl .pt{font-size:13px}.pz-clas.due .pz-cl .pi{min-width:0;font-size:11px}.pz-clas.due .pz-cl .pos{width:20px}",
       ".pz-car{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 4px;border-radius:14px;background:rgba(255,255,255,.08);text-align:left;animation:pzSu .45s both;width:100%;max-width:420px;box-sizing:border-box}",
       ".pz-car .fac{width:34px;height:34px}.pz-car .cosa{flex:1;min-width:0;display:flex;flex-direction:column}",
-      ".pz-car .cosa b{font-size:14px}.pz-car .cosa span{font-size:26px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pz-car .cosa small{font-size:11.5px;color:var(--o-tenue);overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2}",
+      // (20 nov 2026) i premi interi quando c'è posto: le figure vanno a capo e i nomi su più righe; solo se non ci sta (classe
+      // «fitta», la mette riempi) una riga di figure coi puntini e due righe di nomi, come prima
+      ".pz-car .cosa b{font-size:14px}.pz-car .cosa>span{font-size:26px;line-height:1.2;display:flex;flex-wrap:wrap;gap:0 2px}.pz-car .cosa small{font-size:11.5px;color:var(--o-tenue)}",
+      ".pz-cars.fitta .pz-car .cosa>span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.pz-cars.fitta .pz-car .cosa small{overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2}",
       ".pz-car .tot{font-weight:900;color:var(--o-oro-testo);font-size:15px;white-space:nowrap}",
-      ".pz-cars{display:flex;flex-direction:column;gap:6px;width:100%;align-items:center}.pz-cars.due{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:5px}",
-      ".pz-cars.due .pz-car{padding:3px 6px 3px 3px;gap:5px}.pz-cars.due .pz-car .fac{width:26px;height:26px}.pz-cars.due .pz-car .cosa span{font-size:16px}.pz-cars.due .pz-car .tot{font-size:12px}",
+      ".pz-cars{display:flex;flex-direction:column;gap:6px;width:100%;align-items:center}.pz-cars.due{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:5px;align-items:start}",
+      ".pz-cars.due .pz-car{padding:3px 6px 3px 3px;gap:5px}.pz-cars.due .pz-car .fac{width:26px;height:26px}.pz-cars.due .pz-car .cosa>span{font-size:16px}.pz-cars.due .pz-car .tot{font-size:12px}",
+      // (21 nov 2026: in due colonne faccina, nome e totale in alto e sotto foto e premi su tutta la larghezza del riquadro; prima i premi stavano in una colonnina stretta tra faccina e totale)
+      ".pz-cars.due .pz-car{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;align-content:start;column-gap:5px;row-gap:2px;padding:4px 7px}",
+      ".pz-cars.due .pz-car .cosa{display:contents}.pz-cars.due .pz-car .fac{grid-row:1;grid-column:1}.pz-cars.due .pz-car .cosa b{grid-row:1;grid-column:2;min-width:0}.pz-cars.due .pz-car .tot{grid-row:1;grid-column:3}",
+      ".pz-cars.due .pz-car .cosa>span,.pz-cars.due .pz-car .cosa small{grid-column:1/-1}",
       // le scelte grandi (il gioco a premi, giro ancora / mi fermo)
       ".pz-scelte{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}",
       ".pz-sc{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:96px;border:0;border-radius:16px;padding:8px;font:inherit;color:#1d1b3a;background:linear-gradient(#fff,#eceef8);box-shadow:inset 0 -4px 0 rgba(14,18,44,.25);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:transform .1s}",
@@ -769,8 +842,28 @@
       ".pz-sc.pz-scgioco{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:14px;row-gap:4px;align-content:center;align-items:center;text-align:left;min-height:0;padding:12px 16px}",
       ".pz-sc.pz-scgioco .i{grid-row:1/3;font-size:clamp(40px,calc(var(--alt,640px) * .07),64px)}.pz-sc.pz-scgioco b{font-size:clamp(19px,calc(var(--alt,640px) * .03),26px)}",
       ".pz-sc.pz-scgioco small{font-size:clamp(13.5px,calc(var(--alt,640px) * .02),17px);font-weight:600;line-height:1.3}",
+      // (21 nov 2026, scelta D del proprietario) le schede della scelta del gioco a premi col vetro scuro della Notte vivace
+      ".pz-sc.pz-scgioco{background:linear-gradient(160deg,#272e52,#161b31);color:var(--o-testo);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),inset 0 1px 0 rgba(255,255,255,.09),0 16px 32px -16px rgba(0,0,0,.9)}",
+      ".pz-sc.pz-scgioco b{color:var(--o-testo)}.pz-sc.pz-scgioco small{color:var(--o-tenue)}",
+      ".pz-sc.pz-scgioco.sel{background:linear-gradient(160deg,#3d2246,#211a33);box-shadow:inset 0 0 0 2px var(--o-oro),0 0 26px -6px rgba(255,79,134,.65)}",
+      // (21 nov 2026) i disegni dei giochi a premi al posto delle emoji (iconaPremio): grandi quanto la loro emoji, un po' di più perché sono tessere
+      ".pz-ic{display:block;width:1.25em;height:1.25em;-webkit-user-drag:none;user-select:none;pointer-events:none}.i.dis{display:flex;align-items:center;justify-content:center;line-height:1}",
+      ".pz-sc.pz-scgioco .i .pz-ic{width:1.5em;height:1.5em}.pz-gioco .i .pz-ic{width:1.35em;height:1.35em}",
+      ".pz-testa .i.ic-testa{flex:0 0 auto;font-size:22px;letter-spacing:0}.pz-testa .i.ic-testa .pz-ic{width:26px;height:26px}.pz-testa-ic .tx{min-width:0}",
       ".pz-intro{display:flex;flex-direction:column;align-items:center;gap:8px;animation:pzPop .5s cubic-bezier(.3,1.6,.5,1) both}",
       ".pz-intro .i{font-size:64px;line-height:1}.pz-intro b{font-size:28px;color:var(--o-oro-testo)}.pz-intro p{margin:0;max-width:330px;font-size:16px;font-weight:700;color:var(--o-testo);line-height:1.35}",
+      // (20 nov 2026: le regole in tre righe, come si gioca · esempio · punti; più grandi sui telefoni alti)
+      ".pz-intro.come{gap:6px;width:100%;max-width:420px}.pz-intro.come .i{font-size:clamp(40px,calc(var(--alt,640px) * .07),64px)}.pz-intro.come b{font-size:clamp(22px,calc(var(--alt,640px) * .036),30px)}",
+      ".pz-come{display:flex;flex-direction:column;gap:8px;width:100%;text-align:left;margin-top:4px}",
+      ".pz-come .r{display:flex;flex-direction:column;gap:2px;padding:9px 13px;border-radius:14px;background:var(--o-carta,rgba(255,255,255,.07));box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}",
+      ".pz-come .r i{font-style:normal;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--o-oro-testo)}",
+      ".pz-come .r span{font-size:clamp(15px,calc(var(--alt,640px) * .0235),19px);font-weight:700;line-height:1.32;color:var(--o-testo)}",
+      ".pz-come .r.es{background:rgba(79,216,255,.1);box-shadow:inset 0 0 0 1px rgba(79,216,255,.25)}.pz-come .r.es i{color:#4fd8ff}",
+      ".pz-come .r.pt span{font-size:clamp(14px,calc(var(--alt,640px) * .022),18px);color:var(--o-tenue)}",
+      // (21 nov 2026: sul telefono basso, se non ci stanno, si stringono: adattaIntro in prezzo.js)
+      ".pz-intro.come.f1,.pz-intro.come.f2{gap:4px}.pz-intro.come.f1 .i{font-size:34px}.pz-intro.come.f2 .i{font-size:28px}.pz-intro.come.f1 b{font-size:21px}.pz-intro.come.f2 b{font-size:19px}",
+      ".pz-intro.f1 .pz-come,.pz-intro.f2 .pz-come{gap:5px;margin-top:0}.pz-intro.f1 .pz-come .r{padding:6px 11px}.pz-intro.f2 .pz-come .r{padding:5px 10px;gap:1px}.pz-intro.f2 .pz-come .r i{font-size:10.5px}",
+      ".pz-intro.f1 .pz-come .r span{font-size:14.5px;line-height:1.27}.pz-intro.f1 .pz-come .r.pt span{font-size:13.5px}.pz-intro.f2 .pz-come .r span{font-size:13.5px;line-height:1.24}.pz-intro.f2 .pz-come .r.pt span{font-size:12.5px}",
       // la ruota del 100
       ".pz-ruota{position:relative;height:calc(var(--h) * 3);border-radius:18px;overflow:hidden;background:#140d3a;box-shadow:inset 0 0 0 3px #ffd43b,0 6px 20px rgba(0,0,0,.45);touch-action:none;cursor:grab}",
       ".pz-ruota .pz-rstr{position:absolute;left:0;right:0;top:0;will-change:transform}",
@@ -811,9 +904,11 @@
       ".pz-tes{flex:1 1 0;min-height:0;width:100%;max-width:480px;display:grid;grid-template-columns:repeat(var(--cols,2),minmax(0,1fr));gap:6px;--fn:15px;--fd:12px}",
       ".pz-te{position:relative;min-width:0;min-height:0;overflow:hidden;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 7px;border-radius:14px;background:linear-gradient(#ffffff,#f5f6fb);color:#1d1b3a;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.3),inset 0 -3px 0 rgba(14,18,44,.16);animation:pzPop .45s cubic-bezier(.3,1.6,.5,1) both;transition:background .2s,box-shadow .2s}",
       ".pz-tes.fermo .pz-te{animation:none}",
-      ".pz-te .fo{flex:1 1 0;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;line-height:1;font-size:40px}",
+      ".pz-te .fo{flex:1 1 0;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;line-height:1;font-size:40px}.pz-te.centro{justify-content:center}",
       ".pz-te .fo img{display:block;max-width:100%;max-height:100%;border-radius:9px;box-shadow:0 2px 8px rgba(0,0,0,.22);background:#fff}.pz-te .fo.copre img{width:100%;height:100%;object-fit:cover}",
       ".pz-te .tx{flex:0 0 auto;min-width:0;max-width:100%;display:flex;flex-direction:column;gap:1px;overflow-wrap:break-word;hyphens:auto}",
+      // (21 nov 2026: il nome non si spezza a metà parola, «salvadana / io»: i riquadri cercano una forma dove ci sta intero; solo se non ci sta in nessuna, «spezza»)
+      ".pz-te .tx b{overflow-wrap:normal;hyphens:manual}.pz-tes.spezza .pz-te .tx b{overflow-wrap:break-word}",
       ".pz-te .tx b{font-size:var(--fn);font-weight:900;line-height:1.15}.pz-te .tx small{font-size:var(--fd);font-weight:600;color:#4c4a66;line-height:1.22}",
       ".pz-te .ex{flex:0 0 auto;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:4px;max-width:100%}",
       ".pz-te .nb{position:absolute;left:4px;top:4px;z-index:1;min-width:20px;height:20px;padding:0 4px;box-sizing:border-box;border-radius:99px;background:#b0184f;color:#fff;font-size:12px;font-weight:900;line-height:20px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.3)}",
@@ -854,11 +949,35 @@
     document.head.appendChild(s);
   }
 
+  // ---------------- i disegni dei giochi a premi (21 nov 2026, scelti dal proprietario al posto delle emoji) ----------------
+  // js/games/prezzo-disegni.js (SG_PREZZO_DISEGNI): un SVG per gioco. Si mostrano come immagine (ognuna coi suoi id, mai due
+  // disegni uguali che si pestano), fatta una volta sola per gioco. Senza disegno: l'emoji del gioco, come prima.
+  var DIS_URL = {};
+  function disegnoURL(tipo) {
+    var d = window.SG_PREZZO_DISEGNI; if (!d || !d[tipo]) return null;
+    return DIS_URL[tipo] || (DIS_URL[tipo] = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(d[tipo]));
+  }
+  // l'icona di un gioco a premi: <span class="i"> col disegno dentro (classe «dis»), o con l'emoji
+  function iconaPremio(el, tipo, emoji, cls) {
+    var u = disegnoURL(tipo), c = "i" + (cls ? " " + cls : "");
+    if (!u) return el("span", { class: c, text: emoji || "🎁" });
+    var sp = el("span", { class: c + " dis" }), im = document.createElement("img");
+    im.className = "pz-ic"; im.alt = ""; im.src = u; im.draggable = false; im.decoding = "async";
+    sp.appendChild(im); return sp;
+  }
+  // la testata di un gioco a premi (in alto sul maxischermo): il disegno e il titolo; dici(testo) cambia solo il titolo
+  function testaPremio(el, tipo, testo, emoji) {
+    var tx = el("span", { class: "tx", text: testo }), d = el("div", { class: "pz-testa pz-testa-ic" }, [ iconaPremio(el, tipo, emoji, "ic-testa"), tx ]);
+    d.dici = function (t) { tx.textContent = t; };
+    return d;
+  }
+
   window.SGPrezzoScena = {
+    iconaPremio: iconaPremio, testaPremio: testaPremio, disegnoURL: disegnoURL,
     fmtN: fmtN, fmtE: fmtE, tondo2: tondo2, passo: passo, margine: margine, arrotonda: arrotonda, conCent: conCent,
     CAT: CAT, ORDINE_CAT: ORDINE_CAT, FX: FX, vibra: vibra,
     scheda: scheda, cartellino: cartellino, sipario: sipario, contachilometri: contachilometri, durataConta: durataConta,
-    urlFoto: urlFoto, precarica: precarica, figura: figura, miniprod: miniprod, tessere: tessere,
+    urlFoto: urlFoto, precarica: precarica, figura: figura, miniprod: miniprod, tessere: tessere, sottoDi: sottoDi, doveDi: doveDi,
     barraTempo: barraTempo, pannello: pannello, tastierino: tastierino,
     SPICCHI: SPICCHI, ruota: ruota, coloreSpicchio: coloreSpicchio,
     stile: stile
