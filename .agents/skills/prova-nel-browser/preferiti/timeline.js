@@ -343,7 +343,7 @@
         // sul telefono di Giulia
         if (ladri.length) { if (!await W.aspetta(function () { return /Rubata da/.test(T(G)); }, 9000)) no("Giulia non legge «Rubata da»"); }
         else if (!es.giusto) {
-          var re = es.errore <= 3 ? /Per un pelo/ : /Sbagliato di/;
+          var re = es.errore <= 3 ? /Per un pelo: (il tuo posto|il posto di \S+) era lontano/ : /(Il tuo posto|Il posto di \S+) era lontano [\d.]+ ann/;   // (col punto delle migliaia: «1.741 anni»)
           if (!await W.aspetta(function () { return re.test(T(G)) && /Andava qui/i.test(T(G)) && T(G).indexOf(annoTx(piano.Y)) >= 0; }, 9000)) no("Giulia non vede l'anno vero, «" + re.source + "» e «Andava qui» («" + T(G).slice(0, 200) + "»)");
           if (!misurato.esito) { var m3 = await misure(G, "Giulia"); if (m3) no("sul risultato sbagliato: " + m3); misurato.esito = true; }
         }
@@ -550,7 +550,7 @@
           if (!await W.aspetta(function () { return /Rubata da/.test(T(P)) && T(P).indexOf(annoTx(Y)) >= 0; }, 12000)) no("rubata: non vedo «Rubata da» e l'anno («" + T(P).slice(0, 200) + "»)");
         } else if (sbaglia) {
           sbagliate++;
-          if (!await W.aspetta(function () { return /Sbagliato di|Per un pelo/.test(T(P)) && /Andava qui/i.test(T(P)) && T(P).indexOf(annoTx(Y)) >= 0; }, 10000)) no("sbagliata: non vedo l'anno vero e «Andava qui» («" + T(P).slice(0, 200) + "»)");
+          if (!await W.aspetta(function () { return /era lontano|Per un pelo/.test(T(P)) && /Andava qui/i.test(T(P)) && T(P).indexOf(annoTx(Y)) >= 0; }, 10000)) no("sbagliata: non vedo l'anno vero e «Andava qui» («" + T(P).slice(0, 200) + "»)");
           if (sbagliate === 1) { var m = await misure(P, "Paky"); if (m) no("sul risultato sbagliato: " + m); }
         } else {
           if (!await W.aspetta(function () { return /Esatto!/.test(T(P)) && /🎯/.test(T(P)); }, 10000)) no("giusta con l'anno esatto: non vedo «🎯 Esatto!» («" + T(P).slice(0, 200) + "»)");
@@ -702,8 +702,10 @@
         // decidono tutti e due: «✋ In 2 vogliono rubarla!» e «Rubata da Giulia e Luca»
         if (Object.keys(cur.dec).length === 2) {
           var rub = Object.keys(cur.dec).filter(function (n) { return cur.dec[n] >= 0; }), ladri = rub.filter(function (n) { return !cur.giusto && giustoIn(cur.lin, cur.dec[n], cur.Y); });
-          if (rub.length === 2 && !await W.aspetta(function () { return /In 2 vogliono rubarla/.test(T(P)); }, 6000)) no("non si legge «✋ In 2 vogliono rubarla!»");
-          if (rub.length === 1 && !await W.aspetta(function () { return /Qualcuno vuole rubarla/.test(T(P)); }, 6000)) no("non si legge «✋ Qualcuno vuole rubarla!»");
+          // (21 nov 2026, scelta C: si ruba in segreto, quindi prima del risultato la scritta è SEMPRE la stessa, senza il numero)
+          if (!await W.aspetta(function () { return /Vediamo com'è andata/.test(T(P)); }, 6000)) no("non si legge «🔎 Vediamo com'è andata…» (rubano " + rub.length + ")");
+          else conta.vediamo = (conta.vediamo || 0) + 1;
+          if (/vogliono rubarla|vuole rubarla/.test(T(P))) no("prima del risultato si legge quanti rubano («" + T(P).slice(0, 120) + "»)");
           if (ladri.length === 2) { if (!await W.aspetta(function () { return /Rubata da \S+ e \S+/.test(T(P)); }, 12000)) no("non si legge «Rubata da … e …» («" + T(P).slice(0, 160) + "»)"); else conta.insieme++; }
           else if (ladri.length === 1 && !await W.aspetta(function () { return /Rubata da/.test(T(P)); }, 12000)) no("non si legge «Rubata da»");
         }

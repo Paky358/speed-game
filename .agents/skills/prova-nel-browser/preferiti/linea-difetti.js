@@ -3,7 +3,7 @@
 // lfo: una partita online intera nella Sala, fotografata. W.__pfOpz = { nome: "o2", amici: ["Giulia"], misure: { Paky: [360, 640] },
 //      foto: ["Paky", "Giulia"], guarda: "Bea" (entra a guardare al turno 2), tardi: "Mario" (arriva col link al turno 3),
 //      regole: { gara: "turno" | "insieme", linee: true, vinci: 5, meno: 2 (tocchi su − delle carte), ruba: /…/, epoca: /…/ },
-//      giusto: 0.6 (quante volte si mette giusta), ruba: 0.4 (quante volte si prova a rubare), ritardi: { Paky: 3000 }, ms }
+//      giusto: 0.6 (quante volte si mette giusta), ruba: 0.4 (quante volte si prova a rubare), ritardi: { Paky: 3000 }, ms, extraEsito: 3 }
 // lfs: la stessa cosa sullo stesso telefono. W.__pfOpz = { nome, nomi: ["Paky", "Giulia"], misura: [360, 640], regole: {…}, … }
 // Le foto: ogni telefono di «foto» a ogni momento nuovo (dopo 0,9 s) e nei risultati anche 3,6 s dopo. Il diario (W.__pfLog):
 // per ogni foto il momento, la barra in basso, il testo dello schermo e i guai trovati da soli (pagina che scorre, tasti fuori).
@@ -157,7 +157,7 @@
       // (le proposte da far vedere al proprietario: uno stile in più sui telefoni scelti, o.css = { Paky: "…" })
       if (o.css && turni >= 1) Object.keys(o.css).forEach(function (nm) { var w = W.finestra(nm); if (w && !w.document.getElementById("pf-css")) { var st = w.document.createElement("style"); st.id = "pf-css"; st.textContent = o.css[nm]; w.document.body.appendChild(st); } });
       var chiave = (v.fase || "") + "|" + v.n;
-      var nRis =/esito|lEsito|tEsito/i.test(v.fase || "") ? 1 : (o.extra || 0);
+      var nRis =/esito|lEsito|tEsito/i.test(v.fase || "") ? (o.extraEsito || 1) : (o.extra || 0);   // (extraEsito: più foto sul risultato, per vedere quello che compare dopo)
       for (var i = 0; i < fotoDi.length; i++) {
         var n = fotoDi[i]; if (!W.finestra(n)) continue;
         var u = ult[n] || {};

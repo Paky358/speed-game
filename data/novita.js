@@ -9,6 +9,20 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 400,
+    data: "21 novembre 2026",
+    titolo: "La linea del tempo: più chiara e con foto nuove 📸",
+    descrizione: [
+      "📱 Sui telefoni bassi la carta in mano è più bassa (foto più piccola, la spiegazione resta intera) e sotto l'anno non c'è più la rotella: quando tocca a te o quando rubi la linea ha più posto.",
+      "🔎 Sullo stesso telefono, rubando «uno alla volta», prima del risultato si legge sempre «Vediamo com'è andata…»: prima «In 2 vogliono rubarla!» svelava quanti avevano rubato in segreto.",
+      "📍 Quando la carta è sbagliata si legge «Il tuo posto era lontano 6 anni» (prima «Sbagliato di 6 anni!», che accanto a «Andava tra il 1985 e il 2000» sembrava dire il contrario).",
+      "👆 Finché non tocchi il posto, al posto del tasto spento c'è l'istruzione in un riquadro tratteggiato («Tocca dove va la carta», «Tocca il posto giusto»); scelto il posto diventa il tasto vero.",
+      "🧍 In «Ognuno la sua linea» e in «Tutti insieme» prima si girano i cartellini in alto, poi compare l'elenco di chi l'ha messa giusta: niente sorpresa rovinata.",
+      "🎉 I coriandoli cadono dietro le scritte: non coprono più punteggi, nomi e podio.",
+      "📸 Foto nuove: 140 carte hanno una foto più chiara (al posto di concerti al buio, console nere sul fondo scuro, foto sbagliate o che ingannavano sull'epoca) e 52 carte che non l'avevano adesso ce l'hanno."
+    ]
+  },
+  {
     v: 395,
     data: "21 novembre 2026",
     titolo: "Il Prezzo è Giusto: tre ritocchi 🏷️",
