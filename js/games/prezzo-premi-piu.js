@@ -50,6 +50,7 @@
   PREMI.piuomeno = {
     nome: "Più o meno", icona: "🔼🔽", ordine: 1,
     regola: "Scrivi un prezzo: il telefono ti dice ⬆️ più su o ⬇️ più giù. Chi lo trova per primo vince!",
+    aiuto: "↕️ Più su o più giù?",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "Scrivi un prezzo: ti diciamo se quello vero è ⬆️ più su o ⬇️ più giù, e riprovi. Chi lo trova prima vince: 400 punti al primo, 300 al secondo, 250 al terzo, 200 agli altri che lo trovano.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
     fai: "Scrivi quanto costa: il telefono ti dice se il prezzo vero è ⬆️ più su o ⬇️ più giù, e riprovi. Basta andarci vicino.",

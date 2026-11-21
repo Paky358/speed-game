@@ -90,6 +90,7 @@
   PREMI.spesa = {
     nome: "La Spesa", icona: "🛒", ordine: 6,
     regola: "Senza vedere i prezzi, riempi il carrello per spendere tra 20 e 22 €!",
+    aiuto: "➕➖ Quanti pezzi nel carrello?",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "Cinque prodotti del supermercato, senza prezzo: riempi il carrello col più e il meno per spendere tra 20 e 22 €. Dentro la fascia 600 punti, poco fuori 350, più lontano meno.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
     fai: "5 prodotti del supermercato, senza prezzo. Con + e − scegli quanti pezzi comprare: il carrello deve costare tra 20 e 22 €.",
@@ -278,6 +279,7 @@
   PREMI.cassaforte = {
     nome: "La Cassaforte", icona: "🔐", ordine: 7,
     regola: "Le cifre del prezzo sono mescolate: rimettile in ordine e la cassaforte si apre!",
+    aiuto: "🔢 Rimetti le cifre in ordine",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "Le cifre di un prezzo sono mescolate: tocca due cifre per scambiarle e rimettile in ordine. 60 punti per ogni cifra al posto giusto, +400 se la cassaforte si apre.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
     fai: "Le cifre di un prezzo sono mescolate. Tocca due cifre per scambiarle e rimetti il prezzo in ordine.",

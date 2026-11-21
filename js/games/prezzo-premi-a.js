@@ -121,6 +121,7 @@
   PREMI.alpinista = {
     nome: "L'Alpinista", icona: "🧗", ordine: 2,
     regola: "Scrivi 3 prezzi: più sbagli, più sali. Oltre la vetta cadi dal burrone!",
+    aiuto: "✍️ Ogni errore lo fa salire",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "Scrivi il prezzo di 3 prodotti, uno dopo l'altro. Ogni errore fa salire l'alpinista: se supera la vetta cade e fai 0. Più resta in basso, più punti: fino a 550, +200 se li indovini tutti e tre.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
     fai: "Scrivi il prezzo di 3 prodotti, uno dopo l'altro. Più sbagli, più l'alpinista sale la montagna: se va oltre la vetta, cade giù.",
@@ -410,6 +411,7 @@
   PREMI.ordine = {
     nome: "Mettili in ordine", icona: "📊", ordine: 3,
     regola: "Tocca due prodotti per scambiarli: dal meno caro in alto al più caro in basso.",
+    aiuto: "⬆️ Dal meno caro al più caro",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "Metti 5 prodotti in fila, dal meno caro in alto al più caro in basso: tocca due prodotti per scambiarli di posto. 70 punti per ogni prodotto al posto giusto, +100 se sono tutti giusti.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
     fai: "5 prodotti in colonna. Tocca un prodotto e poi un altro per scambiarli: in alto il meno caro, in fondo il più caro.",

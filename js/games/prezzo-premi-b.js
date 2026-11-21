@@ -205,6 +205,7 @@
   PREMI.troppo = {
     nome: "È troppo!", icona: "✋", ordine: 4, fattiSegreti: true,   // (20 nov 2026: chi si è fermato si vede solo quando ti sei fermato anche tu, vedi prezzo.js leggii)
     regola: "I prezzi salgono: tocca «È TROPPO!» appena superano quello vero. Né prima, né tardi!",
+    aiuto: "💸 Fermalo al momento giusto",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "Il prezzo sale da solo, un passo alla volta: tocca «È troppo!» appena supera il prezzo vero. Subito dopo vale 600 punti, poi 450, 350… Se tocchi prima che lo superi, prendi poco.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
     fai: "Sul telefono passano prezzi sempre più alti. Tocca «✋ È troppo!» appena il prezzo supera quello vero.",
@@ -331,7 +332,7 @@
       if (insieme) {
         // tutti insieme intorno al telefono: un bottone a testa
         var testa = A.pan.parentNode && A.pan.parentNode.querySelector(".pz-pan-testa .tx");
-        if (testa) testa.textContent = "✋ È troppo! · tutti insieme";
+        if (testa) testa.textContent = "💸 Tutti insieme: fermatelo in tempo";   // (21 nov 2026, scelta C: il nome del gioco è già in alto)
         var gr = el("div", { class: "pzb-tr-griglia" + (A.giocatori.length === 3 ? " tre" : "") });
         A.giocatori.forEach(function (g) {
           var b = el("button", { class: "pzb-tr-bt attesa" }, [ el("span", { class: "chi" }, [ A.fac(g.id), el("span", { text: g.nome }) ]), el("b", { text: "✋ È TROPPO!" }) ]);
@@ -599,6 +600,7 @@
   PREMI.plinko = {
     nome: "Plinko", icona: "🟡", ordine: 5,
     regola: "Ogni prezzo indovinato vale +50 e un gettone. Poi lasciali cadere: in mezzo c'è il 200!",
+    aiuto: "🤔 Indovina e vinci i gettoni",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "Tre domande: dei due prezzi, qual è quello giusto? Ogni risposta giusta vale 50 punti e un gettone. Poi lasci cadere i gettoni nel Plinko: la casella in mezzo vale 200!",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
     fai: "Prima 3 domande: tra due prezzi, tocca quello giusto. Poi scegli dove far cadere i tuoi gettoni tra i chiodini.",

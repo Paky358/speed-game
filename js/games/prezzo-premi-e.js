@@ -125,6 +125,7 @@
   PREMI.prova5 = {
     nome: "La Prova del 5", icona: "✅", ordine: 10,
     regola: "Cinque cartellini: per ognuno, il prezzo è giusto o sbagliato? Quanti sono giusti non si sa!",
+    aiuto: "🔍 Quanti sono giusti? Non si sa",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "Cinque prodotti col cartellino: per ognuno dì se il prezzo è ✓ giusto o ✗ sbagliato (quanti sono giusti non si sa). 3 giusti: 200 punti · 4 giusti: 400 · tutti e 5 giusti: 700.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
     fai: "5 prodotti, ognuno col suo cartellino. Per ognuno tocca ✓ se il prezzo è giusto o ✗ se è sbagliato. Quanti sono giusti non si sa.",
@@ -324,6 +325,7 @@
   PREMI.togli = {
     nome: "Togli la cifra", icona: "🧹", ordine: 11,
     regola: "In ogni prezzo c'è una cifra di troppo (mai la prima né l'ultima): toccala e toglila!",
+    aiuto: "👀 In ogni prezzo, una cifra in più",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "In ogni prezzo c'è una cifra in più (mai la prima né l'ultima): toccala per toglierla. 120 punti per ogni prezzo giusto, +300 se li fai giusti tutti e tre.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
     fai: "In ogni prezzo c'è una cifra di troppo, mai la prima né l'ultima. Toccala per toglierla: vedi subito il prezzo che viene.",

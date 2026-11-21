@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 395,
+    data: "21 novembre 2026",
+    titolo: "Il Prezzo è Giusto: tre ritocchi 🏷️",
+    descrizione: [
+      "👀 Nell'Offerta con le offerte a vista la regola è scritta chiara: «si può offrire 1 € più di un altro» (10 centesimi sui prezzi piccoli; prima «occhio al +1 €», che capiva solo chi conosce il programma). Anche nelle regole del gioco.",
+      "🛍️ La Vetrina finale, mentre si presenta un pezzo alla volta, sta al centro dello schermo, non più tutta in alto con mezzo schermo vuoto sotto. I pezzi restano grandi come prima, un pezzo da solo nella sua riga sta al centro, e quelli già usciti scivolano piano al loro posto.",
+      "💡 Nei giochi a premi il pannello non ripete il nome del gioco, che è già scritto in alto: al suo posto una frase che ricorda cosa fare (es. «⬆️ Dal meno caro al più caro» in Mettili in ordine, «💸 Fermalo al momento giusto» in È troppo!)."
+    ]
+  },
+  {
     v: 394,
     data: "21 novembre 2026",
     titolo: "La linea del tempo: tanti ritocchi 📜",

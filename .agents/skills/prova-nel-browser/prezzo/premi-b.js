@@ -222,7 +222,7 @@
     var ok = await giocaTuttiB(["Paky"], function () { return w.__prezzoH.fase === "fine" && !w.document.querySelector(".st-vista"); }, { ms: 600000, ognuno: function () {
       if (w.document.querySelector(".pz-pan.su .pzb-tr-griglia")) insiemeVisto = true;
       var H = w.__prezzoH, tx = (w.document.querySelector(".pz-pan.su .pz-pan-testa .tx") || {}).textContent || "";
-      if (H.premio && H.premio.tipo === "troppo" && H.sotto === "gioca" && /✋/.test(tx) && !chiTroppo[tx]) { chiTroppo[tx] = 1; turniTroppo++; }
+      if (H.premio && H.premio.tipo === "troppo" && H.sotto === "gioca" && / · /.test(tx) && !chiTroppo[tx]) { chiTroppo[tx] = 1; turniTroppo++; }
     } });
     sp.ferma(); fasi.ferma();
     if (!ok) no("la partita sullo stesso telefono non finisce (" + fasi.viste.join(" → ") + ", fase " + w.__prezzoH.fase + "." + w.__prezzoH.sotto + ")");

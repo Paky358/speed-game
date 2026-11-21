@@ -273,8 +273,9 @@
       // (i riquadri nascosti, come nella Spesa mentre si gioca: le scritte tornano tutte)
       if (!W || !H) { sacr.forEach(function (x) { x.style.display = ""; }); ult = ""; return; }
       var chiave = W + "x" + H; if (chiave === ult && !forza) return;
-      // (l'emoji dei prodotti senza foto torna alla misura di partenza, se no falsa le prove)
-      g.tessere.forEach(function (t) { var fo = t.querySelector(".fo"); if (fo) { fo.style.fontSize = ""; fo.style.flex = ""; } t.classList.remove("centro"); });
+      // (l'emoji dei prodotti senza foto torna alla misura di partenza, se no falsa le prove; con «solo» si misura con tutti i riquadri)
+      g.tessere.forEach(function (t) { var fo = t.querySelector(".fo"); if (fo) { fo.style.fontSize = ""; fo.style.flex = ""; } t.classList.remove("centro"); t.style.display = t.style.gridColumn = t.style.justifySelf = t.style.width = ""; });
+      g.style.alignContent = "";
       sacr.forEach(function (x) { x.style.display = ""; }); spezzaOn = false;
       function cerca() {
         var best = null;
@@ -301,13 +302,13 @@
         var fo = t.querySelector(".fo.emo"); if (!fo) return;
         fo.style.fontSize = best.f.charAt(0) === "t" ? "" : Math.max(22, Math.min(90, fo.clientHeight * 0.72, fo.clientWidth * 0.6)) + "px";
       });
-      copri();
+      copri(); soloSu();   // (con «solo»: si nasconde dopo aver misurato foto ed emoji con tutti i riquadri al loro posto)
     };
     // la foto riempie tutto il suo spazio quando ha quasi la stessa forma (si taglia appena un bordo), se no si vede intera
     function copri() {
       var piccola = g.classList.contains("t"), riga = g.classList.contains("o");
       g.tessere.forEach(function (t) {
-        var fo = t.querySelector(".fo"), im = fo && fo.querySelector("img"); if (!fo) return;
+        var fo = t.querySelector(".fo"), im = fo && fo.querySelector("img"); if (!fo || t.style.display === "none") return;   // (un riquadro nascosto da «solo» si misura quando compare)
         fo.style.flex = ""; t.classList.remove("centro");
         var r = im && im.naturalWidth && fo.clientHeight ? (fo.clientWidth / fo.clientHeight) / (im.naturalWidth / im.naturalHeight) : 0;
         fo.classList.toggle("copre", !piccola && r > 0.78 && r < 1.3);
@@ -329,6 +330,30 @@
         if (!ciStanno()) g.adatta(true);
       }
     };
+    // (21 nov 2026, scelta B del proprietario) la Vetrina che si presenta un pezzo alla volta: si vedono solo i primi m,
+    // grandi come quando ci sono tutti (niente si ingrandisce), e il gruppo sta al centro dello spazio invece che in alto
+    // con un vuoto sotto. «scorri»: quelli già in vista scivolano al loro posto nuovo (solo transform). null = tutti, come sempre.
+    g.solo = function (m, scorri) {
+      var prima = scorri && g._solo != null ? posti.slice(0, g._solo).map(function (j) { var t = g.tessere[j], r = t.getBoundingClientRect(); return [t, r.left, r.top]; }) : [];
+      g._solo = m == null ? null : m; soloSu(); if (ult) copri();
+      prima.forEach(function (x) {
+        var r = x[0].getBoundingClientRect(), dx = x[1] - r.left, dy = x[2] - r.top;
+        if ((Math.abs(dx) > 1 || Math.abs(dy) > 1) && x[0].animate) x[0].animate([ { transform: "translate(" + dx + "px," + dy + "px)" }, { transform: "none" } ], { duration: 380, easing: "cubic-bezier(.2,.8,.3,1)" });
+      });
+    };
+    function soloSu() {
+      var m = g._solo;
+      g.tessere.forEach(function (t) { t.style.gridColumn = t.style.justifySelf = t.style.width = ""; });
+      if (m == null || !ult || g.classList.contains("scorre")) { if (m == null) g.tessere.forEach(function (t) { t.style.display = ""; }); return; }
+      var c = g.classList.contains("c2") ? 2 : 1, righe = Math.ceil(n / c), gap = parseFloat(getComputedStyle(g).rowGap) || 0;
+      g.style.gridTemplateRows = "repeat(" + righe + ",minmax(0,1fr))"; g.style.alignContent = "";
+      posti.forEach(function (j) { g.tessere[j].style.display = ""; });
+      var h = (g.clientHeight - gap * (righe - 1)) / righe; if (!(h > 0)) return;
+      posti.forEach(function (j, pos) { if (pos >= m) g.tessere[j].style.display = "none"; });
+      g.style.gridTemplateRows = "repeat(" + Math.max(1, Math.ceil(m / c)) + "," + h.toFixed(2) + "px)"; g.style.alignContent = "center";
+      // (in due colonne, un pezzo da solo nella sua riga mentre gli altri devono ancora uscire: al centro anche di lato, stessa misura)
+      if (c === 2 && m % 2 === 1 && m < n) { var t1 = g.tessere[posti[m - 1]]; t1.style.gridColumn = "1 / -1"; t1.style.justifySelf = "center"; t1.style.width = "calc((100% - " + (parseFloat(getComputedStyle(g).columnGap) || 0) + "px) / 2)"; }
+    }
     // (si rifà al fotogramma dopo, mai dentro l'avviso del browser: se no «ResizeObserver loop»)
     if (window.ResizeObserver) {
       var pend = false, oss = new ResizeObserver(function () {
@@ -717,7 +742,7 @@
       ".pz-pan-testa .fac{width:28px;height:28px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.15);flex:0 0 auto}.pz-pan-testa .fac svg{width:100%;height:100%;display:block}",
       ".pz-pan-testa .tx{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       ".pz-pan-testa.due .tx{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;font-size:13.5px;line-height:1.15}",   // (20 nov 2026: su due righe invece dei puntini)
-      ".pz-pan-testa .pz-tempo{flex:0 0 42%}",
+      ".pz-pan-testa .pz-tempo{flex:0 0 42%}.pz-pan-testa.due .pz-tempo{flex-basis:32%}",   // (21 nov 2026: col titolo su due righe la barra lascia più posto alle parole)
       ".pz-nota{margin:0;text-align:center;font-weight:800;color:var(--o-tenue);font-size:14px;line-height:1.35}",
       ".pz-nota.forte{color:var(--o-oro-testo);font-size:16px}",
       // il tastierino

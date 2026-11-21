@@ -1452,7 +1452,7 @@
     var U = schOfferta(R, true); aggiornaTab(R);
     // la regola sempre sotto gli occhi: senza superarlo (o sopra o sotto) e come sono le offerte
     var senza = vm.formato !== "solo" || vm.sforare;
-    U.nota.textContent = vm.rifai ? "😬 Si rifà! Tutti sotto i " + E(vm.limite) : (senza ? "⬇️ Senza superarlo!" : "↕️ Sopra o sotto") + (vm.offerte === "vista" ? " · 👀 occhio al «+1 €»" : " · 🤫 offerte segrete");
+    U.nota.textContent = vm.rifai ? "😬 Si rifà! Tutti sotto i " + E(vm.limite) : (senza ? "⬇️ Senza superarlo!" : "↕️ Sopra o sotto") + (vm.offerte === "vista" ? " · 👀 si può offrire " + (vm.prod && vm.prod.cent ? "10 centesimi" : "1 €") + " più di un altro" : " · 🤫 offerte segrete");
     if (vm.rifai) ST.terzo(S, null, "Tutti sotto i " + E(vm.limite) + "!", "Si rifà una volta sola", "😬");
     await ST.suSchermo(S, 300); if (!vivoK(R, k)) return;
     if (R.cb.locale === "telefono") return turniOfferte(R, k);
@@ -1714,7 +1714,8 @@
     var vm = R.vm, el = R.t.el, pr = vm.premio, cont = el("div", { class: "pz-premio-pan" });
     var tb = Z().barraTempo(el, fine, function () { if (R.premioPan && R.premioPan.tempo) try { R.premioPan.tempo(); } catch (e) {} if (allaFine) allaFine(); });
     R.tempoPan = barraDi(R, tb);
-    R.pan.metti([ testaPan(R, chi, (R.cb.locale === "telefono" ? chi.nome + " · " : "") + pr.icona + " " + pr.nome, tb), cont ]).su();
+    // (21 nov 2026, scelta C del proprietario: il nome del gioco è già in alto; nel pannello una frase d'aiuto)
+    R.pan.metti([ testaPan(R, chi, (R.cb.locale === "telefono" ? chi.nome + " · " : "") + (g && g.aiuto ? g.aiuto : pr.icona + " " + pr.nome), tb), cont ]).su();
     var P = {};
     // (al gioco la fine vera di chi tiene la partita: È troppo! e il Mirino ci regolano i prezzi che scorrono e la finestrella;
     //  la barra, e con lei il «tempo scaduto» del pannello, finisce ANTICIPO prima)
@@ -2080,19 +2081,19 @@
     var lista = vetrinaTes(el, V, null, V.mist ? ["…e c'è una vetrina misteriosa!", "Nessuno sa cosa c'è dentro"] : null), nodi = lista.tessere.map(nascondi);
     var pacco = V.mist ? nodi.pop() : null;
     schermo(R, [ el("div", { class: "pz-testa", text: "🛍️ La Vetrina finale" }), el("div", { class: "pz-vtit", text: V.e + " " + V.titolo }), lista ], "con-terzo");
-    lista.adatta();
+    lista.adatta(); lista.solo(0);   // (scelta B: i pezzi già scoperti al centro dello spazio, grandi come con tutti)
     ST.terzo(S, null, "E per voi…", V.titolo, "🛍️"); Z().FX.tada();
     await ST.dorme(900);
     for (var i = 0; i < V.pezzi.length; i++) {
       if (!vivoK(R, k)) return;
-      scopri(nodi[i]);
+      scopri(nodi[i]); lista.solo(i + 1, true);
       ST.terzo(S, null, (i === 0 ? "E per voi… " : i === V.pezzi.length - 1 ? "…e per finire " : "…ma non è finita! ") + (V.pezzi[i].e || ""), V.pezzi[i].nome, "🛍️");
       ST.pubblico(S, i === V.pezzi.length - 1 ? "applauso" : "piano"); fumetto(S, "Ooooh! 😮");
       await ST.dorme(RVET.pezzo);
     }
     // (con la misteriosa: si annuncia che ce n'è un'altra, che nessuno ha visto)
     if (pacco && vivoK(R, k)) {
-      scopri(pacco);
+      scopri(pacco); lista.solo(V.pezzi.length + 1, true);
       ST.terzo(S, null, "…ma attenzione: c'è anche", "una vetrina misteriosa!", "🎁"); Z().FX.tada(); fumetto(S, "Uuuuh! 🎁");
       await ST.dorme(RVET.mist);
     }
@@ -2244,8 +2245,8 @@
       box.appendChild(el("div", { class: "pz-vtit" + (mist ? " mist" : ""), text: (mist ? "🎁 " : "") + X.e + " " + X.titolo }));
       box.appendChild(lista);
       box.appendChild(el("div", { class: "pz-tot" }, [ el("span", { text: "Totale" }), conta.el ]));
-      lista.adatta();
-      if (mist) { for (var j = 0; j < nodi.length; j++) { scopri(nodi[j]); Z().FX.toc(500 + j * 60); await ST.dorme(RVET.pezzoB); if (!vivoK(R, k)) return false; } }
+      lista.adatta(); if (mist) lista.solo(0);
+      if (mist) { for (var j = 0; j < nodi.length; j++) { scopri(nodi[j]); lista.solo(j + 1, true); Z().FX.toc(500 + j * 60); await ST.dorme(RVET.pezzoB); if (!vivoK(R, k)) return false; } }
       else { ST.FX.rullo(1.2); await ST.dorme(RV.rullo); if (!vivoK(R, k)) return false; }
       for (var i = 0; i < nodi.length; i++) { nodi[i]._tag.classList.add("su"); Z().FX.toc(600 + i * 80); await ST.dorme(RVET.prezzo); if (!vivoK(R, k)) return false; }
       await conta.via(RVET.cifra); if (!vivoK(R, k)) return false;
@@ -2469,7 +2470,7 @@
     regole: [
       "Si indovina il <b>prezzo</b> di cose vere: la spesa, il caffè al bar, lo smartphone, la Vespa, una settimana al mare… Sono prezzi medi in Italia.",
       "📺 <b>Come in TV</b>: si apre il sipario, compare un prodotto e avete <b>20 secondi</b> per scrivere il prezzo. Vince chi ci va <b>più vicino senza superarlo</b> (se superi di pochissimo, entro il 2%, vale ancora).",
-      "👀 Con le offerte <b>a vista</b> si vedono arrivare: un prezzo già detto non si può ridire, e chi aspetta può fare il <b>«+1 €»</b> cattivo. Con le offerte <b>segrete</b> si scoprono tutte alla fine.",
+      "👀 Con le offerte <b>a vista</b> si vedono arrivare: un prezzo già detto non si può ridire, e chi offre dopo può offrire <b>1 € più di un altro</b> (10 centesimi sui prezzi sotto i 20 €), per rubargli il posto. Con le offerte <b>segrete</b> si scoprono tutte alla fine.",
       "Se <b>sforate tutti</b>, si rifà una volta sola, tutti sotto l'offerta più bassa.",
       "Punti: <b>300</b> al primo, <b>150</b> al secondo, <b>75</b> al terzo (con almeno 4 giocatori). <b>PREZZO GIUSTO!</b> (praticamente preciso): <b>+500</b>.",
       "Chi vince l'Offerta sceglie il <b>gioco a premi</b>, e si gioca tutti insieme.",
@@ -2503,7 +2504,7 @@
       }
       gruppo("Formato", "formato", [ { v: "tv", mt: "📺 Come in TV", ms: "Offerte, giochi a premi, Ruota e Vetrina" }, { v: "solo", mt: "🎯 Solo il prezzo", ms: "Un oggetto dopo l'altro, vince il più vicino" } ]);
       gruppo("Quanto dura", "durata", [ { v: "veloce", mt: "⚡ Veloce", ms: "TV: 2 offerte · Solo: 6 oggetti" }, { v: "puntata", mt: "📺 Puntata", ms: "TV: 3 offerte · Solo: 10 oggetti" }, { v: "lunga", mt: "🌙 Serata lunga", ms: "TV: 4 offerte e 2 Ruote · Solo: 15 oggetti" } ]);
-      gruppo("Le offerte", "offerte", [ { v: "vista", mt: "👀 A vista", ms: modo === "telefono" ? "A turno, come in TV: occhio al «+1 €»" : "Si vedono arrivare: occhio al «+1 €»" }, { v: "segrete", mt: "🤫 Segrete", ms: modo === "telefono" ? "Vi passate il telefono" : "Si scoprono alla fine" } ], true);
+      gruppo("Le offerte", "offerte", [ { v: "vista", mt: "👀 A vista", ms: modo === "telefono" ? "A turno, come in TV: si può offrire 1 € (o 10 cent.) più di un altro" : "Si vedono arrivare: si può offrire 1 € (o 10 cent.) più di un altro" }, { v: "segrete", mt: "🤫 Segrete", ms: modo === "telefono" ? "Vi passate il telefono" : "Si scoprono alla fine" } ], true);
       gruppo("Si può sforare? (🎯 Solo il prezzo)", "sforare", [ { v: false, mt: "↕️ Sì", ms: "Vince il più vicino, sopra o sotto" }, { v: true, mt: "⬇️ Senza sforare", ms: "Come in TV: chi supera non vale" } ], true);
       function mostraSolo() { (gruppi.sforare || []).forEach(function (n) { n.style.display = dove.formato === "solo" ? "" : "none"; }); }
       mostraSolo();

@@ -135,6 +135,7 @@
   PREMI.dadi = {
     nome: "Il Gioco dei Dadi", icona: "🎲", ordine: 8,
     regola: "Un dado per ogni cifra del prezzo: la cifra vera è più alta, uguale o più bassa?",
+    aiuto: "🎲 Cifra per cifra, contro il dado",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "Ogni cifra del prezzo ha il suo dado: per ognuna dì se la cifra vera è ⬆️ più alta, = uguale o ⬇️ più bassa del dado. La prima cifra vale 200 punti, le altre 60, +150 se le indovini tutte.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
     fai: "Sopra ogni cifra del prezzo c'è un dado. Per ogni cifra dì se quella vera è ⬆️ più alta, = uguale o ⬇️ più bassa.",
@@ -333,6 +334,7 @@
   PREMI.mirino = {
     nome: "Il Mirino", icona: "🎯", ordine: 9,
     regola: "La finestrella sale sulla scala dei prezzi: fermala quando c'è dentro il prezzo giusto!",
+    aiuto: "🎯 Il prezzo dentro la finestrella",   // (21 nov 2026, scelta C: nel pannello questa frase, il nome del gioco è già in alto)
     spiega: "Una finestrella sale sulla scala dei prezzi: tocca «Stop!» quando il prezzo vero ci sta dentro. Dentro 600 punti, appena fuori 350, più lontano meno.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
     // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
     fai: "Una finestrella sale sulla scala dei prezzi: tocca «🎯 Stop!» quando il prezzo vero ci sta dentro. Si tocca una volta sola.",
