@@ -49,7 +49,7 @@
     box.className = "pz-tab" + (A.giocatori.length > 4 ? " fitto" : "");
     A.giocatori.forEach(function (g) {
       var t = testo(g.id);
-      box.appendChild(A.el("span", { class: "pz-och" + (t.ok ? " ok" : " aspetta") }, [ A.fac(g.id), A.el("span", { text: A.nome(g.id) }), A.el("span", { class: "v", text: t.tx }) ]));
+      box.appendChild(A.el("span", { class: "pz-och" + (t.ok ? " ok" : " aspetta") }, [ A.fac(g.id), A.el("span", { class: "nm", text: A.nome(g.id) }), A.el("span", { class: "v", text: t.tx }) ]));
     });
   }
   function aggChips(A, box, testo) {
@@ -122,6 +122,10 @@
     nome: "L'Alpinista", icona: "🧗", ordine: 2,
     regola: "Scrivi 3 prezzi: più sbagli, più sali. Oltre la vetta cadi dal burrone!",
     spiega: "Scrivi il prezzo di 3 prodotti, uno dopo l'altro. Ogni errore fa salire l'alpinista: se supera la vetta cade e fai 0. Più resta in basso, più punti: fino a 550, +200 se li indovini tutti e tre.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
+    // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
+    fai: "Scrivi il prezzo di 3 prodotti, uno dopo l'altro. Più sbagli, più l'alpinista sale la montagna: se va oltre la vetta, cade giù.",
+    es: "Costa 10 € e scrivi 12 € → hai sbagliato di poco: l'alpinista sale di qualche passo.",
+    pt: "Più resta in basso, più punti: fino a 550. Tutti e tre quasi giusti: +200. Se cade: 0.",
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -285,13 +289,14 @@
         var c = el("span", { class: "pza-alp" }, [ A.fac(x.id) ]);
         c.style.width = c.style.height = FAC + "px"; c.style.zIndex = String(10 + j);
         c.style.setProperty("--col", COLORI[j % COLORI.length]);
-        var off = (j - (n - 1) / 2) * Math.min(7, 40 / Math.max(1, n));
+        var off = (j - (n - 1) / 2) * Math.min(FAC * 0.8, 120 / Math.max(1, n));   // (21 nov 2026: a ventaglio, prima in 6 erano un mucchio solo)
         av[x.id] = { el: c, ox: nx * off, oy: ny * off }; pos[x.id] = 0;
         monte.appendChild(c); metti(x.id, 0);
       });
       function metti(id, s) {
         var a = av[id], u = Math.min(s, ALP.vetta) / ALP.vetta;
         var x = B.x + dx * u + a.ox - FAC / 2, y = B.y + dy * u + a.oy - FAC;
+        x = Math.max(2, Math.min(W - FAC - 2, x)); y = Math.max(0, Math.min(H - FAC, y));   // (21 nov 2026: mai fuori dalla montagna: in 6 il primo era tagliato a sinistra)
         a.el.style.transform = "translate(" + Math.round(x) + "px," + Math.round(y) + "px)";
       }
       function cade(id) {
@@ -342,7 +347,7 @@
         if (cadeQui) {
           var caduti = g.filter(function (x) { return giu[x.id] && add[x.id] && !detti[x.id]; });
           caduti.forEach(function (x) { detti[x.id] = 1; });
-          banner.textContent = caduti.length === 1 ? "💥 " + frase(A, caduti[0].id, "Sei caduto dal burrone!", "è caduto dal burrone!") : "💥 Giù dal burrone: " + caduti.map(function (x) { return A.nome(x.id); }).join(", ") + "!";
+          banner.textContent = caduti.length === 1 ? "💥 " + frase(A, caduti[0].id, "Giù dal burrone!", "vola giù dal burrone!") : "💥 Giù dal burrone: " + caduti.map(function (x) { return A.nome(x.id); }).join(", ") + "!";
           banner.classList.remove("pza-scuoti"); void banner.offsetWidth; banner.classList.add("pza-scuoti");
           await A.dorme(1500); if (!A.vivo()) return;
         }
@@ -406,6 +411,10 @@
     nome: "Mettili in ordine", icona: "📊", ordine: 3,
     regola: "Tocca due prodotti per scambiarli: dal meno caro in alto al più caro in basso.",
     spiega: "Metti 5 prodotti in fila, dal meno caro in alto al più caro in basso: tocca due prodotti per scambiarli di posto. 70 punti per ogni prodotto al posto giusto, +100 se sono tutti giusti.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
+    // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
+    fai: "5 prodotti in colonna. Tocca un prodotto e poi un altro per scambiarli: in alto il meno caro, in fondo il più caro.",
+    es: "In alto il caffè (3 €), poi le cuffie (80 €), in fondo la bici (400 €).",
+    pt: "70 punti per ogni prodotto al posto giusto, +100 se sono tutti giusti.",
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -590,10 +599,10 @@
       var best = g.slice().sort(function (a, b) { return b.n - a.n || a.ms - b.ms; })[0];
       if (buche.length) {
         banner.className = "pz-banner oro pza-bn";
-        banner.textContent = buche.length === 1 ? "⛳ Buca in uno! " + (eTu(A, buche[0].id) ? "Bravissimo!" : A.nome(buche[0].id) + "!") : "⛳ Buca in uno per " + buche.length + "!";
+        banner.textContent = buche.length === 1 ? "⛳ Buca in uno! " + (eTu(A, buche[0].id) ? "Che colpo!" : A.nome(buche[0].id) + "!") : "⛳ Buca in uno per " + buche.length + "!";
       } else if (best && best.n >= 3) {
         banner.className = "pz-banner pza-bn";
-        banner.textContent = "🏌️ " + frase(A, best.id, "Ci sei andato più vicino: " + best.n + " su 5!", "ci va più vicino: " + best.n + " su 5!");
+        banner.textContent = "🏌️ " + frase(A, best.id, "Ci vai più vicino tu: " + best.n + " su 5!", "ci va più vicino: " + best.n + " su 5!");
         A.ST.pubblico(A.S, "applauso");
       } else {
         banner.className = "pz-banner no pza-bn";
@@ -641,7 +650,7 @@
       ".pz-pan:has(.pza-ord) .pz-premio-pan{flex:1 1 0;min-height:0;display:flex;flex-direction:column}.pz-pan .pza-ord{flex:1 1 0;min-height:0}.pz-pan .pza-ord .pza-or{flex:1 1 auto}",
       ".pza-or{position:relative;display:flex;align-items:center;gap:8px;min-height:clamp(40px,calc(var(--alt,640px) * .062),52px);padding:4px 10px 4px 4px;box-sizing:border-box;border:0;border-radius:12px;font:inherit;text-align:left;color:#1d1b3a;background:linear-gradient(#fff,#eceef8);box-shadow:inset 0 -3px 0 rgba(14,18,44,.25);cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:transform .28s cubic-bezier(.3,1.3,.5,1),box-shadow .15s;will-change:transform}",
       ".pza-or .nb{flex:0 0 46px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1;color:#b0184f}.pza-or .nb b{font-size:17px}.pza-or .nb small{font-size:8.5px;font-weight:900;text-transform:uppercase;letter-spacing:.02em;margin-top:2px}",
-      ".pza-or .e{flex:0 0 auto;font-size:clamp(31px,calc(var(--alt,640px) * .085),72px);line-height:1}",   // (sui telefoni alti le righe crescono)
+      ".pza-or .e{flex:0 0 auto;font-size:clamp(28px,calc(var(--alt,640px) * .075),68px);line-height:1}",   // (sui telefoni alti le righe crescono; 20 nov 2026: un po' più piccole, a 640 la quinta riga finiva sotto «Fatto!»)
       ".pza-or .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;overflow-wrap:break-word}.pza-or .n{font-weight:800;font-size:clamp(14px,calc(var(--alt,640px) * .022),19px);line-height:1.15}",
       ".pza-or .ds{font-size:clamp(12px,calc(var(--alt,640px) * .0175),15.5px);font-weight:600;color:#4c4a66;line-height:1.2}.pza-or.sel .ds{color:#5c3c00}",
       ".pza-or.sel{background:linear-gradient(#ffe6ee,#ffc4d6);box-shadow:0 0 0 3px #ff4f86,0 4px 14px rgba(224,34,90,.5);z-index:2}",

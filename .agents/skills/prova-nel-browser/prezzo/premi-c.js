@@ -99,7 +99,7 @@
 
   // ===================== pn1: le regole =====================
   COPIONE.aggiungi("pn1", { nome: "Premi C: le regole della Spesa e della Cassaforte, senza grafica", fai: async function () {
-    var w = await W.apriTel("Paky", { x: 0 });
+    var w = await W.pzPronto(await W.apriTel("Paky", { x: 0 }));
     if (!await W.aspetta(function () { return w.SG_PREZZO_PREMI && w.SG_PREZZO_PREMI.spesa && w.SG_PREZZO_PREMI.cassaforte; }, 6000)) no("i due giochi a premi non sono registrati");
     var R = w.SG_PREZZO_PREMI, tutti = w.SG_PREZZO.prodotti;
     function Pfinto(ids) {
@@ -168,7 +168,7 @@
 
   // ===================== pn2: col Bot =====================
   COPIONE.aggiungi("pn2", { nome: "Premi C: 🤖 Contro il Bot, 📺 Puntata: la Spesa e la Cassaforte", fai: async function () {
-    var w = await W.apriTel("Paky", { x: 0, spiaPrezzo: true, prima: function (w2) { w2.__imp = { formato: "tv", durata: "puntata", offerte: "vista", liv: "medio", nBot: 3 }; } });
+    var w = await W.pzPronto(await W.apriTel("Paky", { x: 0, spiaPrezzo: true, prima: function (w2) { w2.__imp = { formato: "tv", durata: "puntata", offerte: "vista", liv: "medio", nBot: 3 }; } }));   // (i giochi si scaricano quando servono)
     if (!await W.aspetta(function () { return soloMiei(w); }, 6000)) no("i due giochi a premi non sono registrati");
     var tess = await W.aspetta(function () { return [].filter.call(w.document.querySelectorAll(".tessera"), function (t) { return /Prezzo è Giusto/.test(t.textContent); })[0]; }, 5000);
     tess.click(); await W.dorme(300);
@@ -285,7 +285,7 @@
     // (24 ott 2026: nella Spesa i prodotti stanno solo nel pannello, col più e il meno; sopra restano «Spendi tra» e chi ha
     //  finito: il pannello può essere alto fino all'80%, purché «Spendi tra» si veda sopra)
     if (pan && pan.querySelector(".pzc-sr")) {
-      guai = guai.filter(function (g) { return !/^pannello alto/.test(g); });
+      guai = guai.filter(function (g) { return !/^pannello alto/.test(g) && !/^pz-och sotto il pannello/.test(g); });   // (21 nov 2026: mentre si gioca la Spesa il pannello copre apposta chi ha finito: la prova era rimasta a prima del 25 ott)
       // (25 ott: mentre si gioca il pannello sale fin sotto il titolo e «Spendi tra» sta nel pannello)
       if (pan.getBoundingClientRect().top < 50) guai.push("il pannello della Spesa copre i tasti in alto (" + Math.round(pan.getBoundingClientRect().top) + ")");
       var no2 = pan.querySelector(".pzc-nota"); if (!no2 || !no2.getBoundingClientRect().height) guai.push("«Spendi tra» non si vede nel pannello");
@@ -298,7 +298,7 @@
     var esiti = [], misure = W.__pn5misure || [[360, 640], [412, 915], [360, 780]];
     for (var m = 0; m < misure.length; m++) {
       var wh = misure[m];
-      var w = await W.apriTel("Paky", { x: 0, spiaPrezzo: true, prima: function (w2) { w2.__imp = { formato: "tv", durata: "veloce", offerte: "vista", liv: "medio", nBot: 5 }; } });
+      var w = await W.pzPronto(await W.apriTel("Paky", { x: 0, spiaPrezzo: true, prima: function (w2) { w2.__imp = { formato: "tv", durata: "veloce", offerte: "vista", liv: "medio", nBot: 5 }; } }));   // (i giochi si scaricano quando servono)
       await W.aspetta(function () { return soloMiei(w); }, 6000);
       var na = w.document.createElement("style"); na.textContent = "*{animation:none!important;transition:none!important}"; w.document.head.appendChild(na);
       var f = document.getElementById("tel-Paky"); f.style.width = wh[0] + "px"; f.style.height = wh[1] + "px"; w.dispatchEvent(new w.Event("resize"));

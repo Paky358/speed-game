@@ -215,7 +215,11 @@
   // ---------------- i giochi a premi registrati ----------------
   function premi() { return window.SG_PREZZO_PREMI || {}; }
   function premioDi(tipo) { var g = premi()[tipo]; return g && typeof g.prepara === "function" && typeof g.fine === "function" ? g : null; }
-  function infoPremio(tipo) { var g = premioDi(tipo) || {}; return { tipo: tipo, nome: g.nome || tipo, icona: g.icona || "🎁", regola: g.regola || "", spiega: g.spiega || g.regola || "" }; }
+  function infoPremio(tipo) { var g = premioDi(tipo) || {}; return { tipo: tipo, nome: g.nome || tipo, icona: g.icona || "🎁", regola: g.regola || "", spiega: g.spiega || g.regola || "", fai: g.fai || "", es: g.es || "", pt: g.pt || "" }; }
+  // quanto resta la schermata delle regole (20 nov 2026, il proprietario: «metterei più tempo per la spiegazione dei minigiochi… così chi non gioca
+  // capisce bene»): una lettura con calma, 2,5 parole al secondo, più 6 secondi per guardare l'esempio; tra 15 e 30 secondi. «⏩ Avanti» resta.
+  function parole(s) { return String(s || "").trim().split(/\s+/).filter(function (x) { return /[0-9A-Za-zÀ-ú]/.test(x); }).length; }
+  function tempoRegole(tipo) { var i = infoPremio(tipo), n = parole(i.fai ? i.fai + " " + i.es + " " + i.pt : i.spiega); return Math.max(15, Math.min(30, Math.round(6 + n / 2.5))) * 1000; }
 
   // ---------------- le impostazioni ----------------
   function leggiImp(imp, modo) {
@@ -345,7 +349,7 @@
       var f = H.fase, s = H.sotto, o = { fase: f, sotto: s, k: H.k, partita: H.partita, tiene: IO, sessione: H.sessione || "", codice: H.codice, pronta: H.pronta,
         formato: H.imp.formato, durata: H.imp.durata, offerte: H.imp.offerte, sforare: H.imp.sforare, nCat: H.imp.cats.length, anno: annoDati(),
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, omino: p.omino || null, punti: p.punti, via: !!p.via, forse: !!p.forse, bot: p.bot ? 1 : 0 }; }),
-        guarda: H.guarda.slice(), arrivi: H.arrivi.map(function (a) { return { id: a.id, nome: a.nome }; }),
+        guarda: H.guarda.slice(), arrivi: H.arrivi.map(function (a) { return { id: a.id, nome: a.nome }; }), entra: H.arrivi.length ? ingresso() || "" : null,
         restaMs: H.scadenza ? Math.max(0, H.scadenza - Date.now()) : 0 };
       if (f === "lobby") return o;
       o.iOff = H.iOff || 0; o.nOff = H.nOff || 0; o.iPremio = H.iPremio || 0; o.nPremio = H.nPremio || 0; o.nRuota = H.nRuota || 0; o.ruoteTot = H.ruoteTot || 0;
@@ -360,7 +364,7 @@
       if (f === "scegli" && H.scelta) o.scelta = { chi: H.scelta.chi, opz: H.scelta.opz.map(infoPremio), fatta: H.scelta.fatta };
       if (f === "premio" && H.premio) {
         var g = premioDi(H.premio.tipo), inf = infoPremio(H.premio.tipo);
-        o.premio = { tipo: H.premio.tipo, nome: inf.nome, icona: inf.icona, regola: inf.regola, spiega: inf.spiega, da: H.premio.da || null, sec: H.premio.sec || 0,
+        o.premio = { tipo: H.premio.tipo, nome: inf.nome, icona: inf.icona, regola: inf.regola, spiega: inf.spiega, fai: inf.fai, es: inf.es, pt: inf.pt, da: H.premio.da || null, sec: H.premio.sec || 0,
           fatti: Object.keys(H.premio.fatti) };
         if (s === "gioca" && g && g.pubblico) { try { o.premio.pub = g.pubblico(H.premio.st, apiPremio()); } catch (e) { o.premio.pub = {}; } }
         if (s === "riv") { o.premio.riv = H.premio.riv; o.premio.punti = H.premio.punti; }
@@ -453,6 +457,9 @@
       if (s === "carrello") return vai("carrello", null, durCarrello(presenti().length), fine);
       return fine();
     }
+    // dove entra chi arriva adesso (20 nov 2026: «Entri al prossimo oggetto» non era sempre vero): il prossimo oggetto, Offerta,
+    // Ruota o Vetrina del piano; "" = la puntata è alla fine, gioca dalla prossima partita
+    function ingresso() { for (var i = H.ip + 1; i < H.piano.length; i++) if (/^(offerta|oggetto|ruota|vetrina)$/.test(H.piano[i])) return H.piano[i]; return ""; }
     // chi è arrivato a partita cominciata entra adesso (all'inizio di un oggetto, della Ruota o della Vetrina)
     function entranoNuovi() {
       H.arrivi.forEach(function (a) { if (!pById(a.id) && H.players.length < MAX_ON) H.players.push({ id: a.id, nome: a.nome, omino: a.omino || null, punti: 0, carrello: [] }); });
@@ -572,7 +579,7 @@
       try { st = g.prepara(apiPremio()); } catch (e) { try { console.error("[prezzo] prepara " + tipo, e); } catch (x) {} return prossimo(); }
       H.premio = { tipo: tipo, st: st, fatti: {}, riv: null, punti: null, da: da || null, sec: 30 };
       H.avanti = [];   // (la regola si salta con «⏩ Avanti», come le classifiche: 23 ott 2026)
-      vai("premio", "intro", T.intro, giocaPremio);
+      vai("premio", "intro", tempoRegole(tipo), giocaPremio);
     }
     function giocaPremio() {
       var g = premioDi(H.premio.tipo), sec = 30;
@@ -757,7 +764,7 @@
     function mandaIndizio(id) {
       var I = indizioDi(id); if (!I || I.i == null || !H.vet) return;
       var x = vetDi(id).pezzi[I.i]; if (!x) return;
-      privato(id, { t: "priv", k: "indizio", i: I.i, e: x.e, nome: x.nome, desc: [x.desc, x.dove].filter(Boolean).join(" · "), prezzo: x.prezzo, kk: H.k });
+      privato(id, { t: "priv", k: "indizio", i: I.i, e: x.e, nome: x.nome, desc: Z().sottoDi(x), prezzo: x.prezzo, kk: H.k });
     }
     function offVetrina(id, v) {
       var p = pById(id);
@@ -1132,6 +1139,10 @@
       ids: vm.players.map(function (p) { return p.id; }).join("|") };
     vm.players.forEach(function (p, i) { ST.puntiLeggio(S, i, p.punti, 0); });
     if (conTarga(t)) S.vista.classList.add("st-con-targa");   // chi guarda soltanto: in basso la targhetta del core («👀 Guardi · 😂 · ✕»)
+    // (20 nov 2026) lo spazio lasciato sotto lo schermo è quanto è alta davvero la barra in basso: prima era fisso (104 px) e una
+    // scritta d'attesa su due righe, il conto e le faccine coprivano l'ultima riga (la fila di chi ha offerto, il totale della vetrina)
+    S.vista.classList.add("pz-vista");
+    try { if (window.ResizeObserver) new ResizeObserver(function () { var h = S.barraEl.offsetHeight; if (h) S.vista.style.setProperty("--pz-barra", h + "px"); }).observe(S.barraEl); } catch (e) {}
     return X;
   }
   // chi è arrivato a partita cominciata entra: i leggii si rifanno (succede solo all'inizio di un oggetto)
@@ -1147,12 +1158,18 @@
     var vm = R.vm, S = R.S, f = vm.fase, s = vm.sotto; if (!S.vivo()) return;
     var fermi = (f === "offerta" && s === "rivela") || (f === "premio" && s === "riv") || (f === "ruota" && (s === "riv" || s === "rivb")) || (f === "vetrina" && s === "riv") || f === "fine";
     vm.players.forEach(function (p, i) {
-      if (p.via) { if (!R.usciti[p.id]) { R.usciti[p.id] = 1; ST.fuori(S, i, true); } ST.testoLeggio(S, i, "👋 uscito", true); return; }
+      if (p.via) { if (!R.usciti[p.id]) { R.usciti[p.id] = 1; ST.fuori(S, i, true); } ST.testoLeggio(S, i, "👋 fuori", true); return; }
       if (R.usciti[p.id]) { delete R.usciti[p.id]; ST.fuori(S, i, false); }
       if (p.forse) return ST.testoLeggio(S, i, "📶 …");
       if (f === "offerta" && s === "offri") { var v = (vm.off || {})[p.id], ok = v != null || (vm.offFatti || []).indexOf(p.id) >= 0; return ST.testoLeggio(S, i, v != null ? E(v) : ok ? "✅" : (vm.passati || []).indexOf(p.id) >= 0 ? "😶" : "🤔"); }
       if (f === "vetrina" && (s === "offri" || s === "scegli")) return ST.testoLeggio(S, i, ((s === "scegli" ? vm.vet.sFatti : vm.vet.fatti) || []).indexOf(p.id) >= 0 ? "✅" : "🤔");
-      if (f === "premio" && s === "gioca") return ST.testoLeggio(S, i, ((vm.premio || {}).fatti || []).indexOf(p.id) >= 0 ? "✅" : "🎮");
+      if (f === "premio" && s === "gioca") {
+        // (20 nov 2026) nei giochi dove fermarsi è la mossa (È troppo!) chi ha finito si vede solo quando hai finito anche tu:
+        // se no il primo che si ferma fa da spia agli altri («il prezzo vero è qui vicino»). Chi guarda vede tutto.
+        var fatti = (vm.premio || {}).fatti || [], gp = premioDi((vm.premio || {}).tipo), me1 = mio(R);
+        var celati = !!(gp && gp.fattiSegreti && !R.cb.locale && me1 && fatti.indexOf(me1.id) < 0);
+        return ST.testoLeggio(S, i, !celati && fatti.indexOf(p.id) >= 0 ? "✅" : "🎮");
+      }
       if (f === "ruota" && !fermi && vm.ruota) {
         var x = vistaRuota(R, p.id); if (!x) return ST.puntiLeggio(S, i, p.punti, 0);
         var tot = (x.v1 || 0) + (x.v2 || 0);
@@ -1209,13 +1226,21 @@
     var resta = vm.restaMs ? fineVM(R) - Date.now() : 0, tb = null;   // (la stessa fine della barra del pannello: dopo un tocco il conto continua uguale)
     if (R.cb.locale !== "telefono" && resta > 1500 && vm.fase !== "punti") tb = barraDi(R, Z().barraTempo(el, Date.now() + resta, null, { muto: true, cls: "mini" }));
     R.tempoAttesa = tb;
-    ST.barra(R.S, [ el("p", { class: "pz-attesa", text: testo }), tb ? tb.el : null, faccine(R) ]);
+    // (20 nov 2026) la scritta di chi guarda o arriva tardi si aggiorna appena chi tiene la partita lo registra (aggiornaFase):
+    // prima restava «Stai guardando: alla prossima partita…» per tutto il passo anche a chi entrava al prossimo oggetto
+    var p = el("p", { class: "pz-attesa", text: testo }); R.pGuarda = testo === guardaTesto(R) ? p : null;
+    ST.barra(R.S, [ p, tb ? tb.el : null, faccine(R) ]);
   }
   function guardaTesto(R) {
     var vm = R.vm, id = R.cb.myId;
     if (R.t.guarda) return "👀 Guardi la puntata";
     if ((vm.guarda || []).indexOf(id) >= 0) return "👀 Questa volta guardi: gioca chi è stato scelto.";
-    if ((vm.arrivi || []).some(function (a) { return a.id === id; })) return "👋 Ci sei! Entri al prossimo oggetto.";
+    if ((vm.arrivi || []).some(function (a) { return a.id === id; })) {
+      var e = vm.entra;   // (20 nov 2026: dove entra davvero; "" = la puntata è alla fine)
+      return e === "offerta" ? "👋 Ci sei! Entri alla prossima Offerta." : e === "ruota" ? "👋 Ci sei! Entri alla Ruota del 100." : e === "vetrina" ? "👋 Ci sei! Entri alla Vetrina finale." :
+        e === "" ? "👋 Ci sei! La puntata sta finendo: giochi dalla prossima." : "👋 Ci sei! Entri al prossimo oggetto.";
+    }
+    if ((vm.players || []).some(function (p) { return p.id === id && p.via; })) return "📶 Ti ricolleghi: rientri tra un attimo coi tuoi punti.";
     return "👀 Stai guardando: alla prossima partita giochi anche tu.";
   }
   function fumetto(S, testo) { S.fumetto.textContent = testo; S.fumetto.classList.remove("on"); void S.fumetto.offsetWidth; S.fumetto.classList.add("on"); }
@@ -1273,7 +1298,12 @@
   function miniProd(el, p) { return Z().miniprod(el, p); }
   function testaPan(R, chi, testo, tb) {
     var el = R.t.el;
-    return el("div", { class: "pz-pan-testa" }, [ chi ? fac(el, chi) : null, el("span", { class: "tx", text: testo }), tb ? tb.el : null ]);
+    var tx = el("span", { class: "tx", text: testo }), d = el("div", { class: "pz-pan-testa" }, [ chi ? fac(el, chi) : null, tx, tb ? tb.el : null ]);
+    // (20 nov 2026) un titolo che non ci sta su una riga va su due, più piccolo: prima finiva coi puntini («Hai fatto 40. E ade…»)
+    function adatta() { if (!tx.isConnected) return; d.classList.remove("due"); if (tx.scrollWidth > tx.clientWidth + 1) d.classList.add("due"); }
+    requestAnimationFrame(adatta); setTimeout(adatta, 400);
+    try { new MutationObserver(adatta).observe(tx, { childList: true, characterData: true, subtree: true }); } catch (e) {}
+    return d;
   }
   // i punti scorrono sui leggii (inquadratura larga), con le facce
   async function leggiiDelta(R, k, delta) {
@@ -1350,7 +1380,9 @@
     if (R.schKey === key && R.schOff && R.schOff.box.isConnected) { if (aperto) R.schOff.sip.aperto(); return R.schOff; }
     var sk = Z().scheda(el, vm.prod, {}), sip = Z().sipario(el, sk);
     if (aperto) sip.aperto();
-    var nota = el("div", { class: "pz-sotto" }), tab = el("div", { class: "pz-tab" + (vm.players.length > 5 ? " fitto" : "") });
+    // (20 nov 2026) a offerte viste, mentre offri le offerte degli altri sono già nel pannello: la fila sullo schermo si nasconde
+    // (prima in 4 sul telefono basso era tagliata dal pannello e ripeteva le stesse offerte); torna quando il pannello scende
+    var nota = el("div", { class: "pz-sotto" }), tab = el("div", { class: "pz-tab" + (vm.players.length > 5 ? " fitto" : "") + (vm.offerte === "vista" ? " pz-solo-giu" : "") });
     var box = schermo(R, [ testa(R), sip.el, nota, tab ]);
     R.schKey = key; R.schOff = { box: box, sip: sip, nota: nota, tab: tab, chips: {} };
     return R.schOff;
@@ -1383,6 +1415,25 @@
       c.classList.toggle("aspetta", !ha); c.classList.toggle("ok", ha && !vista);
       if (U.tab.lastChild !== c || c.parentNode !== U.tab) U.tab.appendChild(c);
     });
+
+    fotoCheCiSta(R);
+  }
+  // (21 nov 2026) offerte a vista in tanti sul telefono basso: se la fila delle offerte non ci sta, la foto del prodotto si abbassa
+  // finché ci sta tutto (mai sotto 56 px); si rifà quando lo schermo cambia misura (pannello su o giù)
+  function fotoCheCiSta(R) {
+    var U = R.schOff, sch = U && U.box && U.box.isConnected ? (U.box.classList && U.box.classList.contains("pz-sch") ? U.box : R.S.sch.querySelector(".pz-sch")) : null;
+    var f = sch && sch.querySelector(".pz-sip .pz-foto"); if (!f) return;
+    var ci = function () { return sch.scrollHeight <= sch.clientHeight + 1; };
+    f.style.height = "";
+    if (!ci()) { var h = f.offsetHeight; while (!ci() && h > 56) { h = Math.max(56, h - 10); f.style.height = h + "px"; } }
+    if (!U.ossFoto && window.ResizeObserver) {
+      var ult = sch.clientHeight + "x" + sch.clientWidth, pend = false;
+      U.ossFoto = new ResizeObserver(function () {
+        if (pend) return; pend = true;
+        requestAnimationFrame(function () { pend = false; if (!sch.isConnected) { U.ossFoto.disconnect(); return; } var m = sch.clientHeight + "x" + sch.clientWidth; if (m === ult) return; ult = m; fotoCheCiSta(R); });
+      });
+      U.ossFoto.observe(sch);
+    }
   }
   async function fProdotto(R) {
     var S = R.S, vm = R.vm, k = vm.k;
@@ -1535,7 +1586,7 @@
     // «😈 Che cattiveria!»: il «+1 €» fischiato dal pubblico
     if (e.cattivo) {
       var ic = idxDi(vm, e.cattivo.chi);
-      ST.terzo(S, ic, "😈 " + (e.cattivo.chi === me ? "Hai" : nomeDi(vm, e.cattivo.chi) + " ha") + " fatto +" + E(e.cattivo.piu) + " a " + (e.cattivo.a === me ? "te" : nomeDi(vm, e.cattivo.a)) + "!", "Che cattiveria!");
+      ST.terzo(S, ic, "😈 " + (e.cattivo.chi === me ? "Hai" : nomeDi(vm, e.cattivo.chi) + " ha") + " offerto " + E(e.cattivo.piu) + " più di " + (e.cattivo.a === me ? "te" : nomeDi(vm, e.cattivo.a)) + "!", "Che cattiveria!");   // (20 nov 2026: prima «ha fatto +1 € a te», che chi non conosce il programma non capiva)
       Z().FX.buu(); fumetto(S, "Buuuu! 👎");
       if (ic >= 0) ST.faccia(S, ic, "evviva");
       var ia = idxDi(vm, e.cattivo.a); if (ia >= 0) ST.faccia(S, ia, "arrabbiato");
@@ -1555,7 +1606,8 @@
     var carte = sc.opz.map(function (o) { var c = el("div", { class: "pz-gioco" }, [ el("span", { class: "i", text: o.icona }), el("b", { text: o.nome }), el("small", { text: o.spiega || o.regola }) ]); c._tipo = o.tipo; return c; });
     R.ui.carte = carte;
     schermo(R, [ el("div", { class: "pz-testa", text: "🎁 Gioco a premi" }),
-      el("div", { class: "pz-titolo", text: io ? "Hai vinto l'Offerta: scegli tu!" : chi.nome + " sceglie il gioco a premi" }),
+      // (20 nov 2026: chi sceglie ha il pannello alzato fin sotto la testata: il titolo spuntava tagliato a metà sopra il pannello)
+      el("div", { class: "pz-titolo" + (io || R.cb.locale === "telefono" ? " pz-solo-giu" : ""), text: io ? "Hai vinto l'Offerta: scegli tu!" : chi.nome + " sceglie il gioco a premi" }),
       el("div", { class: "pz-giochi pz-solo-giu" }, carte), el("div", { class: "pz-sotto pz-solo-giu", text: "Poi si gioca tutti insieme" }) ]);
     if (ic >= 0) { ST.accendiSolo(S, ic); ST.faccia(S, ic, "pensa"); }
     aggiornaScelta(R);
@@ -1590,11 +1642,40 @@
     ST.accendiSolo(S, -1); ST.tutteNormali(S);
     await ST.suSchermo(S, 600); if (!vivoK(R, k)) return;
     schermo(R, [ el("div", { class: "pz-testa", text: "🎁 Gioco a premi" + (vm.nPremio > 1 ? " · " + vm.iPremio + " di " + vm.nPremio : "") }),
-      el("div", { class: "pz-intro" }, [ el("span", { class: "i", text: pr.icona }), el("b", { text: pr.nome }), el("p", { text: pr.spiega || pr.regola }) ]),
-      el("div", { class: "pz-sotto", text: (pr.da ? "Scelto da " + (pr.da === R.cb.myId ? "te" : nomeDi(vm, pr.da)) + " · " : "") + "si gioca tutti insieme!" }) ]);
+      el("div", { class: "pz-intro" + (pr.fai ? " come" : "") }, [ el("span", { class: "i", text: pr.icona }), el("b", { text: pr.nome }),
+        pr.fai ? el("div", { class: "pz-come" }, [
+          el("div", { class: "r fai" }, [ el("i", { text: "👉 Come si gioca" }), el("span", { text: pr.fai }) ]),
+          pr.es ? el("div", { class: "r es" }, [ el("i", { text: "💡 Esempio" }), el("span", { text: pr.es }) ]) : null,
+          pr.pt ? el("div", { class: "r pt" }, [ el("i", { text: "🏆 Punti" }), el("span", { text: pr.pt }) ]) : null ])
+        : el("p", { text: pr.spiega || pr.regola }) ]),
+      el("div", { class: "pz-sotto", text: pr.da ? "Scelto da " + (pr.da === R.cb.myId ? "te" : nomeDi(vm, pr.da)) + " · si gioca tutti insieme!" : "Si gioca tutti insieme!" }) ]);   // (20 nov 2026: senza chi l'ha scelto la frase comincia con la maiuscola)
+    adattaIntro(R);
     // quanto manca per leggere la regola: «Si comincia tra 7…» e «⏩ Avanti» (si parte appena lo tocca più di metà; col Bot basta il tuo)
-    barraAvanti(R, k, T.intro, "Si comincia tra ");
+    barraAvanti(R, k, T.intro, "Si comincia tra ");   // (il tempo vero arriva dalla foto: vm.restaMs, dalla lunghezza della spiegazione)
     Z().FX.tada(); ST.pubblico(S, "applauso");
+  }
+  // (21 nov 2026) le regole del gioco a premi sul telefono basso: se non ci stanno, prima le scritte si stringono (f1, poi f2),
+  // poi la riga «Si gioca tutti insieme!» sparisce; MAI ingrandite per riempire e MAI una riga tagliata a metà
+  function adattaIntro(R) {
+    var sch = R.S.sch.querySelector(".pz-sch"), box = sch && sch.querySelector(".pz-intro.come"), sotto = sch && sch.querySelector(".pz-sotto"); if (!box) return;
+    // (anche la riga sotto deve stare dentro: misurata col suo riquadro, che non ha animazioni)
+    function ci() { return sch.scrollHeight <= sch.clientHeight + 1 && (!sotto || sotto.style.display === "none" || sotto.getBoundingClientRect().bottom <= sch.getBoundingClientRect().bottom + 1); }
+    function prova() {
+      if (!sch.isConnected) return;
+      box.classList.remove("f1", "f2"); if (sotto) sotto.style.display = "";
+      if (ci()) return; box.classList.add("f1"); if (ci()) return;
+      box.classList.remove("f1"); box.classList.add("f2"); if (ci()) return;
+      if (sotto) sotto.style.display = "none";
+    }
+    prova(); setTimeout(prova, 400); setTimeout(prova, 750);   // (a 750 ms l'animazione d'entrata è finita: la misura vera, a riposo)
+    if (window.ResizeObserver) {
+      var ult = sch.clientHeight + "x" + sch.clientWidth, pend = false;
+      var o = new ResizeObserver(function () {
+        if (pend) return; pend = true;
+        requestAnimationFrame(function () { pend = false; if (!sch.isConnected) { o.disconnect(); return; } var m = sch.clientHeight + "x" + sch.clientWidth; if (m === ult) return; ult = m; prova(); });
+      });
+      o.observe(sch);
+    }
   }
   // gli aiuti per i giochi a premi su ogni telefono (vedi interfaccia in js/games/prezzo-premi-piu.js)
   function apiTel(R, o) {
@@ -1842,6 +1923,12 @@
       if (tot === 100 || (RU.campo === "b" && val === 100)) { Z().FX.cento(); fumetto(R.S, "CENTO! CENTO! CENTO!"); Z().vibra([40, 50, 90]); ST.pubblico(R.S, "ovazione"); }
       else if (tot > 100 && RU.campo !== "b") { ST.pubblico(R.S, "ohh"); Z().vibra([20, 40, 20]); }
       else Z().FX.toc(700);
+      // (20 nov 2026) dopo un attimo il pannello scende e si aspettano gli altri col conto vero: prima la barra restava ferma
+      // sul pannello aperto e sembrava tutto bloccato (sullo stesso telefono si passa al turno dopo da sé)
+      if (R.cb.locale !== "telefono") {
+        var k0 = R.vm.k, txA = RU.campo === "b" ? "🎁 Giro bonus: " + val + (puntiBonus(val) ? " (+" + N(puntiBonus(val)) + ")" : "") : tot > 100 ? "💥 " + tot + ": sballato" : tot === 100 ? "💯 CENTO!" : RU.campo === "v2" ? "🎡 Totale " + tot : "🎡 Hai fatto " + val;
+        setTimeout(function () { if (vivoK(R, k0) && R.ruotaUI === RU) attesa(R, txA + " · aspettiamo gli altri…"); }, 1800);
+      }
     });
   }
   function apriRuota(R, chi, campo, fine, allaFine) {
@@ -1855,7 +1942,7 @@
     var mx = (R.vm.ruota.g || {})[chi.id]; if (mx && mx.v1 != null && campo !== "v1") RU.ru.mostra(campo === "b" ? 100 : mx.v1);
     RU.tb = Z().barraTempo(el, fine, function () { RU.ru.attiva(false); if (allaFine) allaFine(); });
     R.tempoPan = barraDi(R, RU.tb);
-    var tit = campo === "v1" ? "🎡 Il tuo giro" : campo === "v2" ? "🎡 Secondo giro: hai " + (mx ? mx.v1 : "") : "🎁 Giro bonus";
+    var tit = campo === "v1" ? "🎡 Il tuo giro" : campo === "v2" ? "🎡 Secondo giro: hai " + (mx ? mx.v1 : "") : "🎁 Giro bonus";
     R.pan.metti([ testaPan(R, chi, (R.cb.locale === "telefono" ? chi.nome + " · " : "") + tit, RU.tb), RU.ru.el, nota ]).su();
     R.ruotaUI = RU;
     aggiornaRuota(R);
@@ -1892,7 +1979,7 @@
       else if (x.si == null && R.mie["r" + k] == null) apriDecidi(R, me, x, fine);
       else attesa(R, "✅ Hai deciso · aspettiamo gli altri…");
     }
-    else if (s === "giro2") { if (x.si === true && x.v2 == null) apriRuota(R, me, "v2", fine); else attesa(R, x.si === true ? "🎡 Hai fatto " + x.v1 + " + " + x.v2 : "✋ Ti sei fermato a " + x.v1); }
+    else if (s === "giro2") { if (x.si === true && x.v2 == null) apriRuota(R, me, "v2", fine); else attesa(R, x.si === true ? "🎡 Hai fatto " + x.v1 + " + " + x.v2 : "✋ Resti a " + x.v1); }
     else if (s === "bonus") { if (x.cento && x.b == null) apriRuota(R, me, "b", fine); else attesa(R, "🎁 Giro bonus per chi ha fatto 100!"); }
   }
   // sullo stesso telefono: a turno come in TV (chi gira dopo sa quanto deve fare)
@@ -2220,11 +2307,11 @@
       else {
         var raggr = []; x.c.forEach(function (c) { var g = raggr.filter(function (y) { return y.nome === c.nome; })[0]; if (g) g.n++; else raggr.push({ e: c.e, nome: c.nome, n: 1 }); });
         cosa = [ el("b", { text: x.p.id === R.cb.myId ? "Tu" : x.p.nome }), el("span", { class: "figs" }, x.c.slice(0, 12).map(function (c) { return Z().figura(el, c, "e"); })),
-          el("small", { text: raggr.map(function (g) { return quanti(g.n) + g.nome; }).join(", ") }) ];
+          el("small", { text: raggr.map(function (g) { return quanti(g.n) + g.nome; }).join(" · ") }) ];   // (20 nov 2026: «·» tra i premi, perché alcuni nomi hanno la virgola: «I libri delle medie, un anno»)
       }
       return box.appendChild(nascondi(el("div", { class: "pz-car" }, [ fac(el, x.p, x.c.length ? "esulta" : "triste"), el("div", { class: "cosa" }, cosa), el("span", { class: "tot", text: x.c.length ? E(Math.round(x.tot)) : "" }) ])));
     });
-    riempi(R);
+    riempi(R, box);   // (20 nov 2026: premi e nomi interi quando c'è posto; accorciati coi puntini solo se non ci stanno: «fitta»)
     await ST.dorme(900);
     for (var q = 0; q < lista.length; q++) {
       if (!vivoK(R, k)) return;
@@ -2261,7 +2348,7 @@
       var tot = (car[r.id] || []).reduce(function (a, x) { return a + (+x.prezzo || 0); }, 0);
       ol.appendChild(el("li", { class: r.pos === 1 ? "vincitore" : "" }, [
         el("span", { class: "pos", text: med[i] }),
-        el("span", { class: "nome", text: r.nome + (r.id === cb.myId ? " (tu)" : "") + (r.via ? " (uscito)" : "") + (tot && !fitta ? " · 🛒 " + E(Math.round(tot)) : "") }),
+        el("span", { class: "nome", text: r.nome + (r.id === cb.myId ? " (tu)" : "") + (r.via ? " (fuori)" : "") + (tot && !fitta ? " · 🛒 " + E(Math.round(tot)) : "") }),
         el("span", { class: "punti", text: N(r.punti) }) ]));
     });
     s._contenuto.appendChild(ol);
@@ -2272,8 +2359,9 @@
     // I TASTI DI FINE LI METTE IL CORE (Rivincita col 3-2-1, Cambia gioco, Ci sto): solo se torna false i tasti di sempre
     if (!t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) {
       if (cb.sonoHost) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
-      else s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: "Se l'host fa un'altra partita, torni da solo nella saletta." }));
+      else if (haGiocato) s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: "Se l'host fa un'altra partita, torni da solo nella saletta." }));   // (20 nov 2026: chi ha guardato l'ha già letto sopra, detto meglio)
       if (!targa) s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));   // (chi guarda: c'è il ✕ della targhetta)
+      if (!s._piede.children.length) s._piede.style.display = "none";   // (20 nov 2026: chi guarda non ha tasti: niente riquadro scuro vuoto)
     }
     t.mostra(s);
   }
@@ -2282,6 +2370,7 @@
   // ---------------- le cose che cambiano dentro lo stesso passo ----------------
   function aggiornaFase(R) {
     var f = R.vm.fase, s = R.vm.sotto;
+    if (R.pGuarda && R.pGuarda.isConnected) { var gt = guardaTesto(R); if (R.pGuarda.textContent !== gt) R.pGuarda.textContent = gt; }
     if (f === "offerta" && s === "offri") {
       aggiornaTab(R);
       if (R.tast && R.vm.off && R.cb.locale !== "telefono") { R.tast.offerte(listaOfferte(R, R.tastChi)); R.tast.aggiorna(); }

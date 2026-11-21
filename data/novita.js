@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 393,
+    data: "21 novembre 2026",
+    titolo: "Il Prezzo è Giusto: regole chiare e tanti ritocchi 🏷️",
+    descrizione: [
+      "🎁 Prima di ogni gioco a premi la spiegazione ha tre riquadri: «👉 Come si gioca», «💡 Esempio» e «🏆 Punti». Resta più a lungo, tra 24 e 28 secondi a seconda del gioco (prima 10): chi non l'ha mai giocato capisce bene, chi lo conosce tocca «⏩ Avanti».",
+      "✋ È troppo!: chi si è già fermato si vede solo dopo che ti sei fermato anche tu. Prima il primo che si fermava faceva capire agli altri che il prezzo vero era lì vicino.",
+      "🎡 Ruota del 100: finito il tuo giro compare «Hai fatto 45 · aspettiamo gli altri…» col conto alla rovescia (prima sembrava tutto fermo).",
+      "👋 Chi arriva a puntata cominciata legge dove entra davvero: alla prossima Offerta, alla Ruota o alla Vetrina, oppure «La puntata sta finendo: giochi dalla prossima».",
+      "📱 Niente più scritte coperte o tagliate: la barra in basso e la targhetta di chi guarda lasciano sempre il loro posto, i titoli lunghi vanno su due righe, il carrello mostra tutti i premi interi, i punti dei risultati stanno nella riga giusta e il nome di chi vince non si accorcia mai in «P…», sul telefono basso la spiegazione dei giochi a premi si stringe invece di tagliarsi, in tanti la foto dell'Offerta si abbassa perché si vedano tutte le offerte, in Più o meno la scheda non sale più sul titolo, i nomi dei prodotti non si spezzano a metà («salvadana-io»), il prezzo a cifre ha il punto e la virgola al loro posto.",
+      "🧩 Ritocchi: in 5 o più i tasti dei giochi a premi hanno più spazio, i riquadri alti tengono foto e scritte insieme al centro, il luogo non si ripete («…un trullo di Alberobello · ad Alberobello», «Il 730 fatto al CAF · al CAF»), frasi giuste per tutti (non più «Ti sei fermato» o «Sei caduto»), cinque foto sbagliate sistemate (la bici Bianchi ora è celeste), nell'Alpinista le pedine partono a ventaglio (prima in 6 erano un mucchio solo), nel carrello in tanti foto e premi prendono tutta la larghezza del riquadro."
+    ]
+  },
+  {
     v: 392,
     data: "20 novembre 2026",
     titolo: "Parola d'ordine: squadre e chat più chiare 🔤",

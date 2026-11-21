@@ -100,7 +100,7 @@
 
   // ===================== pd1: le regole =====================
   COPIONE.aggiungi("pd1", { nome: "Premi D: le regole dei Dadi e del Mirino, senza grafica", fai: async function () {
-    var w = await W.apriTel("Paky", { x: 0 });
+    var w = await W.pzPronto(await W.apriTel("Paky", { x: 0 }));
     if (!await W.aspetta(function () { return w.SG_PREZZO_PREMI && w.SG_PREZZO_PREMI.dadi && w.SG_PREZZO_PREMI.mirino; }, 6000)) no("i due giochi a premi non sono registrati");
     var R = w.SG_PREZZO_PREMI, tutti = w.SG_PREZZO.prodotti;
     if (R.dadi.ordine !== 8 || R.mirino.ordine !== 9) no("ordine: " + R.dadi.ordine + " / " + R.mirino.ordine);
@@ -192,7 +192,7 @@
 
   // ===================== pd2: col Bot =====================
   COPIONE.aggiungi("pd2", { nome: "Premi D: 🤖 Contro il Bot, 📺 Puntata: i Dadi e il Mirino", fai: async function () {
-    var w = await W.apriTel("Paky", { x: 0, spiaPrezzo: true, prima: function (w2) { w2.__imp = { formato: "tv", durata: "puntata", offerte: "vista", liv: "medio", nBot: 3 }; } });
+    var w = await W.pzPronto(await W.apriTel("Paky", { x: 0, spiaPrezzo: true, prima: function (w2) { w2.__imp = { formato: "tv", durata: "puntata", offerte: "vista", liv: "medio", nBot: 3 }; } }));   // (i giochi si scaricano quando servono)
     if (!await W.aspetta(function () { return soloMiei(w); }, 6000)) no("i due giochi a premi non sono registrati");
     var tess = await W.aspetta(function () { return [].filter.call(w.document.querySelectorAll(".tessera"), function (t) { return /Prezzo è Giusto/.test(t.textContent); })[0]; }, 5000);
     tess.click(); await W.dorme(300);
@@ -340,7 +340,7 @@
     var esiti = [], misure = W.__pd5misure || [[360, 640], [412, 915], [360, 780]];
     for (var m = 0; m < misure.length; m++) {
       var wh = misure[m];
-      var w = await W.apriTel("Paky", { x: 0, spiaPrezzo: true, prima: function (w2) { w2.__imp = { formato: "tv", durata: "veloce", offerte: "vista", liv: "medio", nBot: 5 }; } });
+      var w = await W.pzPronto(await W.apriTel("Paky", { x: 0, spiaPrezzo: true, prima: function (w2) { w2.__imp = { formato: "tv", durata: "veloce", offerte: "vista", liv: "medio", nBot: 5 }; } }));   // (i giochi si scaricano quando servono)
       await W.aspetta(function () { return soloMiei(w); }, 6000);
       var na = w.document.createElement("style"); na.textContent = "*{animation:none!important;transition:none!important}"; w.document.head.appendChild(na);
       var f = document.getElementById("tel-Paky"); f.style.width = wh[0] + "px"; f.style.height = wh[1] + "px"; w.dispatchEvent(new w.Event("resize"));

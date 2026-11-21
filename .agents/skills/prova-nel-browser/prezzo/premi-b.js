@@ -138,7 +138,7 @@
 
   // ===================== pzb1: le regole =====================
   COPIONE.aggiungi("pzb1", { nome: "Prezzo, giochi a premi b: le regole di «È troppo!» e «Plinko»", fai: async function () {
-    var w = await W.apriTel("Paky", { x: 0 }), B = w.__prezzoPremiB, L = w.SG_PREZZO_PREMI, SP = w.SG_PREZZO, F = w.SGPrezzoScena.fmtE;
+    var w = await W.pzPronto(await W.apriTel("Paky", { x: 0 })), B = w.__prezzoPremiB, L = w.SG_PREZZO_PREMI, SP = w.SG_PREZZO, F = w.SGPrezzoScena.fmtE;
     if (!B || !L.troppo || !L.plinko) no("il file b non è caricato");
     var prods = SP.prodotti, cari = prods.filter(function (p) { return p.prezzo >= 2000; });
     if (cari.length < 60) no("pochi prodotti sopra i 2.000 €: " + cari.length);
@@ -378,21 +378,22 @@
     return "3 domande col doppio tocco: risposte " + JSON.stringify(risp) + ", 1 gettone, partita finita" + errori();
   } });
 
-  // ===================== pzb9: Più o meno, il tastierino riparte vuoto; la regola resta ~10 s =====================
-  COPIONE.aggiungi("pzb9", { nome: "Prezzo: Più o meno, dopo un prezzo sbagliato il tastierino riparte vuoto; la regola resta ~10 s con «Si comincia tra…»", fai: async function () {
+  // ===================== pzb9: Più o meno, il tastierino riparte vuoto; la regola resta 15-30 s (20 nov 2026: dalla lunghezza della spiegazione) =====================
+  COPIONE.aggiungi("pzb9", { nome: "Prezzo: Più o meno, dopo un prezzo sbagliato il tastierino riparte vuoto; la regola resta 15-30 s con «Si comincia tra…» e le tre righe (come si gioca, esempio, punti)", fai: async function () {
     var w = await PZ().contrBot({ formato: "tv", durata: "veloce", offerte: "vista", liv: "medio", nBot: 1 });
     var L = w.SG_PREZZO_PREMI || {}; if (!L.piuomeno) no("«Più o meno» non è registrato");
     Object.keys(L).forEach(function (k) { if (k !== "piuomeno") delete L[k]; });
     var H = function () { return w.__prezzoH; }, intro = null;
     var ok = await PZ().giocaTutti(["Paky"], function () {
       var h = H();
-      if (h.fase === "premio" && h.sotto === "intro") { if (!intro) intro = { t0: Date.now(), conto: false }; if (/Si comincia tra/.test(T(w))) intro.conto = true; }
+      if (h.fase === "premio" && h.sotto === "intro") { if (!intro) intro = { t0: Date.now(), conto: false }; if (/Si comincia tra/.test(T(w))) intro.conto = true; if (w.document.querySelectorAll(".pz-come .r").length === 3) intro.righe = true; }
       return h.fase === "premio" && h.sotto === "gioca" && w.document.querySelector(".pz-pan.su .pz-ok");
     }, { ms: 240000, passo: 200, avanti: false });
     if (!ok) no("non si arriva a «Più o meno»");
     if (!intro) no("la regola del gioco a premi non si è vista");
     var durIntro = Date.now() - intro.t0;
-    if (durIntro < 8000) no("la regola è restata solo " + durIntro + " ms (deve essere circa 10 s)");
+    if (durIntro < 14000 || durIntro > 31500) no("la regola è restata " + durIntro + " ms (deve essere tra 15 e 30 s, dalla lunghezza della spiegazione)");
+    if (!intro.righe) no("sulla regola mancano le tre righe «Come si gioca», «Esempio», «Punti»");
     if (!intro.conto) no("sulla regola manca «Si comincia tra…»");
     function tasto(tx) { return [].filter.call(w.document.querySelectorAll(".pz-pan.su .pz-k"), function (x) { return x.textContent.trim() === tx; })[0]; }
     function disp() { return ((w.document.querySelector(".pz-pan.su .pz-disp .v") || {}).textContent || "").trim(); }

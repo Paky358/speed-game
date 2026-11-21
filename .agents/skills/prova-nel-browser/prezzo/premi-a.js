@@ -111,7 +111,7 @@
 
   // ===================== pa1: le regole =====================
   COPIONE.aggiungi("pa1", { nome: "Premi A: le regole dell'Alpinista e di Mettili in ordine, senza grafica", fai: async function () {
-    var w = await W.apriTel("Paky", { x: 0 }), R = w.SG_PREZZO_PREMI, Z = w.SGPrezzoScena;
+    var w = await W.pzPronto(await W.apriTel("Paky", { x: 0 })), R = w.SG_PREZZO_PREMI, Z = w.SGPrezzoScena;
     if (!R || !R.alpinista || !R.ordine) no("i due giochi a premi non sono registrati");
     var tutti = (w.SG_PREZZO.prodotti || []);
     // un P finto (come quello dell'host): pesca dai prodotti veri, mai due volte
@@ -192,7 +192,7 @@
 
   // ===================== pa2: Contro il Bot =====================
   COPIONE.aggiungi("pa2", { nome: "Premi A: 🤖 Contro il Bot, 📺 Puntata: l'Alpinista e Mettili in ordine", fai: async function () {
-    var w = await W.apriTel("Paky", { x: 0, spiaPrezzo: true, prima: function (w2) { w2.__imp = { formato: "tv", durata: "puntata", offerte: "vista", liv: "medio", nBot: 3 }; } });
+    var w = await W.pzPronto(await W.apriTel("Paky", { x: 0, spiaPrezzo: true, prima: function (w2) { w2.__imp = { formato: "tv", durata: "puntata", offerte: "vista", liv: "medio", nBot: 3 }; } }));   // (i giochi si scaricano quando servono)
     if (!await W.aspetta(function () { return soloMiei(w); }, 6000)) no("i due giochi a premi non sono registrati");
     var tess = await W.aspetta(function () { return [].filter.call(w.document.querySelectorAll(".tessera"), function (t) { return /Prezzo è Giusto/.test(t.textContent); })[0]; }, 5000);
     tess.click(); await W.dorme(300);
@@ -393,7 +393,7 @@
     if (pan) [].forEach.call(pan.querySelectorAll(".pza-or,.pza-fatto,.pz-ok"), function (e) { var r = e.getBoundingClientRect(); if (r.height && r.bottom > h + 1) guai.push(e.className.split(" ")[0] + " fuori dallo schermo in basso"); });
     // (24 ott 2026: i prodotti, con la descrizione, stanno solo nel pannello: può essere alto fino all'80%, sopra niente doppioni)
     if (pan && pan.querySelector(".pza-or")) {
-      guai = guai.filter(function (g) { return !/^pannello alto/.test(g); });
+      guai = guai.filter(function (g) { return !/^pannello alto/.test(g) && !/^pz-och sotto il pannello/.test(g); });   // (21 nov 2026: mentre si gioca il pannello copre apposta chi ha finito: la prova era rimasta a prima del 25 ott)
       if (pan.getBoundingClientRect().top < 50) guai.push("il pannello di Mettili in ordine copre i tasti in alto (" + Math.round(pan.getBoundingClientRect().top) + ")");
       if (sch && [].some.call(sch.querySelectorAll(".pza-lista .pz-te"), function (t) { return t.getBoundingClientRect().height > 0; })) guai.push("i prodotti si vedono due volte (sopra e nel pannello)");
       if (![].every.call(pan.querySelectorAll(".pza-or"), function (r) { var ds = r.querySelector(".ds"); return !ds || ds.hidden || ds.getBoundingClientRect().height > 0; })) guai.push("nel pannello manca la descrizione");
@@ -404,7 +404,7 @@
     var esiti = [], misure = W.__pa7misure || [[360, 640], [412, 915]];
     for (var m = 0; m < misure.length; m++) {
       var wh = misure[m];
-      var w = await W.apriTel("Paky", { x: 0, spiaPrezzo: true, prima: function (w2) { w2.__imp = { formato: "tv", durata: "veloce", offerte: "vista", liv: "medio", nBot: 5 }; } });
+      var w = await W.pzPronto(await W.apriTel("Paky", { x: 0, spiaPrezzo: true, prima: function (w2) { w2.__imp = { formato: "tv", durata: "veloce", offerte: "vista", liv: "medio", nBot: 5 }; } }));   // (i giochi si scaricano quando servono)
       await W.aspetta(function () { return soloMiei(w); }, 6000);
       // (con la scheda del browser nascosta transizioni e animazioni restano al primo fotogramma: per misurare si tolgono)
       var na = w.document.createElement("style"); na.textContent = "*{animation:none!important;transition:none!important}"; w.document.head.appendChild(na);

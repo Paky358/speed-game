@@ -42,7 +42,7 @@
     svuota(box); box.className = "pz-tab" + (A.giocatori.length > 4 ? " fitto" : "");
     A.giocatori.forEach(function (g) {
       var ok = fatti.indexOf(g.id) >= 0;
-      box.appendChild(A.el("span", { class: "pz-och" + (ok ? " ok" : " aspetta") }, [ A.fac(g.id), A.el("span", { text: A.nome(g.id) }), A.el("span", { class: "v", text: ok ? "✅" : "…" }) ]));
+      box.appendChild(A.el("span", { class: "pz-och" + (ok ? " ok" : " aspetta") }, [ A.fac(g.id), A.el("span", { class: "nm", text: A.nome(g.id) }), A.el("span", { class: "v", text: ok ? "✅" : "…" }) ]));
     });
   }
   function aggChips(A, box, fatti) {
@@ -91,6 +91,10 @@
     nome: "La Spesa", icona: "🛒", ordine: 6,
     regola: "Senza vedere i prezzi, riempi il carrello per spendere tra 20 e 22 €!",
     spiega: "Cinque prodotti del supermercato, senza prezzo: riempi il carrello col più e il meno per spendere tra 20 e 22 €. Dentro la fascia 600 punti, poco fuori 350, più lontano meno.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
+    // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
+    fai: "5 prodotti del supermercato, senza prezzo. Con + e − scegli quanti pezzi comprare: il carrello deve costare tra 20 e 22 €.",
+    es: "2 pacchi di pasta + 3 latte + 1 caffè = 21 € → dentro!",
+    pt: "Dentro: 600 punti. Fuori di poco (fino a 1,50 €): 350. Più lontano: 200, 75, poi 0.",
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -245,7 +249,7 @@
         banner.textContent = dentro.length === 1 ? (eTu(A, dentro[0].id) ? "🛒 Spesa perfetta!" : "🛒 Spesa perfetta per " + A.nome(dentro[0].id) + "!") : "🛒 Spesa perfetta per " + elenco(A, dentro.map(function (x) { return x.id; })) + "!";
       } else if (vicino) {
         banner.className = "pz-banner pzc-bn";
-        banner.textContent = "😅 Nessuno nella fascia: " + (eTu(A, vicino.id) ? "il più vicino sei tu" : "il più vicino è " + A.nome(vicino.id)) + " (" + A.fmtE(vicino.T) + ")";
+        banner.textContent = "😅 Nessuno nella fascia: " + (eTu(A, vicino.id) ? "ci vai più vicino tu" : "ci va più vicino " + A.nome(vicino.id)) + " (" + A.fmtE(vicino.T) + ")";
         A.ST.pubblico(A.S, "applauso");
       } else {
         banner.className = "pz-banner no pzc-bn"; banner.textContent = "🛒 Carrelli vuoti!";
@@ -275,6 +279,10 @@
     nome: "La Cassaforte", icona: "🔐", ordine: 7,
     regola: "Le cifre del prezzo sono mescolate: rimettile in ordine e la cassaforte si apre!",
     spiega: "Le cifre di un prezzo sono mescolate: tocca due cifre per scambiarle e rimettile in ordine. 60 punti per ogni cifra al posto giusto, +400 se la cassaforte si apre.",   // (25 ott 2026: la spiegazione chiara, nella scelta del gioco e prima di giocare)
+    // (20 nov 2026, il proprietario: «più tempo per la spiegazione… così chi non gioca capisce bene»: come si gioca, un esempio, i punti)
+    fai: "Le cifre di un prezzo sono mescolate. Tocca due cifre per scambiarle e rimetti il prezzo in ordine.",
+    es: "Vedi 9 4 2 1 e pensi che costi 1.249 € → scambi le cifre finché leggi 1 2 4 9.",
+    pt: "60 punti per ogni cifra al posto giusto, +400 se la cassaforte si apre.",
     min: 1, max: 8, locale: true,
 
     // ---------------- host ----------------
@@ -399,7 +407,7 @@
       var rr = g.map(function (x) {
         var cif = el("span", { class: "pzc-comb" }), testo = x.c ? conPunto(x.c) : null;
         if (testo) testo.forEach(function (c) { cif.appendChild(el("span", { class: c === "." ? "pt" : "c", text: c })); });
-        else cif.appendChild(el("span", { class: "vuota", text: "non l'ha toccata" }));
+        else cif.appendChild(el("span", { class: "vuota", text: A.nome(x.id) === "Tu" ? "non l'hai toccata" : "non l'ha toccata" }));   // (20 nov 2026: «Tu… non l'hai toccata»)
         var r = el("div", { class: "pzc-cassa" }, [ A.fac(x.id), el("span", { class: "nm", text: A.nome(x.id) }), cif, el("span", { class: "lucc", text: "🔒" }) ]);
         return { x: x, r: r, cif: cif };
       });
@@ -429,7 +437,7 @@
       } else {
         var best = g.filter(function (x) { return x.c; }).sort(function (a, b) { return b.n - a.n || a.ms - b.ms; })[0];
         banner.className = best && best.n ? "pz-banner pzc-bn" : "pz-banner no pzc-bn";
-        banner.textContent = best && best.n ? "🔒 Resta chiusa: " + (eTu(A, best.id) ? "ci sei andato più vicino tu" : "il più vicino è " + A.nome(best.id)) + " (" + best.n + " cifre su " + vero.length + ")" : "🔒 Resta chiusa per tutti!";
+        banner.textContent = best && best.n ? "🔒 Resta chiusa: " + (eTu(A, best.id) ? "ci vai più vicino tu" : "ci va più vicino " + A.nome(best.id)) + " (" + best.n + " cifre su " + vero.length + ")" : "🔒 Resta chiusa per tutti!";
         A.ST.pubblico(A.S, best && best.n ? "applauso" : "ohh"); if (!(best && best.n)) A.FX.trombone();
       }
       await A.dorme(TC.esito + TC.fine);

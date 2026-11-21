@@ -23,7 +23,7 @@ window.SG_PREZZO_FOTO = {
   "a1-peroni-66": "3/30/Bottle_Peroni_Nastro_Azzurro.jpg|1182",   // Birra Peroni, 66 cl
   "a1-tonno-rio": "6/6f/Seachicken_mild_hagoromofoods002.jpg|3296",   // Tonno Rio Mare, 3 scatolette
   "a1-tortellini": "d/d5/Tortellini.jpg|2150",   // Tortellini freschi, 250 g
-  "a1-crudo-parma": "2/21/Prosciutto_di_Parma,_Tagliere,_Italia.jpg|1800",   // Prosciutto di Parma, 100 g
+  // "a1-crudo-parma": tolta il 20 nov 2026 (la foto era una pizza col prosciutto): resta l'emoji finché non ne arriva una giusta
   "a1-mortadella": "1/1e/Mortadella_tagliata.jpg|801",   // Mortadella Bologna, 100 g
   "a1-bresaola": "c/cb/Bresaola-Valt-IGP.jpg|591",   // Bresaola, 100 g
   "a1-basilico": "6/6e/Basil_plant_in_a_pot_02.jpg|2736",   // Basilico in vaso
@@ -204,7 +204,7 @@ window.SG_PREZZO_FOTO = {
   "a2-tenda-sole": "2/27/Hot_Springs_061.jpg|480",   // Tenda da sole
   "a2-porta-blindata": "a/ac/Vidmar_Panzertüre1.jpg|2587",   // Porta blindata
   "a2-stufa-pellet": "c/c3/Stufa_a_pellet_Palazzetti.jpg|1704",   // Stufa a pellet
-  "a2-bimby": "5/54/Vorwerk_Bimby_3300.jpg|3000",   // Bimby
+  "a2-bimby": "7/78/Thermomix_2014.jpg|1180",   // Bimby (20 nov 2026: era un Bimby vecchio con le manopole; la descrizione dice l'ultimo modello)
   "a2-pile-bottone": "c/c7/Coin-cells.jpg|511",   // Pile a bottone, 2 pezzi
   "a2-pile-aa": "7/71/Duracell_AA_batteries.JPG|2272",   // Pile stilo, 4 pezzi
   "a2-caricatore-usb": "c/c9/USB_power_adapter_for_Apple_iPod,_Model_A1205,_by_Foxlink_Technology_Ltd-1048.jpg|3971",   // Caricatore USB da muro
@@ -301,14 +301,13 @@ window.SG_PREZZO_FOTO = {
   "a2-moka-18": "4/4f/Moka_Express_Bialetti.png|1126",   // Moka da 18 tazze
   "a2-prima-pappa": "9/9a/High_chair.jpg|250",   // Seggiolone Peg Perego
   "a2-reber": "9/9a/Food_Mill.jpg|500",   // Spremipomodoro elettrico
-  "a2-culla": "6/66/Child's_rocking_cradle.jpg|1536",   // Culla di legno a dondolo
   "a2-sacco": "8/85/Zanotta_Sacco_chair_with_houndstooth_upholstery.jpg|1636",   // Poltrona Sacco Zanotta
   "a2-pannolini": "d/d8/Disposablediaper.JPG|2048",   // Pannolini per un anno
   "a2-trasloco": "1/17/Yellow_Iveco_moving_truck_with_Forsman_branding.jpg|6048",   // Trasloco di un trilocale
   "a2-abito-sposa": "a/a4/White_wedding_dress_worn_by_unidentified_female_model.jpg|2910",   // Abito da sposa
   "a2-arco-flos": "4/41/\"_12_-_ITALY_-_Milan_-_FLOS_50th_Anniversary_23.jpg|4000",   // Lampada Arco
   "a2-linea-micra": "5/59/Rocket_silver_metal_espresso_machine_on_table.jpg|1200",   // Macchina del caffè da bar
-  "a2-pianoforte": "b/ba/Piano_Bekas_Yamaha_U1A.jpg|1280",   // Pianoforte verticale
+  // "a2-pianoforte": tolta il 20 nov 2026 (scritte gialle «YAMAHA U1A» e il logo di un negozio sopra la foto): resta l'emoji finché non ne arriva una pulita
   "a2-bagno": "b/bf/EFTA00000311_-_Modern_bathroom_with_white_tiles_a_glass_shower_enclosure_a_toilet_and_a_grey_rug_on_the_floor.jpg|768",   // Rifare il bagno
   "a2-eames": "c/ce/Eames_Lounge_Chair_-_side.jpg|3008",   // Poltrona Eames con pouf
   "a2-piscina": "0/0d/Backyard_swimming_pool_in_Queensland.JPG|3264",   // Piscina interrata
@@ -630,7 +629,7 @@ window.SG_PREZZO_FOTO = {
   "a5-v-palestra#2": "e/e3/TwoDumbbells.JPG|573",   // Dieci lezioni col personal trainer
   "a5-v-palestra#3": "4/40/Fitness_digital_scale_weight_loss_(33837094584).jpg|5616",   // Bilancia smart
   "a5-v-palestra#4": "1/1b/Osaka_protein_shaker.jpg|600",   // Shaker per le proteine
-  "a5-v-ciclista#0": "9/9c/Current_F10_prices_make_this_the_bike_to_buy_right_now._If_you’ve_always_wanted_a_Pinarello_Dogma,_talk_to_us._You_are_closer_to_your_dream_bike_than_you_think._-pinarello_-pinarellof10_-pinarellodogma_-f10endofdiscussion_-baaw.jpg|640",   // Bici da corsa Bianchi in carbonio
+  "a5-v-ciclista#0": "0/0e/2018_Tour_Series_-_Bianchi_bicycles.jpg|4896",   // Bici da corsa Bianchi in carbonio (21 nov 2026: prima era una Pinarello grigia)
   "a5-v-ciclista#1": "f/f1/Garmin_Edge_1040_Solar_07.jpg|2268",   // Ciclocomputer Garmin Edge
   "a5-v-ciclista#2": "6/60/Cycling_bib_shorts_front.jpg|3024",   // Maglia e salopette
   "a5-v-ciclista#3": "b/b8/Tour_de_France_Femmes_2025_-_Tour_cyclosportive_-_La_Chambre.JPG|2048",   // Iscrizione a una granfondo
