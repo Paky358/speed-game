@@ -842,6 +842,14 @@
       ".pz-sc.pz-scgioco{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:14px;row-gap:4px;align-content:center;align-items:center;text-align:left;min-height:0;padding:12px 16px}",
       ".pz-sc.pz-scgioco .i{grid-row:1/3;font-size:clamp(40px,calc(var(--alt,640px) * .07),64px)}.pz-sc.pz-scgioco b{font-size:clamp(19px,calc(var(--alt,640px) * .03),26px)}",
       ".pz-sc.pz-scgioco small{font-size:clamp(13.5px,calc(var(--alt,640px) * .02),17px);font-weight:600;line-height:1.3}",
+      // (21 nov 2026, scelta D del proprietario) le schede della scelta del gioco a premi col vetro scuro della Notte vivace
+      ".pz-sc.pz-scgioco{background:linear-gradient(160deg,#272e52,#161b31);color:var(--o-testo);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),inset 0 1px 0 rgba(255,255,255,.09),0 16px 32px -16px rgba(0,0,0,.9)}",
+      ".pz-sc.pz-scgioco b{color:var(--o-testo)}.pz-sc.pz-scgioco small{color:var(--o-tenue)}",
+      ".pz-sc.pz-scgioco.sel{background:linear-gradient(160deg,#3d2246,#211a33);box-shadow:inset 0 0 0 2px var(--o-oro),0 0 26px -6px rgba(255,79,134,.65)}",
+      // (21 nov 2026) i disegni dei giochi a premi al posto delle emoji (iconaPremio): grandi quanto la loro emoji, un po' di più perché sono tessere
+      ".pz-ic{display:block;width:1.25em;height:1.25em;-webkit-user-drag:none;user-select:none;pointer-events:none}.i.dis{display:flex;align-items:center;justify-content:center;line-height:1}",
+      ".pz-sc.pz-scgioco .i .pz-ic{width:1.5em;height:1.5em}.pz-gioco .i .pz-ic{width:1.35em;height:1.35em}",
+      ".pz-testa .i.ic-testa{flex:0 0 auto;font-size:22px;letter-spacing:0}.pz-testa .i.ic-testa .pz-ic{width:26px;height:26px}.pz-testa-ic .tx{min-width:0}",
       ".pz-intro{display:flex;flex-direction:column;align-items:center;gap:8px;animation:pzPop .5s cubic-bezier(.3,1.6,.5,1) both}",
       ".pz-intro .i{font-size:64px;line-height:1}.pz-intro b{font-size:28px;color:var(--o-oro-testo)}.pz-intro p{margin:0;max-width:330px;font-size:16px;font-weight:700;color:var(--o-testo);line-height:1.35}",
       // (20 nov 2026: le regole in tre righe, come si gioca · esempio · punti; più grandi sui telefoni alti)
@@ -941,7 +949,31 @@
     document.head.appendChild(s);
   }
 
+  // ---------------- i disegni dei giochi a premi (21 nov 2026, scelti dal proprietario al posto delle emoji) ----------------
+  // js/games/prezzo-disegni.js (SG_PREZZO_DISEGNI): un SVG per gioco. Si mostrano come immagine (ognuna coi suoi id, mai due
+  // disegni uguali che si pestano), fatta una volta sola per gioco. Senza disegno: l'emoji del gioco, come prima.
+  var DIS_URL = {};
+  function disegnoURL(tipo) {
+    var d = window.SG_PREZZO_DISEGNI; if (!d || !d[tipo]) return null;
+    return DIS_URL[tipo] || (DIS_URL[tipo] = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(d[tipo]));
+  }
+  // l'icona di un gioco a premi: <span class="i"> col disegno dentro (classe «dis»), o con l'emoji
+  function iconaPremio(el, tipo, emoji, cls) {
+    var u = disegnoURL(tipo), c = "i" + (cls ? " " + cls : "");
+    if (!u) return el("span", { class: c, text: emoji || "🎁" });
+    var sp = el("span", { class: c + " dis" }), im = document.createElement("img");
+    im.className = "pz-ic"; im.alt = ""; im.src = u; im.draggable = false; im.decoding = "async";
+    sp.appendChild(im); return sp;
+  }
+  // la testata di un gioco a premi (in alto sul maxischermo): il disegno e il titolo; dici(testo) cambia solo il titolo
+  function testaPremio(el, tipo, testo, emoji) {
+    var tx = el("span", { class: "tx", text: testo }), d = el("div", { class: "pz-testa pz-testa-ic" }, [ iconaPremio(el, tipo, emoji, "ic-testa"), tx ]);
+    d.dici = function (t) { tx.textContent = t; };
+    return d;
+  }
+
   window.SGPrezzoScena = {
+    iconaPremio: iconaPremio, testaPremio: testaPremio, disegnoURL: disegnoURL,
     fmtN: fmtN, fmtE: fmtE, tondo2: tondo2, passo: passo, margine: margine, arrotonda: arrotonda, conCent: conCent,
     CAT: CAT, ORDINE_CAT: ORDINE_CAT, FX: FX, vibra: vibra,
     scheda: scheda, cartellino: cartellino, sipario: sipario, contachilometri: contachilometri, durataConta: durataConta,

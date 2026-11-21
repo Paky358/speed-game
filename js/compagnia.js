@@ -478,8 +478,8 @@
     if (!chi.length) return 0;
     var riga = el("div", { class: "cmp-fine" }, [ el("span", { class: "cmp-fine-t", text: "👥 Avete giocato con:" }) ]);
     chi.forEach(function (p, i) {
-      if (i) riga.appendChild(el("span", { class: "cmp-fine-sep", text: "·" }));
-      riga.appendChild(el("span", { class: "cmp-fine-p" }, [ el("span", { class: "cmp-fine-n", text: String(p.nome).slice(0, 24) }), piuDi({ n: p.nome, u: p.uid }) ]));
+      // (il «·» in fondo al pezzo della persona: andando a capo non c'è mai un puntino a inizio riga)
+      riga.appendChild(el("span", { class: "cmp-fine-p" }, [ el("span", { class: "cmp-fine-n", text: String(p.nome).slice(0, 24) }), piuDi({ n: p.nome, u: p.uid }), i < chi.length - 1 ? el("span", { class: "cmp-fine-sep", text: "·" }) : null ]));
     });
     box.appendChild(riga);
     return chi.length;
@@ -534,7 +534,7 @@
       ".cmp-piu{appearance:none;-webkit-appearance:none;border:0;cursor:pointer;width:28px;height:28px;flex:0 0 28px;border-radius:50%;background:rgba(255,255,255,.14);color:inherit;font-size:.8rem;padding:0;line-height:1;touch-action:manipulation}",
       ".cmp-piu:disabled{opacity:1}",
       ".cmp-segno{width:28px;text-align:center;font-size:.85rem;color:var(--verde,#37d47e)}",
-      ".cmp-fine{display:flex;align-items:center;gap:5px;height:30px;max-height:30px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch;white-space:nowrap;font-size:.82rem;font-weight:700;color:var(--testo-tenue,#cdd6ff);min-width:0}",
+      ".cmp-fine{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:3px 5px;min-height:30px;white-space:nowrap;font-size:.82rem;font-weight:700;color:var(--testo-tenue,#cdd6ff);min-width:0}",   // (21 nov 2026: va a capo; prima usciva dal bordo destro col ➕ tagliato)
       ".cmp-fine-t{flex:0 0 auto}",
       ".cmp-fine-p{display:flex;align-items:center;gap:3px;flex:none;color:var(--testo,#fff)}",   // (in tanti la riga scorre di lato: prima i nomi diventavano una lettera)
       ".cmp-fine::-webkit-scrollbar{display:none}.cmp-fine-sep{flex:none}",

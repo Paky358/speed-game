@@ -276,7 +276,7 @@
       var tacche = el("div", { class: "pzb-tr-tacche" }), t = [];
       for (var k = 0; k < TR.N; k++) { var ti = el("i"); t.push(ti); tacche.appendChild(ti); }
       var fermi = el("div", { class: "pz-tab fitto" });
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "✋ È troppo!" }));
+      A.sch.appendChild(A.testa("È troppo!"));
       A.sch.appendChild(A.scheda(pub.prod || {}, { cls: "grande" }));   // (25 ott: la scheda prende tutto lo spazio libero)
       A.sch.appendChild(el("div", { class: "pzb-tr-big" }, [ nN, nP ]));
       A.sch.appendChild(tacche);
@@ -413,7 +413,7 @@
       var su = function (i) { return ids.filter(function (id) { return tocchi[id] === i; }); };
       var mai = ids.filter(function (id) { return !(tocchi[id] >= 0); });
       var banner = el("div", { class: "pz-sotto", text: "Dove vi siete fermati…" });
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "✋ È troppo!" }));
+      A.sch.appendChild(A.testa("È troppo!"));
       A.sch.appendChild(A.miniprod(prod));
       var contaBox = el("div", { style: "min-height:52px;display:flex;align-items:center" }, [ conta.el ]);
       conta.el.style.visibility = "hidden";
@@ -683,7 +683,7 @@
       var el = A.el, pub = A.pub || {};
       A.sch.classList.add("pzb-fitto");
       var box = el("div", { class: "pzb-pl-board" }), chips = el("div", { class: "pzb-pl-chips" }), ch = {}, attesa = {};
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🟡 Plinko" }));
+      A.sch.appendChild(A.testa("Plinko"));
       A.sch.appendChild(box);
       A.sch.appendChild(chips);
       A.giocatori.forEach(function (g) {
@@ -860,7 +860,7 @@
       var el = A.el, riv = A.riv || {}, gett = riv.gett || [], ids = riv.ids || [], punti = A.punti || {};
       A.sch.classList.add("pzb-fitto");
       var box = el("div", { class: "pzb-pl-board" }), chips = el("div", { class: "pzb-pl-chips" }), banner = el("div", { class: "pz-sotto", text: "Tutti i gettoni cadono insieme!" });
-      A.sch.appendChild(el("div", { class: "pz-testa", text: "🟡 Plinko" }));
+      A.sch.appendChild(A.testa("Plinko"));
       A.sch.appendChild(box); A.sch.appendChild(chips); A.sch.appendChild(banner);
       var tot = {}, ch = {}, giusti = riv.giusti || {};
       ids.forEach(function (id) {

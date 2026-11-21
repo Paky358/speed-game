@@ -70,6 +70,13 @@ body{
 /* impostazioni e sala prima di giocare: alte come lo schermo, il tasto per cominciare sempre a vista (scorre solo il centro) */
 .schermata.prima-fissa{ flex:0 0 auto; height:var(--alt, 100dvh); max-height:var(--alt, 100dvh); min-height:0; }
 .schermata.prima-fissa > .contenuto{ min-height:0; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+/* (21 nov 2026) sotto c'è altro da scorrere: il fondo delle scelte sfuma (segnaAltroSotto in core.js) */
+.schermata.prima-fissa.altro-sotto > .contenuto{ -webkit-mask-image:linear-gradient(180deg, #000 calc(100% - 44px), rgba(0,0,0,.12)); mask-image:linear-gradient(180deg, #000 calc(100% - 44px), rgba(0,0,0,.12)); }
+/* (21 nov 2026) impostazioni: «Come si gioca» accanto a «Comincia» (una riga sola: più posto alle scelte) */
+.schermata.piede-fila > .piede{ flex-direction:row; align-items:stretch; gap:8px; }
+.schermata.piede-fila > .piede .btn{ width:auto; margin:0; }
+.schermata.piede-fila > .piede .btn-fantasma{ flex:0 0 auto; padding-left:12px; padding-right:12px; }
+.schermata.piede-fila > .piede .btn-primario{ flex:1 1 auto; min-width:0; }
 
 /* ---- Bottoni (uguali ovunque) ---- */
 .btn{
@@ -2004,6 +2011,9 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 .fine-tasti .ft-punti{ flex:1 1 100%; display:block; min-width:0; padding:6px 10px; border:0; border-radius:12px; cursor:pointer; background:rgba(255,202,58,.12); color:#ffe066;
   font:inherit; font-weight:800; font-size:.9rem; line-height:1.25; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .fine-tasti .ft-punti[hidden]{ display:none; }
+/* (21 nov 2026) la riga «🏆 Serata: …» va a capo, al massimo due righe (i nomi che non ci stanno li toglie rigaPuntiOra, mai il mio) */
+.fine-tasti .ft-punti{ white-space:normal; }
+.fine-tasti .ft-pt-testo{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; }
 
 /* ---- "Chi gioca a Tris?" (p2-h): gli avatar della Sala, 5 per riga; chi gioca ha l'anello giallo e la ✓.
    Si cambiano solo le classi (niente lampeggio). Etichette dei giochi nell'elenco della Sala ---- */
@@ -4343,6 +4353,17 @@ html body.tema-oro::before{ display:none; }
 /* chi entra: «Sei dentro!» e cosa aspetta, compatto */
 .saletta-schermo .sl-attesa{ padding:4px 12px; }
 .saletta-schermo .sl-att-testo{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* (21 nov 2026) le regole scelte dall'host nel riquadro «Sei dentro!» (rigaRegoleBox): una riga (due sui telefoni alti), un tocco
+   apre il foglio; per 5 s dopo un cambio «✨ Cambiate: …» in oro. Sui telefoni bassi prende il posto di «Aspetta che…» */
+.sl-att-reg{ display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; width:100%; margin:1px 0 0; padding:0; border:0; background:none;
+  font:inherit; font-size:.82rem; font-weight:700; line-height:1.25; color:var(--o-tenue,#cdd6ff); text-align:center; cursor:pointer; touch-action:manipulation; }
+.sl-att-reg[hidden]{ display:none; }
+.sl-att-reg.cambiate{ color:var(--o-oro,#ffd43b); }
+.sl-att-reg.salta{ animation:slRegSalta .5s cubic-bezier(.3,1.6,.5,1); }
+@media (max-height:720px){
+  .saletta-schermo.con-reg-box .sl-att-testo{ display:none; }
+  .sl-att-reg{ -webkit-line-clamp:1; }
+}
 /* in fondo: ⓘ piccolo e tondo a sinistra, poi Regole e Comincia (o «Sono pronto!») */
 .saletta-schermo .sl-tasti .sl-info{ flex:0 0 46px; width:46px; min-width:46px; padding:0; border-radius:50%; font-size:1.35rem; font-weight:900; line-height:1;
   background:rgba(255,255,255,.1); color:#fff; box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.16); }

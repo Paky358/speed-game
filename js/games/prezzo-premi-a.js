@@ -182,20 +182,20 @@
     // il maxischermo mentre si gioca: il prodotto che stai prezzando (chi guarda: tutti e 3) e chi è a che punto
     schermo: function (A) {
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [];
-      var testa = el("div", { class: "pz-testa", text: "🧗 L'Alpinista" });
+      var testa = A.testa("L'Alpinista");
       var cur = el("div", { class: "pza-cur" }), tre = el("div", { class: "pza-tre" }), ch = el("div", { "data-sacr": "2" });
       A.sch.appendChild(testa); A.sch.appendChild(cur); A.sch.appendChild(tre); A.sch.appendChild(ch);
       var dots = prod.map(function (p, i) { var d = el("span", { class: "pza-dot" }, [ el("b", { text: String(i + 1) }), Z().figura(el, p, "") ]); tre.appendChild(d); return d; });
       function stato(id) { var n = ((A.pub || {}).n || {})[id] || 0; return { tx: n >= prod.length ? "✅" : n + "/" + prod.length, ok: n >= prod.length }; }
       chips(A, ch, pub, stato);
       function tutti() {
-        svuota(cur); testa.textContent = "🧗 L'Alpinista";
+        svuota(cur); testa.dici("L'Alpinista");
         var g = A.tessere(prod, { num: true, fermo: true });
         cur.appendChild(g); cur.classList.add("pieno"); tre.hidden = true; g.adatta();
       }
       function mostra(i, mie) {
         i = Math.max(0, Math.min(prod.length - 1, i));
-        testa.textContent = "🧗 L'Alpinista · " + (i + 1) + " di " + prod.length;
+        testa.dici("L'Alpinista · " + (i + 1) + " di " + prod.length);
         svuota(cur); cur.classList.add("pieno"); var s = A.scheda(prod[i], { cls: "media grande" }); s.classList.add("pza-entra"); cur.appendChild(s);
         tre.hidden = false;
         dots.forEach(function (d, j) { d.classList.toggle("ok", !!(mie && mie[j] != null)); d.classList.toggle("ora", j === i); });
@@ -241,7 +241,7 @@
     },
     rivela: async function (A) {
       var el = A.el, riv = A.riv || {}, prod = riv.prod || [], g = riv.g || [];
-      var testa = el("div", { class: "pz-testa", text: "🧗 L'Alpinista" });
+      var testa = A.testa("L'Alpinista");
       var alto = el("div", { class: "pza-alto" }), monte = el("div", { class: "pza-monte" }), banner = el("div", { class: "pz-sotto pza-bn", text: "Tutti ai piedi della montagna…" });
       monte.innerHTML = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' +
         '<defs><linearGradient id="pzaRoccia" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a1887f"/><stop offset="1" stop-color="#4e342e"/></linearGradient></defs>' +
@@ -316,7 +316,7 @@
       }
       await A.dorme(840); if (!A.vivo()) return;
       for (var i = 0; i < prod.length; i++) {
-        testa.textContent = "🧗 L'Alpinista · " + (i + 1) + " di " + prod.length;
+        testa.dici("L'Alpinista · " + (i + 1) + " di " + prod.length);
         var conta = i ? prodotto(i) : conta0;
         g.forEach(function (x) { var o = voci[x.id]; o.v.textContent = giu[x.id] ? "💥" : "…"; o.ps.textContent = ""; o.c.className = "pz-och aspetta"; });
         banner.textContent = "Quanto costa?";
@@ -359,7 +359,7 @@
         if (giu[x.id]) return;
         var a = av[x.id]; svuota(a.el); a.el.appendChild(A.fac(x.id, x.tot === 0 ? "evviva" : "esulta"));
       });
-      testa.textContent = "🧗 L'Alpinista";
+      testa.dici("L'Alpinista");
       var ord = g.slice().sort(function (a, b) { return (a.giu - b.giu) || (a.tot - b.tot) || (a.ms - b.ms); });
       var vetta = ord.filter(function (x) { return !x.giu && x.tot === 0; }), primo = ord[0];
       banner.classList.remove("pza-scuoti");
@@ -481,7 +481,7 @@
     // sopra e sotto le cose… così abbiamo tutto più largo»). Li vede chi guarda e chi ha finito.
     schermo: function (A) {
       var el = A.el, pub = A.pub || {}, prod = pub.prod || [];
-      var testa = el("div", { class: "pz-testa", text: "📊 Mettili in ordine" }), ch = el("div", { "data-sacr": "2" });
+      var testa = A.testa("Mettili in ordine"), ch = el("div", { "data-sacr": "2" });
       var g = A.tessere(prod, { num: true, fermo: true, cls: "pza-lista" });
       A.sch.appendChild(testa); A.sch.appendChild(g); A.sch.appendChild(el("div", { class: "pz-sotto pza-aiuto", text: "1 = il meno caro · " + prod.length + " = il più caro", "data-sacr": "1" })); A.sch.appendChild(ch);
       function stato(id) { var f = ((A.pub || {}).fatti || []).indexOf(id) >= 0; return { tx: f ? "✅" : "…", ok: f }; }
@@ -551,7 +551,7 @@
     },
     rivela: async function (A) {
       var el = A.el, riv = A.riv || {}, prod = riv.prod || [], giusto = riv.giusto || [], g = riv.g || [];
-      var testa = el("div", { class: "pz-testa", text: "📊 Mettili in ordine" });
+      var testa = A.testa("Mettili in ordine");
       var fila = A.tessere(giusto.map(function (j) { return prod[j] || {}; }), { num: true, extra: function (p, pos, t) { t._tag = A.Z.cartellino(el, A.fmtE(p.prezzo || 0)); return t._tag; } });
       var golf = el("div", { class: "pza-golf" }), banner = el("div", { class: "pz-sotto pza-bn", text: "Dal meno caro al più caro…" });
       A.sch.appendChild(testa); A.sch.appendChild(fila); A.sch.appendChild(golf); A.sch.appendChild(banner);

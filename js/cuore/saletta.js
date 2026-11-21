@@ -150,10 +150,8 @@
     if (U.rRiga.hidden !== !tx) U.rRiga.hidden = !tx;
     var conOsp = !!tx || nodiRegole(U).length > 0;
     if (U.bRegoleOsp && U.bRegoleOsp.hidden !== !conOsp) U.bRegoleOsp.hidden = !conOsp;   // (chi entra: «📜 Regole» solo se l'host ne ha scelte)
-    if (cambiate && tx && U.bRegoleOsp) {   // l'host le ha appena cambiate: il tasto saltella e dice «✨ Cambiate» per 2,5 s
-      rianima(U.bRegoleOsp, "salta"); U.bRegoleOsp.textContent = "✨ Cambiate";
-      clearTimeout(U.tRo); U.tRo = setTimeout(function () { if (U.bRegoleOsp) U.bRegoleOsp.textContent = "📜 Regole"; }, 2500);
-    }
+    if (cambiate && tx && U.bRegoleOsp) rianima(U.bRegoleOsp, "salta");   // l'host le ha appena cambiate: il tasto saltella (cosa è cambiato lo dice il riquadro, rigaRegoleBox)
+    rigaRegoleBox(U, tx, cambiate);
     if (U.rFoglioP && U.rFoglioP.textContent !== tx && tx) U.rFoglioP.textContent = tx;   // (il foglio aperto si aggiorna anche lui)
     if (cambiate && tx) {
       rianima(U.rRiga, "salta");
@@ -161,6 +159,21 @@
       clearTimeout(U.tRc);
       U.tRc = setTimeout(function () { U.rRiga.classList.remove("cambiate"); }, 2500);
     }
+  }
+  // (21 nov 2026) chi entra: le regole nel riquadro «Sei dentro!»; appena cambiate, per 5 s solo quello che è cambiato
+  function rigaRegoleBox(U, tx, cambiate) {
+    var B = U.rBox; if (!B) return;
+    var prima = U.rBoxTx, mostra = tx ? "📜 " + tx : "";
+    if (cambiate && tx && prima != null && prima !== tx) {
+      var vecchi = String(prima).split(" · "), nuovi = String(tx).split(" · ").filter(function (p) { return vecchi.indexOf(p) < 0; });
+      mostra = "✨ Cambiate: " + (nuovi.length ? nuovi.join(" · ") : tx);
+      B.classList.add("cambiate"); rianima(B, "salta");
+      clearTimeout(U.tRb); U.tRb = setTimeout(function () { B.classList.remove("cambiate"); rigaRegoleBox(U, U.rBoxTx || "", false); }, 5000);
+    } else if (B.classList.contains("cambiate") && U.tRb && tx === prima) return;   // (sta ancora dicendo cosa è cambiato)
+    U.rBoxTx = tx;
+    if (B.textContent !== mostra) B.textContent = mostra;
+    if (B.hidden !== !mostra) B.hidden = !mostra;
+    if (U.s) U.s.classList.toggle("con-reg-box", !!mostra);
   }
   function rigaRegoleNodi(U, tocco) {
     U.rTesto = el("span", { class: "sl-rr-testo" });
@@ -335,7 +348,10 @@
       U2.titolo = el("div", { class: "sl-att-tit" });
       U2.attesa = el("div", { class: "sl-att-testo" });
       U2.consiglio = el("div", { class: "sl-consiglio" });
-      U2.box = el("div", { class: "sl-attesa" }, [ U2.titolo, U2.attesa, U2.consiglio ]);
+      // (21 nov 2026) le regole scelte dall'host, dentro il riquadro «Sei dentro!» (niente spazio tolto agli avatar):
+      // «📜 5 carte · Tutti insieme»; quando l'host le cambia, per 5 s «✨ Cambiate: 3 carte». Un tocco: il foglio intero
+      U2.rBox = el("button", { class: "sl-att-reg", type: "button", hidden: "hidden", onclick: function () { foglioRegoleOspite(U2); } });
+      U2.box = el("div", { class: "sl-attesa" }, [ U2.titolo, U2.rBox, U2.attesa, U2.consiglio ]);
       // le regole scelte dall'host: non più una riga, ma il tasto «📜 Regole» in fondo (il foglio col riassunto intero)
       // (la riga resta nella pagina, nascosta: il suo testo serve al foglio e alle prove)
       if (g.id !== "__sala") { rigaRegoleNodi(U2, function () { foglioRegoleOspite(U2); }); s._contenuto.appendChild(U2.rRiga); }

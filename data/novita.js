@@ -23,10 +23,33 @@ window.SG_NOVITA = [
     ]
   },
   {
+    v: 399,
+    data: "21 novembre 2026",
+    titolo: "Saletta, punteggi e fine partita: tanti ritocchi 🪟",
+    descrizione: [
+      "📜 In saletta chi entra legge di nuovo le regole scelte dall'host, nel riquadro «Sei dentro!» (un tocco le apre tutte). Se l'host le cambia, per qualche secondo c'è scritto cosa è cambiato (es. «✨ Cambiate: ⚡ Tutti insieme · 7 carte»).",
+      "🎉 Chi arriva a partita cominciata legge «Sei dentro! Giochi tra poco» sotto i punteggi, non più sopra i nomi. Quando entri lo dice il gioco.",
+      "🔝 Nella fila dei punteggi che scorre il tasto ‹ sta fermo da parte: il primo giocatore non gli passa più sotto. E le lettere come la «y» di Paky hanno di nuovo la gambetta.",
+      "🏆 A fine partita la riga «Serata» va a capo e dice tutti i posti che ci stanno, sempre anche il tuo. «Avete giocato con» va a capo invece di uscire dallo schermo.",
+      "📱 «Come giocate?» sta tutta nello schermo anche sui telefoni piccoli. Nelle impostazioni «Come si gioca» sta accanto a «Comincia», così le scelte hanno più posto, e in fondo la lista sfuma se sotto ce ne sono altre."
+    ]
+  },
+  {
+    v: 398,
+    data: "21 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: le parate vanno alte 🧤",
+    descrizione: [
+      "🧤 Nella giornata, quando il portiere para senza bloccare, il pallone va alto sopra la traversa (o largo oltre il palo se il tiro era basso), in calcio d'angolo: non passa più dietro la porta né dentro la rete. Entra nella porta solo il gol.",
+      "🏟️ Anche il tiro alto non ricade più subito dietro la rete: passa sopra la porta e finisce in curva."
+    ]
+  },
+  {
     v: 395,
     data: "21 novembre 2026",
-    titolo: "Il Prezzo è Giusto: tre ritocchi 🏷️",
+    titolo: "Il Prezzo è Giusto: i giochi a premi coi loro disegni 🏷️",
     descrizione: [
+      "🎨 Ogni gioco a premi ha il suo disegno al posto dell'emoji, nello stile dell'app: le frecce di Più o meno, la montagna dell'Alpinista, la mano di È troppo!, i chiodini del Plinko, il carrello, la cassaforte, i dadi, il bersaglio e gli altri. Si vedono nella scelta, nelle regole e in alto mentre si gioca, anche senza rete.",
+      "🌙 Le schede per scegliere il gioco a premi sono scure come il resto dell'app (prima erano bianche).",
       "👀 Nell'Offerta con le offerte a vista la regola è scritta chiara: «si può offrire 1 € più di un altro» (10 centesimi sui prezzi piccoli; prima «occhio al +1 €», che capiva solo chi conosce il programma). Anche nelle regole del gioco.",
       "🛍️ La Vetrina finale, mentre si presenta un pezzo alla volta, sta al centro dello schermo, non più tutta in alto con mezzo schermo vuoto sotto. I pezzi restano grandi come prima, un pezzo da solo nella sua riga sta al centro, e quelli già usciti scivolano piano al loro posto.",
       "💡 Nei giochi a premi il pannello non ripete il nome del gioco, che è già scritto in alto: al suo posto una frase che ricorda cosa fare (es. «⬆️ Dal meno caro al più caro» in Mettili in ordine, «💸 Fermalo al momento giusto» in È troppo!)."

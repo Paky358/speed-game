@@ -204,7 +204,7 @@
     if (pM.punti !== 0) no("Marco entra con " + pM.punti + " punti");
     if (inProssimi && vm(C).giro !== giro0 + 1) no("Marco entra al giro " + vm(C).giro + " invece del " + (giro0 + 1));
     await W.aspetta(function () { var p = A.pill(M); if (/Sei dentro/.test(p)) pill = p; return pill; }, 3000);
-    if (!/Sei dentro! Giochi dal prossimo turno/.test(pill)) no("Marco non legge «🎉 Sei dentro! Giochi dal prossimo turno» (" + (pill || A.pill(M) || "niente") + ")");
+    if (!/Sei dentro! Giochi tra poco/.test(pill)) no("Marco non legge «🎉 Sei dentro! Giochi tra poco» (" + (pill || A.pill(M) || "niente") + ")");
     if (M.document.querySelector(".sg-guardo")) no("Marco ha la targhetta di chi guarda");
     // Marco gioca: il suo tocco conta
     if (!await W.aspetta(function () { return vm(C).stato === "via"; }, 8000)) no("il tasto non diventa verde");

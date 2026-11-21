@@ -11,6 +11,11 @@
 //     prima, vicina dopo: la telecamera uguale per tutti gli esiti vuol dire anche che l'avvicinamento parte per tutti nello stesso istante).
 // pr2 Online in 2 (IL PAPPONE tiene la partita, Giulia entra): l'asta veloce, poi la giornata dal vivo per 30 secondi. Il campo è in
 //     prospettiva su tutti e due i telefoni se PROSPETTIVA è «tutti» (se è «proprietario», solo su quello di IL PAPPONE); nessun errore; le azioni vanno avanti su tutti e due.
+// pr3 🧤 (21 nov 2026, il proprietario: «la palla deve andare alta quando il portiere la para ma non la blocca»; prima dopo la parata a volte
+//     andava dietro la porta) Per 38 azioni × 6 esiti che non sono gol (parata, palo, traversa, fuori, alto, linea) × 40 semi × verso in su e in
+//     giù, e i rigori (parati, anche con la ribattuta, fuori, palo, alto, traversa): il pallone, millesimo per millesimo dell’azione, non passa MAI
+//     dentro la porta (tra i pali, tra la linea e il fondo della rete, sotto il tetto della rete) né dietro la rete tra i pali sotto l’altezza della
+//     traversa (fino alla curva): ci entra solo il gol. Margini: mezzo metro di lato, 25 cm sopra. Prima della correzione falliva in 1.988 azioni su 18.720.
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no;
@@ -18,7 +23,7 @@
     var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), F = {}, ag = "function costruisciMazzoFanta(n) {";
     if (src.indexOf(ag) < 0) no("non trovo il mazzo del fanta nel file del gioco");
     if (src.indexOf("function porta3D(") < 0) no("nel gioco non c'è la porta in prospettiva");
-    src = src.replace(ag, "FUORI.scena = scena; FUORI.campo = campoAzioni; FUORI.prosp = prospettivaPer; FUORI.GL = GL; FUORI.PROSPETTIVA = PROSPETTIVA; " + ag);
+    src = src.replace(ag, "FUORI.scena = scena; FUORI.campo = campoAzioni; FUORI.prosp = prospettivaPer; FUORI.GL = GL; FUORI.NET = NET; FUORI.lungo = lungo; FUORI.PROSPETTIVA = PROSPETTIVA; " + ag);
     new w.Function("SG", "FUORI", src)({ registra: function () {}, bot: w.SG && w.SG.bot }, F);
     return F;
   }
@@ -121,5 +126,37 @@
     if (errori.length) no("errori: " + errori.slice(0, 4).join(" · "));
     if (cambiP < 8 || cambiG < 8) no("le azioni non vanno avanti (secondi in cui il campo cambia: IL PAPPONE " + cambiP + ", Giulia " + cambiG + " su 30)");
     return "IL PAPPONE in prospettiva, Giulia " + (TUTTI ? "anche (PROSPETTIVA «tutti»)" : "come sempre") + "; in 30 secondi di giornata il campo è cambiato " + cambiP + " e " + cambiG + " volte, nessun errore";
+  } });
+  COPIONE.aggiungi("pr3", { nome: "🧤 Dopo la parata respinta, il fuori e l'alto il pallone non passa mai dentro la porta né dietro la rete: ci entra solo il gol", fai: async function () {
+    var w = await W.apriTel("Paky", { x: 0 }), M = await motore(w), GL = M.GL, NET = M.NET, PALO = 0.084, MX = 0.012, MZ = 0.25, CURVA = 1.08, ko = {}, es1 = {}, n = 0, tipi = {};
+    var SC = SCENE.concat(["olimpico", "portiere", "rovesciata"]);
+    function tetto(y) { return y <= GL ? 2.44 : 2.44 - 2.44 * 0.12 * Math.min(1, (y - GL) / (NET - GL)); }   // (il tetto della rete scende verso il fondo, come in porta3D)
+    function guarda(sc) {
+      if (sc.gol || sc.rete != null) return null;
+      var t0 = sc.palla[0][0], t1 = Math.min(1, sc.palla[sc.palla.length - 1][0]);
+      for (var p = t0; p <= t1 + 1e-9; p += 0.001) {
+        var b = M.lungo(sc.palla, p, true), x = b[1], y = b[2], z = b[3] || 0;
+        if (Math.abs(x - 0.5) >= PALO + MX) continue;
+        if (y > GL + 0.001 && y <= NET + 0.006 && z < tetto(y) + MZ) return "DENTRO la porta a " + p.toFixed(3) + " (" + [x, y, z].map(function (v) { return v.toFixed(3); }) + ")";
+        if (y > NET + 0.006 && y < CURVA && z < 2.44 + MZ) return "DIETRO la rete, basso, a " + p.toFixed(3) + " (" + [x, y, z].map(function (v) { return v.toFixed(3); }) + ")";
+      }
+      return null;
+    }
+    function conta(tag, sc, qui) { n++; if (sc.tipoParata) tipi[sc.tipoParata] = (tipi[sc.tipoParata] || 0) + 1; var m = guarda(sc); if (!m) return; ko[tag] = (ko[tag] || 0) + 1; if (!es1[tag]) es1[tag] = qui + ": " + m; }
+    SC.forEach(function (v) { ["parata", "palo", "traversa", "fuori", "alto", "linea"].forEach(function (es) { for (var s = 1; s <= 40; s++) [1, -1].forEach(function (verso) {
+      var sc = M.scena("occ", v, es, null, {}, { verso: verso, lato: s % 2 ? 1 : -1, seme: s * 7919, lento: true });
+      conta(v + " " + es + (sc.tipoParata ? " (" + sc.tipoParata + ")" : ""), sc, v + " " + es + " seme " + s + (verso < 0 ? " verso l'altra porta" : ""));
+    }); }); });
+    ["parata", "fuori", "palo", "alto", "traversa"].forEach(function (es) { for (var s = 1; s <= 40; s++) [1, -1].forEach(function (verso) { [0, 1].forEach(function (rib) {
+      if (rib && es !== "parata") return;
+      var sc = M.scena("rig", null, es, es === "parata" ? null : es, {}, { verso: verso, lato: s % 2 ? 1 : -1, seme: s * 7919 + 5, rib: rib });
+      conta("rigore " + es + (rib ? " con la ribattuta" : ""), sc, "rigore " + es + " seme " + s);
+    }); }); });
+    // (e il gol entra ancora: subito dopo la rete il pallone tra i pali, oltre la linea, sotto la traversa; nella goal-line rimbalza sulla linea e torna in campo prima del «GOL!»: lì si guarda dal rimbalzo)
+    var gol = 0; SC.forEach(function (v) { for (var s = 1; s <= 3; s++) { var g = M.scena("gol", v, "gol", null, {}, { verso: 1, lato: 1, seme: s * 7919, lento: true }); if (g.rete == null) continue; var b = null; for (var pg = g.glt != null ? g.glt - 0.01 : g.rete; pg <= Math.min(1, g.rete + 0.05) && !b; pg += 0.002) { var bg = M.lungo(g.palla, pg, true); if (Math.abs(bg[1] - 0.5) < PALO && bg[2] > GL - 0.001 && (bg[3] || 0) < 2.44) b = bg; } if (!b) b = M.lungo(g.palla, g.rete, true); if (!(Math.abs(b[1] - 0.5) < PALO && b[2] > GL - 0.001 && (b[3] || 0) < 2.44)) ko["gol fuori dalla porta"] = (ko["gol fuori dalla porta"] || 0) + 1, es1["gol fuori dalla porta"] = v + " seme " + s + " (" + b.slice(1).map(function (q) { return q.toFixed(3); }) + ")"; else gol++; } });
+    var k = Object.keys(ko);
+    if (k.length) no(k.length + " casi sbagliati: " + k.sort(function (a, b) { return ko[b] - ko[a]; }).slice(0, 5).map(function (t) { return ko[t] + " × " + t + " → " + es1[t]; }).join(" · "));
+    if ((tipi.volo || 0) < 100 || (tipi.angolo || 0) < 100) no("troppe poche parate respinte: " + JSON.stringify(tipi));
+    return n + " azioni che non sono gol (parate: " + Object.keys(tipi).map(function (t) { return tipi[t] + " " + t; }).join(", ") + "), il pallone mai dentro la porta né dietro la rete; " + gol + " gol dentro la porta";
   } });
 })();

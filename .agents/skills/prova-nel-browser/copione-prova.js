@@ -1996,17 +1996,22 @@
       var ms = Date.now() - t0;
       if (ms > 1000) no("le regole nuove arrivano a Giulia dopo " + ms + " ms");
       if (!/6 carte/.test(regoleDi(P))) no("la riga di Paky dice «" + regoleDi(P) + "»");
-      // (7 nov 2026) la riga non si vede più: a Giulia lo dice il tasto «📜 Regole» («✨ Cambiate» per 2,5 s)
-      var bRG = G.document.querySelector(".sl-tasti .sl-regole");
-      if (!bRG || bRG.hidden || !/Cambiate/.test(bRG.textContent)) no("il tasto «📜 Regole» di Giulia non dice «✨ Cambiate» («" + (bRG ? bRG.textContent : "manca") + "»)");
+      // (21 nov 2026) a Giulia lo dice il riquadro «Sei dentro!»: per 5 s «✨ Cambiate: 6 carte» (solo quello che è cambiato)
+      var bRG = G.document.querySelector(".sl-tasti .sl-regole"), bxG = G.document.querySelector(".sl-attesa .sl-att-reg");
+      if (!bRG || bRG.hidden) no("Giulia non ha il tasto «📜 Regole»");
+      if (!bxG || bxG.hidden || !/Cambiate: .*6 carte/.test(bxG.textContent) || /5 carte/.test(bxG.textContent)) no("il riquadro di Giulia non dice cosa è cambiato («" + (bxG ? bxG.textContent : "manca") + "»)");
       if (!await W.aspetta(function () { return vm(C).carte === 6; }, 3000)) no("le regole nuove non arrivano nella partita (carte " + vm(C).carte + ")");
       // dopo 2,5 s "✨ Regole cambiate" se ne va
       await W.dorme(2700);
       if (rigaG.classList.contains("cambiate")) no("«✨ Regole cambiate» resta più di 2,5 s");
+      await W.dorme(2600);
+      if (!/^📜 .*6 carte/.test(bxG.textContent) || bxG.classList.contains("cambiate")) no("dopo 5 s il riquadro di Giulia non torna alle regole («" + bxG.textContent + "»)");
       // Marco arriva dopo: legge già le regole nuove, senza "cambiate"
       var M = await W.apriTel("Marco", { hash: "sala=" + S, x: 370, salaSempre: true });
       if (!await W.aspetta(function () { return dentro(M) && /6 carte/.test(regoleDi(M)); }, 9000)) no("Marco non legge le regole nuove («" + regoleDi(M) + "» · «" + T(M).slice(0, 80) + "»)");
       if (M.document.querySelector(".sl-regole-riga").classList.contains("cambiate")) no("per Marco «✨ Regole cambiate» anche se è appena arrivato");
+      var bxM = M.document.querySelector(".sl-attesa .sl-att-reg");
+      if (!bxM || bxM.hidden || !/^📜 .*6 carte/.test(bxM.textContent)) no("nel riquadro di Marco non ci sono le regole («" + (bxM ? bxM.textContent : "manca") + "»)");
       // Giulia tocca la riga: il foglio col riassunto intero e "📖 Come si gioca"
       G.document.querySelector(".sl-tasti .sl-regole").click(); await W.dorme(200);
       var fg = G.document.querySelector(".sl-foglio");
@@ -2225,7 +2230,7 @@
       // la riga della Classifica della serata a fine partita: "🏆 Serata: Paky 1° · Luca 2° · Giulia 3° · …" (a pari punti lo stesso posto)
       var rigaSerata = function (t) { var cl = t.nomi.map(function (n) { return { nome: n, punti: t.punti[n] || 0 }; }).sort(function (a, b) { return b.punti - a.punti; }), po = [];
         cl.forEach(function (r, i) { po.push(i && r.punti === cl[i - 1].punti ? po[i - 1] : i + 1); });
-        return "🏆 Serata: " + cl.slice(0, 3).map(function (r, i) { return r.nome + " " + po[i] + "°"; }).join(" · ") + (cl.length > 3 ? " · …" : ""); };
+        return "🏆 Serata: " + cl.slice(0, 8).map(function (r, i) { return r.nome + " " + po[i] + "°"; }).join(" · ") + (cl.length > 8 ? " · …" : ""); };   // (21 nov 2026: tutti quelli che ci stanno, nome e posto attaccati)
       var CURVA = [100, 78, 62, 50, 40, 32, 25, 19, 14, 10];
       // i punti di una partita: per posto, peso del gioco compreso
       function controllaPunti(ass, peso, gioco) {
@@ -4370,7 +4375,7 @@
     if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 5000)) no("il Contatore non comincia");
     var M = await W.apriTel("Marco", { hash: "gioco=contatore&stanza=" + C, x: 370, prima: A.pr });
     var visti = {};
-    var ok = await W.aspetta(function () { var p = pill(M); if (/giochi dal prossimo turno/.test(p) && /Partita in corso/.test(p)) visti.prima = p; if (/Sei dentro! Giochi dal prossimo turno/.test(p)) visti.dopo = p; return visti.prima && visti.dopo; }, 12000, 100);
+    var ok = await W.aspetta(function () { var p = pill(M); if (/giochi tra poco/.test(p) && /Partita in corso/.test(p)) visti.prima = p; if (/Sei dentro! Giochi tra poco/.test(p)) visti.dopo = p; return visti.prima && visti.dopo; }, 12000, 100);   // (21 nov 2026: «tra poco», non più «dal prossimo turno»)
     if (!ok) no("Marco legge " + JSON.stringify(visti) + " (" + pill(M) + ")");
     if (contaDentro(vm(C)) !== 3) no("Marco non è nella partita");
     await W.dorme(3500);
