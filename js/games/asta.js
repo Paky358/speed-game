@@ -5747,7 +5747,7 @@
         // tuffo), di piede, tolta dall'incrocio in calcio d'angolo. Il pallone arriva sempre proprio sulle mani (o sul piede)
         var hP = q.fermo ? 0 : Math.abs(((op.seme || 7) * 7919 + Math.round(t0 * 1e4) * 31) % 100), alta = zq >= 1, tc = tA - 0.01;
         if (alta && hP >= 42 && hP < 72) {   // dall'incrocio: vola alto e la alza sopra la traversa, in calcio d'angolo
-          palla([[tc, 0.5 + lt * 0.052, 0.935, 2.25], [tc + 0.07, 0.5 + lt * 0.06, 0.975, 3.1], [tc + 0.15, 0.5 + lt * 0.068, 1.01, 1.1], [1, 0.5 + lt * 0.074, 1.04, 0]]);
+          palla([[tc, 0.5 + lt * 0.052, 0.935, 2.25], [tc + 0.07, 0.5 + lt * 0.078, 0.975, 3.35], [tc + 0.16, 0.5 + lt * 0.15, 1.03, 2.1], [1, 0.5 + lt * 0.18, 1.06, 0]]);   // (🧤 21 nov 2026, il proprietario: «la palla deve andare alta quando il portiere la para ma non la blocca»: sopra la traversa e la rete, poi giù larga, mai dietro la porta)
           tuffa(lt, 1, tc, stacco(2.25)); sc.paf = tc; sc.tipoParata = "angolo"; sc.titOcc = "🧤 LA TOGLIE DALL'INCROCIO!"; scritta(tA, "IN ANGOLO!", "#69db7c"); return (sc.dunque = tA);
         }
         if ((alta && hP >= 72) || (!alta && hP >= 34 && hP < 67)) {   // la blocca e se la tiene
@@ -5760,7 +5760,8 @@
           sc.paf = tc; sc.tipoParata = "piede"; sc.titOcc = "🦶 PARATA DI PIEDE!"; scritta(tA, "DI PIEDE!", "#69db7c"); return (sc.dunque = tA);
         }
         // in volo: la respinge di mano, larga, in calcio d'angolo
-        palla([[tc, 0.5 + lt * 0.05, 0.935, zq], [tA + 0.13, 0.5 + lt * 0.26, 1.0, 0.6], [1, 0.5 + lt * 0.3, 1.02, 0]]);
+        if (alta) palla([[tc, 0.5 + lt * 0.05, 0.935, zq], [tc + 0.06, 0.5 + lt * 0.075, 0.962, 3.25], [tc + 0.15, 0.5 + lt * 0.15, 1.02, 2.2], [1, 0.5 + lt * 0.19, 1.05, 0]]);   // (🧤 alta: sopra la traversa e la rete, poi giù larga)
+        else palla([[tc, 0.5 + lt * 0.05, 0.935, zq], [tc + 0.05, 0.5 + lt * 0.125, 0.947, 1.3], [tc + 0.14, 0.5 + lt * 0.21, 0.985, 1.0], [1, 0.5 + lt * 0.27, 1.02, 0]]);   // (🧤 bassa: la allunga larga oltre il palo, in calcio d'angolo)
         tuffa(lt, 1, tc, stacco(zq)); sc.paf = tc; sc.tipoParata = "volo"; scritta(tA, "PARATA!", "#69db7c"); return (sc.dunque = tA);
       }
       if (es === "palo") {
@@ -5772,7 +5773,7 @@
         tuffa(lt, 0.5, tA); scritta(tA, "TRAVERSA!", "#ffffff"); return (sc.dunque = tA);
       }
       if (es === "alto") {
-        palla([[tA, 0.5 + lt * 0.023, GL + 0.004, 3.3], [tA + 0.08, 0.5 + lt * 0.03, 1.0, 3.6], [1, 0.5 + lt * 0.03, 1.03, 0]]);
+        palla([[tA, 0.5 + lt * 0.023, GL + 0.004, 3.3], [tA + 0.06, 0.5 + lt * 0.032, 1.05, 2.8], [tA + 0.15, 0.5 + lt * 0.045, 1.25, 0], [1, 0.5 + lt * 0.045, 1.25, 0]]);   // (🧤 21 nov 2026: sopra la traversa e la rete e via, in curva: con la porta in alto finisce tra i tifosi, con la porta in basso esce dallo schermo verso di noi; prima ricadeva subito dietro la rete e sembrava dentro la porta)
         tuffa(lt, 0.3, tA); scritta(tA, "ALTO!", "#ffffff"); return (sc.dunque = tA);
       }
       if (es === "linea") {   // un difensore la toglie sulla linea, col portiere battuto (nelle scene senza il difensore sul palo, come prima)
@@ -6104,7 +6105,7 @@
         if (esito === "parata") {   // torna come un gatto e la toglie in tuffo: il miracolo
           calcia(tira, 0.48); palla([[0.48, 0.385, 0.875, 0.4]]);   // (il tiro parte come negli altri esiti)
           muovi(por, 0.56, 0.548, 0.935); posa(por, 0.555, { tuffo: -1, salto: stacco(0.35), braccia: 1, allunga: 1 }); posa(por, 0.62, { tuffo: -1, braccia: 0.8, allunga: 0.4 }); posa(por, 0.75, { tuffo: -0.5, piega: 0.4 }); posa(por, 0.85, {});
-          palla([[0.555, 0.512, 0.935, 0.35], [0.66, 0.46, 0.99, 0.5], [1, 0.44, 1.02, 0]]);
+          palla([[0.555, 0.512, 0.935, 0.35], [0.6, 0.625, 0.944, 1.2], [0.7, 0.72, 0.975, 0.9], [1, 0.78, 1.0, 0]]);   // (🧤 21 nov 2026: la devia larga oltre il palo; prima passava dentro la porta e usciva dalla rete)
           sc.paf = 0.555; sc.tipoParata = "volo"; sc.titOcc = "🧤 TORNA E FA IL MIRACOLO!"; scritta(0.56, "MIRACOLO!", "#69db7c"); tg = sc.dunque = 0.56;
         } else {
           tg = tiro(0.48, [0.385, 0.875], 0.4, { dur: 0.08, fermo: true, senzaLento: true, lato: esito === "linea" ? 0 : -1 });   // (il tiro sul palo libero, lontano dal portiere)
@@ -8442,7 +8443,7 @@
       figure.sort(function (a, b) { return a.y - b.y; });
       var nomi = [], yG = A.pv ? base(0.5 + GL * 0.496, 0.5)[1] : 0, yN = A.pv ? base(0.5 + NET * 0.496, 0.5)[1] : 0, telaioFatto = false, palloFatto = false;
       var su = A.pv && vrs(sc) < 0, ySu = su ? base(0.5 - GL * 0.496, 0.5)[1] : 0;
-      if (su) { porta3D(false, "dietro", sc, p); if (gp[1] < ySu + 0.5) pallone(); porta3D(false, "legni", sc, p); }
+      if (su) { if (gp[1] < base(0.5 - NET * 0.496, 0.5)[1] - 0.5) pallone(); porta3D(false, "dietro", sc, p); if (gp[1] < ySu + 0.5) pallone(); porta3D(false, "legni", sc, p); }   // (🧤 dietro la rete: prima il pallone, poi la porta davanti)
       var yPal = gp[1];   // 📐 (in prospettiva: chi è più vicino si disegna dopo; il pallone sopra i calciatori, ma dietro i pali se è davanti alla porta)
       figure.forEach(function (f) {
         if (A.pv && !telaioFatto && f.y >= yG) { if (yPal < yG - 0.5) pallone(); porta3D(true, "telaio", sc, p); telaioFatto = true; }

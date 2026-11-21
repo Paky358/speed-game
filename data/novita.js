@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 398,
+    data: "21 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: le parate vanno alte 🧤",
+    descrizione: [
+      "🧤 Nella giornata, quando il portiere para senza bloccare, il pallone va alto sopra la traversa (o largo oltre il palo se il tiro era basso), in calcio d'angolo: non passa più dietro la porta né dentro la rete. Entra nella porta solo il gol.",
+      "🏟️ Anche il tiro alto non ricade più subito dietro la rete: passa sopra la porta e finisce in curva."
+    ]
+  },
+  {
     v: 389,
     data: "20 novembre 2026",
     titolo: "Mini Asta Fantacalcio: la telecamera come in TV 🎥",
