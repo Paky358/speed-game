@@ -9,6 +9,21 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 394,
+    data: "21 novembre 2026",
+    titolo: "La linea del tempo: tanti ritocchi 📜",
+    descrizione: [
+      "🎨 Nel risultato di «⚡ Tutti insieme» il riquadro dell'anno è rosso se l'hai sbagliata (prima era sempre verde). Chi guarda vede verde e coriandoli solo se qualcuno l'ha messa giusta, con «✅ Giusta per 2 su 4» o «❌ Nessuno l'ha messa giusta» al posto dell'anno ripetuto: anche in «🧍 Ognuno la sua linea» e sullo stesso telefono.",
+      "⏩ Quando arriva la carta nuova non resta più sullo schermo il «⏩ Avanti» della carta di prima con «Si va avanti tra 0…».",
+      "🧍 Ognuno la sua linea: sotto la carta «Messe bene: 3 su 10» (prima «Nella tua linea: 0 su 10» anche con le due carte di partenza già in linea); nello spareggio si legge cosa succede («la prossima carta la giocano solo loro»); chi ha finito legge «Tocca chi vuoi guardare» e «Sta scegliendo… · messe bene 4 su 5». Le regole dicono che si parte con due carte.",
+      "🤫 Le spiegazioni non dicono più l'età («Ha 18 anni»): da lì si risaliva all'anno. Riscritte 15 carte, tra cui Pausini, Morandi, Nada, Pelé, Comaneci e Tiger Woods.",
+      "📸 Foto nuove: la Coca-Cola col suo inventore John Pemberton (prima una bottiglia di oggi, che ingannava sull'epoca) e la Pascalina intera e chiara (prima era su fondo nero).",
+      "👋 Chi arriva tardi legge «Entri al prossimo giro» anche mentre si guarda il risultato; chi guarda soltanto non legge più «sbrigati!»; in saletta gli amici leggono «Aspetta che Paky faccia partire la partita».",
+      "📐 Con poche carte la linea sta al centro dello spazio libero, non tutta in alto. Nell'elenco dei risultati e in «📍 Andava qui» nomi e titoli vanno a capo invece di tagliarsi («Luca (tu)»). In alto il ✅/❌ non copre più l'ultima lettera del nome e il tasto «‹» non lascia vedere sotto il punteggio che scorre.",
+      "📱 Sullo stesso telefono, mentre il telefono passa a chi può rubare, sotto non resta «Tocca a te» col tempo che corre; durante il risultato non resta acceso un giocatore sbagliato."
+    ]
+  },
+  {
     v: 393,
     data: "21 novembre 2026",
     titolo: "Il Prezzo è Giusto: regole chiare e tanti ritocchi 🏷️",

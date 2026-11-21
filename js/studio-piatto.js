@@ -282,7 +282,7 @@
       ".stp-punti.due{gap:4px;padding-top:calc(4px + env(safe-area-inset-top))}.stp-punti.due .stp-chip{height:34px;gap:4px}.stp-punti.due .stp-chip canvas{width:27px;height:27px}",
       ".stp-punti.due .stp-chip .n{font-size:10.5px}.stp-punti.due .stp-chip .p{font-size:13.5px}.stp-punti.due .stp-esci{height:34px}",
       ".stp-punti.riga .stp-riga{overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.stp-punti.riga .stp-riga::-webkit-scrollbar{display:none}",
-      ".stp-punti.riga .stp-chip{flex:1 0 auto;min-width:84px;max-width:150px}.stp-punti.riga .stp-chip .tx{flex:0 1 auto}.stp-punti.riga .stp-chip .p{overflow:visible;text-overflow:clip}.stp-punti.riga .stp-chip .n{max-width:76px}.stp-punti.riga .stp-esci{position:sticky;left:0;z-index:3}",
+      ".stp-punti.riga .stp-chip{flex:1 0 auto;min-width:84px;max-width:150px}.stp-punti.riga .stp-chip .tx{flex:0 1 auto}.stp-punti.riga .stp-chip .p{overflow:visible;text-overflow:clip}.stp-punti.riga .stp-chip .n{max-width:76px}.stp-punti.riga .stp-esci{position:sticky;left:0;z-index:3;background:var(--o-carta-piena,#151a2e);box-shadow:inset 0 0 0 1px var(--o-filo,rgba(255,255,255,.1)),6px 0 8px -2px rgba(5,8,20,.85)}",   // (21 nov 2026: pieno, così il punteggio che scorre sotto non si vede attraverso)
       ".stp-punti.grandi .stp-chip{height:54px;gap:7px;padding-left:5px;border-radius:15px}.stp-punti.grandi .stp-chip canvas{width:42px;height:42px}",
       ".stp-punti.grandi .stp-chip .n{font-size:13px;color:var(--o-testo)}.stp-punti.grandi .stp-chip .p{font-size:14px;color:var(--o-tenue)}.stp-punti.grandi .stp-esci{height:54px}",
       ".stp-riga{display:flex;gap:5px;min-width:0}",
@@ -312,6 +312,10 @@
       ".stp-chip .cart{position:absolute;right:-3px;top:-5px;z-index:2;min-width:22px;height:22px;padding:0 4px;border-radius:8px;display:flex;align-items:center;justify-content:center;",
         "font-size:13px;font-weight:900;background:#f4f1ff;color:#2a1d6e;box-shadow:0 2px 6px rgba(0,0,0,.4);opacity:0;transform:scale(.3);transition:opacity .2s,transform .3s cubic-bezier(.3,1.5,.5,1)}",
       ".stp-chip .cart.su{opacity:1;transform:none}",
+      // (21 nov 2026: col cartellino su, il nome si stringe un poco invece di finirci sotto: «Paky» non diventa «Pak»)
+      ".stp-punti:not(.riga) .stp-chip:has(.cart.su) .tx{padding-right:24px}",
+      ".stp-punti.riga.con-cart .stp-chip .tx{padding-right:26px}",   // (sulla riga che scorre, dal primo cartellino lo spazio resta: se no il riquadro si allargava a scatti a ogni cartellino; il Prezzo, senza cartellini, non cambia)
+      ".stp-punti.riga .stp-chip .cart{top:1px;right:0}",   // (sulla riga che scorre il bordo di sopra taglia: il cartellino sta dentro)
       ".stp-chip .cart .f.r,.stp-chip .cart.gira .f:not(.r){display:none}.stp-chip .cart.gira .f.r{display:inline}",
       ".stp-chip .cart.si{background:#6ff0a6} .stp-chip .cart.no{background:#ff95a0}",
       ".stp-esci{flex:0 0 auto;width:34px;height:40px;border-radius:13px;border:0;background:var(--o-carta,rgba(22,27,50,.72));box-shadow:inset 0 0 0 1px var(--o-filo,rgba(255,255,255,.1));",
@@ -553,6 +557,7 @@
   }
   function cartello(S, i, stato, voto) {
     var X = S.L[i]; if (!X) return;
+    if (stato !== "giu" && S.puntiEl) S.puntiEl.classList.add("con-cart");   // (il gioco usa i cartellini: sulla riga che scorre il loro spazio resta)
     // (il cartellino: davanti «?», dietro il voto; il gioco può scrivere sul retro, es. ✋ ✅ ❌, come sul cartello del leggio)
     var r = X.cart.querySelector(".f.r");
     if (stato === "giu") { X.cart.classList.remove("su", "gira", "si", "no"); return; }
