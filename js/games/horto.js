@@ -887,9 +887,9 @@
     var R = { s: s, bAv: null, quanti: null };
     if (gp.finito) {
       if (!o.locale && !o.targa) { var fac = t.faccine && t.faccine(); if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); } }
-      if (!o.locale && t.tastiFine && t.tastiFine(s._piede, { host: !!o.sonoHost, nuova: o.sonoHost ? o.onRigioca : null, esci: o.onEsci })) { /* i tasti del core */ }
+      if (!o.locale && t.tastiFine && t.tastiFine(s._piede, { host: !!o.sonoHost, nuova: o.sonoHost ? (o.onSaletta || o.onRigioca) : null, esci: o.onEsci })) { /* i tasti del core */ }
       else if (o.sonoHost || o.locale) {
-        s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏆 Un altro Gran Premio", onclick: o.onRigioca }));
+        s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏆 Un altro Gran Premio", onclick: function () { (t.rigiocaRegole && t.rigiocaRegole()) || o.onRigioca(); } }));
         s._piede.appendChild(el("div", { class: "ho-piede2" }, [
           o.onSaletta ? el("button", { class: "btn btn-fantasma", text: "🛋️ Saletta", onclick: o.onSaletta }) : null,
           el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: o.onEsci }) ]));
@@ -964,14 +964,14 @@
     }
     if (!cb.locale && !cb.targa) { var fac = t.faccine && t.faccine(); if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); } }   // online: le faccine anche sulla classifica
     // online: i tasti di fine uguali per tutti i giochi (Rivincita, Ci sto…); se il core non li mette, quelli di sempre
-    if (!cb.locale && t.tastiFine && t.tastiFine(s._piede, { host: !!cb.sonoHost, nuova: cb.sonoHost ? cb.onRigioca : null, esci: cb.onEsci })) { /* fatto dal core */ }
+    if (!cb.locale && t.tastiFine && t.tastiFine(s._piede, { host: !!cb.sonoHost, nuova: cb.sonoHost ? (cb.onSaletta || cb.onRigioca) : null, esci: cb.onEsci })) { /* fatto dal core */ }
     else if (cb.sonoHost) {
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rigioca", onclick: cb.onRigioca }));
+      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rigioca", onclick: function () { (t.rigiocaRegole && t.rigiocaRegole()) || cb.onRigioca(); } }));
       s._piede.appendChild(el("div", { class: "ho-piede2" }, [
         el("button", { class: "btn btn-fantasma", text: "🛋️ Saletta", onclick: cb.onSaletta }),
         el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }) ]));
     } else if (cb.locale) {
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rigioca", onclick: cb.onRigioca }));
+      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rigioca", onclick: function () { (t.rigiocaRegole && t.rigiocaRegole()) || cb.onRigioca(); } }));
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
     } else {
       s._piede.appendChild(el("p", { class: "modulo-nota", text: cb.targa ? "👀 Se l'host fa un'altra corsa, entri anche tu nella saletta." : guardo ? "Entri alla prossima corsa! 🐎" : "Aspetta l'host: un'altra corsa o di nuovo in saletta…" }));
@@ -1324,7 +1324,7 @@
     }
     // di nuovo in saletta: stessa stanza, stessi amici, l'host può cambiare le regole e chi aspettava entra (il Gran Premio finisce lì)
     function tornaInSaletta() { if (fase !== "fine") return; fase = "lobby"; G = null; gpScade = 0; gpR = null; sistemaPosti(); aggiornaLobby(); }
-    t.onRivincita = inizia;   // la Rivincita della Sala (la "Rigioca" dell'host)
+    t.onRivincita = tornaInSaletta;   // la Rivincita della Sala: tutti nella saletta, chi tiene la partita cambia le regole e tocca «Comincia» (22 nov 2026; prima ripartiva subito la corsa)
     function chiudi() { if (loop) clearInterval(loop); if (toC) clearInterval(toC); loop = toC = null; if (ref) ref.rimuovi(); if (rete) rete.chiudi(); }
 
     function seggi() {

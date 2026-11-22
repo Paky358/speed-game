@@ -907,7 +907,7 @@
           lato(due ? nomeDi(1) : "Tu", st.s1, TEMA.io.fuori), el("div", { style: "font-size:1.6rem;opacity:.5", text: "—" }), lato(nomeDi(2), st.s2, TEMA.avv.fuori) ]));
         if (!due && st.golSponda) sf._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "🎱 Gol di sponda: " + st.golSponda }));
         if (!due && vinci !== VINCI) sf._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Partita a " + vinci + " gol: per i trofei delle vittorie servono le partite a 7." }));
-        sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: riparti }));
+        sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { (t.rigiocaRegole && t.rigiocaRegole()) || riparti(); } }));
         // dopo una vittoria si propone il livello sopra; dopo una sconfitta pesante quello sotto
         var i = due ? -1 : LIVELLI.indexOf(liv), altro = null;
         if (i >= 0 && vinto && i < 2) altro = LIVELLI[i + 1];

@@ -1269,7 +1269,7 @@
     setTimeout(function () { coriandoliDietro(s); }, 300);
     if (targa) s.classList.add("tl-con-targa");
     if (comuni || targa) { t.mostra(s); return; }
-    if (rigioca) s._piede.appendChild(el("button", { class: "btn btn-primario", text: opz.testoRigioca || "↻ Rigioca", onclick: rigioca }));
+    if (rigioca) s._piede.appendChild(el("button", { class: "btn btn-primario", text: opz.testoRigioca || "↻ Rigioca", onclick: function () { (t.rigiocaRegole && t.rigiocaRegole()) || rigioca(); } }));   // (22 nov 2026: sullo stesso telefono prima le regole di prima)
     if (opz.online) {
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: function () { esci(); } }));
     } else {

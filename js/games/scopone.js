@@ -1698,7 +1698,7 @@
             if (t.risultato && st.nomi) t.risultato([0, 2, 1, 3].map(function (seat) { var x = { nome: st.nomi[seat], pos: seat % 2 === 0 ? pNoi : pLoro }; if (seat) x.bot = true; return x; }));
             if (vinto) { suonoVittoria(); coriandoli(s); vibra(80); }
           }
-          s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }));
+          s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: function () { (t.rigiocaRegole && t.rigiocaRegole()) || cb.onNuova(); } }));
           s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
         } else {
           if (vinto && !guardo) { suonoVittoria(); coriandoli(s); vibra(80); }

@@ -1523,10 +1523,16 @@
       ]));
     }
     var impostazioni = {}, box = null;
+    // (22 nov 2026) la Rivincita sullo stesso telefono: le stesse regole di prima, già scelte (lo stesso riquadro del gioco, come nella Sala)
+    var riuso = opts && opts.riuso && opts.riuso.gioco === g && opts.riuso.box ? opts.riuso : null;
     // chi gioca (es. "Formazione di Paky"): sullo stesso telefono e nel torneo il gruppo, nella Sala chi c'è, se no tu
     var io0 = profiloAttivo();
     var chiGioca = (conAmici || torn) ? nomiGruppo() : (inSala ? ((cuore.sala && cuore.sala.membri) || []).map(function (m) { return m.nome; }) : [(io0 && io0.nome) || nomiGruppo()[0] || "Giocatore 1"]);
-    if (typeof g.impostazioni === "function") {
+    if (riuso) {
+      box = riuso.box; impostazioni = riuso.impostazioni;
+      if (modo) impostazioni.modo = modo;
+      s._contenuto.appendChild(box);
+    } else if (typeof g.impostazioni === "function") {
       box = el("div", { class: "sg-dal-gioco" });   // (🤍 roba del gioco: le sue emoji restano emoji)
       g.impostazioni(box, impostazioni, { el: el, torneo: torn, sala: inSala, modo: modo, giocatori: chiGioca.slice() });
       if (modo) impostazioni.modo = modo;   // il modo l'avete scelto prima: qui non si cambia
@@ -1539,10 +1545,10 @@
       if (inSala) { impostazioni.modo = "online"; return cuore.salaLancia(g, impostazioni, box); }
       if (modo) impostazioni.modo = modo;
       // online: le stesse impostazioni restano a portata dell'host nella saletta (tasto "⚙️ Regole")
-      if (!conAmici && !torn) { var io = profiloAttivo(), soloIo = [(io && io.nome) || nomiGruppo()[0] || "Giocatore 1"]; ultimaPartita = { gioco: g, impostazioni: impostazioni }; return avviaPartita(g, soloIo, impostazioni, online ? Object.assign({}, opts, { regole: box }) : opts); }   // online o contro il computer: ci sei solo tu (gli altri entrano dal link o sono bot)
+      if (!conAmici && !torn) { var io = profiloAttivo(), soloIo = [(io && io.nome) || nomiGruppo()[0] || "Giocatore 1"]; ultimaPartita = { gioco: g, impostazioni: impostazioni, box: box, modo: modo }; return avviaPartita(g, soloIo, impostazioni, online ? Object.assign({}, opts, { regole: box }) : opts); }   // online o contro il computer: ci sei solo tu (gli altri entrano dal link o sono bot)
       // online: l'host apre la stanza da solo, gli altri entrano via rete → niente vincolo di minimo qui
       if (!(impostazioni && impostazioni.modo === "online") && gruppo.length < minDi(g, modo)) return schermataSala(g, opts);
-      ultimaPartita = { gioco: g, impostazioni: impostazioni };
+      ultimaPartita = { gioco: g, impostazioni: impostazioni, box: box, modo: modo };
       avviaPartita(g, nomiGruppo(), impostazioni, opts);
     }
     s._piede.appendChild(el("button", { class: "btn btn-primario", text: inSala ? "Comincia per tutti ▶" : (online ? "🔗 Apri la stanza ▶" : "Comincia ▶"), onclick: comincia }));
@@ -1758,6 +1764,17 @@
   // righe basse su due colonne, così i tasti restano sempre a vista. extra = altro spazio sotto la classifica (le faccine)
   function classificaFitta(n, extra) { return n > 6 || n * 71 + 262 + (extra || 0) > (window.innerHeight || 640); }
   // tf (partita online): i tasti di fine uguali per tutti (tastiFineCore); se non li mette, quelli di sempre
+  // (22 nov 2026, il proprietario: «quando faccio rivincita mi porta nella pagina per riscegliere le regole») sullo stesso
+  // telefono e contro il Bot la Rivincita riporta alla pagina delle regole con quelle di prima già scelte (lo stesso riquadro);
+  // «Comincia» e si riparte. false = il gioco non ha regole da scegliere (o non è la partita di prima): si riparte come sempre
+  function rigiocaRegole(g, impostazioni) {
+    var U = ultimaPartita;
+    if (!U || U.gioco !== g || U.impostazioni !== impostazioni || !U.box) return false;
+    if (impostazioni && impostazioni.modo === "online") return false;
+    lasciaPartita();   // (i timer della partita finita non disegnano più sopra le regole)
+    schermataPreGioco(g, { modo: U.modo || null, riuso: U });
+    return true;
+  }
   function schermataFine(g, classifica, giocatori, impostazioni, faccine, tf) {
     var s = schermata({ icona: "🏆", titolo: "Fine partita", sotto: g.nome });
     s.classList.add("fine-piede-giu");   // (in tanti, sul telefono piccolo: i tasti restano in vista anche se la classifica è lunga)
@@ -1785,7 +1802,7 @@
     // Dalla fine partita si resta nella stessa sala: rigioca, cambia gioco o modifica il gruppo
     s._piede.appendChild(el("button", {
       class: "btn btn-primario", text: "↻ Rigioca",
-      onclick: function () { avviaPartita(g, giocatori, impostazioni); }
+      onclick: function () { if (!rigiocaRegole(g, impostazioni)) avviaPartita(g, giocatori, impostazioni); }
     }));
     var azioni = el("div", { class: "home-azioni" });
     azioni.appendChild(el("button", { class: "azione", text: "🎮 Cambia gioco", onclick: schermataScegliGioco }));
@@ -2162,7 +2179,7 @@
       eliminazione: !!(salaCtx && salaCtx.tabellone),
 
       // ---- il contratto della Sala per i giochi ----
-      // onRivincita: il gioco ci mette la sua "Nuova partita" dell'host che riporta tutti nella saletta (la Rivincita col 3-2-1)
+      // onRivincita: il gioco ci mette la sua "Nuova partita" dell'host che riporta tutti nella saletta (la Rivincita: chi tiene la partita può cambiare le regole e tocca «Comincia»)
       onRivincita: null,
       // i tasti di fine partita uguali per tutti (vedi tastiFineCore): true = li ha disegnati il core nel piede;
       // false = il gioco mette i suoi di sempre (sullo stesso telefono, col bot, torneo a eliminazione, chi guarda)
@@ -2287,6 +2304,10 @@
         var host = !!(reteXp && reteXp._P === P);
         schermataFine(g, classifica, giocatori, impostazioni, fac, fac ? function (piede) { return tavolo.tastiFine(piede, { host: host }); } : null);
       },
+
+      // (22 nov 2026) la Rivincita di un gioco che disegna da sé la sua fine sullo stesso telefono: si torna alle regole di prima
+      // (già scelte) invece di ripartire subito. true = fatto; false = il gioco riparte come sempre (online, Sala, torneo, senza regole)
+      rigiocaRegole: function () { if (!viva() || salaCtx || (opts && opts.torneo)) return false; return rigiocaRegole(g, impostazioni); },
 
       // uscite comuni
       esci: function () {

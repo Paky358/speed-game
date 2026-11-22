@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 403,
+    data: "22 novembre 2026",
+    titolo: "La Rivincita: prima si scelgono le regole ↻",
+    descrizione: [
+      "↻ Online, toccando «Rivincita» a fine partita si torna tutti nella saletta con le regole di prima, ma la partita non parte più da sola col 3-2-1: chi tiene la partita può cambiare le regole nel ⚙️ e poi tocca lui «Comincia».",
+      "✨ Se le regole cambiano, gli amici in saletta leggono subito cosa è cambiato.",
+      "📱 Sullo stesso telefono e contro il Bot, «Rigioca» porta alla pagina delle regole del gioco con quelle di prima già scelte: cambi quello che vuoi e tocchi «Comincia».",
+      "🏆 Nel torneo a eliminazione e in «Chi vince resta» la partita dopo parte da sola come prima."
+    ]
+  },
+  {
     v: 402,
     data: "22 novembre 2026",
     titolo: "L'Impostore: chi arriva tardi e chi guarda 🕵️",

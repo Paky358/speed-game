@@ -1274,7 +1274,7 @@
     } else if (cb.locale && cb.torneo) {
       sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏆 Avanti nel torneo ▶", onclick: function () { cb.onTorneo(risultato); } }));
     } else if (cb.sonoHost) {
-      sf._piede.appendChild(el("button", { class: "btn btn-primario", text: cb.locale ? "🔄 Nuova partita" : "🔄 Nuova partita (si torna nella saletta)", onclick: cb.onNuova }));
+      sf._piede.appendChild(el("button", { class: "btn btn-primario", text: cb.locale ? "🔄 Nuova partita" : "🔄 Nuova partita (si torna nella saletta)", onclick: function () { (t.rigiocaRegole && t.rigiocaRegole()) || cb.onNuova(); } }));
       sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Chiudi", onclick: cb.onEsci }));
     } else {
       sf._contenuto.appendChild(cb._notaFine = el("p", { class: "modulo-nota", style: "text-align:center;margin-top:12px",

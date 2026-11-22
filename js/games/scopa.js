@@ -1608,7 +1608,7 @@
     } else if (fine) {
       // online: i tasti di fine uguali per tutti, se li disegna il core (se no quelli di sempre)
       if (!(!cb.locale && t.tastiFine && t.tastiFine(s._piede, { host: !!cb.sonoHost, nuova: cb.sonoHost ? cb.onSaletta : null, esci: cb.onEsci }))) {
-        if (cb.sonoHost || cb.locale) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }));
+        if (cb.sonoHost || cb.locale) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: function () { (t.rigiocaRegole && t.rigiocaRegole()) || cb.onNuova(); } }));
         else nota("In attesa dell'host per un'altra partita…");
         s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: esci }));
       }
@@ -2266,7 +2266,7 @@
     } else if (fine) {
       // online: i tasti di fine uguali per tutti, se li disegna il core (se no quelli di sempre)
       if (!(!cb.locale && t.tastiFine && t.tastiFine(s._piede, { host: !!cb.sonoHost, nuova: cb.sonoHost ? cb.onSaletta : null, esci: cb.onEsci }))) {
-        if (cb.sonoHost || cb.locale) s._piede.appendChild(el("button", { class: "btn btn-primario", text: cb.locale ? "🔄 Nuova partita" : "🔄 Nuova partita (in saletta)", onclick: cb.onNuova }));
+        if (cb.sonoHost || cb.locale) s._piede.appendChild(el("button", { class: "btn btn-primario", text: cb.locale ? "🔄 Nuova partita" : "🔄 Nuova partita (in saletta)", onclick: function () { (t.rigiocaRegole && t.rigiocaRegole()) || cb.onNuova(); } }));
         else nota("Se l'host fa una nuova partita, torni in saletta con lui.");
         s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: esci }));
       }

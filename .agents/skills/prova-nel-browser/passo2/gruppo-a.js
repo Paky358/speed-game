@@ -279,7 +279,7 @@
       if (fineCore(X.P) !== nodoP) no("i tasti di fine si ridisegnano da soli");
       note.push("fine: tasti del core (faccine sopra, fermi), Giulia guarda");
       W.clicca(X.P, /Rivincita/, ".fine-tasti button");
-      if (!await W.aspetta(function () { return inGioco(gid, vm(C)); }, 9000)) no("dopo «↻ Rivincita» la partita non riparte");
+      if (!await W.aspetta(function () { return inGioco(gid, vm(C)) || W.cominciaRiv(X.P); }, 12000)) no("dopo «↻ Rivincita» e «Comincia» la partita non riparte");   // (dal 22 nov 2026 Paky tocca «Comincia»)
       if (avvDi(gid, vm(C)) !== X.idL) no("nella rivincita l'avversario non è più Luca (" + avvDi(gid, vm(C)) + ")");
       note.push("Rivincita → di nuovo Luca");
       return note.join("; ");
@@ -302,14 +302,14 @@
       if (!await W.aspetta(function () { return /Rivincita · 👍 1/.test(T(X.P)); }, 4000)) no("sul tasto di Paky non compare «👍 1»");
       W.clicca(X.P, /Rivincita/);
       var t0 = Date.now();
-      if (!await W.aspetta(function () { return inGioco(gid, vm(C)); }, 9000)) no("dopo «Rivincita» la partita non riparte da sola col 3-2-1");
+      if (!await W.aspetta(function () { return inGioco(gid, vm(C)) || W.cominciaRiv(X.P); }, 12000)) no("dopo «Rivincita» e «Comincia» la partita non riparte col 3-2-1");   // (dal 22 nov 2026 Paky tocca «Comincia»)
       var dt = ((Date.now() - t0) / 1000).toFixed(1);
       if (avvDi(gid, vm(C)) !== X.idL) no("nella rivincita l'avversario non è Luca");
       await MOSSE[gid](C);
       if (!await W.aspetta(function () { return W.clicca(X.P, /Cambia gioco/); }, 5000)) no("alla 2ª fine Paky non trova «Cambia gioco»");
       var inSala = function (w) { return /Sala/.test(W.testo(w)) && w.document.querySelector(".saletta-schermo, .tessera"); };
       if (!await W.aspetta(function () { return !vm(X.S).gioco && inSala(X.L) && inSala(X.G); }, 6000)) no("«Cambia gioco» non porta tutti nella Sala");
-      return "Ci sto → 👍 1; Rivincita → si gioca in " + dt + " s senza altri tocchi; Cambia gioco → tutti nella Sala";
+      return "Ci sto → 👍 1; Rivincita → si gioca in " + dt + " s (con «Comincia»); Cambia gioco → tutti nella Sala";
     } };
   }
 

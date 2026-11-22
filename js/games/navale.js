@@ -827,7 +827,7 @@
       }
       ui.fine({ key: P.g, vinto: vinto, nomeAvv: nomeBot, suAvv: v.campi[1], naviAvv: v.svela[1], statTxt: testoStat(P.stat[0]),
         sotto: vinto ? "Hai affondato tutta la flotta di " + nomeBot + "." : nomeBot + " ha affondato la tua flotta.",
-        tasti: [t.el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: nuova }), t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: esci })] });
+        tasti: [t.el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { (t.rigiocaRegole && t.rigiocaRegole()) || nuova(); } }), t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: esci })] });
     }
     nuova();
   }

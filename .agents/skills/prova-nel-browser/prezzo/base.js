@@ -346,7 +346,7 @@
       W.clicca(P, /Rivincita/);
       ["Luca", "Sara"].forEach(function (n) { W.clicca(W.finestra(n), /Ci sto/); });
       if (!await W.aspetta(function () { return vm(C).fase === "lobby" || vm(C).fase === "apertura"; }, 15000)) no("la Rivincita non riporta in saletta (" + vm(C).fase + ")");
-      if (!await W.aspetta(function () { return vm(C).fase === "apertura"; }, 20000)) note.push("dopo la Rivincita la partita non riparte da sola col 3-2-1 (fase " + vm(C).fase + ")");
+      if (!await W.aspetta(function () { return vm(C).fase === "apertura" || W.cominciaRiv(P); }, 20000)) note.push("dopo la Rivincita e «Comincia» la partita non riparte col 3-2-1 (fase " + vm(C).fase + ")");   // (dal 22 nov 2026 Paky tocca «Comincia»)
       return "classifica " + cl.map(function (r) { return r.pos + "° " + r.nome + " " + r.punti; }).join(", ") + " · viste " + spia.viste.length + " passi " + note.join(" ") + errori();
     } finally { senzaSpia(); }
   } });

@@ -94,7 +94,7 @@
     await W.dorme(500);
     var visto = false, spia = setInterval(function () { if (w.document.querySelector(".sl-via")) visto = true; }, 25);
     W.clicca(w, /Rivincita/, ".fine-tasti button");
-    var ok = await W.aspetta(function () { return (visto || (ripartita && ripartita(w))) && !w.document.querySelector(".fine-tasti") && !w.document.querySelector(".saletta-schermo"); }, 20000);
+    var ok = await W.aspetta(function () { return (visto || (ripartita && ripartita(w))) && !w.document.querySelector(".fine-tasti") && !w.document.querySelector(".saletta-schermo") || W.cominciaRiv(w); }, 20000);   // (dal 22 nov 2026 chi tiene la partita tocca «Comincia»)
     clearInterval(spia);
     if (!ok) no("dopo «↻ Rivincita» la partita non riparte da sola (3-2-1 " + (visto ? "visto" : "mai visto") + ", fine " + !!w.document.querySelector(".fine-tasti") + ", saletta " + !!w.document.querySelector(".saletta-schermo") + "; «" + T(w).slice(0, 80) + "»)");
     return tx;

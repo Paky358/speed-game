@@ -82,9 +82,9 @@
     if (G.document.querySelector(".classifica") !== clG) no("la classifica di Giulia è stata ridisegnata");
     var vP = A.spiaVia(P), vG = A.spiaVia(G), t0 = Date.now();
     W.clicca(P, /Rivincita/, ".fine-tasti button");
-    var ok = await W.aspetta(function () { return vm(C).fase === "gioco" && vm(C).partita === 2; }, 10000);
+    var ok = await W.aspetta(function () { return vm(C).fase === "gioco" && vm(C).partita === 2 || W.cominciaRiv(P); }, 13000);   // (dal 22 nov 2026 Paky tocca «Comincia»)
     var viP = vP.stop(), viG = vG.stop();
-    if (!ok) no("dopo «Rivincita» la partita non riparte da sola (fase " + vm(C).fase + ", «" + T(P).slice(0, 80) + "»)");
+    if (!ok) no("dopo «Rivincita» e «Comincia» la partita non riparte (fase " + vm(C).fase + ", «" + T(P).slice(0, 80) + "»)");
     if (!viP || !viG) no("il 3-2-1 non si è visto (Paky " + viP + ", Giulia " + viG + ")");
     if (ids(C, "players").length !== 3) no("nella rivincita non sono in 3");
     var tR = ((Date.now() - t0) / 1000).toFixed(1);

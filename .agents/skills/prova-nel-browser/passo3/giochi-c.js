@@ -459,7 +459,7 @@
     dopo.slice(1).forEach(function (x) { W.clicca(W.finestra(x), /Ci sto/, ".fine-tasti button"); });
     await W.dorme(500);
     if (!W.clicca(Gw, /Rivincita/, ".fine-tasti button")) { clearInterval(tv); no("Giulia non trova «↻ Rivincita»"); }
-    var ripartito = await W.aspetta(function () { var v = vm(C2); return g.inGioco(v) && v.fase !== "fine" && (gid !== "blackjack" || g.dopoRivincita(v)) ? v : null; }, 20000);
+    var ripartito = await W.aspetta(function () { var v = vm(C2); return g.inGioco(v) && v.fase !== "fine" && (gid !== "blackjack" || g.dopoRivincita(v)) ? v : W.cominciaRiv(Gw) || null; }, 20000);   // (dal 22 nov 2026 Giulia tocca «Comincia»)
     if (!ripartito) {
       // (se il gioco torna nella saletta e non parte da solo è NO)
       var stanza = A.codiceSaletta(Gw), vv2 = vm(stanza || C2);
@@ -468,7 +468,7 @@
     }
     await W.dorme(300); clearInterval(tv);
     if (gid !== "blackjack" && !via.visto) no("la Rivincita è partita senza il 3-2-1");
-    note.push("Rivincita: " + (gid === "blackjack" ? "serie nuova allo stesso tavolo" : "3-2-1 e si riparte senza toccare «Comincia»"));
+    note.push("Rivincita: " + (gid === "blackjack" ? "serie nuova allo stesso tavolo" : "saletta, «Comincia», 3-2-1"));
     if (W.__salvate.some(function (s) { return s.tel !== s.di; })) no("un telefono ha scritto le monete di un altro");
     if (g.monete) {
       var nP = W.__salvate.filter(function (s) { return s.tel === "Paky"; }).length - nSalvPaky;

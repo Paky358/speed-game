@@ -774,6 +774,7 @@
   var MENU_AV = null;  // il menu "Fai uscire" aperto: { nodo, f }
   var VIA = null;      // il 3-2-1 sullo schermo: { nodo, U, host, timer }
   var FINE = null;     // i tasti di fine partita sullo schermo: { nodo (Rivincita o Ci sto), SV, host, base } (il conto 👍 senza ridisegnare)
+  var RIVINCITA_DA_SOLA = false;   // (22 nov 2026) true = come prima: la saletta della Rivincita partiva da sola col 3-2-1 se c'erano tutti
   var RIV = null;      // la Rivincita appena toccata: { codice, attesi:[id], nomi, quando, auto, pronti, daSala, U } (3-2-1 da solo se ci sono tutti)
   // chi si sta ricollegando (lo dice net.js, sul telefono dell'host): grigio con 📶 su tutti i telefoni
   window.addEventListener("sg-forse", function (e) {
@@ -902,7 +903,7 @@
       // tutti pronti e "Parti da solo" acceso: si parte da soli (una volta; se qualcuno torna "non pronto", si riarma).
       // Se manca ancora qualcuno della Sala, no: lo si aspetta (o l'host tocca "Comincia senza…")
       if (!tutti || (U.attesi || []).length) U.autoFatto = false;
-      else if (autoParti() && U.goOk && !U.via && !U.autoFatto) {
+      else if (autoParti() && !(RIV && RIV.U === U) && U.goOk && !U.via && !U.autoFatto) {   // (dopo la Rivincita no: «Comincia» lo tocca chi tiene la partita)
         U.autoFatto = true;
         setTimeout(function () {
           if (SL.ultimo === U && document.body.contains(U.s) && U.chip.classList.contains("tutti") && !document.querySelector(".sl-velo")) partenza(U, true);
@@ -1497,7 +1498,7 @@
   //  Sala, chi entra: "👍 Ci sto!" e "🏠 Torna in Sala". Fuori dalla Sala: host "↻ Nuova partita (stessi amici)" e "🏠 Esci",
   //  chi entra "👍 Ci sto!" e "🏠 Esci". Host solo del gioco (duello): "↻ Rivincita" della sua stanza e "🏠 Torna in Sala".
   //  false = il gioco mette i suoi tasti di sempre: sullo stesso telefono, col bot, torneo a eliminazione, chi guarda
-  //  (tranne l'host della Sala). La Rivincita riporta tutti nella saletta e, se ci sono tutti, parte da sola col 3-2-1.
+  //  (tranne l'host della Sala). La Rivincita riporta tutti nella saletta con le regole di prima: chi tiene la partita può cambiarle e tocca «Comincia» (dal 22 nov 2026 non parte più da sola).
   //  Messaggi (i giochi non li vedono): chi entra → host __cisto { si }; nel __sl c: [chi ci sta], g: il giro della saletta,
   //  fine: 1 (l'host chiude la stanza dalla classifica: chi entra non legge "Collegamento perso").
   // =========================================================
@@ -1615,7 +1616,9 @@
     var pronti = {};
     if (SV) Object.keys(SV.cisto || {}).forEach(function (id) { if (SV.dentro[id]) pronti[id] = 1; });
     // (nella stessa stanza il codice è questo; nella Sala con la stanza nuova lo segna salaLancia)
-    var R = RIV = { codice: nuova && SV ? SV.codice : null, attesi: attesi, nomi: nomi, quando: Date.now(), auto: !usciti && attesi.length > 0,
+    // (22 nov 2026, il proprietario: «quando faccio rivincita mi porta nella pagina per riscegliere le regole»: la saletta della
+    // Rivincita NON parte più da sola col 3-2-1. Chi tiene la partita può cambiare le regole nel ⚙️ e poi tocca lui «Comincia»)
+    var R = RIV = { codice: nuova && SV ? SV.codice : null, attesi: attesi, nomi: nomi, quando: Date.now(), auto: RIVINCITA_DA_SOLA && !usciti && attesi.length > 0,
       pronti: pronti, daSala: !nuova, U: null };
     setTimeout(function () { if (RIV === R && R.auto) { R.auto = false; vivaOra(); } }, 10000);
     FINE = null;

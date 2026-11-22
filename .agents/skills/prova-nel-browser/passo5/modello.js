@@ -253,7 +253,7 @@
     var tG = A.tastiFineDi(G).join(" | ");
     if (!/Rivincita/.test(tG) || !/Cambia gioco/.test(tG)) no("Giulia (host della Sala ora) ha «" + tG + "»");
     W.clicca(G, /Rivincita/, ".fine-tasti button");
-    if (!await W.aspetta(function () { var v = vm(C); return v.fase === "gioco" && v.partita === 2; }, 12000)) no("la Rivincita di Giulia non riparte da sola (fase " + vm(C).fase + ")");
+    if (!await W.aspetta(function () { var v = vm(C); return v.fase === "gioco" && v.partita === 2 || W.cominciaRiv(G); }, 14000)) no("la Rivincita di Giulia non riparte dopo «Comincia» (fase " + vm(C).fase + ")");   // (dal 22 nov 2026 Giulia tocca «Comincia»)
     await W.dorme(1000);
     if (((W.statoStanza(S) || {}).torneo || {}).n !== punti0 + 1) no("dopo la Rivincita la serata conta " + ((W.statoStanza(S) || {}).torneo || {}).n + " partite");
     errori();

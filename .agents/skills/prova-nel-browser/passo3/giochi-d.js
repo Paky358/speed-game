@@ -356,7 +356,7 @@
     altri.forEach(function (x) { W.clicca(W.finestra(x), /Ci sto/, ".fine-tasti button"); });
     await W.dorme(500);
     if (!W.clicca(H, /Rivincita/, ".fine-tasti button")) { clearInterval(tv); no(host + " non trova «↻ Rivincita»"); }
-    var ok = await W.aspetta(function () { var v = vm(C2); return v.fase && v.fase !== "fine" && via.visto && !H.document.querySelector(".fine-tasti") && !H.document.querySelector(".saletta-schermo") ? v : null; }, 20000);
+    var ok = await W.aspetta(function () { var v = vm(C2); return v.fase && v.fase !== "fine" && via.visto && !H.document.querySelector(".fine-tasti") && !H.document.querySelector(".saletta-schermo") ? v : W.cominciaRiv(H) || null; }, 20000);   // (dal 22 nov 2026 chi tiene la partita tocca «Comincia»)
     clearInterval(tv);
     if (!ok) no("dopo «↻ Rivincita» non si riparte da soli col 3-2-1 (fase " + vm(C2).fase + ", 3-2-1 " + (via.visto ? "visto" : "mai visto") + ", " + host + " «" + T(H).slice(0, 60) + "»)");
     return host + " rilancia (" + C2 + ") fino alla fine («" + fineH.join(" | ") + "») e alla Rivincita col 3-2-1";

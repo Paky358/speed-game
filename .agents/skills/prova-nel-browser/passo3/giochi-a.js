@@ -316,7 +316,7 @@
       var via = A.spiaVia(L);
       W.clicca(G, /Rivincita/, ".fine-tasti button");
       var t1 = Date.now();
-      if (!await W.aspetta(function () { return inGioco(gid, vm(C2)) && !finita(gid, vm(C2)); }, 10000)) { via.stop(); no("dopo «↻ Rivincita» la partita non riparte da sola"); }
+      if (!await W.aspetta(function () { return inGioco(gid, vm(C2)) && !finita(gid, vm(C2)) || W.cominciaRiv(G); }, 13000)) { via.stop(); no("dopo «↻ Rivincita» e «Comincia» la partita non riparte"); }   // (dal 22 nov 2026 Giulia tocca «Comincia»)
       var dt2 = ((Date.now() - t1) / 1000).toFixed(1), tre = via.stop();
       if (!tre) no("Luca non ha visto il 3-2-1");
       if (avvDi(gid, vm(C2)) !== idL) no("nella rivincita l'avversario non è Luca");

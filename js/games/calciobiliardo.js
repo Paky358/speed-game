@@ -957,7 +957,7 @@
       tm = setTimeout(function () {   // si vede ancora un attimo il campo, poi il risultato
         tm = null;
         finale(t, { vincitore: v, nomi: nomi, gol: P.gol, mia: bot ? 0 : null, rig: P.rig, rigVinto: P.rigVinto }, [
-          t.el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { primo = 1 - primo; inizia(); } }),
+          t.el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { (t.rigiocaRegole && t.rigiocaRegole()) || (primo = 1 - primo, inizia()); } }),
           t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: t.esci })]);
       }, P.evento && P.evento.tipo === "tempo" ? 1700 : 700);   // il fischio finale si vede tutto
     }

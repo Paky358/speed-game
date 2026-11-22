@@ -797,7 +797,7 @@
       // online: i tasti di fine uguali per tutti i giochi (Rivincita, Ci sto…); se il core non li mette, quelli di sempre
       else if (cb.online && t.tastiFine && t.tastiFine(s._piede, { host: !!cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) { /* fatto dal core */ }
       else if (cb.sonoHost || cb.locale) {
-        s._piede.appendChild(el("button", { class: "btn btn-primario", text: cb.locale ? "🔄 Nuova partita" : "🔄 Nuova partita (in saletta)", onclick: cb.onNuova }));
+        s._piede.appendChild(el("button", { class: "btn btn-primario", text: cb.locale ? "🔄 Nuova partita" : "🔄 Nuova partita (in saletta)", onclick: function () { (t.rigiocaRegole && t.rigiocaRegole()) || cb.onNuova(); } }));
         s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
       } else {
         s._piede.appendChild(el("p", { class: "modulo-nota", text: cb.guarda ? "👀 Se l'host fa una nuova partita, entri anche tu nella saletta." : "Se l'host fa una nuova partita, torni in saletta con lui." }));

@@ -1268,7 +1268,7 @@
       s._piede.appendChild(V.notaFine = el("p", { class: "modulo-nota", style: "text-align:center", text: V.chiusa ? NOTA_CHIUSA : "👀 Se l'host fa un'altra partita, entri anche tu nella saletta." }));
     }
     else if (cb.sonoHost) {
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }));
+      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: function () { (t.rigiocaRegole && t.rigiocaRegole()) || cb.onNuova(); } }));
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Chiudi", onclick: cb.onEsci }));
     } else {
       s._piede.appendChild(V.notaFine = el("p", { class: "modulo-nota", style: "text-align:center", text: V.chiusa ? NOTA_CHIUSA : "⏳ Aspetta l'host: se fa un'altra partita, torni da solo nella saletta." }));

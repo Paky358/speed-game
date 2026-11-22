@@ -1703,7 +1703,7 @@
         s._contenuto.appendChild(nC);
       }
     } else if (cb.sonoHost) {
-      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: cb.onNuova }));
+      s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Nuova partita", onclick: function () { (t.rigiocaRegole && t.rigiocaRegole()) || cb.onNuova(); } }));
       s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏁 Fine", onclick: cb.onEsci }));
     } else {
       var nota = el("p", { class: "modulo-nota", style: "text-align:center", text: cb.chiusa ? NOTA_CHIUSA_N

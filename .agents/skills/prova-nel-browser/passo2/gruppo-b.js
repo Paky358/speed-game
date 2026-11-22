@@ -94,7 +94,7 @@
   // «↻ Rivincita»: si riparte (col 3-2-1 quando ci sono tutti); poi chi guarda deve guardare ancora
   async function rivincita(w, C, partita) {
     W.clicca(w, /Rivincita/, ".fine-tasti button");
-    if (!await W.aspetta(function () { return partita(vm(C), W.statoStanza(C) || {}); }, 15000)) no("dopo «↻ Rivincita» la partita non riparte");
+    if (!await W.aspetta(function () { return partita(vm(C), W.statoStanza(C) || {}) || W.cominciaRiv(w); }, 15000)) no("dopo «↻ Rivincita» e «Comincia» la partita non riparte");   // (dal 22 nov 2026 chi tiene la partita tocca «Comincia»)
   }
 
   // 211. Scalinata nella Sala con 5: con la scala grande (dal ramo miglioramenti) salgono tutti e 5, niente «Chi gioca?»
@@ -237,8 +237,8 @@
     if (!W.clicca(G, /Ci sto/)) no("Giulia non ha «Ci sto!»");
     W.clicca(L, /Ci sto/);
     W.clicca(P, /Rivincita/);
-    if (!await W.aspetta(function () { return vm(C).fase === "scelta"; }, 15000)) no("la Rivincita non riparte da sola col 3-2-1");
-    return "Rivincita col 3-2-1 senza altri tocchi";
+    if (!await W.aspetta(function () { return vm(C).fase === "scelta" || W.cominciaRiv(P); }, 15000)) no("la Rivincita non riparte col 3-2-1 dopo «Comincia»");   // (dal 22 nov 2026 Paky tocca «Comincia»)
+    return "Rivincita: saletta, «Comincia» e 3-2-1";
   } });
   // 218. Ruota con 6 nella Sala: "Chi gioca alla Ruota?" con l'host dentro, i 2 non scelti guardano (scenario 53 di p2-h)
   COPIONE.aggiungi(218, { nome: "(dopo p2-h) Ruota con 6: solo i 4 scelti giocano", fai: async function () {

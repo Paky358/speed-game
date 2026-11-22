@@ -1778,7 +1778,7 @@
     var fac = t.faccine && t.faccine(); if (fac) { fac.classList.add("fine-faccine"); s._contenuto.appendChild(fac); }   // le faccine anche sulla classifica
     // contro i Bot, il torneo finito: un altro torneo o via
     if (torneo && !cb.online) {
-      s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🔄 Un altro torneo", onclick: cb.onAncoraTorneo }));
+      s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🔄 Un altro torneo", onclick: function () { (t.rigiocaRegole && t.rigiocaRegole()) || cb.onAncoraTorneo(); } }));
       s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
       t.mostra(s);
       return s;

@@ -687,7 +687,7 @@
     if (o.record) r._contenuto.appendChild(t.el("p", { class: "pd-record", text: o.record }));
     // online: i tasti di fine uguali per tutti i giochi (Rivincita, Ci sto…); se il core non li mette, quelli di sempre
     if (o.online && t.tastiFine && t.tastiFine(r._piede, { host: !!o.online.host, nuova: o.onRigioca || null, esci: o.onEsci })) { t.mostra(r); return; }
-    if (o.onRigioca) r._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🔄 Rigioca", onclick: o.onRigioca }));
+    if (o.onRigioca) r._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "🔄 Rigioca", onclick: function () { (t.rigiocaRegole && t.rigiocaRegole()) || o.onRigioca(); } }));
     else r._piede.appendChild(t.el("p", { class: "modulo-nota", text: o.targa ? "👀 Se l'host fa un'altra partita, entri anche tu nella saletta." : "In attesa dell'host per un'altra partita…" }));
     // chi guarda soltanto (o.targa): una sola uscita, il ✕ della targhetta del core in basso (qui il suo posto)
     if (o.targa) r._piede.style.paddingBottom = "calc(62px + env(safe-area-inset-bottom))";

@@ -61,6 +61,15 @@
 (function () {
   "use strict";
   var W = window;
+  // (22 nov 2026) dopo «↻ Rivincita» la saletta NON parte più da sola: nelle prove vecchie chi tiene la partita tocca «Comincia»
+  // quando ci sono tutti (mai «Comincia senza …»). Da mettere nell'attesa: `… || W.cominciaRiv(P)` (torna sempre false)
+  W.cominciaRiv = function (w) {
+    var b = w && w.document && w.document.querySelector(".sl-go");
+    if (!b || b.disabled || /senza|Si parte/.test(b.textContent) || !b.getBoundingClientRect().width) return false;
+    if (!w.__rivVisto) { w.__rivVisto = Date.now(); return false; }   // (un attimo di respiro: chi torna nella saletta fa in tempo)
+    if (Date.now() - w.__rivVisto < 900) return false;
+    w.__rivVisto = 0; b.click(); return false;
+  };
   async function carica() {
     if (W.BR && W.apriTel) return;
     var src = await (await fetch("/.agents/skills/prova-nel-browser/telefoni-finti.js?" + Date.now())).text();
@@ -2065,10 +2074,10 @@
       var vP = spiaVia(P), vG = spiaVia(G), prG = false, sp = setInterval(function () { if (G.document.querySelector(".sl-pronto.fatto")) prG = true; }, 25);
       var t0 = Date.now();
       W.clicca(P, /Rivincita/, ".fine-tasti button");
-      var ok = await W.aspetta(function () { return vm(C).fase === "gioco" && !(vm(C).board || []).filter(Boolean).length; }, 8000);
+      var ok = await W.aspetta(function () { return vm(C).fase === "gioco" && !(vm(C).board || []).filter(Boolean).length || W.cominciaRiv(P); }, 10000);   // (dal 22 nov 2026 Paky tocca «Comincia»)
       clearInterval(sp);
       var viP = vP.stop(), viG = vG.stop();
-      if (!ok) no("dopo «Rivincita» la partita non ricomincia da sola («" + T(P).slice(0, 80) + "»)");
+      if (!ok) no("dopo «Rivincita» e «Comincia» la partita non ricomincia («" + T(P).slice(0, 80) + "»)");
       if (!viP || !viG) no("il 3-2-1 non si è visto (Paky " + viP + ", Giulia " + viG + ")");
       if (!prG) no("nella saletta della rivincita Giulia non era già pronta");
       if (vm(C).avvId !== idInSala(S, "Giulia")) no("nella rivincita l'avversario non è Giulia");
@@ -2108,9 +2117,9 @@
       W.clicca(w.Paky, /Rivincita/, ".fine-tasti button");
       var C2 = await W.aspetta(function () { var c = vm(S).stanza; return c && c !== C ? c : null; }, 4000);
       if (!C2) no("la Rivincita non apre la stanza nuova");
-      var ok = await W.aspetta(function () { return vm(C2).fase && vm(C2).fase !== "lobby"; }, 15000);
+      var ok = await W.aspetta(function () { return vm(C2).fase && vm(C2).fase !== "lobby" || W.cominciaRiv(w.Paky); }, 15000);   // (dal 22 nov 2026 Paky tocca «Comincia»)
       clearInterval(sp);
-      if (!ok) no("la rivincita non parte da sola (in saletta " + ids(C2, "giocatori").length + ", tasto «" + ((w.Paky.document.querySelector(".sl-go") || {}).textContent || "") + "»)");
+      if (!ok) no("la rivincita non parte (in saletta " + ids(C2, "giocatori").length + ", tasto «" + ((w.Paky.document.querySelector(".sl-go") || {}).textContent || "") + "»)");
       if (!vP.stop()) no("niente 3-2-1 per Paky");
       if (!prG) no("Giulia non era già pronta nella saletta nuova");
       if (ids(C2, "giocatori").length !== 6) no("nella rivincita sono in " + ids(C2, "giocatori").length);
@@ -2454,7 +2463,7 @@
       W.clicca(L, /Ci sto/, ".fine-tasti button");
       await W.dorme(300);
       W.clicca(G, /Rivincita/, ".fine-tasti button");
-      if (!await W.aspetta(function () { return vm(C).fase === "gioco" && !(vm(C).board || []).filter(Boolean).length; }, 10000)) no("la rivincita del duello non riparte col 3-2-1");
+      if (!await W.aspetta(function () { return vm(C).fase === "gioco" && !(vm(C).board || []).filter(Boolean).length || W.cominciaRiv(G); }, 12000)) no("la rivincita del duello non riparte col 3-2-1 dopo «Comincia»");   // (dal 22 nov 2026 Giulia tocca «Comincia»)
       if (!await W.aspetta(function () { return P.document.querySelectorAll(".tr-cella").length === 9 && M.document.querySelectorAll(".tr-cella").length === 9; }, 6000)) no("con la rivincita Paky e Marco non tornano a guardare");
       if (!await trisFinoAllaFine(C, "Giulia", "Luca")) no("la rivincita non finisce");
       if (!await W.aspetta(function () { var t = vm(S).torneo; return t && t.n === 2; }, 6000)) no("la rivincita non conta nel torneo");

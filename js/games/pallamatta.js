@@ -1236,7 +1236,7 @@
       var v = vittorie(gioc);
       tav.finestra({ titolo: titoloFine(cl), sotto: st.febbre ? "Tutti gli arancioni presi!" : "Palline finite per tutti", righe: righeFine(cl),
         nodi: [v ? t.el("div", { class: "pm-rec", text: v }) : null],
-        tasti: [{ testo: "↻ Altra partita" + (imp.lv == null || imp.lv === "caso" ? " (livello a caso)" : ""), cls: "btn-primario", fn: nuova },
+        tasti: [{ testo: "↻ Altra partita" + (imp.lv == null || imp.lv === "caso" ? " (livello a caso)" : ""), cls: "btn-primario", fn: function () { if (t.rigiocaRegole && t.rigiocaRegole()) { try { tav.chiudi(); } catch (e) {} return; } nuova(); } },   // (22 nov 2026: prima le regole di prima)
           { testo: "🏠 Esci", fn: function () { tav.chiudi(); t.esci(); } }] });
     }
     function esci() {

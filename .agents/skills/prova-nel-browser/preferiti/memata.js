@@ -269,7 +269,7 @@
     if (!await W.aspetta(function () { return A.tastiFineDi(F("Paky")) && A.tastiFineDi(F("Giulia")); }, 6000)) no("mancano i tasti di fine");
     var tP = A.tastiFineDi(F("Paky")).join(" | ");
     W.clicca(F("Paky"), /Rivincita/, ".fine-tasti button");
-    if (!await W.aspetta(function () { return vm(C).fase === "gioco" && vm(C).partita === 2; }, 15000)) no("la rivincita non parte da sola");
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco" && vm(C).partita === 2 || W.cominciaRiv(F("Paky")); }, 15000)) no("la rivincita non parte dopo «Comincia»");   // (dal 22 nov 2026 Paky tocca «Comincia»)
     return "8 dalla Sala, 2 round, fine «" + tP + "», rivincita partita";
   } });
 

@@ -291,13 +291,13 @@
       if (!await W.aspetta(function () { return /Rivincita · 👍 1/.test(T(X.P)); }, 4000)) no("sul tasto di Paky non compare «👍 1»");
       W.clicca(X.P, /Rivincita/);
       var t0 = Date.now();
-      if (!await W.aspetta(function () { var v = vm(C); return v.fase && !inSaletta(gid, v) && !finita(gid, v); }, 12000)) no("dopo «Rivincita» la partita non riparte da sola col 3-2-1");
+      if (!await W.aspetta(function () { var v = vm(C); return v.fase && !inSaletta(gid, v) && !finita(gid, v) || W.cominciaRiv(X.P); }, 15000)) no("dopo «Rivincita» e «Comincia» la partita non riparte col 3-2-1");   // (dal 22 nov 2026 Paky tocca «Comincia»)
       var dt = ((Date.now() - t0) / 1000).toFixed(1);
       await finePartita(X, "2ª");
       if (!await W.aspetta(function () { return W.clicca(X.P, /Cambia gioco/); }, 40000)) no("alla 2ª fine Paky non trova «Cambia gioco»");
       var inSala = function (w) { return /Sala/.test(W.testo(w)) && w.document.querySelector(".saletta-schermo, .tessera"); };
       if (!await W.aspetta(function () { return !vm(X.S).gioco && inSala(X.L) && inSala(X.G); }, 6000)) no("«Cambia gioco» non porta tutti nella Sala");
-      return "Ci sto → 👍 1; Rivincita → si gioca in " + dt + " s senza altri tocchi; Cambia gioco → tutti nella Sala";
+      return "Ci sto → 👍 1; Rivincita → si gioca in " + dt + " s (con «Comincia»); Cambia gioco → tutti nella Sala";
     } };
   }
 
