@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 402,
+    data: "22 novembre 2026",
+    titolo: "L'Impostore: chi arriva tardi e chi guarda 🕵️",
+    descrizione: [
+      "✋ Chi arriva a partita cominciata guarda la mano (tenendo premuto vede la parola e l'impostore) e gioca dalla mano dopo, con 0 punti. Prima aspettava la fine di tutta la partita.",
+      "👀 Chi guarda soltanto (col link per guardare, o con «👀 Guarda» nella Sala) vede il segreto tenendo premuto. Prima restava fermo su «Arriva il segreto…» per tutta la partita.",
+      "🤫 Con due impostori la carta coperta è alta uguale per tutti. Prima era più alta solo per loro due: chi sbirciava il telefono del vicino capiva chi era impostore.",
+      "🎲 Con gli indizi scritti l'ordine della lista è tutto a caso. Prima l'impostore era primo della lista meno spesso degli altri, e si poteva indovinare.",
+      "📝 Scritte più chiare: la riga in alto va a capo invece di tagliarsi, chi non scrive legge «Scrivono un indizio», all'ultima possibilità le 6 parole sono spente per chi non sceglie, e «🗳️ Votiamo» dice quanti tocchi mancano."
+    ]
+  },
+  {
     v: 401,
     data: "22 novembre 2026",
     titolo: "Mini Asta Fantacalcio: figurine d'oro, d'argento e di bronzo 🥇",

@@ -219,6 +219,9 @@
     difficolta: 2,
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono e guardate la parola in segreto", amici: true }],
     postiOnline: MAX_ON,
+    // chi arriva a partita cominciata guarda (col segreto, tenendo premuto) ed entra dalla PROSSIMA MANO con 0 punti
+    // (22 nov 2026: prima il gioco non lo diceva e nella Sala «👀 Guarda» mandava ancora il join)
+    ritardatari: "mano",
     riprende: true,   // se l'host ricarica o riapre l'app, la partita online riprende da dove era (t.ripresa, t.ricorda)
     riserva: true,    // se l'host sparisce del tutto un amico la porta avanti (gioco lungo, a turni, da 3 a 10: non a due né in tempo reale)
     // la riga "📜 Si gioca così" che gli amici leggono in saletta
@@ -977,7 +980,9 @@
       respiro: 0,    // dopo una ripresa, fino a quest'ora nessun momento si chiude da solo (gli amici intanto rientrano)
       players: [{ id: IO, nome: nomeHost, omino: t.mioOmino(nomeHost), punti: 0, piu: 0 }],
       guarda: [],   // nella Sala: chi non è stato scelto per giocare (guarda soltanto, col suo id nella foto): { id, nome }
-      tardi: [],    // arrivati a partita cominciata: guardano ed entrano alla prossima
+      tardi: [],    // arrivati a partita cominciata: guardano (col loro id nella foto, «prossimi») ed entrano alla prossima mano
+      tardiI: {},   // il nome e il gettone di chi è arrivato tardi (per metterlo in partita alla mano dopo): id -> { nome, omino }
+      pub: [],      // chi guarda soltanto col link (&guarda=1, «👀 Guarda» della Sala): il core non lo mette tra i giocatori; gli mando il segreto
       passo: null, giro: 0, ordine: [], ind: {}, cor: {}, voti: {}, pronti: [], scadenza: 0, to: null,
       seg: null, V: null, vv: null, spoglio: null, ultima: null, esito: null, classifica: null,
       // 🔪 a eliminazione: il giro, chi è fuori ({ id, ruolo, turno }), i pareggi di fila, il ballottaggio (gli id dei pari),
@@ -989,7 +994,7 @@
     var R0 = t.ripresa, riprendo = !!(R0 && R0.stato && R0.stato.fase && R0.stato.fase !== "lobby" && R0.stato.players), attesi = {}, tAttesi = null;
     if (riprendo) {
       H = R0.stato;
-      H.to = null; H.pronta = false; H.cats = categorie(); H.rip = H.rip || 0; H.guarda = H.guarda || []; H.tardi = H.tardi || [];
+      H.to = null; H.pronta = false; H.cats = categorie(); H.rip = H.rip || 0; H.guarda = H.guarda || []; H.tardi = H.tardi || []; H.tardiI = H.tardiI || {}; H.pub = H.pub || [];
       H.players.forEach(function (p) {
         p.forse = false;
         if (p.id === IO) { p.via = false; p.omino = t.mioOmino(p.nome); return; }
@@ -1025,7 +1030,7 @@
     function addio(id, sparito) {
       delete attesi[id];
       if (guardaId(id)) { H.guarda = H.guarda.filter(function (x) { return x.id !== id; }); bd(); return; }
-      if (H.tardi.indexOf(id) >= 0) { H.tardi.splice(H.tardi.indexOf(id), 1); return; }
+      if (H.tardi.indexOf(id) >= 0) { H.tardi.splice(H.tardi.indexOf(id), 1); delete H.tardiI[id]; bd(); return; }
       var p = pById(id); if (!p || (p.via && H.fase !== "lobby")) return;
       var bloccato = sparito || p.forse;   // sparito senza salutare (schermo bloccato, app in secondo piano), non uscito apposta
       p.forse = false;
@@ -1053,6 +1058,13 @@
       onForse: function (id) { var p = pById(id); if (p && !p.forse) { p.forse = true; bd(); } },
       onTornato: function (id) { var p = pById(id); if (p && p.forse) { p.forse = false; bd(); } },
       onAddio: addio,
+      // 👀 chi guarda soltanto (link con &guarda=1, «👀 Guarda» della Sala): il core non me lo fa vedere tra i giocatori e
+      // butta le sue mosse; gli mando il segreto di chi guarda (parola e impostore, tenendo premuto) e glielo rimando a ogni mano
+      onGuarda: function (id) {
+        if (!id || pById(id)) return;
+        if (H.pub.indexOf(id) < 0) { H.pub.push(id); if (H.pub.length > 30) H.pub.shift(); }
+        spettatore(id);
+      },
       onMsg: function (id, m) {
         if (!m || !m.t) return;
         var ds = pById(id);
@@ -1067,8 +1079,9 @@
           }
           if (!p && H.fase === "lobby" && H.players.length < MAX_ON)
             H.players.push({ id: id, nome: nome, omino: avatarValido(m.omino), punti: 0, piu: 0 });
-          else if (!p) {   // arrivato a partita cominciata (o stanza piena): guarda ed entra alla prossima
+          else if (!p) {   // arrivato a partita cominciata (o stanza piena): guarda ed entra alla prossima mano
             if (H.fase !== "lobby" && H.tardi.indexOf(id) < 0) H.tardi.push(id);
+            if (H.fase !== "lobby") H.tardiI[id] = { nome: nome, omino: avatarValido(m.omino) };
             bd(); spettatore(id); return;
           }
           // chi rientra (pagina ricaricata, telefono riacceso) ha lo STESSO id: ritrova il suo posto, i suoi punti e la sua parola
@@ -1144,9 +1157,17 @@
         esito: H.esito, classifica: H.classifica,
         players: H.players.map(function (p) { return { id: p.id, nome: p.nome, punti: p.punti, piu: p.piu || 0, via: !!p.via, forse: !!p.forse, dorme: !!p.dorme || undefined, fuori: eFuori(p.id) || undefined,
           omino: H.fase === "lobby" ? (p.omino || null) : undefined }; }),
-        guarda: H.guarda };
+        guarda: H.guarda,
+        // ✋ chi è arrivato a partita cominciata: guarda ed entra alla prossima mano (il suo id nella foto: così sa di essere dentro)
+        prossimi: H.tardi.length ? H.tardi.slice() : undefined };
     }
-    function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); ricorda(); disegna(t, v, cbHost); vici(); }
+    function bd() { var v = vm(); rete.invia({ t: "vm", vm: v }); ricorda(); disegna(t, v, cbHost); vici(); punto(); }
+    // a che punto è la partita, per chi è nella Sala e non gioca («🎮 Si gioca all'Impostore · mano 2 di 3 · si vota»)
+    var PUNTO = { indizi: "indizi", discuti: "si discute", voto: "si vota", spoglio: "lo spoglio", ultima: "ultima possibilità", esito: "fine mano", fuori: "chi esce" };
+    function punto() {
+      if (!t.aCheSiamo || H.fase !== "gioco") return;
+      t.aCheSiamo((H.R.mani > 1 ? "mano " + H.mano + " di " + H.R.mani + " · " : "") + (PUNTO[H.passo] || ""));
+    }
     // la partita da ricordare (se l'host ricarica, o se la porta avanti un amico): tutto H tranne il timer e le parole del
     // gioco (cats: si rileggono), senza avatar (tornano col join), con le scadenze come ORE. I segreti (chi è l'impostore,
     // le parole) ci sono: restano su questo telefono e nella copia per il vice, mai nella foto per tutti. In saletta niente
@@ -1174,9 +1195,21 @@
       H.players.forEach(function (p) { p.punti = 0; p.piu = 0; });
       nuovaMano();
     }
+    // ✋ chi è arrivato a partita cominciata entra adesso, all'inizio della mano, con 0 punti (se c'è posto: al massimo MAX_ON)
+    function entrano() {
+      H.tardi = H.tardi.filter(function (id) {
+        var x = H.tardiI[id];
+        if (pById(id) || !x) { delete H.tardiI[id]; return false; }
+        if (presenti().length >= MAX_ON) return true;
+        H.players.push({ id: id, nome: x.nome, omino: x.omino || null, punti: 0, piu: 0 });
+        delete H.tardiI[id];
+        return false;
+      });
+    }
     function nuovaMano() {
       ferma();
       H.mano++;
+      entrano();
       var pres = presenti(), R = H.R;
       var c = pescaCoppia(H), giro = Math.random() < 0.5;   // una volta su due le due parole si scambiano
       var nImp = quantiImp(R, pres.length), imps = [], spia = null;
@@ -1184,9 +1217,11 @@
       if (spiaPossibile(R, pres.length, nImp)) { do { spia = pres[rnd(pres.length)].id; } while (imps.indexOf(spia) >= 0); }
       H.seg = { parola: giro ? c.b : c.a, simile: giro ? c.a : c.b, cat: c.cat, imp: imps[0], imps: imps, spia: spia,
         aiuto: (R.aiuto === "simile" && spia) ? "categoria" : R.aiuto };   // con la spia la parola simile è sua
-      // chi apre il giro: a caso, ma l'impostore apre di rado (come sul telefono solo)
+      // chi apre il giro: a caso, ma a voce l'impostore apre di rado (come sul telefono solo). Con gli indizi scritti nessuno
+      // parla per primo: l'ordine resta tutto a caso (22 nov 2026: era anche l'ordine delle righe degli indizi e del voto, e
+      // il primo della lista era l'impostore meno spesso degli altri: un indizio in più per chi lo sapeva)
       var ini = rnd(pres.length);
-      if (imps.indexOf(pres[ini].id) >= 0 && Math.random() < 0.6 && pres.length > imps.length) { do { ini = rnd(pres.length); } while (imps.indexOf(pres[ini].id) >= 0); }
+      if (R.indizi === "voce" && imps.indexOf(pres[ini].id) >= 0 && Math.random() < 0.6 && pres.length > imps.length) { do { ini = rnd(pres.length); } while (imps.indexOf(pres[ini].id) >= 0); }
       H.ordine = pres.slice(ini).concat(pres.slice(0, ini)).map(function (p) { return p.id; });
       H.ordine0 = H.ordine.slice();
       H.ind = {}; H.cor = {}; H.voti = {}; H.pronti = []; H.V = H.vv = H.spoglio = H.ultima = H.esito = null;
@@ -1197,6 +1232,7 @@
       H.players.forEach(function (p) { privato(p.id, segretoDi(p.id)); });
       H.guarda.forEach(function (x) { spettatore(x.id); });
       H.tardi.forEach(spettatore);
+      H.pub.forEach(function (id) { if (!pById(id)) spettatore(id); });   // (👀 chi guarda col link)
       if (R.indizi === "voce") iniziaDiscuti(); else iniziaIndizi(1);
     }
     function iniziaIndizi(g) {
@@ -1429,7 +1465,7 @@
     // "Nuova partita": stessa stanza, stessi amici, tutti tornano nella saletta (chi guardava nella Sala resta a guardare)
     function nuova() {
       if (H.fase !== "fine") return;
-      ferma(); H.fase = "lobby"; H.passo = null; H.mano = 0; H.classifica = null; H.tardi = [];
+      ferma(); H.fase = "lobby"; H.passo = null; H.mano = 0; H.classifica = null;
       H.seg = H.V = H.vv = H.spoglio = H.ultima = H.esito = null; H.ordine = []; H.ind = {}; H.cor = {}; H.voti = {}; H.pronti = []; H.scadenza = 0;
       H.elim = false; H.turno = 0; H.fuori = []; H.pari = 0; H.ballo = null; H.ultimoFuori = null; H.dec = null;
       H.players = presenti().filter(function (p) { return !p.dorme; });   // (📱 chi ha il telefono bloccato rientra col suo join)
@@ -1439,6 +1475,9 @@
         H.guarda = H.guarda.filter(function (x) { return x.id !== IO; });
         H.players.push({ id: IO, nome: (g0 && g0.nome) || t.nomeProfilo() || nomeHost, omino: t.mioOmino((g0 && g0.nome) || nomeHost), punti: 0, piu: 0 });
       }
+      // ✋ chi era arrivato tardi (e aspettava la mano dopo) si siede in saletta: il suo id era nella foto, il join non lo ripete
+      var tardi = H.tardi, info = H.tardiI; H.tardi = []; H.tardiI = {};
+      tardi.forEach(function (id) { var x = info[id]; if (x && !pById(id) && H.players.length < MAX_ON) H.players.push({ id: id, nome: x.nome, omino: x.omino || null, punti: 0, piu: 0 }); });
       H.players.sort(function (a, b) { return (b.id === IO) - (a.id === IO); });
       H.players.forEach(function (p) { p.punti = 0; p.piu = 0; });
       bd();   // (in saletta bd() fa t.ricorda(null): niente da riprendere)
@@ -1603,7 +1642,10 @@
     ui.piede = el("div", { class: "im-piede" });
     ui.avviso = el("div", { class: "im-avviso" });
     var esci = el("button", { class: "im-esci", type: "button", "aria-label": "Esci", text: "‹", onclick: function () { cb.onEsci(); } });
-    s._contenuto.appendChild(el("div", { class: "im-scena" }, [el("div", { class: "im-barra" }, [esci, ui.stato, ui.tempo]), ui.carta.nodo, ui.corpo, ui.piede, ui.avviso]));
+    // 👀 chi guarda soltanto (t.guarda) ha in basso la targhetta del core («👀 Guardi · 😂 · ✕», alta 44 px): le si lascia il
+    // posto (nel torneo a eliminazione la targhetta non c'è)
+    ui.targa = !!t.guarda && !t.eliminazione;
+    s._contenuto.appendChild(el("div", { class: "im-scena" + (ui.targa ? " im-targa" : "") }, [el("div", { class: "im-barra" }, [esci, ui.stato, ui.tempo]), ui.carta.nodo, ui.corpo, ui.piede, ui.avviso]));
     t.mostra(s);
     // il tempo che scorre (solo la scritta) e, se la mia parola non è arrivata, la richiesta all'host
     ui.timer = setInterval(function () {
@@ -1656,7 +1698,9 @@
     c.sig = sig;
     setTx(c.su, info.su); setTx(c.grande, info.grande); setTx(c.giu, info.giu); setTx(c.socio, info.socio || ""); setTx(c.tx, cop);
     c.grande.classList.toggle("lunga", String(info.grande).length > 14);
-    c.nodo.classList.toggle("socio", !!info.socio);   // (👥 l'altro impostore: una riga in più, a vista anche sulla carta piccola)
+    // (👥 l'altro impostore: una riga in più dentro la carta. La carta coperta è più alta per TUTTI quando ci sono 2 impostori:
+    // 22 nov 2026, prima si allungava solo a loro due e chi sbirciava il telefono del vicino vedeva chi era impostore)
+    c.nodo.classList.toggle("due", (vm.nImp || 1) > 1);
   }
 
   var TESTI_PASSO = { indizi: "✍️ Indizi", discuti: "🗣️ Discutete", voto: "🗳️ Si vota", spoglio: "📮 Lo spoglio", ultima: "🎯 Ultima prova", esito: "🏁 Fine mano", fuori: "🚪 Chi esce" };
@@ -1689,20 +1733,30 @@
       ui.corpo.scrollTop = 0;
     }
     if (ui.fase.agg) ui.fase.agg(vm);
+    if (ui.pGuarda && ui.piede.contains(ui.pGuarda)) setTx(ui.pGuarda, testoGuarda(ui, vm, cb));
   }
 
   // ---- pezzi comuni dei momenti ----
   function titolo(el, testo, sotto) { return el("div", { class: "im-tit" }, [el("b", { text: testo }), sotto ? el("small", { text: sotto }) : null]); }
   // chi guarda: una riga e le faccine
+  function testoGuarda(ui, vm, cb) {
+    var scelto = (vm.guarda || []).some(function (x) { return x.id === cb.myId; }), me = trova(vm, cb.myId);
+    // ✋ arrivato a partita cominciata: entra alla prossima mano (all'ultima mano: alla prossima partita)
+    var aspetto = (vm.prossimi || []).indexOf(cb.myId) >= 0, ultima = (vm.mano || 0) >= (vm.mani || 1);
+    return me && me.fuori ? "🚪 Sei fuori: guardi (tieni premuto in alto per il segreto)"
+      : ui.targa ? "👀 Guardi soltanto: tieni premuto in alto per il segreto"
+      : aspetto ? "👀 Guardi: giochi dalla prossima " + (ultima ? "partita" : "mano") + " (tieni premuto in alto per il segreto)"
+      : scelto ? "👀 Questa volta guardi: tieni premuto in alto per il segreto" : "👀 Guardi: alla prossima partita giochi anche tu";
+  }
   function piedeGuarda(ui, vm, cb) {
-    var el = ui.t.el, scelto = (vm.guarda || []).some(function (x) { return x.id === cb.myId; }), me = trova(vm, cb.myId);
-    ui.piede.appendChild(el("p", { class: "im-conto", text: me && me.fuori ? "🚪 Sei fuori: guardi (tieni premuto in alto per il segreto)"
-      : scelto ? "👀 Questa volta guardi: tieni premuto in alto per il segreto" : "👀 Guardi: alla prossima partita giochi anche tu" }));
+    // (la riga si aggiorna a ogni foto: chi arriva a metà di un momento entra nei «prossimi» qualche istante dopo)
+    ui.pGuarda = ui.t.el("p", { class: "im-conto", text: testoGuarda(ui, vm, cb) });
+    ui.piede.appendChild(ui.pGuarda);
     faccine(ui);
   }
   // gioca davvero in questo momento: è in partita e (a eliminazione) non è fuori
   function giocoIo(vm, cb) { var me = trova(vm, cb.myId); return me && !me.fuori ? me : null; }
-  function faccine(ui) { var f = ui.t.faccine(); if (f) ui.piede.appendChild(f); return f; }
+  function faccine(ui) { if (ui.targa) return null; var f = ui.t.faccine(); if (f) ui.piede.appendChild(f); return f; }   // (👀 chi guarda col link le ha nella targhetta del core)
   // il tasto "più di metà": «🗳️ Votiamo» / «⏩ Avanti» con quanti l'hanno toccato (il mio tocco resta segnato)
   function tastoPronti(ui, vm, cb, testo, fatto) {
     var el = ui.t.el, me = trova(vm, cb.myId), k = vm.k; if (!me || me.via || me.fuori) return null;
@@ -1713,7 +1767,8 @@
     } }, [tx, q]);
     function agg(v) {
       var l = v.pronti || [], mio = cb.mio.pronto === k || l.indexOf(cb.myId) >= 0, n = l.length + (mio && l.indexOf(cb.myId) < 0 ? 1 : 0);
-      setTx(q, Math.min(n, v.servono || 1) + " su " + (v.servono || 1));
+      var manca = Math.max(0, (v.servono || 1) - n);   // (22 nov 2026: prima «0 su 3», sembrava il numero dei giocatori)
+      setTx(q, manca ? (manca > 1 ? "ne mancano " + manca : "ne manca 1") : "");
       setTx(tx, mio ? fatto : testo);
       b.disabled = mio;
     }
@@ -1772,8 +1827,9 @@
   // ---- ✍️ gli indizi: si scrive di nascosto, si svelano tutti insieme al giro dopo ----
   function fIndizi(ui, vm, cb) {
     var el = ui.t.el, me = giocoIo(vm, cb), k = vm.k, dopoIl1 = vm.giro > 1 || (vm.elim && vm.turno > 1);
-    ui.corpo.appendChild(titolo(el, dopoIl1 ? "✍️ Un altro indizio" : "✍️ Scrivi un indizio",
-      vm.elim && vm.turno > 1 ? "Stessa parola: ecco gli indizi dei giri prima, scrivine uno nuovo" : vm.giro > 1 ? "Ecco gli indizi di prima: scrivine un altro, diverso" : "Una parola legata alla tua, senza dirla: si svelano tutti insieme"));
+    ui.corpo.appendChild(me ? titolo(el, dopoIl1 ? "✍️ Un altro indizio" : "✍️ Scrivi un indizio",
+      vm.elim && vm.turno > 1 ? "Stessa parola: ecco gli indizi dei giri prima, scrivine uno nuovo" : vm.giro > 1 ? "Ecco gli indizi di prima: scrivine un altro, diverso" : "Una parola legata alla tua, senza dirla: si svelano tutti insieme")
+      : titolo(el, dopoIl1 ? "✍️ Scrivono un altro indizio" : "✍️ Scrivono un indizio", "Di nascosto: si svelano tutti insieme"));
     var zona = el("div", { class: "im-scrivi" });
     if (me) ui.corpo.appendChild(zona);
     var lista = listaIndizi(ui, vm, cb, true, dopoIl1);
@@ -1944,8 +2000,9 @@
       if (trova(vm, cb.myId)) vibra([30, 40, 30]);   // la rivelazione del ruolo
     } else
     ui.corpo.appendChild(io ? titolo(el, "🎯 Ultima possibilità!", "Indovina la parola degli altri: se ci riesci ti salvi e prendi 2 punti")
-      : titolo(el, "🎯 " + chi.nome + " è l'impostore!", "Ultima possibilità: prova a indovinare la vostra parola…"));
-    var griglia = el("div", { class: "im-scelte" }), bot = [], mia = null, piene = false;
+      : titolo(el, "🎯 " + chi.nome + " è l'impostore!", "Ultima possibilità: sceglie tra queste 6 parole…"));
+    // (chi non sceglie vede le parole spente: prima sembravano tasti da toccare)
+    var griglia = el("div", { class: "im-scelte" + (io ? "" : " guarda") }), bot = [], mia = null, piene = false;
     // le 6 parole: nella foto, o (con l'altro impostore ancora dentro) solo a chi sceglie, col suo segreto
     function scelteDi(v) {
       var x = v.ultima || {};
@@ -2125,7 +2182,9 @@
   }
   function finale(t, vm, cb) {
     var s = t.schermata({ icona: "🏆", titolo: "Classifica finale" });
-    var cl = vm.classifica || [], fac = t.faccine();
+    // (👀 chi guarda col link ha la targhetta del core in basso, con le faccine: gli si lascia il posto)
+    var targa = !!t.guarda && !t.eliminazione, cl = vm.classifica || [], fac = targa ? null : t.faccine();
+    if (targa) s.classList.add("im-fine-targa");
     // tanti giocatori (o schermo basso): righe su due colonne, così i tasti restano a vista senza scorrere
     var fitta = cl.length > 6 || cl.length * 71 + 300 + (fac ? 56 : 0) > (window.innerHeight || 640);
     var ol = t.el("ol", { class: "classifica" + (fitta ? " fitta" : "") }), med = medaglie(cl.map(function (r) { return r.pos; }));
@@ -2178,9 +2237,10 @@
       ".schermata.im-piena>.testa,.schermata.im-piena>.piede{display:none}",
       ".schermata.im-piena>.contenuto{height:100%;margin:0;padding:0}",
       ".im-scena{position:relative;height:var(--alt,100dvh);box-sizing:border-box;display:flex;flex-direction:column;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 12px calc(10px + env(safe-area-inset-bottom));overflow:hidden}",
+      ".im-scena.im-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}.schermata.im-fine-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}",   // (👀 il posto della targhetta di chi guarda)
       ".im-barra{display:flex;align-items:center;gap:8px;font-weight:800;flex:none}",
       ".im-esci{flex:none;width:38px;height:38px;border-radius:50%;border:0;background:var(--o-carta);color:var(--o-testo);box-shadow:inset 0 0 0 1px var(--o-filo-oro),var(--o-ombra);font:inherit;font-size:1.3rem;font-weight:900;cursor:pointer}",
-      ".im-stato{flex:1;min-width:0;font-size:.92rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".im-stato{flex:1;min-width:0;font-size:.92rem;line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}",   // (22 nov 2026: su due righe, prima si tagliava a 360)
       ".im-tempo{flex:none;font-variant-numeric:tabular-nums;font-weight:900;padding:4px 10px;border-radius:999px;background:var(--o-scuro);color:var(--o-scuro-testo)}",
       ".im-tempo.poco{background:var(--o-rosso);color:#fff}.im-tempo:empty{display:none}",
       // la carta segreta (tieni premuto)
@@ -2240,7 +2300,7 @@
       // l'ultima possibilità
       ".im-scelte{display:grid;grid-template-columns:1fr 1fr;gap:8px}",
       ".im-sc{min-height:52px;border-radius:14px;border:2px solid transparent;background:var(--carta);color:inherit;font:inherit;font-weight:800;font-size:1rem;padding:8px;overflow-wrap:anywhere;line-height:1.15;cursor:pointer}",
-      ".im-sc:disabled{cursor:default;color:inherit}.im-sc.mia{border-color:var(--accento)}",
+      ".im-sc:disabled{cursor:default;color:inherit}.im-sc.mia{border-color:var(--accento)}.im-scelte.guarda .im-sc:not(.giusta):not(.sbagliata){opacity:.7;box-shadow:none}",
       ".im-sc.giusta,.im-scl.giusta{background:var(--o-verde);color:var(--o-verde-testo);border-color:var(--o-verde)}.im-sc.sbagliata,.im-scl.sbagliata{background:var(--o-rosso);color:#fff;border-color:var(--o-rosso)}",
       ".im-ris{text-align:center;font-size:1.25rem;font-weight:900;min-height:1.4em;flex:none}",
       // fine mano
@@ -2260,7 +2320,7 @@
       "@keyframes imAvviso{0%{opacity:0;transform:scale(.8)}15%{opacity:1;transform:scale(1.05)}80%{opacity:1}100%{opacity:0}}",
       // 👥 l'altro impostore sulla carta (anche piccola) e 🔪 a eliminazione: chi è fuori, il ruolo svelato in grande
       ".im-c-socio{font-size:.82rem;font-weight:800;line-height:1.15;color:var(--accento)}.im-c-socio:empty{display:none}",
-      ".im-carta.socio:not(.grande){height:58px}.im-carta.grande .im-c-socio{font-size:.95rem;margin-top:4px}",
+      ".im-carta.due:not(.grande){height:58px}.im-carta.grande .im-c-socio{font-size:.95rem;margin-top:4px}",
       ".im-riga.fuori{opacity:.5}.im-riga.fuori .im-ind{-webkit-line-clamp:1}",
       ".im-fuori{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;min-height:0}",
       ".im-riv{text-align:center;flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 12px;border-radius:22px;background:var(--carta);box-shadow:var(--ombra);animation:imRiv .45s ease both}",

@@ -154,7 +154,11 @@
 
   // ===================== el1: le regole =====================
   COPIONE.aggiungi("el1", { nome: "Impostore a eliminazione: regole senza grafica, riassunto, impostazioni fuori pagina", fai: async function () {
-    var w = await W.apriTel("Paky", opzR({ x: 0 })), I = w.__impostore, g = w.__gImp;
+    var w = await W.apriTel("Paky", opzR({ x: 0 }));
+    // (22 nov 2026) il gioco si scarica quando serve: lo chiedo e aspetto le regole e la registrazione
+    try { w.SGCuore.precarica("impostore"); } catch (e) {}
+    await W.aspetta(function () { return w.__impostore && w.__gImp; }, 10000);
+    var I = w.__impostore, g = w.__gImp;
     if (!I || !g || !I.fineElim) no("non vedo le regole nuove (window.__impostore.fineElim) o il gioco");
     // chi vince
     if (I.fineElim([0, 1, 2], [2]) !== null) no("in 3 con l'impostore dentro si continua");

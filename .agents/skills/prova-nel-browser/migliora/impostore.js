@@ -22,10 +22,18 @@
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no, T = A.T;
-  var COME = "garapesca", NOME = "L'Impostore";
+  var NOME = "L'Impostore";
   function vm(C) { return W.vmDi(C) || {}; }
+  // il gioco si scarica quando serve: lo chiedo e aspetto le sue regole (window.__impostore) e la sua registrazione
+  async function scaricato(w) {
+    try { w.SGCuore.precarica("impostore"); } catch (e) {}
+    await W.aspetta(function () { return w.__impostore && w.__gImp; }, 10000);
+    return w;
+  }
+  W.__scaricaImp = scaricato;
 
-  // ---- i telefoni registrano l'Impostore al posto della Gara di pesca (opz.comeImp); w.__imp = le regole dell'host ----
+  // ---- w.__imp = le regole dell'host (opz.comeImp). (22 nov 2026: l'Impostore è online da sé e si scarica quando serve:
+  // niente più il posto della Gara di pesca, che col gioco scaricato a parte non arrivava più) ----
   if (!W.__pfImp) {
     var pf = W.__pfImp = W.preparaFinestra;
     W.preparaFinestra = function (w, nome, opz) {
@@ -36,9 +44,8 @@
         d.set(v);
         var reg = v.registra;
         v.registra = function (g) {
-          if (g && g.id === COME) return;                       // la Gara di pesca vera no
           if (g && g.id === "impostore") {
-            g.id = COME; w.__gImp = g;
+            w.__gImp = g;
             var av = g.avvia;
             g.avvia = function (t) {
               if (w.__imp && t.impostazioni) Object.keys(w.__imp).forEach(function (k) { t.impostazioni[k] = w.__imp[k]; });
@@ -110,7 +117,7 @@
 
   // ===================== imp1: le regole =====================
   COPIONE.aggiungi("imp1", { nome: "Impostore: regole senza grafica, riassunto e impostazioni fuori pagina", fai: async function () {
-    var w = await W.apriTel("Paky", opzImp({ x: 0 })), I = w.__impostore, g = w.__gImp;
+    var w = await scaricato(await W.apriTel("Paky", opzImp({ x: 0 }))), I = w.__impostore, g = w.__gImp;
     if (!I || !g) no("non vedo le regole dell'Impostore (window.__impostore) o il gioco registrato");
     var V = I.contaVoti(4, [1, 0, 1, null]);
     if (V.accusato !== 1 || V.conte.join() !== "1,2,0,0") no("conta dei voti: " + JSON.stringify(V));
@@ -151,7 +158,7 @@
 
   // 4 nov 2026: 10 temi nuovi (1.350 coppie); 🌶️ Serata spenta di partenza: con «Tutte» non esce mai, toccandola si aggiunge
   COPIONE.aggiungi("imp7", { nome: "Impostore: 🌶️ Serata spenta di partenza (fuori da «Tutte», toccandola si aggiunge alle altre), 27 temi e 1.350 coppie", fai: async function () {
-    var w = await W.apriTel("Paky", opzImp({ x: 0 })), I = w.__impostore, g = w.__gImp;
+    var w = await scaricato(await W.apriTel("Paky", opzImp({ x: 0 }))), I = w.__impostore, g = w.__gImp;
     if (!I || !I.categorie || !I.pescaCoppia || !g) no("non vedo categorie e pescaCoppia (window.__impostore) o il gioco");
     try { w.localStorage.removeItem("sg_impostore_regole"); w.localStorage.removeItem("sg_impostore_usate"); } catch (e) {}
     var cats = I.categorie(), ser = cats.filter(function (c) { return c.id === "serata"; })[0], tot = 0;
@@ -245,7 +252,7 @@
     await pronto(P); await pronto(W.finestra("Giulia"));
     await W.dorme(500);
     if (vm(C).passo !== "discuti") no("con 2 su 4 si vota già");
-    if (!/2 su 3/.test((P.document.querySelector(".im-pronto") || {}).textContent || "")) no("il tasto non dice «2 su 3»: " + (P.document.querySelector(".im-pronto") || {}).textContent);
+    if (!/ne manca 1/.test((P.document.querySelector(".im-pronto") || {}).textContent || "")) no("il tasto non dice «ne manca 1» (22 nov 2026: prima «2 su 3»): " + (P.document.querySelector(".im-pronto") || {}).textContent);
     await pronto(W.finestra("Luca"));
     v = await aspettaPasso(C, "voto", 4000); if (!v) no("con 3 su 4 non si va al voto");
     // il voto: tutti l'impostore (l'impostore vota la spia); Giulia prima sbaglia e poi cambia
