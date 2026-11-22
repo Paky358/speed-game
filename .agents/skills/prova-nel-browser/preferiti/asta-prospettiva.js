@@ -72,7 +72,7 @@
         if (tT != null && tT > 0.05) { var zA = az.camera(sc[0], tT - 0.02).z, zB = az.camera(sc[0], Math.min(0.99, tT + 0.1)).z; if (zB / zA < 1.15) ko.push(qui + ": al tiro la telecamera non si avvicina (" + zA.toFixed(2) + " → " + zB.toFixed(2) + ")"); else avv++; }
         // nel momento in cui il pallone arriva sulla porta
         sc.forEach(function (s, i) {
-          var es = ESITI[i], b = primoSullaPorta(s); if (!b || !(es in conti)) return;
+          var es = ESITI[i], b = primoSullaPorta(s); if (!b || !(es in conti) || (s.glt != null && es !== "gol")) return;   // (🎬 22 nov 2026: nella goal-line ogni tiro sbagliato si vede sulla linea, dalla traversa o dal palo: lì l'esito non dice dove sbatte)
           az.foto(s, b[0]); var P = az.porta, q = az.dove; if (!P || !q) { ko.push(qui + " " + es + ": niente porta o pallone"); return; }
           var sx = P.pali[0] < P.pali[1] ? P.pali : [P.pali[1], P.pali[0]], dx = Math.abs(b[1] - 0.5), mezzo = P.sp / 2;
           if (verso > 0 && P.terra < az.h * 0.55) ko.push(qui + " " + es + ": la porta non è in basso (" + Math.round(P.terra) + " su " + az.h + ")");

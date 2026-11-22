@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 406,
+    data: "22 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: tante azioni nuove nella giornata ⚽",
+    descrizione: [
+      "🚩 L'angolo corto, la finta sulla punizione e il tiro sul palo del portiere o sopra la barriera.",
+      "⚡ Il dribbling sul portiere, il cross che diventa un tiro, lo scavetto da lontano, il cambio di gioco da una fascia all'altra e il contropiede che nasce dall'angolo degli altri.",
+      "😱 Il palo-palo: il pallone colpisce un palo, scorre sulla linea fino all'altro… dentro o fuori?",
+      "⏱ Il portiere che perde tempo nel finale (giallo o solo un richiamo) e 💥 la gomitata in un duello di testa, rivista al VAR: rosso, giallo o niente.",
+      "🎬 Più varietà anche nelle azioni di sempre: cross da posti diversi, uno-due sulla fascia, tre contro due, il tap-in dopo un palo o una traversa, la rincorsa del rigore. E il finale non ripete più sempre le stesse azioni.",
+      "🎯 La punizione dal limite e la goal-line non finiscono più quasi sempre in gol: si resta col fiato sospeso fino all'ultimo."
+    ]
+  },
+  {
     v: 405,
     data: "22 novembre 2026",
     titolo: "Il Prezzo è Giusto: via le foto sbagliate 🏷️",

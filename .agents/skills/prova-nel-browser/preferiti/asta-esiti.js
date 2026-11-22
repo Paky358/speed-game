@@ -113,7 +113,7 @@
       if (a === "fallo: reazione") { if (pc("niente") < lim || pc("niente") > 1 - lim) ko.push("«" + a + "» quasi sempre uguale: " + riga); return; }
       Object.keys(t).forEach(function (k) { if (k !== "rosso" || !/entrata|pressing/.test(a)) if (pc(k) < lim) ko.push("«" + a + "» finisce " + k + " solo il " + Math.round(pc(k) * 100) + "%: " + riga); });
     });
-    ["VAR dopo il gol", "VAR richiama per il rigore", "fallo: tattico", "fallo: proteste", "fallo: simula", "fallo: dg", "fallo: ultimo", "ribattuta"].forEach(function (a) { if (!tab[a]) ko.push("«" + a + "» non compare mai"); });
+    ["VAR dopo il gol", "VAR richiama per il rigore", "fallo: tattico", "fallo: proteste", "fallo: simula", "fallo: dg", "fallo: ultimo", "ribattuta", "fallo: tempo", "fallo: gomitata"].forEach(function (a) { if (!tab[a]) ko.push("«" + a + "» non compare mai"); });
     if (nvVisti < nvDati) ko.push("dei falli senza cartellino sono stati tagliati (" + nvVisti + " su " + nvDati + ")");
     if (ko.length) no(ko.length + " problemi: " + ko.slice(0, 6).join(" · "));
     return out.join(" · ") + " · falli senza cartellino visti tutti (" + nvVisti + ")";
@@ -146,8 +146,8 @@
   }
   COPIONE.aggiungi("es2", { nome: "Mini Asta, le scene: falli col cartellino e senza, ultimo uomo giallo e rosso, ribattuta gol e parata identici fino all'esito", fai: async function () {
     var w = await W.apriTel("Paky", { x: 0 }), F = await motore(w), ko = [], prove = 0;
-    var CARTA = { tattico: 0.6, proteste: 0.72, simula: 0.6, reazione: 0.6, ultimo: 0.6 };   // (quando l'arbitro tira fuori il cartellino)
-    [["tattico", ["amm", "rec"]], ["proteste", ["amm", "rec"]], ["simula", ["amm", "rec"]], ["reazione", ["amm", "rec", "esp"]], ["ultimo", ["amm", "esp"]]].forEach(function (cp) {
+    var CARTA = { tattico: 0.6, proteste: 0.72, simula: 0.6, reazione: 0.6, ultimo: 0.6, tempo: 0.6, gomitata: 0.86 };   // (22 nov 2026: il portiere che perde tempo, la gomitata col VAR)   // (quando l'arbitro tira fuori il cartellino)
+    [["tattico", ["amm", "rec"]], ["proteste", ["amm", "rec"]], ["simula", ["amm", "rec"]], ["reazione", ["amm", "rec", "esp"]], ["ultimo", ["amm", "esp"]], ["tempo", ["amm", "rec"]], ["gomitata", ["amm", "rec", "esp"]]].forEach(function (cp) {
       for (var seme = 1; seme <= 200; seme++) [false, true].forEach(function (difesa) {
         var op = { verso: seme % 3 ? 1 : -1, lato: seme % 2 ? 1 : -1, seme: seme * 7919, come: cp[0], difesa: difesa, lento: false };
         var sc = cp[1].map(function (t) { return F.scena(t, null, null, null, { fallo: "Fallo" }, op); });

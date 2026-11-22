@@ -29,7 +29,7 @@
     var w = await W.apriTel("Paky", { x: 0 }), M = await motore(w), ko = [], prove = 0, nomiVisti = 0;
     var SCENE = ["cross", "angolo", "unodue", "contro", "pallonetto", "fuori", "slalom", "punizione", "tapin", "centrocampo", "mischia", "testa", "incrocio", "miracolo", "assedio", "ultimo",
       "secondopalo", "presa", "tuffo", "vuota", "tre", "filtrante", "rasoterra", "giro", "muro", "corta", "volee",
-      "pressing", "laterale", "papera", "glt", "ribattuta", "fuga", "rimessa", "rimessalunga"];   // (15 nov 2026: la fuga da centrocampo, le rimesse)   // (14 nov 2026 sera: anche la ribattuta, col gol e parata) (11-12 nov 2026: le azioni nuove; la punizione sotto la barriera è dentro «punizione», un seme su cinque)
+      "pressing", "laterale", "papera", "glt", "ribattuta", "fuga", "rimessa", "rimessalunga", "cambio"];   // (22 nov 2026: il cambio di gioco; le varianti del gruppo 1 sono dentro le scene di sempre, dal seme: angolo corto, finta, dribbling, cross… o tiro, scavetto, palo-palo…)   // (15 nov 2026: la fuga da centrocampo, le rimesse)   // (14 nov 2026 sera: anche la ribattuta, col gol e parata) (11-12 nov 2026: le azioni nuove; la punizione sotto la barriera è dentro «punizione», un seme su cinque)
     var ESITI = ["gol", "parata", "palo", "traversa", "fuori", "alto", "linea"];
     SCENE.forEach(function (v) {
       for (var seme = 1; seme <= 300; seme++) {
