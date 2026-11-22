@@ -90,6 +90,7 @@ async function turno() {
         // arriva tardi Bea, Dina guarda col link
         await ev(() => I3.tardi("Bea"));
         await due("Bea", "arriva-tardi");
+        await due("Bea", "arriva-tardi-tiene-premuto", tieni); await ev(lascia, "Bea");
         await ev(() => I3.guarda("Dina"));
         await due("Dina", "guarda-col-link");
         await due("Dina", "guarda-col-link-tiene-premuto", tieni); await ev(lascia, "Dina");
@@ -139,6 +140,12 @@ async function turno() {
         await ev(() => I3.indovina(false));
         await dorme(1500);
         await due(civ, "ultima-dopo");
+        // in 3 (dalla v406) il primo sbaglio non chiude: anche l'impostore, poi il secondo tentativo (giusto)
+        if (await ev(() => I3.vm().passo === "ultima" && !(I3.vm().ultima || {}).scelto)) {
+          await due(imp, "ultima-dopo-impostore");
+          await ev(() => I3.indovina(true)); await dorme(1500);
+          await due(civ, "ultima-secondo-tentativo");
+        }
       }
       await ev(() => I3.passo("esito", 20000));
       await dorme(1500);
@@ -178,6 +185,74 @@ async function turno() {
       await ev(() => I3.scrivi());
       await ev(() => I3.passo("discuti")); await dorme(1500);
       await scatta(imp, PRE + "impostore-360", 360, 640); await scatta(civ, PRE + "cittadino-360", 360, 640);
+    }
+    // SULLO STESSO TELEFONO (il modo più usato): dalle regole alla classifica. --n giocatori, --spia sa, --voto elim, --mani 2.
+    // Mano 1: tutti votano l'impostore (lui il primo cittadino) e lui sbaglia (in 3 sbaglia una volta e poi indovina);
+    // mano 2: tutti votano un innocente
+    if (quale === "locale") {
+      const NOMI = ["Paky"].concat(AMICI);
+      const conSpia = arg.spia && arg.spia !== "no";
+      const regL = { mani: +(arg.mani || 1), giri: 1, tempo: 0, indizi: "scritti", spia: conSpia ? arg.spia : "no", aiuto: arg.aiuto || (conSpia ? "categoria" : "simile"), voto: arg.voto === "elim" ? "elim" : "una" };
+      fs.appendFileSync(DIARIO, "Sullo stesso telefono: " + JSON.stringify(regL) + "\n");
+      await ev(([n, r]) => I3L.apri(n, r), [NOMI, regL]);
+      await due("Paky", "regole");
+      await ev(() => I3L.comincia());
+      for (let m = 1; m <= regL.mani; m++) {
+        let fotoImp = false;
+        for (let i = 0; i < NOMI.length; i++) {
+          const n = NOMI[i];
+          if (m === 1 && i === 0) await due("Paky", "passa-il-telefono");
+          await ev(n => I3L.premi("Sono " + n), n);
+          if (m === 1 && i === 0) await due("Paky", "ruolo-coperto");
+          const c = await ev(() => I3L.carta());
+          await ev(([n, c]) => { I3L.ruoli[n] = c.ruolo; if (c.ruolo === "civ") I3L.parola = c.par; }, [n, c]);
+          if (m === 1 && i === 0) await due("Paky", "ruolo-tiene-premuto");
+          if (m === 1 && c.ruolo !== "civ" && !fotoImp) { fotoImp = true; await due("Paky", "ruolo-" + c.ruolo + "-tiene-premuto"); }
+          await ev(() => I3L.lascia());
+          await ev(() => I3L.premi(/Ho capito/));
+        }
+        const ruoli = await ev(() => I3L.ruoli); scriviD("mano " + m + " ruoli: " + JSON.stringify(ruoli) + " · parola " + (await ev(() => I3L.parola)));
+        const imp = NOMI.filter(n => ruoli[n] === "imp")[0], civs = NOMI.filter(n => ruoli[n] === "civ");
+        await dorme(300);
+        await due("Paky", "m" + m + "-si-comincia");
+        await ev(() => I3L.premi(/Andiamo a votare/));
+        // i voti: mano 1 tutti l'impostore, mano 2 tutti un innocente
+        const bersaglio = n => m === 1 ? (n === imp ? civs[0] : imp) : (n === civs[0] ? imp : civs[0]);
+        for (let i = 0; i < NOMI.length; i++) {
+          const n = NOMI[i];
+          if (i === 0 && m === 1) {
+            await ev(n => I3L.premi("Sono " + n), n);
+            await due("Paky", "voto");
+            await ev(t => { const w = I3L.w(); const b = [].filter.call(w.document.querySelectorAll(".contenuto button"), x => x.textContent === t)[0]; if (b) b.click(); }, bersaglio(n));
+            await dorme(400);
+          } else await ev(([n, t]) => I3L.vota(n, t), [n, bersaglio(n)]);
+        }
+        await dorme(500);
+        await due("Paky", "m" + m + "-spoglio-inizio");
+        await dorme(NOMI.length * 330 + 2300);
+        await due("Paky", "m" + m + "-spoglio-fine");
+        await ev(() => I3L.premi(/Avanti|Chi era/));
+        await dorme(400);
+        if (await ev(() => !!I3L.w().document.querySelector(".im-scl"))) {
+          await due("Paky", "m" + m + "-ultima");
+          if (NOMI.length === 3) {
+            const w1 = await ev(() => I3L.scegli(false)); scriviD("prima parola (sbagliata): " + w1);
+            await due("Paky", "m" + m + "-ultima-primo-sbaglio");
+            const w2 = await ev(() => I3L.scegli(true)); scriviD("seconda parola (giusta): " + w2);
+            await due("Paky", "m" + m + "-ultima-indovinata");
+          } else {
+            await ev(() => I3L.scegli(false));
+            await due("Paky", "m" + m + "-ultima-sbagliata");
+          }
+          await ev(() => I3L.premi(/Vedi il risultato/));
+        }
+        await dorme(500);
+        await due("Paky", "m" + m + "-esito");
+        if (m < regL.mani) await ev(() => I3L.premi(/Prossima mano/));
+      }
+      await ev(() => I3L.premi(/Vedi la classifica/));
+      await dorme(1500);
+      await due("Paky", "classifica");
     }
     // LE SCELTE (proposte, NON nel gioco): la schermata vera e, sopra, la proposta disegnata solo per la foto
     if (quale === "scelte") {

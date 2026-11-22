@@ -18,7 +18,7 @@
 //      (anche Paky), un solo "__esito" (di Giulia). Le parole mai nella foto per tutti. «Nuova partita»: in saletta la
 //      corona a Giulia (prima), Paky seduto da amico.
 // 5im4 Riserva tenuta da chi guarda: Paky, Giulia e Luca giocano, Marco arriva a partita cominciata e guarda; il telefono
-//      di Paky si spegne → la partita la tiene Marco GUARDANDO (vede il segreto di chi guarda, niente «Tu»), Giulia e Luca
+//      di Paky si spegne → la partita la tiene Marco GUARDANDO (arrivato tardi: dalla v406 vede solo la parola, niente «Tu»), Giulia e Luca
 //      vanno avanti; Paky torna con la sua parola; classifica, un "__esito" di Marco; «Nuova partita»: Marco si siede, primo.
 (function () {
   "use strict";
@@ -246,6 +246,13 @@
     var sb = null;
     if (!await W.aspetta(function () { sb = [].filter.call(W.finestra(chi.imp).document.querySelectorAll(".im-sc"), function (b) { return !b.disabled && b.textContent !== parola; })[0]; return sb; }, 6000)) no("dopo la ripresa l'impostore non può scegliere");
     sb.click();
+    // (dalla v406 in 3 l'impostore ha DUE tentativi: il primo sbaglio non chiude, ne sceglie un'altra, di nuovo sbagliata)
+    if ((H("Paky").ultima.prove || 1) > 1) {
+      if (!await W.aspetta(function () { return (H("Paky").ultima.no || []).length === 1 && H("Paky").passo === "ultima"; }, 6000)) no("in 3 il primo tentativo sbagliato non arriva (o chiude la mano)");
+      var sb2 = null;
+      if (!await W.aspetta(function () { sb2 = [].filter.call(W.finestra(chi.imp).document.querySelectorAll(".im-sc"), function (b) { return !b.disabled && b.textContent !== parola && b !== sb; })[0]; return sb2; }, 6000)) no("dopo il primo sbaglio l'impostore non può scegliere di nuovo");
+      sb2.click(); sb = sb2;
+    }
     if (!await aspettaPasso(C, "esito", 12000)) no("dopo la scelta non arriva la fine della mano (" + vm(C).passo + ")");
     if (H("Paky").ultima.scelto !== sb.textContent) no("la parola scelta non è quella toccata");
     L.push("2ª ricarica durante l'ultima possibilità (" + r2.dt + " s): resta all'impostore, sceglie e si va alla fine mano");
@@ -362,7 +369,7 @@
     var Z = await apriConAmici(["Giulia", "Luca"], REG), C = Z.C, ids = Z.ids;
     var carte0 = await carteDi(nomi);
     var M = await W.apriTel("Marco", { hash: "gioco=" + GID + "&stanza=" + C, x: 555, prima: prima("Marco") });
-    if (!await W.aspetta(function () { return /Guardi/.test(T(M)) && /Parola:/.test(carta(M).su); }, 10000)) no("Marco non guarda la partita col segreto di chi guarda («" + T(M).slice(0, 60) + "»)");
+    if (!await W.aspetta(function () { return /Guardi/.test(T(M)) && /La parola degli altri/.test(carta(M).su); }, 10000)) no("Marco (arrivato tardi: dalla v406 vede solo la parola) non guarda la partita con la parola («" + T(M).slice(0, 60) + "»)");
     var idM = A.mioId("Marco");
     scrivi(W.finestra("Giulia"), "primogiu");
     if (!await W.aspetta(function () { return (vm(C).scritto || []).length === 1; }, 4000)) no("l'indizio di Giulia non arriva");
@@ -375,7 +382,7 @@
     var MH = H("Marco");
     if (MH.players.some(function (p) { return p.id === idM; })) no("Marco si è seduto a giocare invece di tenere la partita guardando");
     if (JSON.stringify(MH.seg) !== seg0) no("con Marco il segreto della mano è cambiato");
-    if (!await W.aspetta(function () { var w = W.finestra("Marco"); return /Guardi/.test(T(w)) && /Parola:/.test(carta(w).su) && !w.document.querySelector(".im-input"); }, 6000)) no("Marco non vede la partita come chi guarda («" + T(W.finestra("Marco")).slice(0, 80) + "» · " + carta(W.finestra("Marco")).su + ")");
+    if (!await W.aspetta(function () { var w = W.finestra("Marco"); return /Guardi/.test(T(w)) && /La parola degli altri/.test(carta(w).su) && !w.document.querySelector(".im-input"); }, 6000)) no("Marco non vede la partita come chi arriva tardi (solo la parola) («" + T(W.finestra("Marco")).slice(0, 80) + "» · " + carta(W.finestra("Marco")).su + ")");
     await stesseCarte({ Giulia: carte0.Giulia, Luca: carte0.Luca });
     // Luca scrive: senza Paky si va avanti
     scrivi(W.finestra("Luca"), "primoluc");

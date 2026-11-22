@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 406,
+    data: "22 novembre 2026",
+    titolo: "L'Impostore: chi ha votato chi, e in 3 due tentativi 🕵️",
+    descrizione: [
+      "🗳️ Nello spoglio, sotto ogni nome, si vede subito chi l'ha votato («da Luca e Sara»): niente più da aspettare la fine della mano per sapere chi ti ha accusato.",
+      "🎯 In 3 l'impostore scoperto ha due tentativi per indovinare la parola: se sbaglia la prima, la parola diventa rossa e ne sceglie un'altra (la giusta resta nascosta).",
+      "🎭 Quando c'è la spia, a fine mano una riga spiega i punti: chi vota l'impostore, chi vota la spia, la spia non accusata, l'impostore che si salva.",
+      "📱 Le schermate stanno al centro dello schermo quando c'è posto (prima stavano in alto e sotto restava mezzo schermo vuoto), sullo stesso telefono e online. Negli indizi scritti resta tutto in alto, per la tastiera.",
+      "✋ Chi arriva a partita cominciata, tenendo premuto, vede solo la parola, come un cittadino: dalla mano dopo gioca. Chi guarda soltanto col link continua a vedere tutto."
+    ]
+  },
+  {
     v: 405,
     data: "22 novembre 2026",
     titolo: "Il Prezzo è Giusto: via le foto sbagliate 🏷️",

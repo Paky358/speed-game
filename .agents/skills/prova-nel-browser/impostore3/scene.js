@@ -117,4 +117,72 @@
       return male;
     }
   };
+
+  // ===== SULLO STESSO TELEFONO (22 nov 2026: il proprietario, «si giocherà soprattutto su un solo telefono che passa di mano») =====
+  // Paky apre il gioco «Su questo telefono» coi nomi; poi i tasti uno alla volta. L.ruoli: nome -> "imp" / "spia" / "civ"
+  var L = W.I3L = {
+    ruoli: {}, parola: null, nomi: [],
+    w: function () { return W.finestra("Paky"); },
+    titolo: function () { var h = L.w().document.querySelector(".schermata .testa h1"); return h ? h.textContent : ""; },
+    bottone: function (re) {
+      return [].filter.call(L.w().document.querySelectorAll(".piede button, .contenuto button"), function (x) {
+        return x.style.visibility !== "hidden" && !x.disabled && x.offsetParent && re.test(x.textContent);
+      })[0];
+    },
+    premi: async function (re, ms) {
+      if (typeof re === "string") re = new RegExp(re);
+      var b = await W.aspetta(function () { return L.bottone(re); }, ms || 6000);
+      if (!b) no("non trovo il tasto " + re + " («" + T(L.w()).replace(/\s+/g, " ").slice(0, 140) + "»)");
+      await W.dorme(500); b.click(); await W.dorme(350); return true;
+    },
+    apri: async function (nomi, regole) {
+      I3.reg = Object.assign({ mani: 1, giri: 1, tempo: 0, indizi: "scritti", spia: "no", aiuto: "simile", voto: "una" }, regole || {});
+      var w = await W.apriTel("Paky", { x: 0, prima: prima("Paky", I3.reg) }), d = w.document;
+      L.ruoli = {}; L.nomi = nomi; L.parola = null;
+      var tess = await W.aspetta(function () { return [].filter.call(d.querySelectorAll(".tessera"), function (t) { return (t.querySelector("h2") || {}).textContent === NOME; })[0]; }, 8000);
+      if (!tess) no("in home non c'è la tessera dell'Impostore");
+      tess.click(); await W.dorme(500);
+      W.clicca(w, /Su questo telefono/); await W.dorme(500);
+      function campi() { return [].filter.call(d.querySelectorAll("input[type=text], input:not([type])"), function (x) { return x.offsetParent && /Giocatore/.test(x.placeholder || ""); }); }
+      for (var k = 0; k < 12 && campi().length < nomi.length; k++) { if (!W.clicca(w, /Aggiungi giocatore/)) break; await W.dorme(150); }
+      campi().forEach(function (x, k) { x.value = nomi[k] || ("Amico" + k); x.dispatchEvent(new w.Event("input", { bubbles: true })); x.dispatchEvent(new w.Event("change", { bubbles: true })); });
+      if (!W.clicca(w, /Avanti ▶/)) no("non trovo «Avanti ▶» dopo i nomi");
+      await W.dorme(600);
+    },
+    comincia: async function () { await L.premi(/Comincia|Gioca|Inizia/); },
+    // la carta del ruolo: tieni premuto (e leggi); L.lascia() la nasconde
+    carta: async function () {
+      var w = L.w(), c = await W.aspetta(function () { return w.document.querySelector(".im-rl-carta"); }, 5000); if (!c) no("niente carta del ruolo");
+      c.dispatchEvent(new w.PointerEvent("pointerdown", { bubbles: true, pointerId: 1 }));
+      var su = (w.document.querySelector(".im-rl-su") || {}).textContent || "", par = (w.document.querySelector(".im-rl-parola") || {}).textContent || "";
+      return { su: su, par: par, ruolo: /impostore/i.test(su) ? "imp" : /spia/i.test(su) ? "spia" : "civ" };
+    },
+    lascia: function () { var w = L.w(), c = w.document.querySelector(".im-rl-carta"); if (c) c.dispatchEvent(new w.PointerEvent("pointerup", { bubbles: true, pointerId: 1 })); },
+    // il giro dei ruoli intero (foto: la funzione chiamata a ogni passo, se c'è)
+    giroRuoli: async function () {
+      for (var i = 0; i < L.nomi.length; i++) {
+        var n = L.nomi[i];
+        await L.premi("Sono " + n);
+        var c = await L.carta(); L.ruoli[n] = c.ruolo; if (c.ruolo === "civ") L.parola = c.par;
+        L.lascia(); await W.dorme(200);
+        await L.premi(/Ho capito/);
+      }
+      return L.ruoli;
+    },
+    chi: function (r) { return L.nomi.filter(function (n) { return L.ruoli[n] === r; }); },
+    // un voto: sul telefono passato, il tasto col nome
+    vota: async function (votante, nome) {
+      await L.premi("Sono " + votante);
+      var w = L.w(), b = await W.aspetta(function () { return [].filter.call(w.document.querySelectorAll(".contenuto button"), function (x) { return x.textContent === nome && !x.disabled; })[0]; }, 5000);
+      if (!b) no(votante + " non trova il tasto di " + nome);
+      await W.dorme(500); b.click(); await W.dorme(350);
+    },
+    // le 6 parole: giusta o una sbagliata (non già rossa)
+    scegli: async function (giusta) {
+      var w = L.w(), bs = await W.aspetta(function () { var l = [].slice.call(w.document.querySelectorAll(".im-scl")); return l.length ? l : null; }, 5000);
+      if (!bs) no("niente parole dell'ultima possibilità");
+      var b = bs.filter(function (x) { return giusta ? x.textContent === L.parola : x.textContent !== L.parola && !x.classList.contains("sbagliata"); })[0];
+      await W.dorme(500); if (b) b.click(); await W.dorme(400); return b ? b.textContent : null;
+    }
+  };
 })();
