@@ -5970,6 +5970,11 @@
           tira = att("A", et.tira, [[0, 0.66, 0.12], [0.14, 0.66, 0.2], [0.42, 0.6, 0.62], [0.56, 0.55, 0.8]]);
           palla([[0, 0.48, -0.62, 2.0], [0.1, 0.38, -0.15, 0], [0.14, 0.385, -0.12, 0], [0.28, 0.52, 0.25, 9], [0.42, 0.6, 0.625, 0], [0.56, 0.55, 0.805, 0]]);
           att("D", null, [[0, 0.56, 0.18], [0.56, 0.56, 0.72]]); att("D", null, [[0, 0.44, 0.1], [0.56, 0.5, 0.7]]);
+          if (sc.dPalo) {   // (il difensore che poi va sul palo: quando parte l'azione è ancora in linea con la difesa, lontano, e arretra di corsa: mai accanto al portiere col pallone lontano. Uguale per ogni esito)
+            var sQ2 = sc.dPalo.s || 1; sc.dPalo.pts = []; sc.dPalo.pose = []; sc.dPalo.fisso = true;
+            [[0, 0.5 + sQ2 * 0.2, 0.55], [0.26, 0.5 + sQ2 * 0.19, 0.7], [0.55, 0.5 + sQ2 * 0.17, 0.86], [0.62, 0.5 + sQ2 * 0.165, 0.9]].forEach(function (q) { muovi(sc.dPalo, q[0], q[1], q[2]); });
+            posa(sc.dPalo, 0.5, {}); posa(sc.dPalo, 0.56, { piega: 0.3 });
+          }
           if (esito === "gol") sc.fraseGol = frase(["Dall'angolo degli altri al gol in un attimo!", "Contropiede micidiale dopo l'angolo!", "L'angolo è loro, il gol è suo!"], op.seme || 7);
         } else {
           calcia(att("A", et.passa, [[0, 0.35, 0.08], [0.12, 0.36, 0.12]]), 0.12);
@@ -6706,7 +6711,7 @@
   // correndo all'indietro (guarda il pallone), a 7 m al secondo. Lo decidono la strada del pallone PRIMA del tiro e il seme: uguale in ogni esito.
   // Se l'azione parte già vicino alla porta (cross, angolo, punizione…) sta sul palo dall'inizio, come prima
   function arretraPalo(sc, durS, canoni) {   // (canoni: la stessa azione col gol e con la parata, con lo stesso seme: tutto si decide su quelle, uguali per ogni esito)
-    var d = sc.dPalo, p = d.pts; if (!p || p.length < 2 || !canoni[0]) return;
+    var d = sc.dPalo, p = d.pts; if (!p || p.length < 2 || !canoni[0] || d.fisso) return;   // (fisso: la scena gli ha già dato la sua strada)
     var cg = canoni[0], post = p[1], s = d.s || 1, lx = 0.5 + s * 0.13, vR = 7;
     var tMin = Math.min.apply(null, canoni.map(function (c) { return c.tiroDa != null ? c.tiroDa : c.dunque || 0.6; }));   // (il tiro che parte prima)
     var ball = function (t) { var l = cg.palla; if (!l.length) return 0.5; if (t <= l[0][0]) return l[0][2]; for (var i = 1; i < l.length; i++) if (t <= l[i][0]) { var a = l[i - 1], b = l[i], k = b[0] > a[0] ? (t - a[0]) / (b[0] - a[0]) : 1; return a[2] + (b[2] - a[2]) * k; } return l[l.length - 1][2]; };

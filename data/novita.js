@@ -9,7 +9,7 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 406,
+    v: 407,
     data: "22 novembre 2026",
     titolo: "Mini Asta Fantacalcio: tante azioni nuove nella giornata ⚽",
     descrizione: [
