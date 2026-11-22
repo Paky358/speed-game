@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 408,
+    data: "22 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: altre azioni nuove e parate spettacolari 🧤",
+    descrizione: [
+      "🚩 Sugli angoli la spizzata sul primo palo e il pallone che esce dall'area per il tiro al volo. E la rimessa veloce, battuta mentre gli altri si stanno ancora sistemando.",
+      "🎯 La punizione dalla fascia che sembra un cross… e va dritta in porta, e la rarissima punizione a due in area, con tutta la barriera sulla linea.",
+      "⚡ Il colpo di tacco, la traversa e la ribattuta, il flipper in area, il tiki-taka al limite, la sponda di testa e il tiro al volo, il pressing sul portiere che sta per rinviare.",
+      "🚀 Nel recupero, col portiere degli altri salito in area, il tiro da centrocampo a porta vuota; e al primo minuto il gol lampo, pochi secondi dopo il calcio d'inizio.",
+      "🧤 Parate nuove: coi pugni sopra la traversa, col braccio di richiamo, la sfiora con le dita e va sul palo, l'uscita a valanga sui piedi di chi arriva. E sulla linea i difensori salvano anche di testa o, ogni tanto, in rovesciata."
+    ]
+  },
+  {
     v: 407,
     data: "22 novembre 2026",
     titolo: "Mini Asta Fantacalcio: tante azioni nuove nella giornata ⚽",

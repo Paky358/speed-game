@@ -28,7 +28,7 @@
     return F;
   }
   var SCENE = ["cross", "angolo", "unodue", "contro", "pallonetto", "fuori", "slalom", "punizione", "tapin", "centrocampo", "mischia", "testa", "incrocio", "miracolo", "assedio", "ultimo",
-    "secondopalo", "presa", "tuffo", "vuota", "tre", "filtrante", "rasoterra", "giro", "muro", "corta", "volee", "pressing", "laterale", "papera", "glt", "ribattuta", "fuga", "rimessa", "rimessalunga"];
+    "secondopalo", "presa", "tuffo", "vuota", "tre", "filtrante", "rasoterra", "giro", "muro", "corta", "volee", "pressing", "laterale", "papera", "glt", "ribattuta", "fuga", "rimessa", "rimessalunga", "cambio", "fascia", "adue", "tikitaka", "sponda", "centrovuota", "lampo"];   // (22 nov 2026: le scene nuove dei gruppi 1 e 2)
   var ESITI = ["gol", "parata", "palo", "traversa", "fuori", "alto", "linea"];
   function dove(pts, t) {   // dov'è il pallone al tempo t (come sp1)
     if (t <= pts[0][0]) return pts[0].slice(1, 4);

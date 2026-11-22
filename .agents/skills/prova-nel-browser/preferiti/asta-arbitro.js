@@ -13,7 +13,7 @@
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no, MX = 68, MY = 52;
   var SCENE = ["cross", "angolo", "unodue", "contro", "pallonetto", "fuori", "slalom", "punizione", "tapin", "centrocampo", "mischia", "testa", "incrocio", "miracolo", "assedio", "ultimo",
-    "secondopalo", "presa", "tuffo", "vuota", "tre", "filtrante", "rasoterra", "giro", "muro", "corta", "volee", "pressing", "laterale", "papera", "glt", "ribattuta", "fuga", "rimessa", "rimessalunga"];
+    "secondopalo", "presa", "tuffo", "vuota", "tre", "filtrante", "rasoterra", "giro", "muro", "corta", "volee", "pressing", "laterale", "papera", "glt", "ribattuta", "fuga", "rimessa", "rimessalunga", "cambio", "fascia", "adue", "tikitaka", "sponda", "centrovuota", "lampo"];   // (22 nov 2026: le scene nuove dei gruppi 1 e 2)
   async function motore(w) {
     var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), fuori = {}, ag = "function costruisciMazzoFanta(n) {";
     if (src.indexOf(ag) < 0) no("non trovo il mazzo del fanta nel file del gioco");
