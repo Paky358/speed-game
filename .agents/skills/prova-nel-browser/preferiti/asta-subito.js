@@ -118,10 +118,10 @@
   //     qualunque cosa succeda dopo (gol, parata, fuori, rigore negato: la scena non lo sa); sul fallo chi lo subisce è in area e va giù al contatto;
   //     col fallo e col mano l'arbitro fischia e indica il dischetto, col VAR niente fischio (si gioca, poi lo chiama il VAR)
   COPIONE.aggiungi("rs3", { nome: "Mini Asta, l'azione che porta al rigore: identica in ogni esito, il fallo in area, il fischio e il dischetto (col VAR si gioca)", fai: async function () {
-    var w = await W.apriTel("Paky", { x: 0 }), M = await motore(w), ko = [], prove = 0, fischi = { fallo: 0, mano: 0, var: 0 };
+    var w = await W.apriTel("Paky", { x: 0 }), M = await motore(w), ko = [], prove = 0, fischi = { fallo: 0, mano: 0, var: 0, tratt: 0, dato: 0 };
     var SUB = [["vostro", { nome: "Subito", faccia: "x", pc: "#ff0", pr: "Giulia", k: "Subito (Napoli)" }], ["vero", { vero: true, k: "Politano (Napoli)", num: 21 }], ["nessuno", null], ["lo batte lui", undefined]];
     function firma(sc) { return JSON.stringify([sc.attori.map(function (a) { return [a.sq, a.chi && (a.chi.k || a.chi), a.pts, a.pose]; }), sc.palla, sc.fischi || null, sc.lento, sc.dunque]); }
-    ["fallo", "mano", "var"].forEach(function (cm) {
+    ["fallo", "mano", "var", "tratt", "dato"].forEach(function (cm) {   // (22 nov 2026, gruppo 3: la trattenuta sull'angolo, come il VAR; il rigore dato e poi rivisto, come il fallo)
       SUB.forEach(function (sb) {
         for (var seme = 1; seme <= 300; seme++) {
           var op = { verso: seme % 3 ? 1 : -1, lato: seme % 2 ? 1 : -1, seme: seme * 7919, lento: true, come: cm }, et = { tira: { vero: true, k: "Tira (Napoli)", num: 9 }, para: "Para" };
@@ -137,7 +137,7 @@
             if (!giu || !giu[1].cade) ko.push(cm + " seme " + seme + ": chi subisce non va giù");
           }
           var ar = sc.attori.filter(function (x) { return x.sq === "arb"; })[0], pu = ar && ar.pose.some(function (p) { return p[1].punta; });
-          if (cm === "var") { if (sc.fischi && sc.fischi.length) ko.push("VAR seme " + seme + ": l'arbitro fischia"); if (pu) ko.push("VAR seme " + seme + ": l'arbitro indica il dischetto"); }
+          if (cm === "var" || cm === "tratt") { if (sc.fischi && sc.fischi.length) ko.push("VAR seme " + seme + ": l'arbitro fischia"); if (pu) ko.push("VAR seme " + seme + ": l'arbitro indica il dischetto"); }
           else { if (!sc.fischi || !sc.fischi.length) ko.push(cm + " seme " + seme + ": niente fischio"); else fischi[cm]++; if (!pu) ko.push(cm + " seme " + seme + ": l'arbitro non indica il dischetto"); }
           if (ko.length > 20) break;
         }

@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 409,
+    data: "22 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: falli, cartellini e rigori nuovi 🟨",
+    descrizione: [
+      "✋ La mano a centrocampo per fermare l'avversario che scappa, e 🤼 gli spintoni dopo un fallo, con tutti che arrivano e l'arbitro in mezzo: giallo o niente?",
+      "👕 Dopo un gol, a volte il marcatore corre a togliersi la maglia: se la toglie davvero (giallo!) o un compagno lo ferma in tempo?",
+      "🎯 I rigori nascono in modi nuovi: la trattenuta sull'angolo rivista dal VAR, il portiere che esce e stende l'attaccante, il rigore fischiato dall'arbitro e poi rivisto al monitor: confermato o tolto?",
+      "🙈 Rarissimo: il tiro rimpallato che finisce dritto sull'arbitro."
+    ]
+  },
+  {
     v: 408,
     data: "22 novembre 2026",
     titolo: "Mini Asta Fantacalcio: altre azioni nuove e parate spettacolari 🧤",

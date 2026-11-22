@@ -52,8 +52,8 @@
         ["gol", "parata"].forEach(function (es) { prove++; guarda(M.scena(es === "gol" ? "gol" : "occ", v, es, null, et, op), v + " seme " + seme + " " + es, 4.2); });
       }
     });
-    [["amm", "entrata"], ["amm", "tattico"], ["amm", "proteste"], ["esp", "ultimo"], ["rec", "pressing"], ["amm", "pressing"]].forEach(function (f) {
-      for (var seme = 1; seme <= 20; seme++) { prove++; guarda(M.scena(f[0], null, null, null, { tira: "Tira" }, { verso: 1, lato: seme % 2 ? 1 : -1, seme: seme * 7919, come: f[1] }), f[0] + "/" + f[1] + " seme " + seme, 2.9, true); }   // (sul fallo va dal giocatore apposta, a mostrare il cartellino)
+    [["amm", "entrata"], ["amm", "tattico"], ["amm", "proteste"], ["esp", "ultimo"], ["rec", "pressing"], ["amm", "pressing"], ["amm", "manoc"], ["rec", "manoc"], ["amm", "spintoni", 4.2], ["rec", "spintoni", 4.2], ["amm", "maglia"], ["rec", "maglia"]].forEach(function (f) {   // (22 nov 2026: i falli del gruppo 3)
+      for (var seme = 1; seme <= 20; seme++) { prove++; guarda(M.scena(f[0], null, null, null, { tira: "Tira", fallo: "Tira" }, { verso: 1, lato: seme % 2 ? 1 : -1, seme: seme * 7919, come: f[1] }), f[0] + "/" + f[1] + " seme " + seme, f[2] || 2.9, true); }   // (sul fallo va dal giocatore apposta, a mostrare il cartellino)
     });
     if (ko.length) no(ko.length + " problemi: " + ko.slice(0, 6).join(" · "));
     return prove + " azioni: l'arbitro al massimo a " + vMaxVisto.toFixed(1) + " m/s, al massimo " + girVisti + " giravolte, dopo il gol piano, mai addosso ai giocatori";
