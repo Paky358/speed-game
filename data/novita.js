@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 410,
+    data: "22 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: l'autogol con l'azione e parate vere 🧤",
+    descrizione: [
+      "🙈 L'autogol di un vostro difensore ora si vede con tutta la sua azione (prima arrivava «di colpo»). E per non svelare niente, a volte la stessa azione finisce con lui che la spazza via.",
+      "🧤 Parate vere: quando il portiere la blocca, la respinge coi pugni, la sfiora sul palo o la toglie dai piedi, mani e pallone si toccano davvero.",
+      "🏟️ Le tribune di lato non «tremano» più quando la telecamera va verso la linea laterale (sulle rimesse), e gli spettatori sono un pizzico più veri."
+    ]
+  },
+  {
     v: 409,
     data: "22 novembre 2026",
     titolo: "Mini Asta Fantacalcio: falli, cartellini e rigori nuovi 🟨",

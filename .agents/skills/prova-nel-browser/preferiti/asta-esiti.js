@@ -96,6 +96,7 @@
             if (t === "ribP" && x.chi.length) ko.push("la ribattuta parata ha dei punti");
             if (t === "amm" || t === "esp" || t === "rec") conta("fallo: " + (e.dg ? "dg" : e.come || "entrata"), t === "rec" ? (e.nv ? "niente" : "pulita") : t === "esp" ? "rosso" : "giallo");
             if (/^rig[PFN]?$/.test(t) && e.come === "var") conta("VAR richiama per il rigore", t === "rigN" ? "niente rigore" : "rigore");
+            if (t === "aut" || t === "spz") conta("autogol o spazzata (l'azione degli altri col vostro difensore)", t === "aut" ? "autogol" : "la spazza");   // (22 nov 2026, ritocchi: l'autogol si vede con la sua azione)
             if (/^rig[PFN]?$/.test(t) && e.come === "tratt") conta("trattenuta sull'angolo (VAR)", t === "rigN" ? "niente rigore" : "rigore");   // (22 nov 2026, gruppo 3)
             if (/^rig[PFN]?$/.test(t) && e.come === "dato") conta("rigore dato e rivisto al VAR", t === "rigN" ? "tolto" : "confermato");
             if (t === "ann" || (t === "gol" && e.varOk)) conta("VAR dopo il gol", t === "ann" ? "annullato" : "convalidato");
@@ -115,7 +116,7 @@
       if (a === "fallo: reazione") { if (pc("niente") < lim || pc("niente") > 1 - lim) ko.push("«" + a + "» quasi sempre uguale: " + riga); return; }
       Object.keys(t).forEach(function (k) { if (k !== "rosso" || !/entrata|pressing/.test(a)) if (pc(k) < lim) ko.push("«" + a + "» finisce " + k + " solo il " + Math.round(pc(k) * 100) + "%: " + riga); });
     });
-    ["VAR dopo il gol", "VAR richiama per il rigore", "fallo: tattico", "fallo: proteste", "fallo: simula", "fallo: dg", "fallo: ultimo", "ribattuta", "fallo: tempo", "fallo: gomitata", "fallo: manoc", "fallo: spintoni", "fallo: maglia", "trattenuta sull'angolo (VAR)", "rigore dato e rivisto al VAR"].forEach(function (a) { if (!tab[a]) ko.push("«" + a + "» non compare mai"); });
+    ["VAR dopo il gol", "VAR richiama per il rigore", "fallo: tattico", "fallo: proteste", "fallo: simula", "fallo: dg", "fallo: ultimo", "ribattuta", "fallo: tempo", "fallo: gomitata", "fallo: manoc", "fallo: spintoni", "fallo: maglia", "trattenuta sull'angolo (VAR)", "rigore dato e rivisto al VAR", "autogol o spazzata (l'azione degli altri col vostro difensore)"].forEach(function (a) { if (!tab[a]) ko.push("«" + a + "» non compare mai"); });
     if (nvVisti < nvDati) ko.push("dei falli senza cartellino sono stati tagliati (" + nvVisti + " su " + nvDati + ")");
     if (ko.length) no(ko.length + " problemi: " + ko.slice(0, 6).join(" · "));
     return out.join(" · ") + " · falli senza cartellino visti tutti (" + nvVisti + ")";
