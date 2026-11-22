@@ -544,6 +544,8 @@
     ".st-fum::before{content:'';position:absolute;top:-7px;left:50%;margin-left:-8px;border:8px solid transparent;border-top:0;border-bottom-color:#fffdf5;}",
     ".st-fum b{flex:none;font-size:1.25rem;}.st-fum span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}",
     ".st-fig.oro canvas{border-radius:7%/5%;box-shadow:0 0 0 2px rgba(255,214,90,.7),0 0 26px 6px rgba(255,196,60,.55);}",
+    ".st-fig.argento canvas{border-radius:7%/5%;box-shadow:0 0 0 2px rgba(226,234,248,.75),0 0 22px 5px rgba(196,212,240,.5);}",
+    ".st-fig.bronzo canvas{border-radius:7%/5%;box-shadow:0 0 0 2px rgba(240,172,122,.65),0 0 20px 4px rgba(214,128,70,.45);}.st-fig.bronzo .st-fig-luce i{opacity:.7;}",
     ".st-fig-luce{position:absolute;inset:0;border-radius:7%/5%;overflow:hidden;}.st-fig-luce i{position:absolute;top:-10%;bottom:-10%;left:0;width:34%;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.75),rgba(255,255,255,0));transform:translateX(-140%) skewX(-18deg);}",
     ".st-tv-sx canvas{display:block;width:50px;height:50px;}.st-pf canvas.st-pf-busto{flex:none;width:50px;height:50px;margin:-8px -2px;}",
     ".st-slot.busto .st-slot-maglia{width:124%;height:124%;left:-12%;top:-22%;}",
@@ -3276,7 +3278,7 @@
   }
   function figurinaCanvas(c, prezzo, w, coperto) {   // (coperto: l'overall è un «?»: all'asta il valore resta segreto fino alla fine)   // c: { nome, squadra, ruolo }. Torna il canvas (w px di larghezza) o null
     if (!c || !c.squadra) return null;
-    var k = c.nome + "|" + c.squadra + "|" + prezzo + "|" + Math.round(w) + (GRAF2.on ? "|2" : "") + (OVR.on ? (coperto ? "|o?" : "|o") : "");
+    var k = c.nome + "|" + c.squadra + "|" + prezzo + "|" + Math.round(w) + "|" + fasciaDi(c) + (GRAF2.on ? "|2" : "") + (OVR.on ? (coperto ? "|o?" : "|o") : "");
     if (FIG_CACHE[k]) return FIG_CACHE[k];
     if (FIG_N > 30) { FIG_CACHE = {}; FIG_N = 0; }   // (non se ne tengono troppe: sono foto grandi)
     var d = Math.min(3, window.devicePixelRatio || 1), h = Math.round(w * 1.36), cv = document.createElement("canvas");
@@ -3292,7 +3294,7 @@
     var ruolo = { P: "PORTIERE", D: "DIFENSORE", C: "CENTROCAMPISTA", A: "ATTACCANTE" }[c.ruolo] || "";
     function tondo(x, y, ww, hh, rr) { cx.beginPath(); cx.moveTo(x + rr, y); cx.arcTo(x + ww, y, x + ww, y + hh, rr); cx.arcTo(x + ww, y + hh, x, y + hh, rr); cx.arcTo(x, y + hh, x, y, rr); cx.arcTo(x, y, x + ww, y, rr); cx.closePath(); }
     function nomeIn(testo, x, y, maxW, fs, colore) { cx.font = "900 " + fs + "px system-ui,sans-serif"; var l = cx.measureText(testo).width; if (l > maxW) { fs = Math.floor(fs * maxW / l); cx.font = "900 " + fs + "px system-ui,sans-serif"; } cx.fillStyle = colore; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(testo, x, y); }
-    if (GRAF2.on) albumNuovo(cx, w, h, c, kit, col, ca, mg, ruolo, prezzo, d, tondo, nomeIn, valoreCalc(c) >= BIG_DA, coperto);   // ✨ (la grafica nuova)
+    if (GRAF2.on) albumNuovo(cx, w, h, c, kit, col, ca, mg, ruolo, prezzo, d, tondo, nomeIn, fasciaDi(c), coperto);   // ✨ (la grafica nuova)
     else {   // la figurina da album: cartoncino crema, dentro i colori della squadra, il calciatore a mezzo busto, la fascia col nome
       var m = w * 0.045, iw = w - 2 * m, ih = h * 0.78;
       cx.shadowColor = "rgba(0,0,0,.45)"; cx.shadowBlur = w * 0.06; cx.shadowOffsetY = w * 0.02; tondo(0, 0, w, h, w * 0.07); cx.fillStyle = "#f6f1e3"; cx.fill(); cx.shadowColor = "transparent";
@@ -3315,9 +3317,10 @@
     var w = larghezzaFig(S), cv = figurinaCanvas(carta, prezzo, w, !OVR_ASTA);   // (la figurina senza prezzo è già pronta: preparaStadio)
     if (!cv || !cv.animate) return volo(S, s, poi);
     var fig = document.createElement("div"); fig.className = "st-fig"; fig.appendChild(cv);
-    if (GRAF2.on && valoreCalc(carta) >= BIG_DA) {   // ⭐ la figurina d'oro dei big: brilla e le passa sopra un riflesso
-      fig.classList.add("oro"); var lu = document.createElement("div"); lu.className = "st-fig-luce"; var ri = document.createElement("i"); lu.appendChild(ri); fig.appendChild(lu);
-      if (ri.animate) ri.animate([{ transform: "translateX(-140%) skewX(-18deg)" }, { transform: "translateX(260%) skewX(-18deg)" }], { duration: 650, delay: 350, iterations: 2, easing: "ease-in-out", fill: "both" });
+    var fsc = GRAF2.on ? fasciaDi(carta) : null;
+    if (fsc) {   // 🥇🥈🥉 la figurina brilla del suo metallo e le passa sopra un riflesso (all'oro due volte)
+      fig.classList.add(fsc); var lu = document.createElement("div"); lu.className = "st-fig-luce"; var ri = document.createElement("i"); lu.appendChild(ri); fig.appendChild(lu);
+      if (ri.animate) ri.animate([{ transform: "translateX(-140%) skewX(-18deg)" }, { transform: "translateX(260%) skewX(-18deg)" }], { duration: 650, delay: 350, iterations: fsc === "oro" ? 2 : 1, easing: "ease-in-out", fill: "both" });
     }
     var h = parseFloat(cv.style.height), x0 = base.width / 2 - w / 2, y0 = Math.max(sch.bottom - base.top - h * 0.18, Math.min(base.height * 0.42 - h / 2, base.height - h - 8));
     fig.style.left = x0 + "px"; fig.style.top = y0 + "px"; fig.style.width = w + "px"; fig.style.height = h + "px";
@@ -7736,13 +7739,68 @@
   }
   function vsTesto(vsA) { if (!vsA) return ""; var l = vsA.split(" · "), corto = l.length > 1; return "🆚 " + l.map(function (n) { return n === "?" ? n : corto ? sigla(n) + (OVR.on ? " " + overallSquadra(n) : "") : OVR.on ? n + " (" + overallSquadra(n) + ")" : n; }).join(" · "); }   // (con 3 giornate le sigle: «🆚 GEN 77 · FRO 81 · TOR 79», ripasso del 12 nov 2026)   // («🆚 Inter (88)»)
   function valoreRosa(r) { return OVR.on ? "overall " + numFanta(Math.round(r.totale / Math.max(1, (r.kit || []).length) * 10) / 10) : "valore " + r.totale; }   // ⭐ (la riga della classifica: la media degli overall)
+  // 🥇🥈🥉 LE FIGURINE ORO, ARGENTO E BRONZO (22 nov 2026, il proprietario: «i primi 15% di ogni categoria sono oro e via scendendo»; poi: «mettiamo dei
+  // limiti di quotazione e cambia la carta solo quando cambia il numero della quotazione»; «segui lo stesso schema anche per gli anni passati»).
+  // Per ogni stagione e ogni ruolo DUE NUMERI FISSI: [oro da, argento da] (quotazione); sotto l'argento il bronzo. Trovati una volta sola così: tra i
+  // calciatori che vanno all'asta (gruppi A, B, C: il gruppo X no) la quotazione che dà più vicino il 15% d'oro, poi tra i rimasti quella che dà il 35%
+  // d'argento (a pari distanza la più alta). Con le quotazioni nuove i numeri NON si rifanno da soli (decide il proprietario).
+  // Solo aspetto: le buste dei big restano da BIG_DA. Programmi e foto in D:\SG-asta-prove\figurine-fasce (fasce.js, metti-nel-gioco.js).
+  var SOGLIE_FASCE = {
+    "oggi": { P: [14, 10], D: [15, 9], C: [19, 12], A: [20, 15] },
+    "2015-16": { P: [15, 12], D: [12, 9], C: [19, 11], A: [24, 18] },
+    "2016-17": { P: [14, 10], D: [12, 9], C: [17, 11], A: [30, 17] },
+    "2017-18": { P: [15, 12], D: [13, 10], C: [18, 11], A: [26, 13] },
+    "2018-19": { P: [17, 11], D: [14, 10], C: [17, 12], A: [26, 18] },
+    "2019-20": { P: [14, 10], D: [15, 9], C: [20, 13], A: [34, 22] },
+    "2020-21": { P: [16, 11], D: [15, 10], C: [22, 13], A: [31, 19] },
+    "2021-22": { P: [16, 11], D: [16, 11], C: [21, 13], A: [30, 20] },
+    "2022-23": { P: [16, 13], D: [14, 10], C: [21, 13], A: [30, 18] },
+    "2023-24": { P: [16, 13], D: [14, 10], C: [20, 13], A: [27, 18] },
+    "2024-25": { P: [16, 13], D: [14, 10], C: [19, 13], A: [25, 20] },
+    "2025-26": { P: [17, 13], D: [15, 10], C: [19, 13], A: [25, 17] }
+  };
+  var FASCE_PERC = [0.15, 0.35];   // (solo per una stagione senza numeri qui sopra: si calcolano così, una volta per stagione)
+  var FASCE_CALC = {};
+  var METALLI = {
+    oro: { fondo: [[0, "#fff1b0"], [0.35, "#f2c94c"], [0.55, "#fff4c4"], [0.8, "#d4a032"], [1, "#f7dc7a"]], filo: "#9a6b12", stella: "#b8860b", bordo: "#fff4c4", riflesso: 0.1, ovr: "#ffe9a6", medio: "#f0cf6a", inchiostro: "#5b3c06" },
+    argento: { fondo: [[0, "#f9fbfe"], [0.33, "#b9c2d0"], [0.54, "#ffffff"], [0.78, "#8b95a8"], [1, "#e3e8f0"]], filo: "#4e596c", stella: "#66717f", bordo: "#ffffff", riflesso: 0.16, ovr: "#f1f5fc", medio: "#d4dae4", inchiostro: "#1f2632" },
+    bronzo: { fondo: [[0, "#f4cba7"], [0.33, "#b96d3c"], [0.54, "#f0c29b"], [0.78, "#81441f"], [1, "#d99b6f"]], filo: "#552810", stella: "#8a461c", bordo: "#fde3cb", riflesso: 0.1, ovr: "#ffe4cc", medio: "#cf9466", inchiostro: "#3a1806" }
+  };
+  function luce(x) { var s = String(x), m = s.indexOf("rgb") === 0 ? s.replace(/[^0-9,]/g, "").split(",") : null, n = m ? 0 : parseInt(s.slice(1), 16) || 0, v = m ? [+m[0], +m[1], +m[2]] : [n >> 16, n >> 8 & 255, n & 255]; v = v.map(function (y) { y /= 255; return y <= 0.03928 ? y / 12.92 : Math.pow((y + 0.055) / 1.055, 2.4); }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; }
+  function contrasto(a, b) { var x = luce(a), y = luce(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+  function sogliaFascia(l, voluti) {   // (l in ordine dalla quotazione più alta; a pari distanza vince la quotazione più alta)
+    var best = null, bd = 1e9;
+    l.forEach(function (c, i) { if (i && l[i - 1].q === c.q) return; var n = 0; l.forEach(function (d) { if (d.q >= c.q) n++; }); var dd = Math.abs(n - voluti); if (dd < bd) { bd = dd; best = c.q; } });
+    return best;
+  }
+  function soglieDi(ruolo) {
+    var id = STAG_ATT || "oggi", f = SOGLIE_FASCE[id];
+    if (f) return f[ruolo] || null;
+    if (!FASCE_CALC[id]) {
+      var tab = FASCE_CALC[id] = {}, db = window.SG_FANTA_CALCIATORI || {};
+      ["P", "D", "C", "A"].forEach(function (r) {
+        var l = []; ["A", "B", "C"].forEach(function (t) { ((db[r] || {})[t] || []).forEach(function (s) { l.push({ q: valoreCalc(splitCalc(s)) }); }); });
+        if (!l.length) return; l.sort(function (a, b) { return b.q - a.q; });
+        var qo = sogliaFascia(l, l.length * FASCE_PERC[0]), resto = l.filter(function (x) { return x.q < qo; });
+        tab[r] = [qo, resto.length ? sogliaFascia(resto, l.length * FASCE_PERC[1]) : qo];
+      });
+    }
+    return FASCE_CALC[id][ruolo] || null;
+  }
+  function fasciaDi(c) {
+    if (!c) return "bronzo";
+    var f = soglieDi(c.ruolo), q = valoreCalc(c);
+    return !f ? "bronzo" : q >= f[0] ? "oro" : q >= f[1] ? "argento" : "bronzo";
+  }
+  window.__FASCIA = fasciaDi;   // (per le prove)
   function valoreMostrato(c) { return OVR.on ? overallDi(c) : valoreCalc(c); }   // (quello che si vede e che fa il valore della rosa)
-  function albumNuovo(cx, w, h, c, kit, col, ca, mg, ruolo, prezzo, d, tondo, nomeIn, oro, coperto) {   // 🃏 la figurina nuova da album (oro: ⭐ i big, da BIG_DA in su)
+  function albumNuovo(cx, w, h, c, kit, col, ca, mg, ruolo, prezzo, d, tondo, nomeIn, fascia, coperto) {   // 🃏 la figurina nuova da album (fascia: 🥇🥈🥉 oro, argento o bronzo, da fasciaDi)
+    var MT = METALLI[fascia] || null;
     var m = w * 0.045, iw = w - 2 * m, ih = h * 0.76, PI = Math.PI, c0 = col[0], c1 = col[1] || "#ffffff";
     cx.shadowColor = "rgba(0,0,0,.45)"; cx.shadowBlur = w * 0.06; cx.shadowOffsetY = w * 0.02; tondo(0, 0, w, h, w * 0.07);
-    if (oro) { var go = cx.createLinearGradient(0, 0, w, h); go.addColorStop(0, "#fff1b0"); go.addColorStop(0.35, "#f2c94c"); go.addColorStop(0.55, "#fff4c4"); go.addColorStop(0.8, "#d4a032"); go.addColorStop(1, "#f7dc7a"); cx.fillStyle = go; } else cx.fillStyle = "#f6f1e3";
+    if (MT) { var go = cx.createLinearGradient(0, 0, w, h); MT.fondo.forEach(function (s) { go.addColorStop(s[0], s[1]); }); cx.fillStyle = go; } else cx.fillStyle = "#f6f1e3";
     cx.fill(); cx.shadowColor = "transparent";
-    tondo(m * 0.45, m * 0.45, w - m * 0.9, h - m * 0.9, w * 0.055); cx.strokeStyle = oro ? "#9a6b12" : "#c9a24a"; cx.lineWidth = Math.max(1, w * (oro ? 0.014 : 0.008)); cx.stroke();   // (il filetto d'oro)
+    tondo(m * 0.45, m * 0.45, w - m * 0.9, h - m * 0.9, w * 0.055); cx.strokeStyle = MT ? MT.filo : "#c9a24a"; cx.lineWidth = Math.max(1, w * (MT ? 0.014 : 0.008)); cx.stroke();   // (il filetto d'oro)
     cx.save(); tondo(m, m, iw, ih, w * 0.04); cx.clip();
     var g = cx.createLinearGradient(0, m, 0, m + ih); g.addColorStop(0, scuro(c0, 1.0)); g.addColorStop(1, scuro(c0, 0.45)); cx.fillStyle = g; cx.fillRect(m, m, iw, ih);
     var gr = cx.createRadialGradient(w / 2, m + ih * 0.36, 0, w / 2, m + ih * 0.36, iw * 0.7); gr.addColorStop(0, "rgba(255,255,255,.42)"); gr.addColorStop(0.5, "rgba(255,255,255,.1)"); gr.addColorStop(1, "rgba(255,255,255,0)"); cx.fillStyle = gr; cx.fillRect(m, m, iw, ih);   // (la luce dietro il calciatore)
@@ -7757,7 +7815,7 @@
     var ovOff = 0;
     if (OVR.on) {   // ⭐ l'overall in alto a sinistra, grande, col ruolo sotto (come nelle carte dei videogiochi)
       var ovx = m + w * 0.11, ovy = m + w * 0.105, ovt = coperto ? "?" : String(overallDi(c));   // (10 nov 2026, il proprietario: «teniamolo nascosto fino alla fine»: all'«AGGIUDICATO!» un punto di domanda) cx.textAlign = "center"; cx.textBaseline = "middle";
-      cx.font = "900 " + Math.round(w * 0.15) + "px system-ui,sans-serif"; cx.lineJoin = "round"; cx.lineWidth = w * 0.022; cx.strokeStyle = "rgba(0,0,0,.55)"; cx.strokeText(ovt, ovx, ovy); cx.fillStyle = oro ? "#ffe9a6" : "#ffffff"; cx.fillText(ovt, ovx, ovy);
+      cx.font = "900 " + Math.round(w * 0.15) + "px system-ui,sans-serif"; cx.lineJoin = "round"; cx.lineWidth = w * 0.022; cx.strokeStyle = "rgba(0,0,0,.55)"; cx.strokeText(ovt, ovx, ovy); cx.fillStyle = MT ? MT.ovr : "#ffffff"; cx.fillText(ovt, ovx, ovy);
       cx.font = "900 " + Math.round(w * 0.055) + "px system-ui,sans-serif"; cx.lineWidth = w * 0.012; var rb = { P: "POR", D: "DIF", C: "CEN", A: "ATT" }[c.ruolo] || ""; cx.strokeText(rb, ovx, ovy + w * 0.105); cx.fillText(rb, ovx, ovy + w * 0.105);
       ovOff = w * 0.2;
     }
@@ -7773,10 +7831,11 @@
     var gb = cx.createLinearGradient(0, by, 0, by + bh); gb.addColorStop(0, scuro(c0, 1.08)); gb.addColorStop(1, scuro(c0, 0.75)); cx.fillStyle = gb; cx.fill(); cx.restore();
     cx.fillStyle = c1; cx.fillRect(m + w * 0.02, by + bh - h * 0.009, iw - w * 0.04, h * 0.009);
     nomeIn(mg.nome, w / 2, by + bh * 0.47, iw * 0.88, Math.round(w * 0.11), chiaraC(c0) ? "#16161a" : "#ffffff");
-    nomeIn(c.squadra.toUpperCase() + " · " + ruolo, w / 2, by + bh + h * 0.07, iw * 0.92, Math.round(w * 0.06), scuro(chiaraC(c0) ? (col[1] || "#333") : c0, 0.85));
-    if (oro) {   // ⭐ la stellina dei big e il riflesso olografico (fermo: quello che passa lo fa il volo)
-      cx.font = "900 " + Math.round(w * 0.06) + "px system-ui,sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; var stx = m + w * 0.035 + w * 0.075, sty = m + w * 0.035 + w * 0.18 + w * 0.075 + ovOff; cx.beginPath(); cx.arc(stx, sty, w * 0.055, 0, Math.PI * 2); cx.fillStyle = "#b8860b"; cx.fill(); cx.lineWidth = Math.max(1, w * 0.01); cx.strokeStyle = "#fff4c4"; cx.stroke(); cx.fillStyle = "#fff"; cx.fillText("★", stx, sty + w * 0.004);   // (la stellina sotto lo scudetto)
-      cx.save(); tondo(0, 0, w, h, w * 0.07); cx.clip(); cx.globalAlpha = 0.1; cx.fillStyle = "#fff"; [0.18, 0.62].forEach(function (p, i) { cx.beginPath(); cx.moveTo(w * (p - 0.3), h); cx.lineTo(w * (p - 0.3 + (i ? 0.1 : 0.18)), h); cx.lineTo(w * (p + 0.5 + (i ? 0.1 : 0.18)), 0); cx.lineTo(w * (p + 0.5), 0); cx.closePath(); cx.fill(); }); cx.restore();
+    var sub = scuro(chiaraC(c0) ? (col[1] || "#333") : c0, 0.85); if (MT && contrasto(sub, MT.medio) < (fascia === "oro" ? 3.2 : 4.5)) sub = MT.inchiostro;   // (sul metallo la scritta della squadra si deve leggere)
+    nomeIn(c.squadra.toUpperCase() + " · " + ruolo, w / 2, by + bh + h * 0.07, iw * 0.92, Math.round(w * 0.06), sub);
+    if (MT) {   // ⭐ la stellina del metallo e il riflesso olografico (fermo: quello che passa lo fa il volo)
+      cx.font = "900 " + Math.round(w * 0.06) + "px system-ui,sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; var stx = m + w * 0.035 + w * 0.075, sty = m + w * 0.035 + w * 0.18 + w * 0.075 + ovOff; cx.beginPath(); cx.arc(stx, sty, w * 0.055, 0, Math.PI * 2); cx.fillStyle = MT.stella; cx.fill(); cx.lineWidth = Math.max(1, w * 0.01); cx.strokeStyle = MT.bordo; cx.stroke(); cx.fillStyle = "#fff"; cx.fillText("★", stx, sty + w * 0.004);   // (la stellina sotto lo scudetto)
+      cx.save(); tondo(0, 0, w, h, w * 0.07); cx.clip(); cx.globalAlpha = MT.riflesso; cx.fillStyle = "#fff"; [0.18, 0.62].forEach(function (p, i) { cx.beginPath(); cx.moveTo(w * (p - 0.3), h); cx.lineTo(w * (p - 0.3 + (i ? 0.1 : 0.18)), h); cx.lineTo(w * (p + 0.5 + (i ? 0.1 : 0.18)), 0); cx.lineTo(w * (p + 0.5), 0); cx.closePath(); cx.fill(); }); cx.restore();
     }
     if (prezzo != null) cartellino(cx, w, prezzo);
   }

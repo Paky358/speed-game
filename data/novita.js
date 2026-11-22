@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 401,
+    data: "22 novembre 2026",
+    titolo: "Mini Asta Fantacalcio: figurine d'oro, d'argento e di bronzo 🥇",
+    descrizione: [
+      "🥇 Ogni calciatore ha la sua figurina: d'oro i più forti del suo ruolo, d'argento quelli buoni, di bronzo tutti gli altri. Si vede quando lo vinci all'asta e nella classifica delle rose a fine asta.",
+      "📊 Conta la quotazione, ruolo per ruolo: oggi i portieri sono d'oro da 14 in su, i difensori da 15, i centrocampisti da 19, gli attaccanti da 20. A pari quotazione sempre la stessa figurina.",
+      "📅 Anche nelle stagioni passate: ogni anno ha i suoi limiti, così i più forti di quell'anno sono d'oro.",
+      "✨ All'«AGGIUDICATO!» la figurina brilla del suo metallo. Le buste dei big restano da 18 in su, come prima."
+    ]
+  },
+  {
     v: 400,
     data: "21 novembre 2026",
     titolo: "La linea del tempo: più chiara e con foto nuove 📸",
