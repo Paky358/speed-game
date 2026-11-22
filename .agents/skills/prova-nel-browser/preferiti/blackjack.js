@@ -15,20 +15,34 @@
   function carta(x) { var s = x.slice(-1), r = x.slice(0, -1); return { v: RANGO[r] || +r, s: SEMI[s] }; }
   // il mazzo truccato: le prime carte sono queste (nell'ordine in cui escono), poi il resto mescolato come sempre.
   // Ordine della distribuzione: giocatori, banco (scoperta), giocatori, banco (coperta), poi le carte chieste.
+  // (22 nov 2026: il gioco si scarica quando serve, quindi window.__BJ può non esserci ancora: si aggancia quando arriva)
   function trucca(w, lista) {
     w.__mazzoBJ = lista.map(carta);
-    if (w.__BJ.__truccato) return;
-    var vero = w.__BJ.creaMotore; w.__BJ.__truccato = true;
-    w.__BJ.creaMotore = function (nomi, mischia, f, o) {
-      var m = function (carte) {
-        var r = (mischia || function (a) { return a.slice(); })(carte), testa = [];
-        (w.__mazzoBJ || []).forEach(function (c) { var k = r.findIndex(function (y) { return y.v === c.v && y.s === c.s; }); if (k >= 0) testa.push(r.splice(k, 1)[0]); });
-        w.__mazzoBJ = null;
-        return testa.concat(r);
-      };
-      return vero.call(this, nomi, m, f, o);
-    };
+    if (w.__bjAggancio) return;
+    w.__bjAggancio = true;
+    function aggancia(o) {
+      var vero = o.creaMotore;
+      function truccato(nomi, mischia, f, op) {
+        var m = function (carte) {
+          var r = (mischia || function (a) { return a.slice(); })(carte), testa = [];
+          (w.__mazzoBJ || []).forEach(function (c) { var k = r.findIndex(function (y) { return y.v === c.v && y.s === c.s; }); if (k >= 0) testa.push(r.splice(k, 1)[0]); });
+          w.__mazzoBJ = null;
+          return testa.concat(r);
+        };
+        return vero.call(this, nomi, m, f, op);
+      }
+      Object.defineProperty(o, "creaMotore", { configurable: true, enumerable: true, get: function () { return vero ? truccato : undefined; }, set: function (x) { vero = x; } });
+    }
+    if (w.__BJ) aggancia(w.__BJ);
+    else { var val; Object.defineProperty(w, "__BJ", { configurable: true, get: function () { return val; }, set: function (x) { val = x; if (x) aggancia(x); } }); }
   }
+  // il gioco scaricato: aspetta il motore del Black Jack sul telefono w
+  async function bjPronto(w) {
+    if (w.SGCuore && w.SGCuore.precarica) w.SGCuore.precarica("blackjack");
+    if (!await W.aspetta(function () { return w.__BJ && w.__BJ.creaMotore; }, 20000)) no("il Black Jack non arriva");
+    return w.__BJ;
+  }
+  COPIONE.aiuti.bjPronto = bjPronto;
   COPIONE.aiuti.bjTrucca = trucca;
   function q(w, s) { return w.document.querySelector(s); }
   function hero(w) { var h = q(w, ".bj-hero"); return h ? h.innerText.replace(/\s+/g, " ").trim() : ""; }
@@ -318,7 +332,7 @@
     var r = await regoleBJ(), x = [];
     if (!/Regole da esperti/.test(r) || !/21\+3/.test(r)) no("nelle regole non ci sono le regole da esperti");
     // ---- il motore, direttamente: le regole una per una ----
-    var BJm = window.__BJ || (await W.apriTel("Paky", { x: 0 })).__BJ;
+    var BJm = window.__BJ || await bjPronto(await W.apriTel("Paky", { x: 0 }));
     function motore(lista, opz, fiches) {
       var testa = lista.map(carta);
       return BJm.creaMotore(["A"], function (c) { var resto = c.slice(), t = []; testa.forEach(function (y) { var k = resto.findIndex(function (z) { return z.v === y.v && z.s === y.s; }); if (k >= 0) t.push(resto.splice(k, 1)[0]); }); testa = []; return t.concat(resto); }, [fiches || 1000], opz);

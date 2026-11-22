@@ -914,7 +914,7 @@
     ".bjr-nome.mini{font-size:.56rem;padding:0 5px}.bjr-nome.attivo{border-color:#ffd45e;box-shadow:0 0 10px rgba(255,212,94,.6)}",
     ".bjr-nome .piu{color:#7dffa8}.bjr-nome .meno{color:#ff9d8a}",
     ".bjr-nome{border-radius:9px;text-align:center;line-height:1.2;padding:1px 7px}.bjr-nome .ff{color:#ffe58a;font-size:.92em}.bjr-nome.via{opacity:.45}",
-    ".bjr-fval{position:absolute;transform:translate(-50%,-100%);background:rgba(0,0,0,.72);color:#ffe58a;border:1px solid rgba(255,229,138,.5);border-radius:8px;padding:0 5px;font-size:.62rem;font-weight:900;white-space:nowrap;transition:opacity .3s}",
+    ".bjr-fval{position:absolute;transform:translate(-50%,-100%);background:rgba(0,0,0,.72);color:#ffe58a;border:1px solid rgba(255,229,138,.5);border-radius:8px;padding:0 5px;font-size:.62rem;font-weight:900;white-space:nowrap;transition:opacity .3s}.bjr-fval.mini{font-size:.54rem;padding:0 3px}",
     ".bjr-bolla{position:absolute;transform:translate(-50%,-100%);background:#fff;color:#12233a;font-weight:900;font-size:.72rem;padding:3px 8px;border-radius:11px;white-space:nowrap;box-shadow:0 3px 8px rgba(0,0,0,.45);animation:bjrPop .25s cubic-bezier(.3,1.6,.5,1)}",
     ".bjr-bolla.bj-doro{background:linear-gradient(135deg,#ffe066,#ffb300);color:#3b2400}.bjr-bolla.rossa{background:#ff8a8a;color:#3a0009}",
     "@keyframes bjrPop{from{transform:translate(-50%,-100%) scale(.3);opacity:0}}",
@@ -1836,8 +1836,10 @@
         s.k = {};   // cosa è già disegnato (per non rifare niente che non è cambiato)
       });
       var bm = pt(bancoMira), bDisp = 0;
-      if (ill()) {   // 🎨 le carte del banco stanno a destra del croupier (che sta in basso a sinistra), mai sotto di lui
-        var hudR = hudLargo(W) + 14, bsc0 = bm.sc || 1, bdisp = W - hudR - 10;   // spazio per le carte
+      {   // 🎨 le carte del banco stanno a destra del croupier (che sta in basso a sinistra), mai sotto di lui (22 nov 2026: anche coi gettoni,
+          // se no con 5 carte la prima finiva sotto il gettone del banco)
+        var avB = hud.firstChild.getBoundingClientRect(), zrB = zBanco.getBoundingClientRect();
+        var hudR = ill() ? hudLargo(W) + 14 : Math.max(60, Math.round(avB.right - zrB.left + 8)), bsc0 = bm.sc || 1, bdisp = W - hudR - 10;   // spazio per le carte
         var tx = Math.max(W / 2, hudR + 6 + Math.min(bdisp, 3 * 50 * bsc0 + 6) / 2);
         if (Math.abs(tx - bm.x) > 1) { var dl = (tx - bm.x) / bsc0; [bancoCC, bancoMira].forEach(function (n) { n.style.left = Math.round(cx + dl) + "px"; }); bm = pt(bancoMira); }
         bDisp = Math.max(60, Math.min(2 * (bm.x - hudR - 6), 2 * (W - bm.x - 6)));   // larghezza utile attorno al centro
@@ -1878,6 +1880,10 @@
             if (d) rf.appendChild(el("b", { class: d > 0 ? "piu" : "meno", text: " " + (d > 0 ? "+" : "−") + fmt(Math.abs(d)) }));
             s.nome.appendChild(rf);
           }
+          // (22 nov 2026) il cartellino non esce mai dai lati dello schermo (con 4-5 giocatori i posti ai lati lo tagliavano)
+          if (s.nx == null) s.nx = parseFloat(s.nome.style.left);
+          var wN = s.nome.offsetWidth;
+          if (wN) s.nome.style.left = Math.round(Math.max(wN / 2 + 4, Math.min(R.W - wN / 2 - 4, s.nx))) + "px";
         }
         // le fiche puntate, col valore scritto sopra (a fine mano: chi perde resta senza, chi vince vede la vincita)
         var imp = vm.fase === "esito" ? g.mani.reduce(function (a, m) { return a + (m.vincita || 0); }, 0) : puntataDi(g);
@@ -1890,7 +1896,7 @@
             svuota(s.pila); var resto = imp, nf = 0;
             FICHE.forEach(function (f) { while (resto >= f[0] && nf < 14) { var ch = el("div", { class: "bjr-fiche " + f[1], style: "transform:translateZ(" + (nf * 2.6) + "px)" + (cresce ? ";animation-delay:" + (nf * 0.06) + "s" : ";animation:none") }); s.pila.appendChild(ch); nf++; resto -= f[0]; } });
           }
-          s.fval.textContent = fmt(imp) + " 🪙"; s.fval.style.opacity = imp ? 1 : 0;
+          s.fval.textContent = fmt(imp) + (N > 6 ? "" : " 🪙"); s.fval.classList.toggle("mini", N > 6); s.fval.style.opacity = imp ? 1 : 0;   // (22 nov 2026: da 7 in su solo il numero, più piccolo: le cifre vicine si accavallavano)
         }
         // le carte a cascata (come i croupier), col punteggio sopra; dopo "Dividi" ogni mano ha il suo mazzetto
         var nm = g.mani.length;
@@ -1930,7 +1936,7 @@
         var pr = R.k.nb || 0, gira = R.k.cop && scoperta && pr === vm.banco.length && R.bancoCC.children[1];
         R.k.b = kb; R.k.nb = vm.banco.length; R.k.cop = !scoperta && vm.banco.length > 1;
         if (gira) giraCarta(R.bancoCC.children[1], vm.banco[1]);
-        else { svuota(R.bancoCC); var cwB = 50; if (ill() && R.bDisp) cwB = Math.max(A_PROP() ? 26 : 30, Math.min(A_PROP() ? (vm.giocatori.length <= 4 ? 44 : 40) : (vm.giocatori.length <= 4 ? 58 : 50), Math.floor((R.bDisp / R.bsc - 3 * Math.max(0, vm.banco.length - 1)) / Math.max(1, vm.banco.length)))); vm.banco.forEach(function (c, k) { R.bancoCC.appendChild(cartaR(c, cwB, k >= pr && vm.banco.length > pr, !scoperta && k === 1)); }); }
+        else { svuota(R.bancoCC); var cwB = 50; if (R.bDisp) cwB = Math.max(A_PROP() ? 26 : 30, Math.min(!ill() ? 50 : A_PROP() ? (vm.giocatori.length <= 4 ? 44 : 40) : (vm.giocatori.length <= 4 ? 58 : 50), Math.floor((R.bDisp / R.bsc - 3 * Math.max(0, vm.banco.length - 1)) / Math.max(1, vm.banco.length)))); vm.banco.forEach(function (c, k) { R.bancoCC.appendChild(cartaR(c, cwB, k >= pr && vm.banco.length > pr, !scoperta && k === 1)); }); }
       }
       // Bot nell'angolo con quanto ha il banco (sempre visibile)
       var fm = faccinaMatt(), pB = testoBanco(scoperta);
@@ -2130,6 +2136,8 @@
     function apertura() {
       intro.fatta = true;
       if (introGiaVista()) { telecamera(); return; }
+      // (22 nov 2026) chi arriva a partita cominciata (o guarda) non si vede la presentazione sopra la mano degli altri: copriva le carte del banco
+      if (vm.fase !== "punta" || vm.mano > 0 || vm.giocatori.some(function (g) { return g.puntata; })) { telecamera(); return; }
       try { if (drv.stanza) sessionStorage.setItem("bj-intro-" + drv.stanza, "1"); } catch (e) {}
       intro.corre = true;
       var N = vm.giocatori.length, velo = el("div", { class: "bjr-intro" + (ill() ? " ill" : "") }, [
@@ -2392,12 +2400,13 @@
       var centro = el("div", { class: "bj-hcentro" });
       var ma = g.mani[g.attiva], v = mosseValideVm(vm), resaB = null;
       if (mio && ma && !ma.chiusa && v.resa) resaB = el("button", { class: "bj-btn bj-m bj-m-resa bj-resa", text: "Resa" });   // (si accende qui sotto, col consiglio)
+      if (drv.mioIdx && vm.turno !== mioIdx()) centro.appendChild(el("div", { class: "bj-hnome bj-dichi", text: "Le carte di " + g.nome + (g.mani.length > 1 ? " · mano " + (g.attiva + 1) + " di " + g.mani.length : "") }));   // (chi guarda o aspetta: di chi sono)
       heroCarte(g, centro, resaB);
       var attesa = ma && !ma.chiusa && ma.carte.length < 2;   // dopo "Dividi": aspetta la seconda carta
       if (ma && ma.assi && (ma.chiusa || !mio)) centro.appendChild(notaAssi());   // assi divisi: niente tasti, si spiega perché (resta per tutte e due le mani)
-      else if (attesa) centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:#ffe58a", text: nomeBanco(vm) + " ti dà la carta…" }));
+      else if (attesa) centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:#ffe58a", text: nomeBanco(vm) + (mio ? " ti dà la carta…" : " dà la carta a " + g.nome + "…") }));
       else if (ma && ma.charlie) centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:#9fe6b4", text: "🖐️ 5 carte senza sballare: vinci!" }));
-      else if (ma && ma.resa) centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:var(--o-tenue)", text: "🏳️ Ti ritiri: riprendi " + fmt(Math.floor(ma.puntata / 2)) + " 🪙" }));
+      else if (ma && ma.resa) centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:var(--o-tenue)", text: mio ? "🏳️ Ti ritiri: riprendi " + fmt(Math.floor(ma.puntata / 2)) + " 🪙" : "🏳️ " + g.nome + " si ritira: riprende " + fmt(Math.floor(ma.puntata / 2)) + " 🪙" }));
       else if (ma && ma.chiusa) {   // mano finita: resta a schermo un attimo prima di passare
         var pm = BJ.punteggio(ma.carte);
         centro.appendChild(el("div", { class: "bj-hnome", style: "margin-top:2px;color:" + (pm > 21 ? "#ff9d8a" : "#9fe6b4"),
@@ -3065,7 +3074,7 @@
           if ((vm.guardano || []).indexOf(S.mioId) < 0) return "";
           if (pieno(vm)) return "🪑 Il tavolo è pieno (10 su 10): guardi la partita";
           if ((vm.senzaQuota || []).indexOf(S.mioId) >= 0) return "🎟️ Non hai " + fmt(vm.gara ? vm.gara.quota : 0) + " 🪙 per la quota: guardi questa gara";
-          return vm.uguali ? "🏆 Torneo in corso: lo guardi e giochi al prossimo" : "👀 Guardi il tavolo: questa volta giocano gli altri";
+          return vm.uguali ? "🏆 Gara in corso: la guardi e giochi alla prossima" : "👀 Guardi il tavolo: questa volta giocano gli altri";
         },
         onPasso: function () {},
         onPunta: function (v, i, cp, ex) { invia({ t: "mossa", kind: "punta", val: v, coppia: !!cp, ex: ex || [] }); },
