@@ -318,6 +318,9 @@
     ["Giulia", "Luca", "Sara"].forEach(function (n) { W.clicca(W.finestra(n), /Ci sto/, ".fine-tasti button"); });
     await W.dorme(600);
     W.clicca(P, /Rivincita/, ".fine-tasti button");
+    // (dalla v403 la Rivincita torna in saletta con le regole di prima e la partita la fa partire chi la tiene con «Comincia»)
+    if (!await W.aspetta(function () { return vm(C).fase === "lobby" || vm(C).fase === "gioco"; }, 10000)) no("la Rivincita non torna in saletta (" + vm(C).fase + ")");
+    if (vm(C).fase === "lobby" && !await W.aspetta(function () { return W.clicca(P, /Comincia/, ".sl-go") || W.clicca(P, /Comincia/); }, 8000)) no("dopo la Rivincita l'host non ha «Comincia»");
     v = await aspettaPasso(C, "indizi", 15000); if (!v) no("la Rivincita non fa ripartire la partita (" + vm(C).fase + ")");
     if (v.mano !== 1 || v.partita !== 2) no("rivincita: mano " + v.mano + ", partita " + v.partita);
     if (!await W.aspetta(function () { return nomi.every(function (n) { return ruoloDi(W.finestra(n)); }); }, 6000)) no("alla Rivincita non arrivano le carte");
