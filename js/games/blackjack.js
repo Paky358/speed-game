@@ -1139,6 +1139,8 @@
     // 🎨 giro 4: il banco più grande, la sua battuta SUL ritratto (sul suo gilet): non copre mai le carte né i giocatori
     ".bj-wrap .bjr-matt.ill{width:min(27%,108px)}.bj-wrap .bjr-matt.ill .bjr-matt-nome{font-size:.64rem;padding:1px 6px}.bj-wrap .bjr-matt.ill .bjr-matt-nome b{font-size:.9rem}",
     ".bj-wrap .bjr-matt.ill .bj-av{width:100%;height:auto;aspect-ratio:92/100}",
+    // (22 nov 2026) coi gettoni: mentre la telecamera è su chi gioca il banco si fa piccolo (le sue carte sono già in alto a sinistra), se no copriva le carte del primo posto
+    ".bj-wrap .bjr-matt.pic:not(.ill) .bj-av{width:40px;height:40px}.bj-wrap .bjr-matt.pic:not(.ill) .bjr-matt-nome{display:none}.bj-wrap .bjr-matt.pic:not(.ill)~.bjr-fum{display:none}",
     ".bj-wrap .bjr-matt.ill.pic{width:min(13%,50px);left:4px;bottom:4px}.bj-wrap .bjr-matt.ill.pic .bjr-matt-nome,.bj-wrap .bjr-matt.ill.pic .bjr-fum{display:none}",
     ".bj-wrap .bjr-matt.ill .bjr-fum{position:absolute;left:50%;bottom:28px;top:auto;width:calc(100% + 10px);max-width:none;transform:translateX(-50%);box-sizing:border-box;font-size:.68rem;padding:3px 6px;text-align:center;animation:bjFumM .26s cubic-bezier(.3,1.6,.5,1);pointer-events:none;z-index:3}",
     "@keyframes bjFumM{from{transform:translateX(-50%) scale(.3);opacity:0}}",
@@ -1199,6 +1201,7 @@
   var svgCache = {};
   // 🎨 avatar illustrati (5 nov 2026): solo se accesi (oggi IL PAPPONE). Con quelli di oggi tutto resta come prima.
   function A_PROP() { return !!(window.SGOminoA && SGOminoA.PROPORZIONE && SGOminoA.PROPORZIONE !== "attuale"); }   // (3° tempo) le proporzioni nuove degli avatar illustrati
+  function PROP_LONTANO() { return typeof PROP !== "undefined" && (PROP === "lontano" || PROP === "gala"); }   // (proposte: lì la telecamera resta larga)
   function ill() { return !!(window.SGOmino && SGOmino.illustrato && SGOmino.illustrato()); }
   function svgAvatar(cfg, faccia, opts) {
     if (opts && !ill()) opts = opts.busto ? { busto: true } : undefined;   // (vita e gesti esistono solo negli illustrati)
@@ -1945,7 +1948,7 @@
       var km = (ill() ? "i" + (R.N > 1 && (vm.fase === "gioca" || vm.fase === "assic") ? "p" : "") : "") + fm.faccia + "|" + fm.fum + "|" + pB + "|" + vm.fase + "|" + nomeBanco(vm) + "|" + (conCarte ? kb : "");
       if (R.k.m !== km) {
         R.k.m = km;
-        hud.className = "bjr-matt" + (vm.fase === "banco" ? " turno" : "") + (ill() ? " ill" : "") + (ill() && R.N > 1 && (vm.fase === "gioca" || vm.fase === "assic") ? " pic" : "");   // (illustrati: nello zoom il croupier si fa piccolo, non copre carte e punteggio di chi è a sinistra)
+        hud.className = "bjr-matt" + (vm.fase === "banco" ? " turno" : "") + (ill() ? " ill" : "") + (R.N > 1 && (vm.fase === "gioca" || vm.fase === "assic") && !(PROP_LONTANO()) ? " pic" : "");   // (illustrati: nello zoom il croupier si fa piccolo, non copre carte e punteggio di chi è a sinistra)
         if (window.SGOmino) hud.firstChild.innerHTML = svgAvatar(avatarBanco(vm), fm.faccia, ill() ? { vita: true, gesto: "tavolo" } : { busto: true });
         var hn = hud.children[1]; hn.innerHTML = ""; hn.appendChild(document.createTextNode(pB ? "🎩 Banco" : "🎩 " + nomeBanco(vm)));
         if (pB) hn.appendChild(el("b", { class: /Sball/.test(pB) ? "bust" : "", text: pB }));
