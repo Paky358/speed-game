@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 411,
+    data: "23 novembre 2026",
+    titolo: "🃏 Black Jack: il tavolo si legge meglio",
+    descrizione: [
+      "Le carte del banco non finiscono più sotto il suo gettone, nemmeno con 5 carte.",
+      "Quando tocca a qualcuno il banco si fa piccolo nell'angolo: non copre più le carte del primo posto.",
+      "Chi guarda o aspetta legge di chi sono le carte grandi in basso («Le carte di Luca»).",
+      "Chi arriva a partita cominciata non vede più la presentazione dei giocatori sopra la mano in corso.",
+      "I nomi non escono più dai lati dello schermo e in tanti le cifre delle puntate non si accavallano."
+    ]
+  },
+  {
     v: 410,
     data: "22 novembre 2026",
     titolo: "Mini Asta Fantacalcio: l'autogol con l'azione e parate vere 🧤",
