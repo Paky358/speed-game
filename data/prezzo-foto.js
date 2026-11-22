@@ -28,7 +28,7 @@ window.SG_PREZZO_FOTO = {
   "a1-bresaola": "c/cb/Bresaola-Valt-IGP.jpg|591",   // Bresaola, 100 g
   "a1-basilico": "6/6e/Basil_plant_in_a_pot_02.jpg|2736",   // Basilico in vaso
   "a1-tavernello": "0/06/Tavernello_classico.png|450",   // Vino in brick, 1 litro
-  "a1-aceto-modena": "3/33/Aceto_Balsamico.jpg|3264",   // Aceto balsamico, 250 ml
+  "a1-aceto-modena": "7/7e/Balsamico-1.jpg|1896",   // Aceto balsamico, 250 ml (22 nov 2026, ripasso: Aceto balsamico tradizionale in cofanetto: fascia di prezzo molto più alta di 2,30 euro.; prima Aceto_Balsamico.jpg)
   "a1-cotechino": "5/58/Cotechino-Intero.jpg|1399",   // Cotechino, 500 g
   "a1-mele": "0/0f/Golden_Delicious_apples.jpg|6000",   // Mele Golden, 1 kg
   "a1-patatine": "6/69/Potato-Chips.jpg|3072",   // Patatine San Carlo, 180 g
@@ -41,9 +41,9 @@ window.SG_PREZZO_FOTO = {
   "a1-treccia-bufala": "d/d5/Mozzarella_di_bufala2.jpg|4160",   // Treccia di bufala, 1 kg
   "a1-pistacchi-bronte": "b/b5/Pistachio_vera.jpg|1709",   // Pistacchi di Bronte, 1 kg
   "a1-ferrero-30": "b/b5/Ferrero_Rocher_8pcs_box_20150118.jpg|3920",   // Ferrero Rocher, 30 praline
-  "a1-moet": "4/4a/Moët_et_Chandon.jpg|3089",   // Champagne Moët & Chandon
+  "a1-moet": "c/c5/Moët_&_Chandon_Brut_Impérial_bottle_(Fareham_Wine).jpg|719",   // Champagne Moët & Chandon (22 nov 2026, ripasso: champagne Moët: scura, non si capisce; prima Moët_et_Chandon.jpg)
   "a1-ferrari-brut": "5/54/Example_of_TrentoDOC_Label.JPG|2175",   // Spumante Ferrari Brut, 75 cl
-  "a1-aperol": "b/b3/Aperol_bottle.JPG|1657",   // Aperol, 1 litro
+  "a1-aperol": "b/ba/Aperol_001_2025_06_08.jpg|2012",   // Aperol, 1 litro (22 nov 2026, ripasso: Bottiglia Aperol che sembra vuota, senza il liquido arancione: non è riconoscibile come…; prima Aperol_bottle.JPG)
   "a1-brunello": "7/70/Brunello_di_Montalcino_-_Biondi_Santi_-_Bottle.jpg|1536",   // Brunello di Montalcino, 75 cl
   "a1-montenegro": "f/ff/Amaro_Montenegro.jpg|2304",   // Amaro Montenegro, 70 cl
   "a1-cassa-peroni": "4/41/Bierkasten_001.jpg|1024",   // Cassa di 24 birre Peroni
@@ -54,7 +54,7 @@ window.SG_PREZZO_FOTO = {
   "a1-cappuccino": "7/70/Cappuccino_in_original.jpg|6000",   // Cappuccino al banco
   "a1-cornetto": "c/cd/Cornetto_marmellata.jpg|10944",   // Cornetto alla marmellata
   "a1-spritz-venezia": "a/a2/Aperol_spritz_-_Bistro_Don_Giovanni_-_Sarah_Stierch_2018_04.jpg|3024",   // Spritz al bacaro
-  "a1-spritz-milano": "2/24/Aperol_Aperitivo_Aperitif_02.jpg|4032",   // Spritz all'aperitivo
+  "a1-spritz-milano": "c/c2/Aperol_Spritz_at_Lasipiha.jpg|3456",   // Spritz all'aperitivo (22 nov 2026, ripasso: Mostra la bottiglia di Aperol, non il bicchiere di spritz con aperitivo; si collega ma…; prima Aperol_Aperitivo_Aperitif_02.jpg)
   "a1-margherita-napoli": "d/d4/Margherita_Originale.JPG|2048",   // Pizza margherita
   "a1-suppli": "b/bb/Supplì_al_telefono.jpg|1000",   // Supplì al telefono
   "a1-arancina": "e/ee/Arancini_002.jpg|2288",   // Arancina al ragù
@@ -83,7 +83,7 @@ window.SG_PREZZO_FOTO = {
   "a1-orecchiette": "a/a5/Orecchiette_con_cime_di_rapa_-_The_Grill,_Grossi_Florentino_AUD32_main_(4800088661).jpg|2048",   // Orecchiette alle cime di rapa
   "a1-carbonara-roma": "5/50/Spaghetti_alla_Carbonara_2.jpg|3264",   // Spaghetti alla carbonara
   "a1-tagliatelle": "1/1a/Tagliatelle_al_ragù_03.jpg|3264",   // Tagliatelle al ragù
-  "a1-menu-pranzo": "a/a5/Italian_trattoria_sign.jpg|618",   // Menù del giorno a pranzo
+  "a1-menu-pranzo": "4/43/Pizza,_Spaghetti_and_Wrap_–_A_Restaurant_Food_Spread.jpg|1080",   // Menù del giorno a pranzo (22 nov 2026, ripasso: Solo l'insegna di una trattoria, nessun piatto né menù: quasi tutta scritta.; prima Italian_trattoria_sign.jpg)
   "a1-pollo-spiedo": "d/d9/Max's_Roasted_Chicken_-_Evan_Swigart.jpg|2033",   // Pollo allo spiedo con patate
   "a1-hamburger": "4/4b/Bacon_cheeseburger,_French_fries,_and_dill_pickle_-_Massachusetts.jpg|2591",   // Hamburger con patatine
   "a1-frittura-mare": "7/77/Frittura_di_pesce_tipica_delle_coste_Toscane.jpg|4624",   // Frittura di calamari e gamberi
@@ -113,7 +113,7 @@ window.SG_PREZZO_FOTO = {
   "a1-cappotto": "2/26/Drycleanmachine.JPG|1952",   // Lavaggio di un cappotto
   "a1-ripetizioni": "7/71/Jan_Lievens_(Dutch_-_Prince_Charles_Louis_of_the_Palatinate_with_his_Tutor_Wolrad_von_Plessen_in_Historical_Dress_-_Google_Art_Project.jpg|3611",   // Un'ora di ripetizioni
   "a1-pacco-giu": "1/16/TV_set_(46_inch)_in_self-customized_box_for_sending_via_parcel_service_N.3.jpg|3024",   // Il pacco da giù, 20 kg
-  "a1-pacco-5kg": "2/2b/Inside_USAG_Italy's_Summer_Hire_Program_(6758706).jpg|4032",   // Spedire un pacco di 5 kg
+  "a1-pacco-5kg": "0/0a/Sticking_a_label_onto_a_parcel_for_shipping.jpg|4000",   // Spedire un pacco di 5 kg (22 nov 2026, ripasso: Persona in un magazzino, non si capisce che sia la spedizione di un pacco.; prima Inside_USAG_Italy's_Summer_Hire_Program_(6758706).jpg)
   "a1-barbiere": "4/4d/Barber_cutting_hair_with_comb._Back_view_of_man_in_barber_shop.jpg|6016",   // Taglio dal barbiere
   "a1-carta-identita": "a/af/CIE_(fronte).jpg|1014",   // Carta d'identità elettronica
   "a1-piumone": "b/b2/La_cama_deshecha_(2724466831).jpg|3072",   // Lavaggio del piumone
@@ -128,7 +128,7 @@ window.SG_PREZZO_FOTO = {
   "a1-pulizia-denti": "5/50/U.S._Air_Force_Medical_Dental_Technician_Cleaning_March_2023.jpg|7858",   // Pulizia dei denti
   "a1-tatuaggio": "c/ce/Aaira_Tattoo_on_Wrist.jpg|3024",   // Un piccolo tatuaggio
   "a1-idraulico": "f/fa/Plumber_at_work.jpg|2272",   // Idraulico a casa
-  "a1-accordatura": "c/cb/Piano_Tuning.jpg|900",   // Accordare il pianoforte
+  "a1-accordatura": "1/15/Piano_tuning.jpg|1736",   // Accordare il pianoforte (22 nov 2026, ripasso: accordare il pianoforte: foto in bianco e nero d'epoca; prima Piano_Tuning.jpg)
   "a1-spazzacamino": "a/ab/Chimneysweep.png|1480",   // Lo spazzacamino
   "a1-divano": "4/46/A_brown_sofa_(2005-03-03).jpg|2048",   // Pulizia del divano
   "a1-passaporto": "0/09/Passaportoitaliano2006.jpg|1525",   // Passaporto nuovo
@@ -139,7 +139,7 @@ window.SG_PREZZO_FOTO = {
   "a1-abito-sposa": "3/36/Bride_north_america.jpg|426",   // Lavare l'abito da sposa
   "a1-devitalizzazione": "b/bb/Dental_root_canal_treatment_process.jpg|2200",   // Devitalizzazione di un dente
   "a1-imbianchino": "c/c7/House_painters_in_Capri_(cropped).jpg|1896",   // Imbiancare una stanza
-  "a1-condizionatore": "8/8b/MITSUBISHI_ELECTRIC_WINDOW_TYPE_AIR_CONDITIONER_OUTDOOR_UNIT.jpg|7082",   // Montare un condizionatore
+  "a1-condizionatore": "e/e6/Galanz_Air_Conditioner_2.jpg|3264",   // Montare un condizionatore (22 nov 2026, ripasso: Vecchio condizionatore a finestra arrugginito, non uno split moderno.; prima MITSUBISHI_ELECTRIC_WINDOW_TYPE_AIR_CONDITIONER_OUTDOOR_UNIT.jpg)
   "a1-asilo-nido": "5/5c/Asilo_Fontevivo_(5)_sez_blu_interno.jpg|2816",   // Un mese di asilo nido
   "a1-laser-occhi": "7/73/Lasik_eye_surgery.jpg|4592",   // Laser agli occhi
   "a1-carbone-befana": "3/3c/Befana1.jpg|954",   // Carbone dolce della Befana
@@ -184,7 +184,6 @@ window.SG_PREZZO_FOTO = {
   "a2-lenzuola": "3/3d/Bettwaesche.jpg|2960",   // Completo lenzuola matrimoniale
   "a2-billy": "d/dd/IKEA_Billy_bookshelf_(80x106_cm_birch_veneer).jpg|2592",   // Libreria IKEA Billy
   "a2-poang": "a/a2/POÄNG_in_“Knisa_Beige”_(45144076894).jpg|2253",   // Poltrona IKEA Poäng
-  "a2-asse-stiro": "5/58/Ironing_(cropped).jpg|4091",   // Asse da stiro
   "a2-albero-natale": "d/d5/A1_Christmas_Tree_photo.jpg|2676",   // Albero di Natale finto
   "a2-piscina-gonfiabile": "c/c1/An_inflatable_swimming_pool_invites_relaxation_in_a_backyard_setting,_with_a_blue_hose_artistically_draped_over_the_edge.jpg|4016",   // Piscina gonfiabile da giardino
   "a2-microonde": "0/08/Panasonic_NN-SD69LS_20220410.jpg|3024",   // Forno a microonde
@@ -197,7 +196,7 @@ window.SG_PREZZO_FOTO = {
   "a2-lavatrice": "a/a7/Front_Load_Washing_Machine.jpg|4248",   // Lavatrice da 8 kg
   "a2-cucina-gas": "9/99/Gas_stove.jpg|369",   // Cucina a gas col forno
   "a2-lavastoviglie": "8/82/Dishwasher_open_for_loading.jpg|1944",   // Lavastoviglie da 60 cm
-  "a2-supersonic": "c/cc/Dyson_Supersonic_Hair_Dryer_4_2017-01-28.jpg|4032",   // Phon Dyson Supersonic
+  "a2-supersonic": "e/e2/Dyson_Supersonic_Hair_Dryer_1_2017-01-28.jpg|3024",   // Phon Dyson Supersonic Nural (22 nov 2026, ripasso: Espositore con phon piccoli e confusi, il Dyson non si riconosce.; prima Dyson_Supersonic_Hair_Dryer_4_2017-01-28.jpg)
   "a2-asciugatrice": "1/1c/Modern_front_load_tumble_dryer.JPG|2155",   // Asciugatrice da 8 kg
   "a2-materasso": "b/b3/Pillowtop-mattress.jpg|1487",   // Materasso matrimoniale
   "a2-frigorifero": "7/7b/Open_refrigerator_with_food_at_night.jpg|3465",   // Frigorifero combinato
@@ -226,9 +225,9 @@ window.SG_PREZZO_FOTO = {
   "a2-echo-dot": "6/67/Echo_Dot_(3rd_Gen)_01.jpg|2906",   // Echo Dot
   "a2-ps-plus": "7/77/Black_and_white_Playstation_5_base_edition_with_controller.png|1941",   // PlayStation Plus, 12 mesi
   "a2-dualsense": "3/3c/Playstation_DualSense_Controller.png|3120",   // Controller della PS5
-  "a2-instax": "7/7d/Fujifilm_Instax_Mini_10_P1110435.jpg|4016",   // Fotocamera istantanea Instax
+  "a2-instax": "1/1c/מצלמת_אינסטקס_מיני_11_FUJIFILM_INSTAX_MINI-_בצבע_כחול.jpg|3061",   // Fotocamera istantanea Instax (22 nov 2026, ripasso: Instax: non sembra una Instax; prima Fujifilm_Instax_Mini_10_P1110435.jpg)
   "a2-stampante": "d/d8/Canon_PIXMA_TS_3480_Multifunction_ink-jet_Printer_(4).jpg|6469",   // Stampante multifunzione
-  "a2-spazzolino": "d/d4/2023_Szczoteczka_do_zębów_Oral-B_Pro_750_(2).jpg|4368",   // Spazzolino elettrico Oral-B
+  "a2-spazzolino": "8/85/Oral-B_Pro_2_2500_Electric_Toothbrush_-_41646996702.jpg|1000",   // Spazzolino elettrico Oral-B (22 nov 2026, ripasso: Si vede un caricatore/custodia con testine, non uno spazzolino elettrico: confonde.; prima 2023_Szczoteczka_do_zębów_Oral-B_Pro_750_(2).jpg)
   "a2-airpods-4": "2/23/Airpods_4.jpg|2685",   // AirPods 4
   "a2-tv-32": "e/e2/LG_smart_TV.jpg|1700",   // TV da 32 pollici
   "a2-kindle": "3/38/2023_Amazon_Kindle_Paperwhite_(3).jpg|4152",   // Kindle Paperwhite
@@ -241,23 +240,22 @@ window.SG_PREZZO_FOTO = {
   "a2-galaxy-a": "c/c8/Samsung_Galaxy_A57_5G.jpg|4592",   // Samsung Galaxy A57
   "a2-ipad": "b/b0/IPad_Pro_11-inch_backside.jpg|3024",   // iPad
   "a2-ipad-pro": "8/87/About_iPad_Pro_11-inch_(M4).jpg|3024",   // iPad Pro 11 pollici
-  "a2-ps5": "0/00/PlayStation_5_and_DualSense.jpg|1430",   // PlayStation 5
+  "a2-ps5": "7/77/Black_and_white_Playstation_5_base_edition_with_controller.png|1941",   // PlayStation 5 (22 nov 2026, ripasso: PS5 riconoscibile ma tagliata, con tende e fondo disordinato; una foto pulita aiuterebbe.; prima PlayStation_5_and_DualSense.jpg)
   "a2-macbook-neo": "9/9e/MacBook_Neo_Indigo_Touch_ID.png|4035",   // MacBook Neo
   "a2-iphone-17": "8/8f/White_iPhone_17.jpg|4160",   // iPhone 17
   "a2-macbook-air": "3/39/MacBook_Air_(13-inch,_M4,_Silver).jpg|5712",   // MacBook Air 13 pollici
   "a2-galaxy-ultra": "d/de/Galaxy_S26_Ultra_lavender.jpg|3120",   // Samsung Galaxy S26 Ultra
   "a2-iphone-pro-max": "f/f4/IPhone_Pro_(Max).png|4624",   // iPhone Pro Max
-  "a2-iphone-2tb": "a/ad/About_iPhone_16_Pro_Max_Natural_Titanium.jpg|3024",   // iPhone Pro Max da 2 TB
-  "a2-cappello-babbo": "c/cf/Santa_Claus_cap.jpg|2211",   // Cappello da Babbo Natale
-  "a2-lacci": "f/f4/Black_shoe_laces_tied_03.jpg|4000",   // Lacci per scarpe
+  "a2-iphone-2tb": "e/e2/IPhone_16_Pro_Max_Desert_Titanium_Rear.png|2048",   // iPhone Pro Max da 2 TB (22 nov 2026, ripasso: Telefono in mano con schermata impostazioni illeggibile: non si capisce il modello né i…; prima About_iPhone_16_Pro_Max_Natural_Titanium.jpg)
+  "a2-lacci": "3/37/Shoelaces_20050719_001.jpg|2272",   // Lacci per scarpe (22 nov 2026, ripasso: lacci: scura, non si capisce; prima Black_shoe_laces_tied_03.jpg)
   "a2-maglietta-primark": "b/b6/Uniqlo_2026-09-07_shirt_Philippines.jpg|2324",   // Maglietta bianca Primark
   "a2-ombrello-ambulante": "8/87/M0354_000727-005_1.jpg|1024",   // Ombrello dell'ambulante
   "a2-collant": "f/f8/Sheer_Tights_or_Pantyhose_with_low_waist_top_in_the_colour_black_-_front_view.jpg|4678",   // Collant velati
   "a2-mutande-rosse": "8/89/Knickers1.jpg|2046",   // Mutande rosse di Capodanno
   "a2-calzini": "d/d4/Premium_Cotton_Socks.jpg|3164",   // Calzini corti, 3 paia
-  "a2-occhiali-mercato": "9/90/Occhiali_da_sole_-_Italia.jpg|2567",   // Occhiali da sole al mercato
+  "a2-occhiali-mercato": "d/d6/Jan_05_2011_-Day_065-_\"Retro_Sunglasses\"_(5328176833).jpg|2560",   // Occhiali da sole al mercato (22 nov 2026, ripasso: occhiali da sole: una faccia in primo piano; prima Occhiali_da_sole_-_Italia.jpg)
   "a2-pantofole": "e/e2/Charentaises_bureau_EHM.jpg|640",   // Pantofole a quadri
-  "a2-jeans-primark": "3/3e/Levi's_501_raw_jeans.jpg|2740",   // Jeans Primark
+  "a2-jeans-primark": "5/5a/Jeans.jpg|435",   // Jeans Primark (22 nov 2026, ripasso: Jeans blu dritti, ma stinti e usati; per Primark nuovi andrebbe meglio un paio nuovo; prima Levi's_501_raw_jeans.jpg)
   "a2-body-neonato": "9/9d/Menzis_bodysuit_for_newborns_(2019)_01.jpg|2736",   // Body per neonato, 5 pezzi
   "a2-sciarpa-squadra": "9/97/Uzbekistan_national_football_team_supporter.jpg|3024",   // Sciarpa della squadra
   "a2-havaianas": "5/5f/Havaianas_Aqua_and_White_Flip_flops_at_Lung_Mei_Beach.jpg|5184",   // Infradito Havaianas
@@ -282,9 +280,9 @@ window.SG_PREZZO_FOTO = {
   "a2-air-force": "7/7e/Nike_air_Force_1_white_on_white.jpg|5152",   // Nike Air Force 1
   "a2-k-way": "9/98/K-Way.jpg|2532",   // K-Way
   "a2-ray-ban": "2/22/Ray-Ban,_New_Wayfarer_-_4.jpg|8600",   // Ray-Ban Wayfarer
-  "a2-marinella": "3/31/Red_and_Green_Tie.jpg|2304",   // Cravatta Marinella
+  "a2-marinella": "2/2f/L85HS09_blake_vincent_blue_striped_silk_necktie_2.jpg|1000",   // Cravatta Marinella (22 nov 2026, ripasso: Manichini in stile videogioco con cravatte colorate, non una cravatta Marinella; prima Red_and_Green_Tie.jpg)
   "a2-ugg": "2/23/UggBoots_SMC.JPG|2544",   // Stivaletti UGG Classic Mini
-  "a2-dr-martens": "9/9a/Pair_of_brown_Dr_Martens_1460_boots.jpg|4061",   // Anfibi Dr. Martens 1460
+  "a2-dr-martens": "7/74/Doctors_1460_Black_Worn.jpg|500",   // Anfibi Dr. Martens 1460 (22 nov 2026, ripasso: Anfibi bordeaux, la voce dice neri con cuciture gialle; prima Pair_of_brown_Dr_Martens_1460_boots.jpg)
   "a2-timberland": "e/eb/Image_of_a_pair_of_Tmerberland_boots.png|820",   // Timberland gialle
   "a2-borsalino": "f/fc/Borsalino,_fedora.jpg|3024",   // Cappello Borsalino
   "a2-nuptse": "4/42/Adidas_Helionic_Down_Jacket.jpg|2834",   // Piumino The North Face Nuptse
@@ -322,7 +320,7 @@ window.SG_PREZZO_FOTO = {
   "a3-autostrada-mi-rm": "5/5b/TiranaAirportJunction.png|1024",   // Autostrada Milano-Roma
   "a3-telepass": "e/e2/Un_dispositivo_Telepass_edizione_2022.jpg|3578",   // Telepass per un anno
   "a3-cambio-gomme": "b/be/Car_wheel_change_in_desert.jpg|1632",   // Cambio gomme di stagione
-  "a3-traforo-monte-bianco": "e/ec/Mont_Blanc_Tunnel_Courmayeur_P1550586.jpg|4896",   // Traforo del Monte Bianco
+  "a3-traforo-monte-bianco": "a/a4/Chamonix_-_Mont_Blanc_Tunnel_Entrance.jpg|2346",   // Traforo del Monte Bianco (22 nov 2026, ripasso: traforo del Monte Bianco: foto dall'alto, non si capisce; prima Mont_Blanc_Tunnel_Courmayeur_P1550586.jpg)
   "a3-pieno-benzina": "f/f5/Petrol_pump_mp3h0355.jpg|3504",   // Pieno di benzina, 40 litri
   "a3-casco-nolan": "8/82/Casque_Nolan_N21_Visor.jpg|3928",   // Casco Nolan N21 Visor
   "a3-tagliando-panda": "d/d2/2018_Fiat_Panda_Easy_1.2.jpg|4206",   // Tagliando della Panda
@@ -334,7 +332,7 @@ window.SG_PREZZO_FOTO = {
   "a3-liberty-125": "a/a4/Piaggio_Liberty_01.jpg|3008",   // Piaggio Liberty 125
   "a3-sh-125": "f/fd/Honda_SH_125_JF41_.jpg|4160",   // Honda SH 125
   "a3-vespa-primavera-50": "c/ca/Vespa_Primavera_50_4T_4V_seitlich.jpg|2448",   // Vespa Primavera 50
-  "a3-vespa-primavera-125": "f/f5/Vespa_Primavera_125.jpg|2048",   // Vespa Primavera 125
+  "a3-vespa-primavera-125": "d/d6/Vespa_Prima_125b.jpg|4032",   // Vespa Primavera 125 (22 nov 2026, ripasso: Vespa gialla d'epoca anni 70 stile 50 Special: non è una Primavera 125 moderna e nuova.; prima Vespa_Primavera_125.jpg)
   "a3-sh-350": "3/34/Honda_SH_350_2026.jpg|1963",   // Honda SH 350
   "a3-xmax-300": "5/53/2024_Yamaha_XMAX_300_Tech_MAX.jpg|3024",   // Yamaha XMAX 300
   "a3-vespa-gts-310": "c/ca/Vespa_GTV_310_2025.jpg|2048",   // Vespa GTS 310
@@ -1332,4 +1330,10 @@ window.SG_PREZZO_FOTO = {
   "a7-seduta-di-fisioterapia": "d/db/MEDIMAX_Physiotherapy_Clinic_Tel_Aviv.jpg|5040",   // Seduta di fisioterapia (2 nov 2026, terza ricerca)
   "a7-barba-dal-barbiere": "1/10/Barber_shop_(4682858271).jpg|1200",   // Barba dal barbiere (2 nov 2026, terza ricerca)
   "a4-v-collezionista#0": "8/89/Lego_Titanic.jpg|1920",   // LEGO Titanic (2 nov 2026, terza ricerca)
+  "a1-crudo-parma": "1/15/Prosciutto_di_Parma,_ham_producing.jpg|1704",   // Prosciutto di Parma, 100 g (22 nov 2026, ripasso: non aveva la foto)
+  "a2-dyson-v15": "4/48/Dyson_vacuum_cleaner.jpg|4032",   // Aspirapolvere Dyson V15 (22 nov 2026, ripasso: non aveva la foto)
+  "a2-pianoforte": "c/cc/ヤマハ_アップライトピアノ.jpg|3024",   // Pianoforte verticale (22 nov 2026, ripasso: non aveva la foto)
+  "a7-amazon-prime-un-anno-2": "d/da/Amazon_Prime_Delivery_Van,_Camp_Street,_New_Orleans,_2020.jpg|7256",   // Amazon Prime, un anno (22 nov 2026, ripasso: non aveva la foto)
+  "a7-casco-integrale-agv-k5-tinta-unita": "c/c4/BlackFullCoverageMotorcycleHelmet.jpg|771",   // Casco integrale AGV K5, tinta unita (22 nov 2026, ripasso: non aveva la foto)
+  "a5-v-pulizie#0": "a/a8/-2022-01-14_Cleaning_brushes_and_buckets,_Morrisons,_Cromer.JPG|2937",   // Un anno di pulizie (22 nov 2026, ripasso: non aveva la foto)
 };

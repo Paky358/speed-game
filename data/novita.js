@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 404,
+    data: "22 novembre 2026",
+    titolo: "Il Prezzo è Giusto: foto più giuste 🏷️",
+    descrizione: [
+      "📸 Abbiamo ripassato tutte le foto dei prodotti e delle vetrine: 20 cambiate con foto più giuste, per esempio la vera bottiglia di Moët, l'Aperol pieno, lo spritz nel bicchiere, la Instax azzurra, la PlayStation 5 intera e l'iPhone Pro Max.",
+      "🆕 6 cose che non avevano la foto adesso ce l'hanno: il prosciutto di Parma, il pianoforte verticale, l'aspirapolvere Dyson, Amazon Prime, il casco integrale e un anno di pulizie.",
+      "🙈 Via 2 foto con una persona in primo piano (l'asse da stiro e il cappello di Babbo Natale): adesso si vede la loro emoji."
+    ]
+  },
+  {
     v: 403,
     data: "22 novembre 2026",
     titolo: "La Rivincita: prima si scelgono le regole ↻",
