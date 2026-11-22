@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 405,
+    data: "22 novembre 2026",
+    titolo: "Il Prezzo è Giusto: via le foto sbagliate 🏷️",
+    descrizione: [
+      "📸 Altre 41 foto cambiate perché mostravano un'altra cosa: adesso il Magnum è un Magnum, la colazione è cappuccino e cornetto, il cacciucco è una zuppa di pesce, il Rolex è un Submariner, il frigorifero side by side ha le due porte, il ticket di Venezia è il ponte di Rialto e il biglietto del cinema sono le poltrone rosse della sala.",
+      "🧳 Ritorna la foto della crociera e quella di Minecraft, che non si vedevano più.",
+      "🙈 Via 19 foto che non andavano bene (documenti con una faccia vera, persone e bambini in primo piano, un prezzo scritto, foto d'epoca, cose del tutto diverse): adesso si vede la loro emoji."
+    ]
+  },
+  {
     v: 404,
     data: "22 novembre 2026",
     titolo: "Il Prezzo è Giusto: foto più giuste 🏷️",

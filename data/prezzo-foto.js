@@ -9,7 +9,7 @@
 window.SG_PREZZO_FOTO = {
   "a1-nutella-750": "9/9b/Nutella_ak.jpg|1514",   // Nutella, 750 g
   "a1-spaghetti-barilla": "9/92/Spaghettoni.jpg|2304",   // Spaghetti Barilla n.5, 500 g
-  "a1-latte-fresco": "c/c4/Plastic_bottle_of_milk.jpg|746",   // Latte fresco intero, 1 litro
+  "a1-latte-fresco": "0/01/Milk-bottle.jpg|528",   // Latte fresco intero, 1 litro (22 nov 2026, ripasso: latte fresco: una bottiglia di ceramica d'epoca, non il latte di oggi in bottiglia; prima Plastic_bottle_of_milk.jpg)
   "a1-uova-6": "b/b1/Carton_of_eggs.jpg|1200",   // Sei uova grandi
   "a1-olio-evo": "f/f1/Bottle_of_Extra_Virgin_Olive_Oil.jpg|526",   // Olio extravergine, 1 litro
   "a1-passata-mutti": "9/94/Tomato_passata.jpg|930",   // Passata di pomodoro, 700 g
@@ -32,7 +32,7 @@ window.SG_PREZZO_FOTO = {
   "a1-cotechino": "5/58/Cotechino-Intero.jpg|1399",   // Cotechino, 500 g
   "a1-mele": "0/0f/Golden_Delicious_apples.jpg|6000",   // Mele Golden, 1 kg
   "a1-patatine": "6/69/Potato-Chips.jpg|3072",   // Patatine San Carlo, 180 g
-  "a1-magnum": "e/e1/Magnum_Double_Chocolate_Ice-cream_Bar_(7629011916).jpg|2448",   // Magnum Classic, 4 gelati
+  "a1-magnum": "5/5a/Magnum_ice_cream.jpg|1376",   // Magnum Classic, 4 gelati (22 nov 2026, ripasso: Magnum: un dolce di cioccolato con le rose, non il Magnum; prima Magnum_Double_Chocolate_Ice-cream_Bar_(7629011916).jpg)
   "a1-pollo-intero": "5/57/Chickens_in_market.jpg|2860",   // Pollo intero, 1,5 kg
   "a1-parmigiano-kg": "e/e9/Parmigiano-Reggiano_at_Eataly_in_Stockholm.jpg|2448",   // Parmigiano Reggiano, 1 kg
   "a1-pecorino-kg": "e/ee/Pecorino_romano_cheese.jpg|1280",   // Pecorino Romano, 1 kg
@@ -79,7 +79,7 @@ window.SG_PREZZO_FOTO = {
   "a1-bombolone": "e/e4/Bombolone_impiattato.jpg|3490",   // Bombolone alla crema
   "a1-arrosticini": "4/4a/Arrosticini_abruzzesi_01.jpg|4000",   // Dieci arrosticini
   "a1-negroni": "4/4d/Negroni_(cocktail).jpg|4032",   // Negroni
-  "a1-colazione-4": "7/75/Breakfast_at_the_Black_Bear_Diner.jpg|2592",   // Colazione per quattro
+  "a1-colazione-4": "0/0c/Cornetto_e_cappuccino.jpg|4032",   // Colazione per quattro (22 nov 2026, ripasso: Waffle, uova e frutta: una colazione americana, non cappuccini e cornetti al banco.; prima Breakfast_at_the_Black_Bear_Diner.jpg)
   "a1-orecchiette": "a/a5/Orecchiette_con_cime_di_rapa_-_The_Grill,_Grossi_Florentino_AUD32_main_(4800088661).jpg|2048",   // Orecchiette alle cime di rapa
   "a1-carbonara-roma": "5/50/Spaghetti_alla_Carbonara_2.jpg|3264",   // Spaghetti alla carbonara
   "a1-tagliatelle": "1/1a/Tagliatelle_al_ragù_03.jpg|3264",   // Tagliatelle al ragù
@@ -90,7 +90,7 @@ window.SG_PREZZO_FOTO = {
   "a1-vongole": "7/70/Spaghetti_alle_vongole.jpg|1600",   // Spaghetti alle vongole
   "a1-tagliere": "a/a1/Tagliere_toscano.jpg|4194",   // Tagliere per due
   "a1-gelato-kg": "3/3a/Delicious_Gelato_on_display.jpg|3179",   // Vaschetta di gelato, 1 kg
-  "a1-cacciucco": "5/57/Cacciucco_alla_Livornese_19_34_55_234000.jpeg|3024",   // Cacciucco
+  "a1-cacciucco": "3/33/Toscana_-_Zuppa_di_pesce_in_tegame_(Cacciucco)_da_porre_in_scodella_con_pane_arrostito.jpg|1080",   // Cacciucco (22 nov 2026, ripasso: Sembra carne o pollo in salsa gialla, non una zuppa di pesce con pane abbrustolito.; prima Cacciucco_alla_Livornese_19_34_55_234000.jpeg)
   "a1-sushi-ayce": "6/60/Sushi_platter.jpg|1614",   // Sushi «mangia quanto vuoi»
   "a1-cotoletta": "3/34/Cotoletta_alla_milanese_in_milano.jpg|3024",   // Cotoletta alla milanese
   "a1-brunch": "2/25/Cafe_Brunch_Budapest_omelette.jpg|3000",   // Brunch della domenica
@@ -111,11 +111,9 @@ window.SG_PREZZO_FOTO = {
   "a1-dog-sitter": "5/58/Dog_walking_woman.jpg|2115",   // Passeggiata col dog sitter
   "a1-orlo": "8/8f/Hemmed_jeans.png|1500",   // Orlo ai pantaloni
   "a1-cappotto": "2/26/Drycleanmachine.JPG|1952",   // Lavaggio di un cappotto
-  "a1-ripetizioni": "7/71/Jan_Lievens_(Dutch_-_Prince_Charles_Louis_of_the_Palatinate_with_his_Tutor_Wolrad_von_Plessen_in_Historical_Dress_-_Google_Art_Project.jpg|3611",   // Un'ora di ripetizioni
   "a1-pacco-giu": "1/16/TV_set_(46_inch)_in_self-customized_box_for_sending_via_parcel_service_N.3.jpg|3024",   // Il pacco da giù, 20 kg
   "a1-pacco-5kg": "0/0a/Sticking_a_label_onto_a_parcel_for_shipping.jpg|4000",   // Spedire un pacco di 5 kg (22 nov 2026, ripasso: Persona in un magazzino, non si capisce che sia la spedizione di un pacco.; prima Inside_USAG_Italy's_Summer_Hire_Program_(6758706).jpg)
   "a1-barbiere": "4/4d/Barber_cutting_hair_with_comb._Back_view_of_man_in_barber_shop.jpg|6016",   // Taglio dal barbiere
-  "a1-carta-identita": "a/af/CIE_(fronte).jpg|1014",   // Carta d'identità elettronica
   "a1-piumone": "b/b2/La_cama_deshecha_(2724466831).jpg|3072",   // Lavaggio del piumone
   "a1-ceretta": "2/2f/Waxing_Supplies.jpg|4000",   // Ceretta alle gambe
   "a1-manicure": "d/df/Професионална_Ноктопластика.JPG|1530",   // Manicure semipermanente
@@ -136,7 +134,7 @@ window.SG_PREZZO_FOTO = {
   "a1-lavatrice-rotta": "e/ec/LG_드럼세탁기와_식기세척기,_영국서_물사용_효율_최우수_제품_수상.jpg|770",   // Riparare la lavatrice
   "a1-animatore": "6/69/Kids_Party_Entertainer.jpg|1280",   // Animatore per una festa
   "a1-pensione-cane": "e/ef/Dog_kennel_Mason.jpg|768",   // Pensione per il cane, 7 notti
-  "a1-abito-sposa": "3/36/Bride_north_america.jpg|426",   // Lavare l'abito da sposa
+  "a1-abito-sposa": "1/12/Wedding_gown_with_a_bow.jpg|3072",   // Lavare l'abito da sposa (22 nov 2026, ripasso: lavare l'abito da sposa: scura, una donna alla finestra; prima Bride_north_america.jpg)
   "a1-devitalizzazione": "b/bb/Dental_root_canal_treatment_process.jpg|2200",   // Devitalizzazione di un dente
   "a1-imbianchino": "c/c7/House_painters_in_Capri_(cropped).jpg|1896",   // Imbiancare una stanza
   "a1-condizionatore": "e/e6/Galanz_Air_Conditioner_2.jpg|3264",   // Montare un condizionatore (22 nov 2026, ripasso: Vecchio condizionatore a finestra arrugginito, non uno split moderno.; prima MITSUBISHI_ELECTRIC_WINDOW_TYPE_AIR_CONDITIONER_OUTDOOR_UNIT.jpg)
@@ -159,13 +157,13 @@ window.SG_PREZZO_FOTO = {
   "a1-uovo-pasqua": "4/4e/Chocolate_Easter_eggs_in_foil,_Canada,_2026-02-27_01.jpg|5019",   // Uovo di Pasqua artigianale
   "a1-pranzo-nozze": "5/55/Elegant_banquet_setup_for_wedding_reception_with_beautifully_arranged_tables_in_soft_lighting.jpg|4016",   // Pranzo di nozze, a persona
   "a1-caffe-anno": "4/41/Espresso_BW_1.jpg|3872",   // Un caffè al giorno per un anno
-  "a1-comunione": "b/b5/Elsőáldozó_fortepan_40689.jpg|5168",   // Pranzo della Prima Comunione
+  "a1-comunione": "0/01/Layout_of_a_table_in_the_Nobel_Prize_for_the_banquet_at_the_City_Hall.jpg|1024",   // Pranzo della Prima Comunione (22 nov 2026, ripasso: pranzo della Prima Comunione: foto d'epoca in bianco e nero; prima Elsőáldozó_fortepan_40689.jpg)
   "a1-matrimonio": "b/ba/Amalfi_-_7332.jpg|4104",   // Un matrimonio in Italia
   "a2-presine": "e/ea/Pot_holder_(AM_2002.64.8).jpg|1681",   // Presine da cucina, 2
   "a2-mollette": "2/23/Plastic_clothespins.jpg|2400",   // Mollette per il bucato, 24
   "a2-barattolo-fido": "7/7e/PreservedFood1.jpg|5238",   // Barattolo Fido, 1 litro
   "a2-lampadina-led": "d/d6/LED-E27-Light-Bulb-1134.jpg|2592",   // Lampadina LED
-  "a2-accendigas": "9/97/Milk_on_the_stove.jpg|4000",   // Accendigas elettronico
+  "a2-accendigas": "c/c0/Allume_gaz.jpg|4746",   // Accendigas elettronico (22 nov 2026, ripasso: Pentola sul fornello: l'accendigas non si vede affatto.; prima Milk_on_the_stove.jpg)
   "a2-sturalavandini": "2/2b/Plopper.jpg|1536",   // Sturalavandini
   "a2-battipanni": "c/c3/Carpet_beater.jpg|1552",   // Battipanni in vimini
   "a2-cavatappi": "8/8f/Kellnermesser_p1000026.jpg|1902",   // Cavatappi da cameriere
@@ -174,7 +172,6 @@ window.SG_PREZZO_FOTO = {
   "a2-colapasta": "0/0e/Kevgir.JPG|863",   // Colapasta in acciaio
   "a2-zerbino": "d/db/Zerbino_format.jpg|2187",   // Zerbino con la scritta
   "a2-tagliere": "9/91/MAIGO-Schneidebrett_\"Gerd\".jpg|1560",   // Tagliere di legno
-  "a2-blahaj": "a/aa/NärCon_2026_-_CakeJumper.jpg|2048",   // Squalo di peluche IKEA
   "a2-stendino": "8/84/Clotheshorse.jpg|1094",   // Stendibiancheria ad ali
   "a2-padella": "5/58/Aluminium_koekenpan_met_lange_zwart_gelakte_steel,_objectnr_80330.JPG|2048",   // Padella antiaderente, 28 cm
   "a2-moka-3": "4/4f/Moka_Express_Bialetti.png|1126",   // Moka Bialetti, 3 tazze
@@ -297,13 +294,12 @@ window.SG_PREZZO_FOTO = {
   "a2-vinile": "b/b6/12in-Vinyl-LP-Record-Angle.jpg|4000",   // Disco in vinile
   "a2-juicy-salif": "5/5e/Juicy_Salif_-_78365.jpg|2777",   // Spremiagrumi di design
   "a2-moka-18": "4/4f/Moka_Express_Bialetti.png|1126",   // Moka da 18 tazze
-  "a2-prima-pappa": "9/9a/High_chair.jpg|250",   // Seggiolone Peg Perego
   "a2-reber": "9/9a/Food_Mill.jpg|500",   // Spremipomodoro elettrico
   "a2-sacco": "8/85/Zanotta_Sacco_chair_with_houndstooth_upholstery.jpg|1636",   // Poltrona Sacco Zanotta
   "a2-pannolini": "d/d8/Disposablediaper.JPG|2048",   // Pannolini per un anno
   "a2-trasloco": "1/17/Yellow_Iveco_moving_truck_with_Forsman_branding.jpg|6048",   // Trasloco di un trilocale
-  "a2-abito-sposa": "a/a4/White_wedding_dress_worn_by_unidentified_female_model.jpg|2910",   // Abito da sposa
-  "a2-arco-flos": "4/41/\"_12_-_ITALY_-_Milan_-_FLOS_50th_Anniversary_23.jpg|4000",   // Lampada Arco
+  "a2-abito-sposa": "1/12/Wedding_gown_with_a_bow.jpg|3072",   // Abito da sposa (22 nov 2026, ripasso: abito da sposa: una sposa in primo piano; prima White_wedding_dress_worn_by_unidentified_female_model.jpg)
+  "a2-arco-flos": "e/e5/Arco_lamp.jpg|2448",   // Lampada Arco (22 nov 2026, ripasso: Foto scura, lampada ad arco con cupole blu che poco somiglia alla Flos Arco in acciaio…; prima "_12_-_ITALY_-_Milan_-_FLOS_50th_Anniversary_23.jpg)
   "a2-linea-micra": "5/59/Rocket_silver_metal_espresso_machine_on_table.jpg|1200",   // Macchina del caffè da bar
   // "a2-pianoforte": tolta il 20 nov 2026 (scritte gialle «YAMAHA U1A» e il logo di un negozio sopra la foto): resta l'emoji finché non ne arriva una pulita
   "a2-bagno": "b/bf/EFTA00000311_-_Modern_bathroom_with_white_tiles_a_glass_shower_enclosure_a_toilet_and_a_grey_rug_on_the_floor.jpg|768",   // Rifare il bagno
@@ -353,7 +349,7 @@ window.SG_PREZZO_FOTO = {
   "a3-alfa-junior": "3/39/Alfa_Romeo_Junior_IMG_0474_(cropped).jpg|4941",   // Alfa Romeo Junior
   "a3-ferrari-amalfi": "7/79/Ferrari_Amalfi_IMG_8179.jpg|4003",   // Ferrari Amalfi
   "a3-funicolare-capri": "2/22/Funicolare_Capri-St.Gera.jpg|383",   // Funicolare di Capri
-  "a3-contributo-venezia": "d/d8/The_Grand_Canal._Venice,_Italy.jpg|4207",   // Ticket d'ingresso a Venezia
+  "a3-contributo-venezia": "4/4e/Ponte_di_Rialto_Venice_2.jpg|5090",   // Ticket d'ingresso a Venezia (22 nov 2026, ripasso: ticket d'ingresso a Venezia: una nave da crociera; prima The_Grand_Canal._Venice,_Italy.jpg)
   "a3-vaporetto": "7/75/Venezia_Vaporetto_ACTV43_R01.jpg|4462",   // Biglietto del vaporetto
   "a3-cenacolo": "b/bb/Leonardo_da_Vinci_-_The_Last_Supper_high_res.jpg|5381",   // L'Ultima Cena di Leonardo
   "a3-cristo-velato": "3/30/Cappella_Sansevero_(15041603867).jpg|1600",   // Il Cristo Velato
@@ -370,7 +366,7 @@ window.SG_PREZZO_FOTO = {
   "a3-cupola-brunelleschi": "2/22/Florence,_Italy,_Brunelleschi's_Dome_of_Florence_Cathedral.jpg|3072",   // Cupola del Brunelleschi
   "a3-palazzo-ducale": "4/4d/(Venice)_Doge's_Palace_facing_the_sea.jpg|8280",   // Palazzo Ducale
   "a3-cinque-terre-card": "4/42/Corniglia_costa.jpg|1000",   // Cinque Terre Card col treno
-  "a3-esta-usa": "3/31/Electronic_System_for_Travel_Authorization.png|1902",   // ESTA per gli Stati Uniti
+  "a3-esta-usa": "b/b1/United_States_Passport_Book_2871134419_721dd2b0db_o.jpg|2858",   // ESTA per gli Stati Uniti (22 nov 2026, ripasso: ESTA: la schermata di un sito; prima Electronic_System_for_Travel_Authorization.png)
   "a3-vaporetto-24-ore": "8/8a/ACTV_31_at_Fondaco_dei_Tedeschi.jpg|4896",   // Vaporetto per 24 ore
   "a3-roma-pass": "d/de/Colosseo_2020.jpg|12051",   // Roma Pass 72 ore
   "a3-taxi-fiumicino": "f/f5/Taxi_in_Rome.JPG|1944",   // Taxi da Fiumicino a Roma
@@ -386,14 +382,13 @@ window.SG_PREZZO_FOTO = {
   "a3-interrail": "d/dc/09.05.22_Trelleborg_Centralstation_X61_037,_X61_057_and_X61_047_(52093968846).jpg|5827",   // Interrail per un mese
   "a3-vacanza-due": "b/bf/Siracusa_vendicari.jpg|800",   // Una settimana di vacanza
   "a3-settimana-rimini": "b/b4/Rimini_Beach,_Italy_in_2016_(28357400314).jpg|4506",   // Settimana a Rimini
-  "a3-cinema": "b/b1/Ptuj,_city_cinema.jpg|2319",   // Biglietto del cinema
+  "a3-cinema": "d/db/Cinema_Seats_I_(51830912465).jpg|4032",   // Biglietto del cinema (22 nov 2026, ripasso: biglietto del cinema: un edificio qualsiasi; prima Ptuj,_city_cinema.jpg)
   "a3-puzzle": "6/66/Jigsaw_puzzle_01_by_Scouten.jpg|4288",   // Puzzle da 1.000 pezzi
   "a3-carnevale-viareggio": "7/78/Carnevale_di_Viareggio.JPG|3264",   // Carnevale di Viareggio
-  "a3-romanzo": "3/32/Planet_of_the_Apes_book_cover.jpg|358",   // Romanzo appena uscito
   "a3-italia-miniatura": "9/93/Panoramica_italia_in_miniatura.jpg|640",   // Italia in Miniatura
   "a3-noleggio-sci": "e/e4/Ski_rental,_Tandådalen_03.jpg|4000",   // Noleggio sci e scarponi
   "a3-acquario-genova": "a/ae/Acquario_di_Genova_-_panoramio.jpg|2272",   // Acquario di Genova
-  "a3-escape-room": "b/b1/Tulleys_Farm_Outfitter_Escape_Room.jpg|6720",   // Escape room
+  "a3-escape-room": "5/5f/Escape_Quest_-_The_Black_Widow_1.jpg|5000",   // Escape room (22 nov 2026, ripasso: escape room: due persone in primo piano; prima Tulleys_Farm_Outfitter_Escape_Room.jpg)
   "a3-oltremare": "3/35/Dolphinarium_at_Oltremare_-_Riccione_(Naturalistic-technological_theme_park).jpg|2960",   // Oltremare
   "a3-lucca-comics": "1/1a/Lucca_Comics_2009_-_04.jpg|3264",   // Lucca Comics
   "a3-juventus-museum": "0/02/Juventus_v_Real_Madrid,_Champions_League,_Stadium,_Turin,_2013.jpg|4608",   // Juventus Museum e stadio
@@ -405,10 +400,10 @@ window.SG_PREZZO_FOTO = {
   "a3-calcetto": "a/af/2017-08-04_Sports_field,_Caminho_Vale_da_Azinheira,_Olhos_de_Água_(2).JPG|4608",   // Campo da calcetto per un'ora
   "a3-curva-sud-roma": "5/5f/Stadio_Olimpico_2024.jpg|3384",   // Curva Sud all'Olimpico
   "a3-inter-san-siro": "6/6b/Milano_-_stadio_Giuseppe_Meazza_-_202209050049.jpeg|4028",   // Biglietto per vedere l'Inter
-  "a3-palestra": "3/3b/Amsterdam_-_Gymnasium_-_0591.jpg|4368",   // Un mese di palestra
+  "a3-palestra": "8/84/Health_club_in_Gothenburg_Sweden_in_March_2025.jpg|4000",   // Un mese di palestra (22 nov 2026, ripasso: Palestra scolastica con spalliere e basket: non è una palestra con attrezzi da…; prima Amsterdam_-_Gymnasium_-_0591.jpg)
   "a3-lezione-sci": "6/66/Maestrodisciclaviereinsegnando.jpg|2018",   // Lezione di sci privata
   "a3-concerto-san-siro": "1/17/Stadio_Meazza_2021_3.jpg|4728",   // Concerto a San Siro
-  "a3-monza-prato": "d/d6/Autodromo_Nazionale_di_Monza,_Italy_(Ank_Kumar)_01.jpg|6000",   // Gran Premio di Monza
+  "a3-monza-prato": "0/05/Autodromo_Nazionale_di_Monza,_Italy_(Ank_Kumar)_06.jpg|6000",   // Gran Premio di Monza (22 nov 2026, ripasso: Gran Premio di Monza: solo una scritta WELCOME; prima Autodromo_Nazionale_di_Monza,_Italy_(Ank_Kumar)_01.jpg)
   "a3-paracadute": "4/45/Parachute_Descent.jpg|768",   // Lancio col paracadute
   "a3-arena-verona": "e/e2/Arena-XE3F2406a.jpg|5771",   // Opera all'Arena di Verona
   "a3-mongolfiera": "f/fd/Luftballong.jpg|1024",   // Volo in mongolfiera
@@ -425,7 +420,7 @@ window.SG_PREZZO_FOTO = {
   "a3-finale-sanremo": "7/72/Teatro_Ariston_Sanremo.jpg|5400",   // Finale di Sanremo
   "a3-elicottero-capri": "7/70/VH-SUF_Taking_Off.jpg|4262",   // Elicottero Napoli-Capri
   "a3-prima-scala": "0/04/Milano_-_Teatro_alla_Scala_3924.jpg|1920",   // La Prima della Scala
-  "a3-luna-di-miele": "9/90/Happy_young_honeymoon_couple_having_fun_on_the_beach._Ocean,_tropical_vacation_on_Bali_island,_Indonesia._(47955055743).jpg|6000",   // Luna di miele all'estero
+  "a3-luna-di-miele": "5/5d/Bush_and_beach._Eriyadu,_Maldives.jpg|5193",   // Luna di miele all'estero (22 nov 2026, ripasso: luna di miele: una coppia in primo piano; prima Happy_young_honeymoon_couple_having_fun_on_the_beach._Ocean,_tropical_vacation_on_Bali_i…)
   "a4-renault-clio": "1/1c/Renault_Clio_V_1X7A0392.jpg|5221",   // Renault Clio
   "a4-dacia-spring": "9/95/Dacia_Spring_1X7A0350.jpg|4970",   // Dacia Spring
   "a4-dacia-duster": "9/9b/Dacia_Duster_III_IMG_8961.jpg|5313",   // Dacia Duster
@@ -451,7 +446,7 @@ window.SG_PREZZO_FOTO = {
   "a4-bmw-r12-ninet": "9/94/BMW_R_nineT_(MSP16).jpg|5456",   // BMW R 12 nineT
   "a4-bmw-r1300gs": "1/16/BMW_R_1300_GS_Adventure_Triple_Black_(1).jpg|3012",   // BMW R 1300 GS
   "a4-omega-moonwatch": "1/15/Speedmaster_(23456608783).jpg|4608",   // Omega Speedmaster Moonwatch
-  "a4-rolex-submariner": "7/75/Rolex_Submariner_watch_16613.JPG|2048",   // Rolex Submariner Date
+  "a4-rolex-submariner": "c/cd/Rolex-Submariner.jpg|550",   // Rolex Submariner Date (22 nov 2026, ripasso: Bracciale bicolore oro e acciaio tagliato: non è un Submariner in acciaio con quadrante…; prima Rolex_Submariner_watch_16613.JPG)
   "a4-galaxy-fold8": "b/b2/Samsung_Galaxy_Z_Fold_4.jpg|3024",   // Samsung Galaxy Z Fold8
   "a4-dji-mavic": "a/a8/DJI_-_Drohne_Mavic_4_Pro.JPG|5800",   // Drone DJI Mavic 4 Pro
   "a4-studio-display": "6/6f/Studio_Display_(2022).jpg|3495",   // Apple Studio Display XDR
@@ -460,7 +455,6 @@ window.SG_PREZZO_FOTO = {
   "a4-mq-milano": "a/a2/Apartment_building_near_the_Duomo_in_Milan.jpg|4938",   // Un metro quadro di casa
   "a4-affitto-milano": "8/82/Milano_-_edificio_via_Giovanni_Pacini_60.JPG|768",   // Un anno d'affitto
   "a4-bocconi": "d/dc/Bocconi_Grafton_Building_Milan.jpg|5400",   // Un anno all'università Bocconi
-  "a4-maglia-italia": "6/60/Maldini_Italia.jpg|3120",   // Maglia della Nazionale
   "a4-finale-champions": "e/e5/Puskás_Aréna_05.jpg|5472",   // Finale di Champions League
   "a4-olimpiadi": "1/17/Stadio_Meazza_2021_3.jpg|4728",   // Cerimonia d'apertura olimpica
   "a4-gibson-les-paul": "1/1c/Full_front_R9_Les_Paul.jpg|3520",   // Chitarra Gibson Les Paul
@@ -478,7 +472,6 @@ window.SG_PREZZO_FOTO = {
   "a1-v-natale-famiglia#1": "9/98/Christmas_Dinner_Setting.jpg|3504",   // Pranzo di Natale per 12
   "a1-v-natale-famiglia#2": "d/d5/A1_Christmas_Tree_photo.jpg|2676",   // Abete vero, 2 metri
   "a1-v-natale-famiglia#3": "b/b6/Tombola.jpg|2080",   // Tombola con 48 cartelle
-  "a1-v-diciotto-anni#0": "7/71/MC_701F_(1)_front.jpg|2993",   // Patente B
   "a1-v-diciotto-anni#1": "3/32/Wikipedia_space_ibiza(03).jpg|1000",   // Sala per la festa
   "a1-v-diciotto-anni#2": "5/57/Neapolitan_pizza_at_Trappica_(48701940197).jpg|3024",   // Pizze per 70 amici
   "a1-v-diciotto-anni#3": "f/f9/DJ_AnthonyB._at_the_turntables.jpg|1227",   // DJ per la festa
@@ -492,7 +485,6 @@ window.SG_PREZZO_FOTO = {
   "a1-v-meglio-italia#0": "3/38/2003_Bolgheri_Sassicaia.jpg|2432",   // Dodici bottiglie di Sassicaia
   "a1-v-meglio-italia#1": "e/e5/Wheel_of_2013_Parmigiano-Reggiano_DOP.JPG|3264",   // Forma intera di Parmigiano
   "a1-v-meglio-italia#2": "5/5d/Aceto_Balsamico_Tradizionale_di_Modena_DOP_extravecchio.jpg|5908",   // Aceto balsamico tradizionale
-  "a1-v-vivere-milano#0": "1/18/Daycare_Attendee.jpg|4288",   // Babysitter ogni sabato sera
   "a1-v-vivere-milano#1": "0/06/Aperol_Spritz_-_Santa_Ynez_Kitchen_-_Sarah_Stierch.jpg|4032",   // Uno spritz ogni venerdì
   "a1-v-vivere-milano#2": "2/20/Milaan_metro_2024_5.jpg|5472",   // Abbonamento annuale ai mezzi
   "a1-v-vivere-milano#3": "8/80/Photo_Booth_in_Malaga.jpg|4000",   // Quattro fototessere
@@ -504,18 +496,17 @@ window.SG_PREZZO_FOTO = {
   "a2-v-cucina#2": "8/82/Dishwasher_open_for_loading.jpg|1944",   // Lavastoviglie silenziosa
   "a2-v-cucina#3": "8/8e/Global_Knives.jpg|600",   // Ceppo di coltelli
   "a2-v-cucina#4": "c/ca/Preparing_the_Cake_(5285262061).jpg|4288",   // Grembiule col tuo nome
-  "a2-v-bebe#0": "d/d0/Baby_pram.jpg|1500",   // Trio Peg Perego
   "a2-v-bebe#1": "7/76/The_Nursery_Progresses..._-_Flickr_-_Kelly_Sue.jpg|450",   // Cameretta completa
   "a2-v-bebe#2": "3/38/Inglesina_Marco_Polo_car_seat.jpg|2871",   // Seggiolino auto girevole
-  "a2-v-bebe#3": "7/71/Giant_Teddy_Bear.jpg|4608",   // Orsetto gigante
+  "a2-v-bebe#3": "b/b4/Giant_teddy_bear_with_hot_chocolate.jpg|2796",   // Orsetto gigante (22 nov 2026, ripasso: orsetto gigante: una persona accanto a un costume, non un peluche; prima Giant_Teddy_Bear.jpg)
   "a2-v-bebe#4": "9/96/Feeding-bottle--01.jpg|1942",   // Biberon, 3 pezzi
   "a2-v-gamer#0": "8/82/PlayStation_5_Pro_no_disc_drive.jpg|1536",   // PlayStation 5 Pro
   "a2-v-gamer#1": "d/d0/Samsung_OLED_TV.jpg|4500",   // TV OLED da 65 pollici
   "a2-v-gamer#2": "b/b2/Gaming_chair.jpg|3648",   // Sedia da gaming
-  "a2-v-gamer#3": "2/27/Plantronics_headset.jpg|1456",   // Cuffie da gaming
+  "a2-v-gamer#3": "d/df/Sony-WH-1000XM3-kabellose-Bluetooth-Noise-Cancelling-Kopfhoerer.3.jpg|4032",   // Cuffie da gaming (22 nov 2026, ripasso: Cuffia con filo da call center, non cuffie gaming senza fili.; prima Plantronics_headset.jpg)
   "a2-v-gamer#4": "2/2a/HP_mouse_and_mousepad_20060803.jpg|1280",   // Tappetino gigante
   "a2-v-guardaroba#0": "2/26/PAX_wardrobe_at_IKEA_Xihongmen_(20150423113022).jpg|3264",   // Armadio IKEA Pax
-  "a2-v-guardaroba#1": "3/39/Overcoat_MET_1973.65.1_B.jpg|1656",   // Cappotto da sartoria
+  "a2-v-guardaroba#1": "9/9e/Tailored_sport_coat_partial_lining.jpg|1600",   // Cappotto da sartoria (22 nov 2026, ripasso: Cappotto antico da museo appeso: sembra una giubba d'epoca, non un cappotto di sartoria…; prima Overcoat_MET_1973.65.1_B.jpg)
   "a2-v-guardaroba#2": "f/f8/TailoringFirstFitFront01.jpg|698",   // Abito da uomo su misura
   "a2-v-guardaroba#3": "e/eb/Black_Leather_Pumps_Worn_by_Bonnie_Blake_-_DPLA_-_12bcc989cf7708c987a7be7c19a640b9_(page_2).jpg|5792",   // Décolleté col tacco
   "a2-v-guardaroba#4": "b/b8/Wooden_coat_hangers.jpg|2992",   // Grucce di legno, 10
@@ -530,13 +521,13 @@ window.SG_PREZZO_FOTO = {
   "a2-v-giardino#0": "1/10/Gasgrill_Weber_Q100.jpg|4480",   // Barbecue Weber a gas
   "a2-v-giardino#1": "6/62/Above_Ground_swimming_pool_-_4420.jpg|1600",   // Piscina fuori terra
   "a2-v-giardino#3": "a/ab/Garden_chairs_and_table,_Birkenhead_-_DSC09774.JPG|3648",   // Set da giardino
-  "a2-v-giardino#4": "8/87/Mosquito_coil.JPG|3800",   // Zampirone, 10 spirali
+  "a2-v-giardino#4": "6/69/Mosquito_repellent_spiral.jpg|4032",   // Zampirone, 10 spirali (22 nov 2026, ripasso: Si vede una spirale verde ma su un fazzoletto rosso con stemma: confusa; ci sono pero…; prima Mosquito_coil.JPG)
   "a2-v-salotto#0": "4/46/A_brown_sofa_(2005-03-03).jpg|2048",   // Divano in pelle
   "a2-v-salotto#1": "b/bc/LG_LAS260B_Soundbar.jpg|4437",   // Soundbar col subwoofer
-  "a2-v-salotto#2": "b/bd/Floor_lamp_(5906).JPG|460",   // Lampada da terra
+  "a2-v-salotto#2": "b/ba/Michele_de_lucchi_e_giancarlo_fassina_per_artemide,_lampada_da_tavolo_tolomeo,_1987.jpg|2088",   // Lampada Artemide Tolomeo (22 nov 2026, ripasso: Lampada da terra con paralume in un salotto, ma non la Tolomeo col braccio snodato;…; prima Floor_lamp_(5906).JPG)
   "a2-v-salotto#3": "f/f7/Interior_of_living_room_01.JPG|2816",   // Tavolino da salotto
   "a2-v-salotto#4": "1/16/Ficus_elastica_leaves_02.JPG|2304",   // Ficus in vaso grande
-  "a3-v-estate-vespa#0": "f/f5/Vespa_Primavera_125.jpg|2048",   // Vespa Primavera 125
+  "a3-v-estate-vespa#0": "d/d6/Vespa_Prima_125b.jpg|4032",   // Vespa Primavera 125 (22 nov 2026, ripasso: Vespa gialla d'epoca vecchio modello, non una Primavera 125 nuova blu.; prima Vespa_Primavera_125.jpg)
   "a3-v-estate-vespa#1": "8/82/Casque_Nolan_N21_Visor.jpg|3928",   // Casco Nolan N21 Visor
   "a3-v-estate-vespa#2": "6/68/Rimini_beach_umbrellas_at_night.jpg|4496",   // Ombrellone a Rimini
   "a3-v-estate-vespa#3": "f/f5/Petrol_pump_mp3h0355.jpg|3504",   // Il pieno della Vespa
@@ -555,7 +546,7 @@ window.SG_PREZZO_FOTO = {
   "a3-v-avventura#1": "f/fd/Luftballong.jpg|1024",   // Volo in mongolfiera
   "a3-v-avventura#2": "4/45/Parachute_Descent.jpg|768",   // Lancio col paracadute
   "a3-v-avventura#3": "7/77/Rafting_em_Brotas.jpg|1280",   // Discesa in rafting
-  "a3-v-moto-sogno#0": "6/68/Honda_Africatwin.jpg|1500",   // Honda Africa Twin
+  "a3-v-moto-sogno#0": "5/5b/2020_Honda_CRF1100L_Africa_Twin_MT.jpg|2448",   // Honda Africa Twin (22 nov 2026, ripasso: Africa Twin d'epoca anni 90 in museo, non la moto nuova da 15.490 euro; prima Honda_Africatwin.jpg)
   "a3-v-moto-sogno#1": "8/82/Casque_Nolan_N21_Visor.jpg|3928",   // Casco Nolan N21 Visor
   "a3-v-moto-sogno#2": "a/a4/Chamonix_-_Mont_Blanc_Tunnel_Entrance.jpg|2346",   // Traforo del Monte Bianco
   "a3-v-moto-sogno#3": "f/f2/Swiss-motorway-road-tax-vignette.jpg|749",   // Vignetta svizzera
@@ -576,8 +567,7 @@ window.SG_PREZZO_FOTO = {
   "a4-v-rockstar#2": "2/22/Ray-Ban,_New_Wayfarer_-_4.jpg|8600",   // Ray-Ban Wayfarer
   "a4-v-rockstar#3": "b/b6/12in-Vinyl-LP-Record-Angle.jpg|4000",   // Disco in vinile
   "a4-v-campioni#0": "e/e5/Puskás_Aréna_05.jpg|5472",   // Finale di Champions League
-  "a4-v-campioni#1": "6/60/Maldini_Italia.jpg|3120",   // Maglia della Nazionale
-  "a4-v-campioni#2": "7/75/Rolex_Submariner_watch_16613.JPG|2048",   // Rolex Submariner Date
+  "a4-v-campioni#2": "c/cd/Rolex-Submariner.jpg|550",   // Rolex Submariner Date (22 nov 2026, ripasso: Rolex Submariner: solo un pezzo di cinturino bicolore (come la 477); prima Rolex_Submariner_watch_16613.JPG)
   "a4-v-campioni#3": "9/97/Uzbekistan_national_football_team_supporter.jpg|3024",   // Sciarpa della squadra
   "a4-v-collezionista#1": "3/3b/Moonwatch_(24023224706).jpg|3456",   // Omega Speedmaster Moonwatch
   "a4-v-collezionista#2": "6/6f/Studio_Display_(2022).jpg|3495",   // Apple Studio Display XDR
@@ -752,7 +742,7 @@ window.SG_PREZZO_FOTO = {
   "a6-v-cavallo#1": "c/c5/Showjumping.JPG|2272",   // Venti lezioni di equitazione
   "a6-v-cavallo#2": "b/b4/Fieldboots.jpg|1500",   // Stivali da equitazione e casco
   "a6-v-cavallo#3": "f/f0/Sardined_Carrots.jpg|4032",   // Un sacco di carote
-  "a6-v-sposa#0": "3/36/Bride_north_america.jpg|426",   // Abito da sposa
+  "a6-v-sposa#0": "1/12/Wedding_gown_with_a_bow.jpg|3072",   // Abito da sposa (22 nov 2026, ripasso: abito da sposa: scura, una donna alla finestra (come la 137); prima Bride_north_america.jpg)
   "a6-v-sposa#1": "c/ce/Fede_nuziale_Classica.jpg|939",   // Due fedi nuziali in oro
   "a6-v-sposa#2": "b/bc/Cosmetics.JPG|640",   // Trucco e acconciatura
   "a6-v-sposa#3": "0/06/Wedding_bouquet_white_roses.jpg|958",   // Bouquet della sposa
@@ -812,7 +802,6 @@ window.SG_PREZZO_FOTO = {
   "a6-v-scooter#0": "a/a7/2023_Piaggio_Liberty_S_125_ABS.jpg|1438",   // Piaggio Liberty 125
   "a6-v-scooter#1": "a/a7/Xiaomi_M365_blanche.jpg|3024",   // Monopattino elettrico
   "a6-v-scooter#2": "6/6e/Open-face_helmet_kallerna.JPG|2814",   // Casco jet
-  "a6-v-scooter#3": "6/6a/City_bike_locked_with_a_U-lock,_with_wheels_secured_by_a_steel_cable._Tomaszów_Mazowiecki,_Poland.jpg|4096",   // Antifurto ad arco
   "a6-v-fuoristrada#0": "1/13/2019_Suzuki_Jimny_SZ5_4X4_Automatic_1.5.jpg|2724",   // Suzuki Jimny
   "a6-v-fuoristrada#1": "4/47/Toyota_hilux_with_roof_tents.jpg|2299",   // Tenda da tetto
   "a6-v-fuoristrada#3": "d/db/LED_headlamp_(1).jpg|1412",   // Torcia frontale
@@ -889,7 +878,6 @@ window.SG_PREZZO_FOTO = {
   "a6-v-dolomiti#3": "1/15/RS_122.jpg|2000",   // Una notte in rifugio
   "a6-v-dolomiti#4": "a/a6/TrekkingPolesCarbonWoman.jpg|1200",   // Bastoncini da trekking
   // ---- i prodotti nuovi (data/prezzo-7.js, 23 ott 2026): scelte dal nome da aiutanti Sonnet e guardate tutte a occhio ----
-  "a7-pomodori-pelati-mutti-400-g": "0/03/Peeling_tomatoes-01.jpg|1741",   // Pomodori pelati Mutti, 400 g
   "a7-penne-rigate-de-cecco-n-41-500-g": "0/0b/Pennelisce_closeup.png|2932",   // Penne rigate De Cecco n.41, 500 g
   "a7-riso-carnaroli-gallo-1-kg": "3/33/Carnaroli.jpg|3285",   // Riso Carnaroli Gallo, 1 kg
   "a7-corn-flakes-kellogg-s-375-g": "9/9c/Photo_cornflakes.jpg|5184",   // Corn Flakes Kellogg's, 375 g
@@ -944,7 +932,6 @@ window.SG_PREZZO_FOTO = {
   "a7-cocktail-in-un-rooftop": "8/80/15-09-26-RalfR-WLC-0084.jpg|2368",   // Cocktail in un rooftop
   "a7-pizza-a-portafoglio": "a/a3/Eq_it-na_pizza-margherita_sep2005_sml.jpg|1024",   // Pizza a portafoglio
   "a7-orzo-in-tazza-grande": "4/4b/Caffè_d'orzo_(89397).jpg|3000",   // Orzo in tazza grande
-  "a7-marocchino": "c/c2/Marocchino_(26440403402).jpg|1080",   // Marocchino
   "a7-cioccolata-calda-con-panna": "9/92/Hot_chocolate_with_whipped_cream_and_dried_berries_(Vegan,_KETO,_LCHF,_Low_Carb,_Gluten_free,_FIT)_-_52774784724.jpg|2659",   // Cioccolata calda con panna
   "a7-bicerin": "8/86/2016_1128_Turin_Bicerin_01.jpg|3072",   // Bicerin
   "a7-un-ombra-di-vino": "4/42/\"_05_-_ITALY_-_un_bacaro_a_Venezia_Osteria_appetizers_restaurant_in_Venice_wine_enoteca.jpg|2910",   // Un'ombra di vino
@@ -1002,25 +989,24 @@ window.SG_PREZZO_FOTO = {
   "a7-scopa-elettrica-senza-fili": "8/8a/Dyson_V6_cordless_stick_vacuum.jpg|5472",   // Scopa elettrica senza fili Rowenta X-Force 8.80
   "a7-friggitrice-ad-aria-digitale-4-litri": "d/d3/Air_Fryer_2020.jpg|4032",   // Friggitrice ad aria digitale, 4 litri
   "a7-piumino-matrimoniale-quattro-stagioni": "b/b2/La_cama_deshecha_(2724466831).jpg|3072",   // Piumino matrimoniale quattro stagioni
-  "a7-letto-ikea-neiden-160x200-cm": "6/60/Lotte_Heaven._(2185651031).jpg|2496",   // Letto IKEA Neiden, 160x200 cm
   "a7-trapano-avvitatore-a-batteria": "7/77/Panasonic_Cordless_Drill_&_Driver_EY1DD2,_Ottobrunn_(20250410-P1046293).jpg|3888",   // Trapano avvitatore a batteria
   "a7-forno-elettrico-da-25-litri": "e/e4/Hamilton_Beach_Easy_Reach_Sure-Crisp_Toaster_Oven_-_05.jpg|5184",   // Forno elettrico da 25 litri
   "a7-impastatrice-planetaria-da-5-litri": "e/e2/2012.09.24.154927_KitchenAid_Rheingauer_Straße_Eltville.jpg|1920",   // Impastatrice planetaria Ariete Gourmet, 5,2 litri
   "a7-topper-in-memory-foam": "4/48/MemoryFoam-fast.jpg|1136",   // Topper in memory foam
   "a7-materasso-ikea-afjall-90x200-cm": "b/bb/Shifman_Mattress_Set.JPG|4828",   // Materasso IKEA Åfjäll, 90x200 cm
   "a7-ventilatore-da-soffitto-con-luce": "7/76/Ceiling_fan_with_lamp.jpg|4128",   // Ventilatore da soffitto con luce
-  "a7-tavolo-da-giardino-110x71-cm": "c/c2/Green_metal_chairs_with_round_table_in_a_garden,_Germany.jpeg|2669",   // Tavolo da giardino, 110x71 cm
+  "a7-tavolo-da-giardino-110x71-cm": "6/60/Green_garden_furniture_from_plastics_near_Hostákov,_Vladislav,_Třebíč_District.jpg|3888",   // Tavolo da giardino, 110x71 cm (22 nov 2026, ripasso: tavolo da giardino: un giardino con una casa, il tavolo non si vede; prima Green_metal_chairs_with_round_table_in_a_garden,_Germany.jpeg)
   "a7-idropulitrice-karcher-k-2": "6/63/KARCHER_5_85.jpg|964",   // Idropulitrice Kärcher K 2 Power Control
   "a7-ferro-con-caldaia-braun-carestyle-5": "c/ca/Teal_and_white_electric_steam_iron_-_side_view.jpg|1466",   // Ferro con caldaia Braun CareStyle 5
   "a7-sedia-da-ufficio-ikea-markus": "4/46/Ikea_MARKUS_Swivel_Chair_(19548745588).jpg|3648",   // Sedia da ufficio IKEA Markus
-  "a7-poltrona-ikea-strandmon": "b/b5/Easy_chair,_probably_Boston,_Massachusetts,_1760-1780,_mahogany,_soft_maple,_reproduction_wool_upholstery_-_Winterthur_Museum_-_DSC01384.JPG|3573",   // Poltrona IKEA Strandmon, Nordvalla grigio scuro
+  "a7-poltrona-ikea-strandmon": "9/9d/Easy_chair,_probably_Boston,_Massachusetts,_1750-1790,_mahogany,_maple,_pine,_replacement_wool_upholstery-_Dallas_Museum_of_Art_-_DSC04896.jpg|3628",   // Poltrona IKEA Strandmon, Nordvalla grigio scuro (22 nov 2026, ripasso: Poltrona antica damascata su gambe lavorate, nulla a che vedere con la Strandmon moderna.; prima Easy_chair,_probably_Boston,_Massachusetts,_1760-1780,_mahogany,_soft_maple,_reproductio…)
   "a7-divano-ikea-ektorp-a-3-posti": "4/46/A_brown_sofa_(2005-03-03).jpg|2048",   // Divano IKEA Ektorp a 3 posti
   "a7-lavasciuga-candy-8-5-kg": "4/42/Samsung_WD90N740NOA,_IFA_2018.jpg|2400",   // Lavasciuga Candy GWD 485SB6-S, 8+5 kg
-  "a7-letto-ikea-malm-con-contenitore": "6/60/Lotte_Heaven._(2185651031).jpg|2496",   // Letto IKEA Malm con contenitore
+  "a7-letto-ikea-malm-con-contenitore": "c/cb/Malm_bed_from_Ikea,_Brisbane,_Australia.jpg|4032",   // Letto IKEA Malm con contenitore (22 nov 2026, ripasso: Letto d'albergo con testiera imbottita, non un Malm con contenitore.; prima Lotte_Heaven._(2185651031).jpg)
   "a7-congelatore-verticale-whirlpool": "4/44/Openfreezer.jpg|2112",   // Congelatore verticale Whirlpool
-  "a7-camera-da-letto-ikea-idanas": "f/fb/Berlin_Villa_Borsig_Tegel_asv2019-08_img09.jpg|7508",   // Camera da letto IKEA Idanäs
+  "a7-camera-da-letto-ikea-idanas": "6/61/Full_Bedroom_Set_(49875913003).jpg|4421",   // Camera da letto IKEA Idanäs (22 nov 2026, ripasso: Camera classica con copriletto rosa e mobili d'epoca, non un set IKEA moderno.; prima Berlin_Villa_Borsig_Tegel_asv2019-08_img09.jpg)
   "a7-asciugatrice-bosch-serie-8": "1/1c/Modern_front_load_tumble_dryer.JPG|2155",   // Asciugatrice Bosch Serie 8
-  "a7-frigorifero-side-by-side": "7/7b/Open_refrigerator_with_food_at_night.jpg|3465",   // Frigorifero side by side
+  "a7-frigorifero-side-by-side": "8/85/LG_refrigerator_interior.jpg|2448",   // Frigorifero side by side (22 nov 2026, ripasso: frigorifero side by side: scura, un frigo aperto al buio, non un side by side; prima Open_refrigerator_with_food_at_night.jpg)
   "a7-divano-ikea-jattebo-3-5-posti": "2/2a/Chaise_longue_sofa_2.jpg|2770",   // Divano IKEA Jättebo, 3,5 posti
   "a7-cavo-usb-c-da-1-metro": "c/c3/USB-C_cable_2017_A.jpg|3872",   // Cavo USB-C da 1 metro
   "a7-pellicola-in-vetro-per-smartphone": "9/94/Screen_protector.png|352",   // Pellicola in vetro per smartphone
@@ -1033,14 +1019,13 @@ window.SG_PREZZO_FOTO = {
   "a7-router-wi-fi-6": "6/63/TP-Link_AX1500_Wi-Fi_6_Router_Front.jpg|1280",   // Router Wi-Fi 6
   "a7-mouse-logitech-mx-master-3s": "d/d4/Logitech_MX_Master_3S_HS12.jpg|6000",   // Mouse Logitech MX Master 3S
   "a7-tastiera-logitech-mx-keys-s": "7/78/Logitech_MX_Keys_YR0073_Wireless_Keyboard.jpg|3877",   // Tastiera Logitech MX Keys S
-  "a7-samsung-galaxy-a17": "6/67/Samsung_Galaxy_A17_5G_2026_(4).jpg|3024",   // Samsung Galaxy A17 4G, 128 GB
   "a7-tablet-lenovo-idea-tab-11": "c/c5/Lenovo_Tab_M10_FHD_Plus_(2026).jpg|4080",   // Tablet Lenovo Idea Tab 11", Wi-Fi 256 GB
   "a7-samsung-galaxy-tab-a11-128-gb": "d/d5/Samsung_Galaxy_Tab_A11_Gray.png|389",   // Samsung Galaxy Tab A11+, 128 GB
   "a7-drone-dji-neo-2": "7/74/DJI_DN1A0626_Neo_(FA3PEWAH34)_(1-18-2025).jpg|2490",   // Drone DJI Neo 2
   "a7-volante-logitech-driving-force": "e/ed/Logitech_G29_steering_wheel.jpg|4608",   // Volante Logitech G29 Driving Force
   "a7-xbox-series-s-512-gb": "5/54/Xbox_Series_S_with_controller.jpg|2101",   // Xbox Series S, 512 GB
   "a7-redmi-note-17-pro-max-256-gb": "3/3d/Redmi_Note_10_Pro_Back.jpg|3471",   // Redmi Note 17 Pro Max, 256 GB
-  "a7-portatile-hp-15-pollici-ryzen-5": "4/4f/Laptop_(Pixi).png|757",   // Portatile HP 15 pollici, Intel Core 5
+  "a7-portatile-hp-15-pollici-ryzen-5": "5/5e/HP_Laptop_Notebook.png|1000",   // Portatile HP 15 pollici, Intel Core 5 (22 nov 2026, ripasso: Portatile di molti anni fa con schermata Wikipedia: per un HP moderno da 799 euro è…; prima Laptop_(Pixi).png)
   "a7-airpods-max": "7/7e/Apple_airpods_max_1.jpg|3005",   // AirPods Max 2
   "a7-tv-da-65-pollici-4k": "e/e2/LG_smart_TV.jpg|1700",   // TV Xiaomi F Pro da 65 pollici 4K
   "a7-drone-dji-mini-5-pro": "9/9b/2024_Dron_DJI_Mini_4_Pro_(18).jpg|5232",   // Drone DJI Mini 5 Pro
@@ -1078,9 +1063,8 @@ window.SG_PREZZO_FOTO = {
   "a7-traforo-del-frejus-solo-andata": "7/7b/Frejus_Road_Tunnel_Bardonecchia_portal_2.jpg|2560",   // Traforo del Frejus, solo andata
   "a7-seggiolino-auto-chicco-gro-up-i-size": "e/ec/Volvo_child_safety_seat.jpg|1391",   // Seggiolino auto Chicco Gro-Up i-Size
   "a7-casco-agv-pista-gp-rr": "e/e0/Valentino_Rossi's_AGV_helmets.jpg|1024",   // Casco AGV Pista GP RR
-  "a7-giant-talon-20": "2/23/DL_110707_MDE_221.jpg|800",   // Giant Talon 20
   "a7-giant-talon": "9/96/Hardtail-mountain-bike.jpg|907",   // Giant Talon 3
-  "a7-camera-d-aria-per-bici-da-corsa": "0/01/Barum_bicycle_inner_tube.jpg|4608",   // Camera d'aria Decathlon per bici da corsa
+  "a7-camera-d-aria-per-bici-da-corsa": "5/5b/Fahrradschlaeuche.jpg|1536",   // Camera d'aria Decathlon per bici da corsa (22 nov 2026, ripasso: Camera d'aria scura con la scritta Barum quasi unica protagonista, misura da bimbo;…; prima Barum_bicycle_inner_tube.jpg)
   "a7-lavaggio-dell-auto-al-self": "1/1f/'Car_Wash_Bergwerff'_Gorinchem_(18466972783).jpg|3091",   // Lavaggio dell'auto al self
   "a7-pastiglie-dei-freni-davanti": "9/92/Brake_pad.jpg|3996",   // Pastiglie dei freni davanti
   "a7-bracciale-in-acciaio-con-cristalli-azzur": "d/de/Bracelet_(jewelry).jpg|734",   // Bracciale in acciaio con cristalli azzurri
@@ -1088,9 +1072,9 @@ window.SG_PREZZO_FOTO = {
   "a7-casio-f-91w": "9/96/Casio_F-91W_5051.jpg|3393",   // Casio F-91W
   "a7-costume-parigamba-da-uomo": "2/20/Speedo_zwembroek-1.jpg|1280",   // Costume parigamba da uomo
   "a7-jeans-chino-straight-fit": "3/3e/Chino_pants.jpg|1200",   // Jeans chino straight fit
-  "a7-portachiavi-mimi": "a/a5/Key_chain_4.jpg|3120",   // Portachiavi Mimì
+  "a7-portachiavi-mimi": "f/f6/Sandal_keychain.jpg|2048",   // Portachiavi Mimì (22 nov 2026, ripasso: Medaglione antico su legno: non è un portachiavi e non c'entra con Carpisa.; prima Key_chain_4.jpg)
   "a7-collana-punto-luce-in-argento": "d/de/Silver_necklace_with_a_Chai_Hamsa_pendant,_March_2024_11.jpg|4000",   // Collana Punto Luce in argento
-  "a7-costume-boxer-formentera": "2/20/Speedo_zwembroek-1.jpg|1280",   // Costume boxer Formentera
+  "a7-costume-boxer-formentera": "f/f3/Sky_blue_board_shorts.jpg|4000",   // Costume boxer Formentera (22 nov 2026, ripasso: Stessi pantaloncini sportivi neri del 781, non un costume boxer con fantasia.; prima Speedo_zwembroek-1.jpg)
   "a7-bomber-effetto-pelle": "4/42/B-17_Bomber_Pilot_Flight_Jacket.jpeg|241",   // Bomber effetto pelle
   "a7-zaino-carpisa-roadmate-go": "d/d7/Rucksack1.jpg|1458",   // Zaino Carpisa Roadmate go
   "a7-trolley-rigido-carpisa-wander-go": "c/c0/Suitcase1.jpg|1267",   // Trolley rigido Carpisa Wander go
@@ -1107,7 +1091,6 @@ window.SG_PREZZO_FOTO = {
   "a7-sneakers-in-canvas-emporio-armani": "a/a1/Oca-low-washed-black-contrast-thread-canvas-sneaker.png|1500",   // Sneakers in canvas Emporio Armani
   "a7-fede-in-oro-giallo-18-carati-3-2-mm": "d/df/Gold_wedding_ring.jpg|4032",   // Fede in oro giallo 18 carati, 3,2 mm
   "a7-maglione-in-seta-e-cashmere-emporio-arma": "e/ea/Jersei-coll-alt.jpg|678",   // Maglione in seta e cashmere Emporio Armani
-  "a7-emporio-armani-sea-explorer-automatico": "1/16/Seiko_Automatic_Diver's_200m.jpg|3648",   // Emporio Armani Sea Explorer automatico
   "a7-valentino-rockstud-decollete-100-mm": "8/82/Rockstud_leather_caged_pumps_on_feet_(20240531202508).jpg|5049",   // Valentino Rockstud, décolleté 100 mm
   "a7-caban-emporio-armani-in-lana-tweed": "2/22/US_Navy_p_coat_wiki.jpg|288",   // Caban Emporio Armani in lana pied-de-poule
   "a7-cartier-tank-must-quarzo": "d/df/Cartier_Tank.jpg|2726",   // Cartier Tank Must, quarzo
@@ -1118,7 +1101,7 @@ window.SG_PREZZO_FOTO = {
   "a7-ingresso-alla-basilica-di-san-marco": "6/61/Venezia_Basilica_di_San_Marco_Fassade_2.jpg|4574",   // Ingresso alla Basilica di San Marco
   "a7-traghetto-napoli-capri-nave-lenta": "3/33/Capri_coastline.jpg|3072",   // Traghetto Napoli-Capri, nave lenta
   "a7-treno-dall-aeroporto-di-parigi-al-centro": "f/f1/RER-B_at_Charles_de_Gaulle.jpg|2816",   // Treno dall'aeroporto di Parigi al centro
-  "a7-seggiovia-del-monte-solaro-andata-e-rito": "4/47/Monte_Solaro_Chairlift_索拉羅山纜車_-_panoramio.jpg|3264",   // Seggiovia del Monte Solaro, andata e ritorno
+  "a7-seggiovia-del-monte-solaro-andata-e-rito": "6/65/Monte_Solaro_Chairlift_索拉羅登山纜車_-_panoramio_(1).jpg|3264",   // Seggiovia del Monte Solaro, andata e ritorno (22 nov 2026, ripasso: seggiovia del Monte Solaro: un edificio, la seggiovia non si vede; prima Monte_Solaro_Chairlift_索拉羅山纜車_-_panoramio.jpg)
   "a7-teatro-antico-di-taormina": "6/6d/Teatro_Antico_di_Taormina_(44895386195).jpg|5920",   // Teatro Antico di Taormina
   "a7-salita-al-campanile-di-san-marco": "8/8c/Campanile_of_St._Mark's_Basilica_-_remote_view.jpg|5889",   // Salita al Campanile di San Marco
   "a7-salita-alla-cupola-di-san-pietro-a-piedi": "0/03/Dome_of_St._Peter_in_the_afternoon.JPG|6016",   // Salita alla Cupola di San Pietro, a piedi
@@ -1146,7 +1129,7 @@ window.SG_PREZZO_FOTO = {
   "a7-disneyland-paris-biglietto-flessibile": "f/f1/Disneyland_Park_05,_Paris_22_August_2013.jpg|3872",   // Disneyland Paris, biglietto flessibile
   "a7-notte-in-un-hotel-3-stelle-a-roma": "e/e1/Bed_in_hotel_room_6.jpg|4048",   // Notte in un hotel 3 stelle a Roma
   "a7-interrail-global-pass-4-giorni-in-un-mes": "d/dc/09.05.22_Trelleborg_Centralstation_X61_037,_X61_057_and_X61_047_(52093968846).jpg|5827",   // Interrail Global Pass, 4 giorni in un mese
-  "a7-crociera-di-7-notti-nel-mediterraneo": "e/ec/Legend_of_the_Seas.png|2048",   // Crociera di 7 notti nel Mediterraneo
+  "a7-crociera-di-7-notti-nel-mediterraneo": "8/8c/Costa_Diadema_13-5-2025.jpg|3000",   // Crociera di 7 notti nel Mediterraneo (22 nov 2026, ripasso: la foto non c'è più su Commons (cancellata): nel gioco si vede l'emoji; prima Legend_of_the_Seas.png)
   "a7-una-settimana-alle-maldive": "8/82/MaldivesBungalows.jpg|3024",   // Una settimana alle Maldive
   "a7-safari-di-una-settimana-in-kenya": "1/17/Masai_Mara_at_Sunset.jpg|2400",   // Safari di una settimana in Kenya
   "a7-biglietto-del-vaporetto-per-7-giorni": "7/75/Venezia_Vaporetto_ACTV43_R01.jpg|4462",   // Biglietto del vaporetto per 7 giorni
@@ -1186,7 +1169,7 @@ window.SG_PREZZO_FOTO = {
   "a7-tavola-da-sup-gonfiabile": "8/84/Inflatable_Stand_Up_Paddle_board.png|617",   // Tavola da SUP gonfiabile
   "a7-zaino-da-trekking-50-litri": "d/d7/Rucksack1.jpg|1458",   // Zaino da trekking, 50 litri
   "a7-tavolo-da-ping-pong-da-interno": "c/c9/Table_Tennis_racquet_and_ball_on_table_with_the_net_-_side_view.jpg|4624",   // Tavolo da ping pong da interno
-  "a7-risiko-edizione-classica": "4/48/UK_Risk_Pieces_'80s.jpg|3264",   // Risiko! edizione classica
+  "a7-risiko-edizione-classica": "8/8c/Amsterdam_-_Risk_players_-_1136_(cropped).jpg|1977",   // Risiko! edizione classica (22 nov 2026, ripasso: Si vedono solo pedine di plastica colorate in uno scatolone. La foto è scura e il…; prima UK_Risk_Pieces_'80s.jpg)
   "a7-monopoly-edizione-classica": "7/78/Monopoly_board_on_white_bg.jpg|1463",   // Monopoly edizione classica
   "a7-mazzo-di-carte-uno": "7/72/Uno_Old_Deck.jpg|640",   // Mazzo di carte Uno
   "a7-cubo-di-rubik-3x3": "6/61/Rubiks_cube_solved.jpg|600",   // Cubo di Rubik 3x3
@@ -1203,7 +1186,6 @@ window.SG_PREZZO_FOTO = {
   "a7-violino-da-studio": "1/1b/Violin_VL100.png|700",   // Violino da studio
   "a7-chitarra-elettrica-fender-stratocaster-p": "6/63/Fender_Stratocaster_004-2.jpg|1432",   // Chitarra elettrica Fender Stratocaster Player II
   "a7-lezione-di-tennis-privata": "4/4a/Tennis_Racquets_and_Balls_on_a_Clay_Court.jpg|3246",   // Lezione di tennis privata
-  "a7-marca-da-bollo": "4/47/Marca_da_bollo_adesiva.jpg|1564",   // Marca da bollo
   "a7-lettera-con-posta-ordinaria": "0/0a/Daschle_letter.jpg|400",   // Lettera con posta ordinaria
   "a7-raccomandata-ordinaria": "e/ee/Registered_envelope_of_Kenya_and_Uganda_1930.jpg|1637",   // Raccomandata ordinaria
   "a7-libro-spedito-con-le-poste": "c/c0/Parcelfromamazon.jpeg|3333",   // Libro spedito con le Poste
@@ -1234,14 +1216,14 @@ window.SG_PREZZO_FOTO = {
   "a7-zeppola-di-san-giuseppe": "b/b8/Zeppole_di_San_Giuseppe.jpg|960",   // Zeppola di San Giuseppe
   "a7-pani-ca-meusa": "e/e3/Pani_ca_meusa.jpg|3968",   // Pani ca' meusa
   "a7-pasta-di-gragnano-igp-500-g": "e/e9/Spaghetti_di_Gragnano_e_colatura_di_alici.jpg|2800",   // Pasta di Gragnano IGP, 500 g
-  "a7-pomodori-san-marzano-dop-400-g": "5/5e/TomateSanMarzano.jpg|2448",   // Pomodori San Marzano DOP, 400 g
+  "a7-pomodori-san-marzano-dop-400-g": "4/4f/San_Marzano_Tomatoes.jpg|698",   // Pomodori San Marzano DOP, 400 g (22 nov 2026, ripasso: Pomodori allungati sulla pianta: tipo San Marzano riconoscibile, ma non i pelati in…; prima TomateSanMarzano.jpg)
   "a7-cioccolato-di-modica-igp-100-g": "9/98/Cioccolato_di_Modica.jpg|5472",   // Cioccolato di Modica IGP, 100 g
   "a7-cantucci-di-prato-igp-250-g": "1/15/I_cantuccini.jpg|3244",   // Cantucci di Prato IGP, 250 g
   "a7-caldarroste-un-cartoccio": "f/fb/Chestnuts_roasted.jpg|1280",   // Caldarroste, un cartoccio
   "a7-pane-di-altamura-dop-1-kg": "7/77/Pane-di-altamura-dop-official.jpg|5616",   // Pane di Altamura DOP, 1 kg
   "a7-mazzo-di-carte-napoletane": "c/c4/Carte_napoletane_al_completo.jpg|3507",   // Mazzo di carte napoletane
   "a7-nduja-di-spilinga-200-g": "0/04/'Nduja.JPG|3888",   // 'Nduja di Spilinga, 200 g
-  "a7-cocomero-intero-8-kg": "6/6f/Whole_Watermelon.jpg|3120",   // Cocomero intero, 8 kg
+  "a7-cocomero-intero-8-kg": "d/d9/البطيخ_الأحمر.JPG|4320",   // Cocomero intero, 8 kg (22 nov 2026, ripasso: Meloni verde chiaro, non un cocomero a buccia verde striata.; prima Whole_Watermelon.jpg)
   "a7-lenticchie-di-castelluccio-igp-500-g": "6/6e/Lenticchie_z01.jpg|800",   // Lenticchie di Castelluccio IGP, 500 g
   "a7-stella-di-natale-in-vaso": "e/e1/Weihnachtsstern_-_groß.jpg|980",   // Stella di Natale in vaso
   "a7-ricciarelli-di-siena-igp-250-g": "9/97/Ricciarelli_from_Siena-2.jpg|2048",   // Ricciarelli di Siena IGP, 250 g
@@ -1299,7 +1281,6 @@ window.SG_PREZZO_FOTO = {
   "a7-tissot-prx-40-mm-al-quarzo": "3/39/Tissot_PRX_35mm.jpg|1200",   // Tissot PRX 40 mm al quarzo (25 ott 2026, seconda ricerca)
   "a7-avviso-di-ricevimento": "e/e9/Avis_de_réception_-_Deutsche_Post_-_return_from_Belgium_-_front_side.jpg|3408",   // Avviso di ricevimento (25 ott 2026, seconda ricerca)
   "a7-il-730-fatto-al-caf": "c/c2/Modello_730.jpg|1241",   // Il 730 fatto al CAF (25 ott 2026, seconda ricerca)
-  "a7-rinnovo-della-patente-b": "b/b6/Italian_driving_licence_validation_stickers.jpg|2199",   // Rinnovo della patente B (25 ott 2026, seconda ricerca)
   "a7-vaccino-per-il-cane": "8/85/Ear_examination_of_a_white_dog_in_Newark,_New_Jersey.jpg|4284",   // Vaccino per il cane (25 ott 2026, seconda ricerca)
   "a7-visita-dal-pediatra": "d/d2/Stethoscope-2.png|600",   // Visita dal pediatra (25 ott 2026, seconda ricerca)
   "a7-giardiniere-un-ora": "b/bf/Trimming_the_Parterre_Hedging_at_Pitmedden_-_geograph.org.uk_-_1880461.jpg|2816",   // Giardiniere, un'ora (25 ott 2026, seconda ricerca)
@@ -1307,7 +1288,7 @@ window.SG_PREZZO_FOTO = {
   "a7-musical-in-poltronissima": "b/bd/A_scene_from_the_musical_play_\"Hello,_Dolly!\"_by_Lee_University_Theatre_02.jpg|6357",   // Musical in poltronissima (25 ott 2026, seconda ricerca)
   "a7-tappetino-da-yoga": "7/76/Yoga_mats.png|3000",   // Tappetino da yoga (25 ott 2026, seconda ricerca)
   "a7-i-coloni-di-catan": "9/9e/Settlers_of_Catan_completed.jpg|4032",   // I Coloni di Catan (25 ott 2026, seconda ricerca)
-  "a7-minecraft-per-nintendo-switch": "5/53/Minecraft_Creeper.jpg|1920",   // Minecraft per Nintendo Switch (25 ott 2026, seconda ricerca)
+  "a7-minecraft-per-nintendo-switch": "a/a9/Minecraft_Creeper_(Crop).png|239",   // Minecraft per Nintendo Switch (22 nov 2026, ripasso: la foto non c'è più su Commons (cancellata): nel gioco si vede l'emoji; prima Minecraft_Creeper.jpg)
   "a2-v-cucina#0": "f/f1/California_Kitchen_Oven_Installation_2.jpg|2288",   // Forno a vapore da incasso (25 ott 2026, seconda ricerca)
   "a2-v-smart#3": "4/43/Height_adjustable_workstation.jpg|3024",   // Scrivania elettrica (25 ott 2026, seconda ricerca)
   "a2-v-giardino#2": "9/9c/Whirlpool_bestway_lay-z-spa_Miami.jpg|4080",   // Idromassaggio gonfiabile (25 ott 2026, seconda ricerca)
