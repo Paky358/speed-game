@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 421,
+    data: "24 novembre 2026",
+    titolo: "Fine partita: medaglie per posto e la serata intera 🏆",
+    descrizione: [
+      "🥇 In tutti i giochi le medaglie vanno per posto: 1° oro, 2° argento, 3° bronzo, poi «4°». A pari merito lo stesso posto: con due secondi tutti e due l'argento e chi viene dopo è 4°. Online e sullo stesso telefono la stessa partita dà le stesse medaglie.",
+      "🏆 La riga della Classifica della serata a fine partita non si taglia più a metà di un nome: va a capo e, se non ci stanno tutti, dice «e altri 3». Online c'è sempre anche il tuo posto."
+    ]
+  },
+  {
     v: 420,
     data: "23 novembre 2026",
     titolo: "📡 Stessa Lunghezza d'Onda: medaglie per posto e avatar a ventaglio",

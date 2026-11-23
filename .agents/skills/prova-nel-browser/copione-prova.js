@@ -2239,7 +2239,7 @@
       // la riga della Classifica della serata a fine partita: "🏆 Serata: Paky 1° · Luca 2° · Giulia 3° · …" (a pari punti lo stesso posto)
       var rigaSerata = function (t) { var cl = t.nomi.map(function (n) { return { nome: n, punti: t.punti[n] || 0 }; }).sort(function (a, b) { return b.punti - a.punti; }), po = [];
         cl.forEach(function (r, i) { po.push(i && r.punti === cl[i - 1].punti ? po[i - 1] : i + 1); });
-        return "🏆 Serata: " + cl.slice(0, 8).map(function (r, i) { return r.nome + " " + po[i] + "°"; }).join(" · ") + (cl.length > 8 ? " · …" : ""); };   // (21 nov 2026: tutti quelli che ci stanno, nome e posto attaccati)
+        return "🏆 Serata: " + cl.slice(0, 8).map(function (r, i) { return r.nome + " " + po[i] + "°"; }).join(" · ") + (cl.length > 8 ? " · e altri " + (cl.length - 8) : ""); };   // (21 nov 2026: tutti quelli che ci stanno, nome e posto attaccati)
       var CURVA = [100, 78, 62, 50, 40, 32, 25, 19, 14, 10];
       // i punti di una partita: per posto, peso del gioco compreso
       function controllaPunti(ass, peso, gioco) {
@@ -3153,10 +3153,11 @@
       var t1 = await W.aspetta(function () { return P.__tav; }, 4000); if (!t1) no("la Patata non parte");
       t1.fine([{ nome: "Paky", pos: 1 }, { nome: "Giulia", pos: 2 }]);
       var riga = function () { var b = P.document.querySelector(".fine-serata"); return b ? b.textContent : ""; };
-      if (!await W.aspetta(function () { return /Classifica della serata: Paky 1° · Giulia 2°/.test(riga()); }, 3000)) no("a fine partita non c'è «🏆 Classifica della serata: Paky 1° · Giulia 2°» («" + riga() + "»)");
+      if (!await W.aspetta(function () { return /Classifica della serata: Paky\s1° · Giulia\s2°/.test(riga()); }, 3000)) no("a fine partita non c'è «🏆 Classifica della serata: Paky 1° · Giulia 2°» («" + riga() + "»)");
       var mis = await misureSchermata(P, "Paky"); if (mis) no("la fine con la riga della serata: " + mis);
       if (!W.clicca(P, /Rigioca/)) no("non c'è «↻ Rigioca»");
-      var t2 = await W.aspetta(function () { return P.__tav !== t1 && P.__tav; }, 4000); if (!t2) no("«Rigioca» non fa ripartire la Patata");
+      // (dalla v403 «Rigioca» passa dalla pagina delle regole con quelle di prima: si tocca «Comincia»)
+      var t2 = await W.aspetta(function () { return P.__tav !== t1 && P.__tav || (W.clicca(P, /^Comincia/, ".piede button"), null); }, 6000); if (!t2) no("«Rigioca» e «Comincia» non fanno ripartire la Patata");
       t2.fine([{ nome: "Giulia", pos: 1 }, { nome: "Paky", pos: 2 }]);
       if (!await W.aspetta(function () { return riga(); }, 3000)) no("alla 2ª fine non c'è la riga della serata");
       var r1 = riga();

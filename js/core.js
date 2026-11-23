@@ -1750,14 +1750,15 @@
 
   // ---- Tabellone finale (uguale per tutti i giochi) ----
   // classifica: array ordinato dal 1° all'ultimo, ognuno { nome, punti (facolt.) }
-  // le medaglie a pari merito: oro, oro, poi ARGENTO per il gruppo dopo (non bronzo). posti = [1, 1, 3, 4] → 🥇🥇🥈🥉
-  // (dal quarto gruppo in giù si scrive il posto vero: "5°")
+  // (24 nov 2026) le medaglie vanno per POSTO, come online in Stessa Lunghezza d'Onda: 1° oro, 2° argento, 3° bronzo, poi «4°».
+  // A pari merito lo stesso posto: posti = [1, 2, 2, 4] → 🥇🥈🥈4° (niente bronzo); [1, 1, 3] → 🥇🥇🥉. Il posto è quello
+  // «da gara» (1 + quanti stanno davanti), anche se il gioco dà i posti di fila ai pari (es. a squadre [1, 1, 2, 2] → 🥇🥇🥉🥉).
+  // Prima andavano per gruppi di punti ([1, 1, 3, 4] → 🥇🥇🥈🥉): la stessa partita dava medaglie diverse online e sullo stesso telefono
   var MEDAGLIE = ["🥇", "🥈", "🥉"];
   function medaglieAPari(posti) {
-    var gruppi = 0, prec = null;
     return posti.map(function (p) {
-      if (p !== prec) { gruppi++; prec = p; }
-      return MEDAGLIE[gruppi - 1] || p + "°";
+      var posto = 1 + posti.filter(function (q) { return q < p; }).length;
+      return MEDAGLIE[posto - 1] || posto + "°";
     });
   }
   // tanti giocatori (più di 6), o righe che non starebbero nello schermo coi tasti sotto (es. 6 su un 360x640):
@@ -1794,9 +1795,23 @@
     // sullo stesso telefono, più giochi di fila con lo stesso gruppo: "🏆 Classifica della serata: Paky 1° · Luca 2°" (tocco → la classifica)
     if (!faccine && cuore.torneo && cuore.torneo.auto && cuore.torneo._fine === classifica) {
       var clS = cuore.classificaTorneo();
-      s._piede.appendChild(el("button", { class: "fine-serata", type: "button", onclick: cuore.schermataTorneoHub,
-        // (a pari punti, stesso posto: prima diceva 1°, 2°, 3° anche se erano tutti pari)
-        text: "🏆 Classifica della serata: " + clS.slice(0, 3).map(function (r, i) { var p = r.punti != null ? 1 + clS.filter(function (q) { return q.punti > r.punti; }).length : i + 1; return r.nome + " " + p + "°"; }).join(" · ") + " ›" }));
+      // (24 nov 2026: la riga va a capo, al massimo due righe, con quelli che ci stanno e «e altri N»: mai un nome tagliato a metà)
+      var txS = el("span", { class: "fine-serata-tx" });
+      var bS = el("button", { class: "fine-serata", type: "button", onclick: cuore.schermataTorneoHub }, [ txS ]);
+      s._piede.appendChild(bS);
+      var serataK = function (k) {   // (a pari punti, stesso posto: prima diceva 1°, 2°, 3° anche se erano tutti pari)
+        var v = clS.slice(0, k).map(function (r, i) { var p = r.punti != null ? 1 + clS.filter(function (q) { return q.punti > r.punti; }).length : i + 1; return r.nome + " " + p + "°"; });
+        if (clS.length > k) v.push("e altri " + (clS.length - k));
+        return "🏆 Classifica della serata: " + v.join(" · ") + " ›";
+      };
+      var misuraS = function () {
+        if (!bS.isConnected) return;
+        var k = Math.min(8, clS.length); txS.textContent = serataK(k);
+        while (k > 1 && txS.scrollHeight > txS.clientHeight + 1) txS.textContent = serataK(--k);
+      };
+      txS.textContent = serataK(Math.min(3, clS.length));
+      [0, 60, 400, 1200].forEach(function (ms) { setTimeout(misuraS, ms); });
+      window.addEventListener("resize", function rs() { if (!bS.isConnected) return window.removeEventListener("resize", rs); misuraS(); });
     }
 
     // Dalla fine partita si resta nella stessa sala: rigioca, cambia gioco o modifica il gruppo

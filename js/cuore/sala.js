@@ -151,13 +151,13 @@
     k = k || 3;
     cl.forEach(function (r, i) { posti.push(i && r.punti === cl[i - 1].punti ? posti[i - 1] : i + 1); });
     var mio = -1; if (io) cl.forEach(function (r, i) { if (mio < 0 && stessoNome(r.nome, io)) mio = i; });
-    var pezzi = [], ult = -1;
+    // (24 nov 2026: niente più «…»: chi non ci sta lo dice «e altri N», così nessun nome resta a metà)
+    var pezzi = [], fuori = 0;
     cl.forEach(function (r, i) {
-      if (i >= k && i !== mio) return;
-      if (i > ult + 1) pezzi.push("…");
-      pezzi.push(r.nome + " " + posti[i] + "°"); ult = i;   // (nome e posto mai su due righe diverse)
+      if (i >= k && i !== mio) { fuori++; return; }
+      pezzi.push(r.nome + " " + posti[i] + "°");   // (nome e posto mai su due righe diverse)
     });
-    if (ult < cl.length - 1) pezzi.push("…");
+    if (fuori) pezzi.push("e altri " + fuori);
     return "🏆 Serata: " + pezzi.join(" · ");
   }
   function mioNomeT(R) {
@@ -275,7 +275,8 @@
     if (R.tx.textContent !== tx) R.tx.textContent = tx;
     // se non ci sta in due righe (schermo piccolo, nomi lunghi) si tolgono nomi dal fondo, mai il mio (tutto nello stesso momento: niente lampeggio)
     while (tx && k > 1 && R.nodo.isConnected && R.tx.clientHeight && R.tx.scrollHeight > R.tx.clientHeight + 1) { tx = rigaSerataT(T, --k, io); R.tx.textContent = tx; }
-    if (tx && !R.nodo.isConnected && !R.misura) { R.misura = 1; setTimeout(rigaPuntiOra, 60); }   // (appena la fine è sullo schermo: si misura)
+    // (appena la fine è sullo schermo si misura, e di nuovo dopo un attimo: la schermata di fine può arrivare dopo, il carattere pure)
+    if (tx && !R.misura) { R.misura = 1; [60, 400, 1200, 2500].forEach(function (ms) { setTimeout(function () { if (RIGA_PT === R) rigaPuntiOra(); }, ms); }); }
   }
   function schermataPodioT(T, host) {
     var s = schermata({ icona: "🏆", titolo: "Fine della serata!", sotto: T.n + (T.n === 1 ? " partita giocata" : " partite giocate") });
