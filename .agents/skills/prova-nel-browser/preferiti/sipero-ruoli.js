@@ -93,7 +93,10 @@
     if ((vm(C).scelte || {})[S.idDi(C, "Luca")] != null) no("toccando di nuovo la sua colonna Luca non torna libero");
     await scegli(C, "Giulia", "g", false); await W.dorme(500);
     if (!vm(C).piano || !vm(C).piano.ok) no("senza giudice e con Luca libero non si può partire (" + JSON.stringify(vm(C).piano) + ")");
-    if (!/Il giudice lo fa/.test(vm(C).piano.nota)) no("non si dice chi fa il giudice scelto dal gioco");
+    if (!vm(C).piano.auto) no("nel piano non c'è il giudice scelto dal gioco");
+    var nAuto = S.nomeDi(C, vm(C).piano.auto);
+    if (!await W.aspetta(function () { return /Se nessuno lo sceglie, il giudice lo f/.test(T(P)); }, 3000)) no("non si dice chi fa il giudice se nessuno lo sceglie");
+    if (!await W.aspetta(function () { return /il giudice lo fai tu/.test(T(W.finestra(nAuto))); }, 3000)) no(nAuto + " non legge «il giudice lo fai tu»");
     await S.partiRuoli(C);
     var a = vm(C).assegna, g = Object.keys(a).filter(function (k) { return a[k] === "g"; });
     if (g.length !== 1 || g[0] === S.idDi(C, "Paky")) no("il giudice scelto dal gioco non è uno libero o senza squadra (" + JSON.stringify(a) + ")");

@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 416,
+    data: "23 novembre 2026",
+    titolo: "🤨 Sì... però: scegliete voi giudice e squadre",
+    descrizione: [
+      "Online a squadre chi organizza sceglie quanti round giocare: 3, 5 o 7.",
+      "Prima di ogni round c'è la schermata dei ruoli: ⚖️ Giudice, 🟥 Squadra 1, 🟦 Squadra 2. Ognuno tocca dove vuole andare e vede subito chi c'è dove. Il giudice è uno solo e le squadre restano pari.",
+      "Niente fretta: si parte quando chi organizza tocca «▶ Si parte». Chi non sceglie va nella squadra più piccola, e se manca il giudice lo sceglie il gioco.",
+      "Durante il round, in alto, c'è sempre scritto dove sei: «Sei nella Squadra 1» o «Sei il giudice».",
+      "Chi arriva a partita in corso guarda il round e sceglie il suo posto al giro dopo."
+    ]
+  },
+  {
     v: 415,
     data: "23 novembre 2026",
     titolo: "🎡 La Ruota della Fortuna: più chiara per tutti",

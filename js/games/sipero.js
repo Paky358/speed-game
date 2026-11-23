@@ -598,14 +598,14 @@
       ".sp-rc:active{transform:scale(.97)}.sp-rc.cg{--rc:#ffc247}.sp-rc.c0{--rc:#ff8787}.sp-rc.c1{--rc:#74c0fc}",
       ".sp-rc.mio{box-shadow:inset 0 0 0 3px var(--rc),0 0 16px rgba(255,255,255,.12)}.sp-rc.cg.mio{background:linear-gradient(rgba(255,194,71,.22),rgba(255,194,71,.22)),var(--o-carta-piena,#151a2e)}",
       ".sp-rc.c0.mio{background:linear-gradient(rgba(255,135,135,.22),rgba(255,135,135,.22)),var(--o-carta-piena,#151a2e)}.sp-rc.c1.mio{background:linear-gradient(rgba(116,192,252,.22),rgba(116,192,252,.22)),var(--o-carta-piena,#151a2e)}",
-      ".sp-rc.no{opacity:.5;cursor:default}",
-      ".sp-rc-testa{font-weight:900;font-size:.98rem;color:var(--rc);padding:2px 0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".sp-rc.no{cursor:default}.sp-rc.no .sp-rc-stato{opacity:.75}.sp-rc.no:active{transform:none}",
+      ".sp-rc-testa{display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:900;font-size:.98rem;line-height:1.15;color:var(--rc);padding:2px 0 8px}.sp-rc-ic{font-size:1.35rem;line-height:1}",
       ".sp-rc-lista{flex:1 1 auto;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:5px}",
       ".sp-rc-p{display:flex;align-items:center;gap:5px;font-weight:700;font-size:.82rem;min-width:0;background:rgba(255,255,255,.07);border-radius:10px;padding:3px 5px;text-align:left}",
       ".sp-rc-p.io{background:rgba(255,255,255,.16)}.sp-rc-p .sp-av{width:26px;height:26px;flex:0 0 26px}.sp-rc-p span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       ".sp-rc-stato{font-size:.74rem;font-weight:800;color:var(--o-tenue,#a6acc8);padding-top:6px;min-height:1.3em}.sp-rc.mio .sp-rc-stato{color:var(--rc)}",
       ".sp-rc-liberi,.sp-rc-punti{flex:0 0 auto;margin:6px 12px 0;text-align:center;font-size:.82rem;color:var(--o-tenue,#a6acc8)}.sp-rc-punti:empty{display:none}",
-      ".sp-rc-nota.no{color:#ffb3b3}",
+      ".sp-rc-nota.no{color:#ffb3b3}.sp-rc-chi{font-weight:700;margin-top:2px}",
       ".sp-round .sp-giudbox .sp-av{width:54px;height:54px}.sp-round .sp-chi span.sp-pers{font-size:1rem;padding-right:12px}.sp-round .sp-chi .sp-av{width:40px;height:40px}"
     ].join("\n");
     document.head.appendChild(st);
@@ -937,7 +937,7 @@
     if (vecchia) vecchia.parentNode.removeChild(vecchia);
     var box = el("div", { class: "sp-pres-box" }, [
       el("div", { class: "sp-pres-tit", text: d.titolo }),
-      el("div", { class: "sp-pres-g" }, [el("span", { class: "sp-bigav", html: avatarHtml(d.giudice.nome, d.giudice.omino) }), el("span", { text: "⚖️ Giudice: " + d.giudice.nome })])
+      el("div", { class: "sp-pres-g" }, [el("span", { class: "sp-bigav", html: avatarHtml(d.giudice.nome, d.giudice.omino) }), el("span", { text: d.giudice.nome === "Tu" ? "⚖️ Il giudice sei tu" : "⚖️ Giudice: " + d.giudice.nome })])
     ]);
     d.gruppi.forEach(function (g, i) {
       if (i === 1 && d.gruppi.length === 2) box.appendChild(el("div", { class: "sp-contro", text: "contro" }));
@@ -1965,20 +1965,19 @@
         pres.forEach(function (p) { if (a[p.id] == null) { var k = c[0] <= c[1] ? 0 : 1; a[p.id] = k; c[k]++; } });
         return c;
       }
-      var a = null, giud = pres.filter(function (p) { return base[p.id] === "g"; })[0], note = [];
+      var a = null, giud = pres.filter(function (p) { return base[p.id] === "g"; })[0], note = [], auto = null;
       if (giud) { a = Object.assign({}, base); riempi(a); }
       else {
         var cands = pres.slice().sort(function (x, y) { return ((st.giudicati[x.id] || 0) - (st.giudicati[y.id] || 0)) || ((base[x.id] == null ? 0 : 1) - (base[y.id] == null ? 0 : 1)) || (pos[x.id] - pos[y.id]); });
         for (var i = 0; i < cands.length && !a; i++) { var tA = Object.assign({}, base); tA[cands[i].id] = "g"; var cc = riempi(tA); if (cc[0] && cc[1]) { a = tA; giud = cands[i]; } }
         if (!a) { giud = cands[0]; a = Object.assign({}, base); a[giud.id] = "g"; riempi(a); }
-        note.push("⚖️ Il giudice lo fa " + giud.nome + " (nessuno l'ha scelto)");
+        auto = giud.id;
       }
       var n = [0, 0]; pres.forEach(function (p) { if (a[p.id] === 0 || a[p.id] === 1) n[a[p.id]]++; });
       if (!n[0] || !n[1]) return { ok: false, perche: "La " + nomeSq(n[0] ? 1 : 0) + " è vuota: qualcuno ci deve andare." };
-      if (pres.some(function (p) { return base[p.id] == null && a[p.id] !== "g"; })) note.push("Chi non ha scelto va nella squadra più piccola");
-      return { ok: true, nota: note.join(" · "), assegna: a };
+      return { ok: true, auto: auto, liberi: pres.some(function (p) { return base[p.id] == null && a[p.id] !== "g"; }), assegna: a };
     }
-    function pianoVm() { var p = pianoRuoli(); return { ok: p.ok, perche: p.perche || "", nota: p.nota || "" }; }
+    function pianoVm() { var p = pianoRuoli(); return { ok: p.ok, perche: p.perche || "", auto: p.auto || null, liberi: !!p.liberi }; }
     // ▶ «Si parte» (solo chi tiene la partita)
     function parti(id) {
       if (id !== IO || st.fase !== "ruoli") return;
@@ -2400,7 +2399,7 @@
     if (vm.fase !== "gioco" || V.introK === k || (vm.inizio || 0) > 2500 || !vm.giudiceId) return;
     if (vm.solo ? vm.passoS !== "bonus" : !(vm.step && vm.step.i === 0)) return;
     V.introK = k;
-    function persona(g, capo) { return { nome: g.id === cb.myId ? g.nome + " (tu)" : g.nome, omino: cb.omino(g.id), capo: capo }; }
+    function persona(g, capo) { return { nome: g.id === cb.myId ? "Tu" : g.nome, omino: cb.omino(g.id), capo: capo }; }   // (23 nov 2026: «Paky (tu)» si tagliava)
     var gruppi;
     if (vm.solo) {
       gruppi = [{ titolo: "🙋 Ognuno per sé", k: "s", persone: (vm.pres || []).map(function (id) { var g = vm.giocatori.filter(function (x) { return x.id === id; })[0]; return g ? persona(g) : null; }).filter(Boolean) }];
@@ -2410,7 +2409,7 @@
     }
     var tit = vm.totale > 1 ? "Round " + vm.round + " di " + vm.totale : "Round unico";
     var sotto = vm.solo ? "2 Bonus sul tuo scenario, poi 1 Malus su quello del vicino" : "👑 = il capo: decide le carte, gli altri le segnano";
-    presenta(V.ui, { titolo: "🥊 " + tit, giudice: { nome: vm.giudiceId === cb.myId ? vm.giudiceNome + " (tu)" : vm.giudiceNome, omino: cb.omino(vm.giudiceId) }, gruppi: gruppi, sotto: sotto });
+    presenta(V.ui, { titolo: "🥊 " + tit, giudice: { nome: vm.giudiceId === cb.myId ? "Tu" : vm.giudiceNome, omino: cb.omino(vm.giudiceId) }, gruppi: gruppi, sotto: sotto });
   }
 
   function lobbyOn(V, vm, cb) {
@@ -2479,7 +2478,7 @@
         c.nodo = el("button", { type: "button", class: "sp-rc " + (r === "g" ? "cg" : "c" + r), onclick: function () {
           if (c.nodo.classList.contains("no")) return;
           vibra(15); cb.onRuolo(r);
-        } }, [el("div", { class: "sp-rc-testa", text: r === "g" ? "⚖️ Giudice" : emoSq(r) + " " + nomeSq(r) }), c.lista, c.stato]);
+        } }, [el("div", { class: "sp-rc-testa" }, [el("span", { class: "sp-rc-ic", text: r === "g" ? "⚖️" : emoSq(r) }), el("span", { text: r === "g" ? "Giudice" : nomeSq(r) })]), c.lista, c.stato]);
         return c;
       });
       R.guida = el("p", { class: "sp-rc-guida" });
@@ -2522,15 +2521,20 @@
     testoSe(R.punti, conPunti.length ? "🏆 " + conPunti.map(function (g) { return (g.id === cb.myId ? "Tu" : g.nome) + " " + g.punti; }).join(" · ") : "");
     // il piede: il tasto di chi tiene la partita (spento col perché) o chi aspetta
     var pz = vm.piano || { ok: false, perche: "" }, host = vm.giocatori.filter(function (g) { return g.id === (vm.hostId || "host"); })[0];
-    var kp = JSON.stringify([cb.sonoHost, pz, host ? host.nome : ""]);
+    // (se si parte adesso) chi fa il giudice scelto dal gioco e chi va nella squadra più piccola: detto a chi tocca
+    var nAuto = pz.auto ? (pz.auto === cb.myId ? "tu" : (vm.giocatori.filter(function (g) { return g.id === pz.auto; })[0] || {}).nome) : null;
+    var nota = pz.ok ? [nAuto ? "⚖️ Se nessuno lo sceglie, " + (nAuto === "tu" ? "il giudice lo fai tu" : "il giudice lo fa " + nAuto) : "", pz.liberi ? "Chi non sceglie va nella squadra più piccola" : ""].filter(Boolean).join(" · ") : pz.perche;
+    var kp = JSON.stringify([cb.sonoHost, pz.ok, nota, host ? host.nome : ""]);
     if (R.kp !== kp) {
       R.kp = kp; svuota(R.piede);
       if (cb.sonoHost) {
         var b = el("button", { class: "btn btn-primario", text: "▶ Si parte", onclick: function () { if (!pz.ok) return; b.disabled = true; vibra(20); cb.onParti(); } });
         if (!pz.ok) b.disabled = true;
-        R.piede.appendChild(el("div", { class: "sp-nota sp-rc-nota" + (pz.ok ? "" : " no"), text: pz.ok ? (pz.nota || "Quando siete pronti, tocca «Si parte»") : pz.perche }));
+        R.piede.appendChild(el("div", { class: "sp-nota sp-rc-nota" + (pz.ok ? "" : " no"), text: nota || "Quando siete pronti, tocca «Si parte»" }));
         R.piede.appendChild(b);
-      } else R.piede.appendChild(el("div", { class: "sp-nota sp-rc-nota", text: (pz.ok && pz.nota ? pz.nota + " · " : "") + "Quando siete pronti, " + (host ? host.nome : "chi organizza") + " fa partire il round ▶" }));
+      } else {
+        R.piede.appendChild(el("div", { class: "sp-nota sp-rc-nota" }, [nota ? el("div", { text: nota }) : null, el("div", { class: "sp-rc-chi", text: "Quando siete pronti, " + (host ? host.nome : "chi organizza") + " fa partire il round ▶" })]));
+      }
     }
   }
 

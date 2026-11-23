@@ -603,4 +603,5 @@
     await misure(w0, p0, "esito con «⏩ Avanti»");
     return "schermate a 360x640 e 412x915 senza scorrere" + errori();
   } });
+  COPIONE.aiuti.spLocale = { avvia: avviaLocale, passa: passa, gioca: gioca };   // (per le foto: sipero-foto.js)
 })();
