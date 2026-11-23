@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 417,
+    data: "23 novembre 2026",
+    titolo: "🤨 Sì... però: giudice e squadre anche sullo stesso telefono",
+    descrizione: [
+      "Sullo stesso telefono, a squadre, si sceglie quanti round giocare: 3, 5 o 7.",
+      "Prima di ogni round chi ha il telefono in mano mette giudice e squadre: tocca un nome e poi dove va, ⚖️ Giudice, 🟥 Squadra 1 o 🟦 Squadra 2. Si decide a voce, tutti insieme, senza passarsi il telefono.",
+      "Dopo un round le squadre di prima restano già segnate: si cambia solo chi vuole. Il giudice invece va scelto di nuovo.",
+      "Chi non viene messo da nessuna parte va nella squadra più piccola, e se manca il giudice lo sceglie il gioco tra chi l'ha fatto meno volte. Poi «▶ Si parte» e il telefono si passa solo per giocare le carte, come sempre."
+    ]
+  },
+  {
     v: 416,
     data: "23 novembre 2026",
     titolo: "🤨 Sì... però: scegliete voi giudice e squadre",

@@ -525,6 +525,9 @@
     note.push("Ognuno per sé in 3: 3 round, carta bianca, classifica");
     // a squadre in 5 (due squadre da 2): la carta bianca con «Chi la scrive?»
     w = await avviaLocale(["Paky", "Giulia", "Luca", "Sara", "Bea"], { si: "squadre", giri: 1, bianca: 1 });
+    // (dal 23 nov 2026 prima la schermata dei ruoli: chi ha il telefono tocca «Si parte», il gioco sistema chi resta)
+    if (!await W.aspetta(function () { return w.document.querySelector(".sp-ruoli-sc") && bottone(w, /Si parte/); }, 3000)) no("niente schermata dei ruoli");
+    W.clicca(w, /Si parte/);
     if (!await W.aspetta(function () { return /Squadra 1/.test(T(w)) && bottone(w, /Via ▶/); }, 3000)) no("niente schermata delle squadre");
     W.clicca(w, /Via ▶/);
     var primo = await W.aspetta(function () { var b = bottone(w, /^Sono /); return b ? b.textContent : null; }, 3000);

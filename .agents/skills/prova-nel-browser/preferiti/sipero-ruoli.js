@@ -9,6 +9,10 @@
 // spr2 in 3: una squadra vuota = «Si parte» spento col perché; nessun giudice = lo sceglie il gioco tra chi l'ha fatto meno;
 //      chi non tocca niente va nella squadra più piccola; chi esce libera il posto; l'host sparisce e il vice ha «Si parte».
 // spr3 le misure della schermata dei ruoli in 10 a 360x640 e 412x915 (niente scorre, niente esce, tasto intero).
+// spl1 sullo stesso telefono a squadre in 5 con 3 round: la schermata dei ruoli di chi ha il telefono (tocca un nome, poi la
+//      colonna), un giudice solo, squadra vuota = «Si parte» spento, nessun giudice = lo sceglie il gioco; dopo il round le
+//      squadre di prima già segnate e il giudice libero; 3 round e la classifica. spl2 le misure in 8 a 360x640 e 412x915.
+//   (spl1-spl2 vogliono anche migliora2/g3-sipero.js caricato: COPIONE.aiuti.spLocale)
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, vm = A.vm, no = A.no, T = A.T, S = A.sp;
@@ -148,6 +152,106 @@
       }
       f.style.width = "360px"; f.style.height = "740px";
     }
+    return note.join(" · ");
+  } });
+  // ===================== spl1-spl2: sullo stesso telefono (23 nov 2026) =====================
+  function chipL(w, nome) { return [].find.call(w.document.querySelectorAll(".sp-ruoli-sc button.sp-rc-p"), function (b) { return (b.lastChild && b.lastChild.textContent.trim()) === nome; }); }
+  function doveL(w, nome) {
+    var b = chipL(w, nome); if (!b) return "?";
+    var c = b.closest(".sp-rc"); if (!c) return "liberi";
+    return c.classList.contains("cg") ? "g" : c.classList.contains("c0") ? 0 : 1;
+  }
+  async function mettiL(w, nome, r) {
+    var b = chipL(w, nome); if (!b) no("nella schermata dei ruoli non c'è " + nome);
+    b.click(); await W.dorme(60);
+    if (!/Ora tocca dove va/.test(T(w))) no("toccato " + nome + " ma la guida non lo dice");
+    if (r === "liberi") w.document.querySelector(".sp-rcl-liberi").click(); else col(w, r).click();
+    await W.dorme(60);
+    if (doveL(w, nome) !== r) no(nome + " doveva andare in " + r + " ed è in " + doveL(w, nome));
+  }
+  function siParte(w) { return S.bottone(w, /Si parte/); }
+  // gioca un round a squadre fino alla schermata dei ruoli dopo (o alla classifica): tocca quello che c'è
+  async function roundL(w) {
+    var fine = Date.now() + 120000;
+    W.clicca(w, /Via ▶/);
+    while (Date.now() < fine) {
+      await W.dorme(250);
+      var d = w.document;
+      if (d.querySelector(".sp-ruoli-sc")) return "ruoli";
+      if (!d.querySelector(".sp-scena") && /Fine partita/.test(T(w))) return "fine";
+      if (W.clicca(w, /^Sono /)) continue;
+      var cc = [].slice.call(d.querySelectorAll(".sp-carta[role=button]")), g = S.bottone(w, /^Gioca ▶|^Conferma ▶/);
+      if (cc.length && g) {
+        for (var i = 0; i < cc.length && g.disabled; i++) if (!cc[i].classList.contains("su")) { cc[i].click(); await W.dorme(40); }
+        if (!g.disabled) { g.click(); await W.dorme(1300); continue; }
+      }
+      var vv = d.querySelector(".sp-vota:not([disabled])"); if (vv) { vv.click(); await W.dorme(150); vv.click(); await W.dorme(4500); continue; }
+      var tabs = d.querySelectorAll(".sp-tab button");
+      if (tabs.length && S.bottone(w, /Scelgo/)) { tabs[0].click(); await W.dorme(80); W.clicca(w, /Scelgo/); await W.dorme(300); W.clicca(w, /Scelgo|Conferma/); await W.dorme(3800); continue; }
+      if (W.clicca(w, /Scopriamo gli scenari|Prossimo scenario|Al verdetto|Tocca alla Squadra|Prossimo round|Classifica finale|Avanti|Via ▶/)) continue;
+    }
+    no("il round non finisce («" + T(w).slice(0, 140) + "»)");
+  }
+  COPIONE.aggiungi("spl1", { nome: "Sì… però sullo stesso telefono: i ruoli di chi ha il telefono, un giudice solo, squadra vuota, giudice del gioco, squadre di prima, 3 round", fai: async function () {
+    var nomi = ["Paky", "Giulia", "Luca", "Sara", "Bea"], note = [];
+    var w = await COPIONE.aiuti.spLocale.avvia(nomi, { si: "squadre", round: 3, bianca: 0 });
+    if (!await W.aspetta(function () { return w.document.querySelector(".sp-ruoli-sc"); }, 4000)) no("a squadre non parte con la schermata dei ruoli («" + T(w).slice(0, 120) + "»)");
+    if (!/Round 1 di 3/.test(T(w))) no("il titolo non dice «Round 1 di 3» («" + T(w).slice(0, 80) + "»)");
+    if (!nomi.every(function (n) { return doveL(w, n) === "liberi"; })) no("al primo round non sono tutti da sistemare (" + nomi.map(function (n) { return n + ":" + doveL(w, n); }).join(" ") + ") «" + T(w).slice(0, 300) + "»");
+    if (!/il giudice lo fa Paky/.test(T(w))) no("senza giudice non dice chi lo fa («" + T(w).slice(0, 200) + "»)");
+    if (siParte(w).disabled) no("«Si parte» spento con tutti da sistemare (il gioco può sistemarli)");
+    // un giudice solo: Giulia, poi Luca al suo posto → Giulia torna da sistemare
+    await mettiL(w, "Giulia", "g"); await mettiL(w, "Luca", "g");
+    if (doveL(w, "Giulia") !== "liberi") no("con due giudici Giulia non è tornata da sistemare");
+    note.push("un giudice solo");
+    // tutti nella Squadra 1 (tranne il giudice): «Si parte» spento col perché
+    var tutti4 = ["Paky", "Giulia", "Sara", "Bea"];
+    for (var k = 0; k < tutti4.length; k++) await mettiL(w, tutti4[k], 0);
+    if (!siParte(w).disabled || !/vuota/.test(T(w))) no("con la Squadra 2 vuota «Si parte» non è spento col perché");
+    await mettiL(w, "Sara", 1); await mettiL(w, "Bea", "liberi");
+    if (siParte(w).disabled) no("«Si parte» spento con una squadra per parte");
+    if (!/squadra più piccola/.test(T(w))) no("non dice che chi resta va nella squadra più piccola");
+    note.push("squadra vuota = spento");
+    siParte(w).click();
+    if (!await W.aspetta(function () { return S.bottone(w, /Via ▶/); }, 3000)) no("dopo «Si parte» niente presentazione del round");
+    if (!/Luca/.test(T(w))) no("nella presentazione non c'è il giudice Luca");
+    note.push("si parte");
+    var r = await roundL(w);
+    if (r !== "ruoli") no("dopo il round 1 niente schermata dei ruoli (" + r + ")");
+    if (!/Round 2 di 3/.test(T(w))) no("niente «Round 2 di 3»");
+    var gia = { Paky: 0, Giulia: 0, Sara: 1, Bea: 1 };   // (Bea era da sistemare: è andata nella squadra più piccola, la 2)
+    Object.keys(gia).forEach(function (n) { if (doveL(w, n) !== gia[n]) no("round 2: " + n + " non è già nella squadra di prima (" + doveL(w, n) + ")"); });
+    if (doveL(w, "Luca") !== "liberi") no("round 2: il giudice di prima è ancora giudice");
+    if (/il giudice lo fa Luca/.test(T(w))) no("round 2: il gioco rifà giudice Luca");
+    note.push("round 2: squadre di prima segnate, giudice libero");
+    siParte(w).click();
+    if (!await W.aspetta(function () { return S.bottone(w, /Via ▶/); }, 3000)) no("round 2 non parte");
+    r = await roundL(w); if (r !== "ruoli") no("dopo il round 2 niente ruoli (" + r + ")");
+    siParte(w).click(); await W.aspetta(function () { return S.bottone(w, /Via ▶/); }, 3000);
+    r = await roundL(w); if (r !== "fine") no("dopo 3 round non c'è la classifica (" + r + ")");
+    note.push("3 round e la classifica");
+    return note.join(" · ");
+  } });
+  COPIONE.aggiungi("spl2", { nome: "Sì… però sullo stesso telefono: la schermata dei ruoli in 8 a 360x640 e 412x915", fai: async function () {
+    var nomi = ["Paky", "Giulia", "Luca", "Sara", "Marco", "Bea", "Tom", "Ugo"], note = [];
+    var w = await COPIONE.aiuti.spLocale.avvia(nomi, { si: "squadre", round: 3 });
+    if (!await W.aspetta(function () { return w.document.querySelector(".sp-ruoli-sc"); }, 4000)) no("niente schermata dei ruoli");
+    var f = document.getElementById("tel-Paky");
+    for (var fase = 0; fase < 2; fase++) {
+      if (fase) { await mettiL(w, "Giulia", "g"); for (var i = 2; i < 8; i++) await mettiL(w, nomi[i], i % 2 ? 0 : 1); await mettiL(w, "Paky", 0); }
+      for (var m = 0; m < 2; m++) {
+        var L = m ? 412 : 360, H = m ? 915 : 640;
+        f.style.width = L + "px"; f.style.height = H + "px"; void w.document.documentElement.offsetHeight; w.dispatchEvent(new w.Event("resize"));
+        await W.dorme(450);
+        var d = w.document, q = (fase ? "sistemati " : "tutti liberi ") + L + "x" + H;
+        if (d.documentElement.scrollHeight > H + 1) no(q + ": la pagina scorre");
+        var p = d.querySelector(".sp-ruoli-sc .sp-piede").getBoundingClientRect(); if (p.bottom > H + 1) no(q + ": il piede esce");
+        [].forEach.call(d.querySelectorAll(".sp-ruoli-sc button.sp-rc-p"), function (x) { var b = x.getBoundingClientRect(); if (b.right > L + 1 || b.bottom > H + 1) no(q + ": " + x.textContent + " esce"); });
+        [].forEach.call(d.querySelectorAll(".sp-rc"), function (c) { var r = c.getBoundingClientRect(); [].forEach.call(c.querySelectorAll(".sp-rc-p"), function (x) { if (x.getBoundingClientRect().bottom > r.bottom + 1) no(q + ": un nome esce dalla colonna"); }); });
+        note.push(q + " ok");
+      }
+    }
+    f.style.width = "360px"; f.style.height = "740px";
     return note.join(" · ");
   } });
 })();

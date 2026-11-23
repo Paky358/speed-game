@@ -174,6 +174,24 @@ async function turno() {
           if (p) { p.click(); return p.textContent; } return ""; });
         scriviD("   tocco: " + ok);
       }
+    } else if (quale === "ruoli-locale") {
+      // (23 nov 2026) sullo stesso telefono a squadre: la schermata dei ruoli di chi ha il telefono, prima di ogni round
+      await ev(() => COPIONE.aiuti.spLocale.avvia(["Paky", "Giulia", "Luca", "Sara", "Bea"], { si: "squadre", round: 3, bianca: 0 }));
+      await dorme(1200);
+      await due("Paky", "ruoli-1-tutti-da-sistemare");
+      const tocca = (nome, r) => ev(([nome, r]) => { var d = window.finestra("Paky").document;
+        var b = [].find.call(d.querySelectorAll(".sp-ruoli-sc button.sp-rc-p"), function (x) { return x.lastChild.textContent.trim() === nome; }); if (b) b.click();
+        if (r != null) { var c = d.querySelector(".sp-rc." + (r === "g" ? "cg" : "c" + r)); if (c) c.click(); } }, [nome, r]);
+      await tocca("Giulia", null); await dorme(300);
+      await due("Paky", "ruoli-2-toccato-giulia");
+      await ev(() => { var d = window.finestra("Paky").document; d.querySelector(".sp-rc.cg").click(); }); await dorme(200);
+      for (const n of ["Paky", "Luca", "Sara", "Bea"]) { await tocca(n, 0); await dorme(150); }
+      await due("Paky", "ruoli-3-squadra-2-vuota");
+      await tocca("Sara", 1); await dorme(150); await tocca("Bea", 1); await dorme(300);
+      await due("Paky", "ruoli-4-pronti");
+      await ev(() => { var w = window.finestra("Paky"); [].find.call(w.document.querySelectorAll("button"), function (b) { return /Si parte/.test(b.textContent); }).click(); });
+      await dorme(1500);
+      await due("Paky", "ruoli-5-presentazione-del-round");
     }
 
     scriviD("✅ fine");
