@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 413,
+    data: "23 novembre 2026",
+    titolo: "🃏 Black Jack: si gioca subito",
+    descrizione: [
+      "Niente più presentazione all'inizio della partita: si apre il tavolo e si punta subito."
+    ]
+  },
+  {
     v: 412,
     data: "23 novembre 2026",
     titolo: "🃏 Black Jack: le carte in primo piano e la sala di gala",

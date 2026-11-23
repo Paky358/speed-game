@@ -2155,8 +2155,12 @@
     // Si salta con un tocco; online si vede una volta sola per stanza (chi rientra non la rivede).
     var intro = { fatta: false, corre: false, stop: false, velo: null };
     function introGiaVista() { if (drv.senzaIntro) return true; try { return !!(drv.stanza && sessionStorage.getItem("bj-intro-" + drv.stanza)); } catch (e) { return false; } }
+    // (23 nov 2026, il proprietario: «coi gettoni la presentazione del banco non ha più senso, si gioca direttamente») spenta per tutti:
+    // PRESENTAZIONE = true la riaccende (il croupier che saluta e la telecamera che passa su ognuno)
+    var PRESENTAZIONE = false;
     function apertura() {
       intro.fatta = true;
+      if (!PRESENTAZIONE) { telecamera(); return; }
       if (introGiaVista()) { telecamera(); return; }
       // (22 nov 2026) chi arriva a partita cominciata (o guarda) non si vede la presentazione sopra la mano degli altri: copriva le carte del banco
       if (vm.fase !== "punta" || vm.mano > 0 || vm.giocatori.some(function (g) { return g.puntata; })) { telecamera(); return; }
