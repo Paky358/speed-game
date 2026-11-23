@@ -42,6 +42,7 @@ async function turno() {
     const ev = (f, a) => page.evaluate(f, a);
     const dorme = ms => page.waitForTimeout(ms);
     const quale = arg.copione || "online", N = +(arg.n || 4);
+    await ev(p => { window.__BJPROP = p; }, arg.prop || "");
     const PRE = arg.pre || quale + (quale === "locale" ? "" : N) + "-";
     let nf = 0;
     async function scatta(nome, file, L, H) {
@@ -83,7 +84,37 @@ async function turno() {
     const passi = async (cond, ms) => { const t = Date.now() + (ms || 60000); while (Date.now() < t) { const v = await ev(() => { const v = BJT.vm(); return { fase: v.fase, turno: v.turno, g: (v.giocatori || []).map(g => g.nome) }; }); if (await ev(cond)) return true; if (v.fase === "punta") await ev(() => BJT.punta()); else if (v.fase === "assic" || v.fase === "gioca") await ev(() => BJT.turno()); await dorme(200); } return false; };
     fs.writeFileSync(DIARIO, "Copione " + quale + " in " + N + " · " + new Date().toISOString() + "\n");
     const AMICI = ["Giulia", "Luca", "Sara", "Marco", "Ugo", "Rita", "Teo", "Nina", "Elia"].slice(0, N - 1);
-    if (quale === "online" || quale === "gara") {
+    if (quale === "lento") {
+      // il computer rallentato ×4: fotogrammi lenti (sopra 50 ms) sul telefono di Paky in una mano intera
+      const cdp = await ctx.newCDPSession(page); await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+      await ev(([a]) => BJT.apri(a, { mani: 0 }, { monete: 25000 }), [AMICI]);
+      await ev(() => { const f = document.getElementById("tel-Paky"); f.style.transform = "none"; f.style.width = "360px"; f.style.height = "640px"; f.style.zIndex = 9999; const w = f.contentWindow; w.dispatchEvent(new w.Event("resize")); });
+      await ev(() => BJT.comincia());
+      await ev(() => { const w = window.finestra("Paky"); w.__ft = []; let u = w.performance.now(); (function g(t) { w.__ft.push(t - u); u = t; w.requestAnimationFrame(g); })(u); });
+      await passi(() => BJT.vm().fase === "esito", 120000);
+      await dorme(2000);
+      const r = await ev(() => { const a = window.finestra("Paky").__ft.slice(1); const lenti = a.filter(x => x > 50).length; a.sort((x, y) => x - y); return { n: a.length, lenti, med: Math.round(a[a.length >> 1]), p95: Math.round(a[Math.floor(a.length * 0.95)]), max: Math.round(a[a.length - 1]) }; });
+      scriviD("⏱ " + (arg.prop || "oggi") + " in " + N + " ×4: " + JSON.stringify(r));
+    } else if (quale === "prop") {
+      // le proposte: punta, tocca a Paky, tocca a un amico (visto da Paky), il banco, fine mano
+      const mazzo = ["10♠", "8♣", "9♦", "5♥", "6♠", "8♦", "7♣", "K♥", "Q♣", "4♥", "2♦"];
+      await ev(([a, m]) => BJT.apri(a, { mani: 0, consigli: true }, { monete: 25000, mazzo: m }), [AMICI, mazzo]);
+      await ev(() => BJT.comincia());
+      await dorme(2500);
+      await ev(() => BJT.punta(["Paky"])); await dorme(900);
+      await due("Paky", "punta");
+      await ev(() => BJT.punta());
+      await passi(() => { const v = BJT.vm(); return v.fase === "gioca" && (v.giocatori[v.turno] || {}).nome === "Paky"; });
+      await dorme(1600);
+      await due("Paky", "tocca-a-te");
+      await ev(() => BJT.turno(() => "Carta")); await dorme(300);
+      await passi(() => { const v = BJT.vm(); return v.fase === "gioca" && v.turno >= 2; });
+      await dorme(1600);
+      await due("Paky", "tocca-a-un-amico");
+      await passi(() => BJT.vm().fase === "esito");
+      await dorme(1800);
+      await due("Paky", "fine-mano");
+    } else if (quale === "online" || quale === "gara") {
       const imp = quale === "gara" ? { uguali: true, quota: 1000, mani: 6 } : { mani: 0 };
       if (arg.esperti) Object.assign(imp, { t213: true, royal: true, buster: true, charlie: true });
       // la prima mano truccata: Giulia ha due 8 (si divide), Paky 10+6

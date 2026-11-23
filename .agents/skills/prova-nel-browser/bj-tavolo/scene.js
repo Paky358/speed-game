@@ -17,7 +17,7 @@
   }
   function prepara(nome, opz) {
     var pf = portafoglio(nome, (opz && opz.monete) || 25000), tr = opz && opz.mazzo;
-    return function (w) { pf(w); if (tr) A.bjTrucca(w, tr); };
+    return function (w) { pf(w); if (tr) A.bjTrucca(w, tr); if (W.__BJPROP != null) try { w.localStorage.setItem("sg-bj-prop", W.__BJPROP); } catch (e) {} };
   }
   var BJT = W.BJT = {
     C: null, nomi: [], vm: vm, tasto: tasto, tocca: tocca,

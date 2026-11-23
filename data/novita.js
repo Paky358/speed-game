@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 412,
+    data: "23 novembre 2026",
+    titolo: "🃏 Black Jack: le carte in primo piano e la sala di gala",
+    descrizione: [
+      "Quando tocca a qualcuno la telecamera va sulle sue CARTE, grandi e col filo d'oro: tutti seguono la mano di tutti e si leggono bene.",
+      "I gettoni dei giocatori sono piccoli come sedie attorno al tavolo e le carte sul tavolo sono più grandi.",
+      "La sala è più bella: buia, con una luce calda sul tavolo, il panno verde smeraldo e il bordo col filo d'oro.",
+      "In tanti (9 o 10) la telecamera passa da uno all'altro più in fretta, e i nomi e le scritte «vince/perde» non si accavallano più.",
+      "Il fumetto «🤫 Ho puntato» dell'ultima mano della gara non copre più il nome di nessuno."
+    ]
+  },
+  {
     v: 411,
     data: "23 novembre 2026",
     titolo: "🃏 Black Jack: il tavolo si legge meglio",
