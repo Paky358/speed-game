@@ -943,10 +943,12 @@
     // "partita" (di partenza) = guarda ed entra alla prossima partita
     // (21 nov 2026: niente più «dal prossimo turno»: non tutti i giochi hanno i turni, e quando entri lo dice il gioco, più preciso)
     var rit = R.P.g.ritardatari, dal = rit === "turno" ? "tra poco" : (rit === "mano" ? "dalla prossima mano" : (rit === "subito" ? "già da adesso" : null));
-    var txF = cuore.aDue(R.P.g) ? "👀 Giocano in due: tu guardi" : (dal ? "✋ Partita in corso: giochi " + dal : "👀 Partita in corso: la guardi ed entri alla prossima");
-    // (nei giochi a due la pillola resta 4 secondi e poi sparisce: per tutta la partita copriva il punteggio in alto, Scopa C1)
+    if (inSaletta) R.eraInSaletta = true;   // (ero in saletta quando è cominciata: i posti erano finiti, non sono arrivato tardi)
+    var posti = +R.P.g.postiOnline || 0;
+    var txF = cuore.aDue(R.P.g) ? "👀 Giocano in due: tu guardi" : (dal ? "✋ Partita in corso: giochi " + dal : R.eraInSaletta && posti > 2 ? "👀 Giocano in " + posti + ": tu guardi questa partita" : "👀 Partita in corso: la guardi ed entri alla prossima");
+    // (la pillola resta 5 secondi e poi sparisce: per tutta la partita copriva il titolo e il tasto ‹. 23 nov 2026: in tutti i giochi, prima solo in quelli a due, Scopa C1)
     var mostraP = fuori;
-    if (fuori && cuore.aDue(R.P.g)) { if (!R.pillDue) R.pillDue = Date.now(); else if (Date.now() - R.pillDue > 4000) mostraP = false; }
+    if (fuori) { if (!R.pillDue) R.pillDue = Date.now(); else if (Date.now() - R.pillDue > (cuore.aDue(R.P.g) ? 4000 : 5000)) mostraP = false; }
     pillola("prossima", mostraP ? txF : null, "grigia");
     if (fuori) R.tardi = true;
     // l'host mi ha messo nella partita in corso (non ci ero già stato: chi ricarica non lo legge): una volta "🎉 Sei dentro!"

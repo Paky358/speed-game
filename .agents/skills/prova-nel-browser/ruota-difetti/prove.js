@@ -61,4 +61,39 @@
     var err = W.erroriTel(); if (err.length) no("errori: " + err.slice(0, 3).join(" / "));
     return giri + " giri, dopo: " + L.join(", ") + " · ruota intera dopo 2,5 s su tutti · punteggi interi";
   } });
+
+
+  // rd2: sullo stesso telefono in 2, quando il turno passa all'altro compare in grande «📱 Tocca a Giulia» (e sparisce da sola)
+  COPIONE.aggiungi("rd2", { nome: "Ruota sullo stesso telefono: «📱 Tocca a …» in grande quando cambia il turno", fai: async function () {
+    var P = await apri("Paky", { x: 0 });
+    var tess = await W.aspetta(function () { return A.tessera(P, "La Ruota della Fortuna"); }, 8000); if (!tess) no("non trovo la Ruota"); tess.click(); await W.dorme(400);
+    if (!W.clicca(P, /Sullo stesso telefono/, ".modo-grande")) no("niente «Sullo stesso telefono»");
+    await W.aspetta(function () { return P.document.querySelector(".sala-riga input"); }, 4000);
+    while (P.document.querySelectorAll(".sala-riga input").length < 2) { if (!W.clicca(P, /Aggiungi giocatore/)) break; await W.dorme(80); }
+    [].forEach.call(P.document.querySelectorAll(".sala-riga input"), function (c, k) { c.value = ["Paky", "Giulia"][k] || ""; c.dispatchEvent(new P.Event("input", { bubbles: true })); });
+    W.clicca(P, /Avanti/); await W.dorme(400);
+    [].forEach.call(P.document.querySelectorAll(".modo-chip"), function (x) { if (/Giochi veloci/.test(x.textContent) && /attiva/.test(x.className)) x.click(); });
+    if (!W.clicca(P, /Comincia/)) no("niente «Comincia»");
+    var R = P.__RUOTA, visti = [], t0 = Date.now();
+    if (!await W.aspetta(function () { return R.ultima && R.ultima.fase === "gira" && R.H && !R.H.sigla; }, 60000)) no("non comincia");
+    var on = false; var o = new P.MutationObserver(function () { var e = P.document.querySelector(".ru-passa"); if (e && e.classList.contains("on")) { on = true; visti.push(e.textContent); } });
+    o.observe(P.document.body, { subtree: true, attributes: true, attributeFilter: ["class"] });
+    var primo = R.ultima.giocatori[R.ultima.turno].nome;
+    // chi ha il turno chiama una consonante che non c'è: il turno passa
+    var storia = [];
+    for (var k = 0; k < 60 && !on; k++) {
+      var Q = R.ultima; var sk = Q.fase + ":" + Q.turno; if (storia[storia.length - 1] !== sk) storia.push(sk);
+      if (Q.fase === "gira") { var bg = [].find.call(P.document.querySelectorAll(".ru-azioni button"), function (b) { return /🎡 Gira/.test(b.textContent) && !b.disabled; }); if (bg) tocca(P, bg); }
+      if (Q.fase === "consonante") { var L = "BCDFGHLMNPRSTVZ".split("").filter(function (x) { return Q.frase.indexOf(x) < 0 && !Q.chiamate[x]; })[0] || "Q"; var b = lettera(P, L); if (b) { tocca(P, b); await W.dorme(300); b = lettera(P, L); if (b) tocca(P, b); } }
+      await W.dorme(900);
+    }
+    o.disconnect();
+    var pe = P.document.querySelector(".ru-passa"); if (!on) no("quando il turno passa non compare «Tocca a …» (" + storia.join(" ") + ") · elemento " + (pe ? "c'è, testo «" + pe.textContent + "» classi " + pe.className + " piatto " + !!(P.SGStudio && P.SGStudio.piatto) : "manca"));
+    if (!/📱 Tocca a /.test(visti[0])) no("la scritta è «" + visti[0] + "»");
+    await W.dorme(2200);
+    var e = P.document.querySelector(".ru-passa"), op = +P.getComputedStyle(e).opacity;
+    if (op > 0.05) no("la scritta resta (opacità " + op + ")");
+    var err = W.erroriTel(); if (err.length) no("errori: " + err.slice(0, 3).join(" / "));
+    return "primo turno " + primo + ", poi «" + visti[0] + "», sparita dopo 2 s";
+  } });
 })();

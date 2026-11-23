@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 415,
+    data: "23 novembre 2026",
+    titolo: "🎡 La Ruota della Fortuna: più chiara per tutti",
+    descrizione: [
+      "📐 Nei giochi veloci e quando un altro risolve, le scritte stanno al centro dello spazio libero (sul telefono grande prima metà schermo restava vuota).",
+      "✉️ Quando chi vince sceglie la busta, tutti vedono le 5 buste chiuse e seguono la scelta.",
+      "🔒 «La so!»: la spiegazione è più corta.",
+      "📱 Sullo stesso telefono, quando cambia il turno compare in grande «Tocca a Giulia»: si capisce subito a chi passare il telefono.",
+      "👀 In tutti i giochi, chi arriva a partita cominciata legge «Partita in corso…» per qualche secondo e poi la scritta sparisce (prima restava sopra il titolo); chi era in saletta quando i posti erano finiti legge «Giocano in 4: tu guardi questa partita»."
+    ]
+  },
+  {
     v: 414,
     data: "23 novembre 2026",
     titolo: "🎡 La Ruota della Fortuna: tutto in ordine",
