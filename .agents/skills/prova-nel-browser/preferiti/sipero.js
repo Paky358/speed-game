@@ -7,8 +7,8 @@
 //      può giocare (nemmeno mandando la mossa a mano), l'altra squadra segna già le carte per il suo turno, il capo gioca.
 // spn2 il capo sparisce: dopo 20 s il capo passa al compagno (che ha «Gioca»); sparisce anche lui: la squadra vuota gioca le carte
 //      con più faccine (quelle segnate), non a caso.
-// spn3 chi arriva tardi a squadre: mentre si giocano le carte sceglie la squadra (👈 la più piccola) ed entra subito con la mano;
-//      chi arriva all'arringa guarda ed entra dal round dopo; ogni nuovo = un round in più; alla fine tutti hanno fatto il giudice una volta.
+// spn3 (23 nov 2026) chi arriva tardi a squadre: guarda il round («finito questo round scegli anche tu»), niente scelta a metà round,
+//      i round restano quelli scelti; alla schermata dei ruoli dopo sceglie anche lui ed entra nella squadra che tocca.
 // spn4 il verdetto: un tocco sceglie («Confermi?»), il secondo decide; la luce (🥁) su tutti per ~3 s, poi chi ha vinto; vibrazione
 //      di festa a chi vince e un colpo a chi perde; la stella la mette solo il giudice, una volta; alla fine «⭐ Le carte…».
 // spn5 Ognuno per sé: chi arriva mentre si scelgono i Bonus entra subito (mano sua, giro dei Malus rifatto); chi arriva ai Malus
@@ -17,6 +17,8 @@
 // spn7 la memoria delle uscite: il mazzo nuovo mette in cima le carte mai viste; l'host ha segnato le carte arrivate in mano.
 // spn8 le misure a 360x640 e 412x915: capo, compagno col riquadro del capo, giudice che aspetta, chi arriva e sceglie, verdetto da
 //      confermare, esito con la stella: niente scorre, niente esce, nessuna scritta tagliata.
+// (23 nov 2026: a squadre online, dopo «Comincia» e dopo ogni round c'è la schermata dei ruoli: stanza() tocca da sola «▶ Si parte»
+//  a meno di { ruoli: true }; spn3 è rifatta per la regola nuova di chi arriva tardi. Le prove dei ruoli: preferiti/sipero-ruoli.js)
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, vm = A.vm, no = A.no, T = A.T;
@@ -34,7 +36,7 @@
   function membri(C, k) { var v = vm(C); return Object.keys(v.assegna || {}).filter(function (id) { return v.assegna[id] === k; }); }
   function vibrazioni(w) { w.__vib = []; try { Object.defineProperty(w.navigator, "vibrate", { configurable: true, value: function (p) { w.__vib.push(p); return true; } }); } catch (e) {} }
   // la stanza (non la Sala): Paky apre, gli amici entrano col link, le regole con la spia di g3-sipero
-  async function stanza(amici, imp) {
+  async function stanza(amici, imp, opz) {
     W.__spiaSp = [];
     var P = await W.apriTel("Paky", { x: 0, spiaSp: true, prima: function (w) { w.__imp = Object.assign({ giri: 1 }, imp || {}); } });
     var C = await W.apriStanza(P, "Sì... però");
@@ -44,10 +46,21 @@
       if (!await W.aspetta(function () { return (vm(C).giocatori || []).some(function (p) { return p.nome === n; }); }, 8000)) no(n + " non entra");
     }
     W.clicca(P, /Comincia/);
+    if (!await W.aspetta(function () { var f = vm(C).fase; return f === "gioco" || f === "ruoli"; }, 8000)) no("la partita non comincia (" + vm(C).fase + ")");
+    if (vm(C).fase === "ruoli") { if (opz && opz.ruoli) return { C: C, P: P }; await partiRuoli(C); }
     var v = await W.aspetta(function () { var x = vm(C); return x.fase === "gioco" ? x : null; }, 8000);
     if (!v) no("la partita non comincia (" + vm(C).fase + ")");
     await W.dorme(400);
     return { C: C, P: P };
+  }
+  // 👥 «▶ Si parte» di chi tiene la partita (ruoli lasciati al gioco se nessuno ha scelto)
+  async function partiRuoli(C, chi) {
+    var w = W.finestra(chi || "Paky");
+    var b = await W.aspetta(function () { var x = bottone(w, /Si parte/); return x && !x.disabled ? x : null; }, 6000);
+    if (!b) no("chi tiene la partita non ha «▶ Si parte» acceso («" + T(w).slice(0, 160) + "»)");
+    b.click();
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 6000)) no("dopo «Si parte» il round non comincia (" + vm(C).fase + ")");
+    await W.dorme(300);
   }
   // il capo della squadra di turno gioca le prime carte (o quelle già segnate); niente controlli
   async function giocaCapo(C) {
@@ -85,6 +98,7 @@
       else if (v.fase === "arringa") { W.clicca(telDi(C, v.giudiceId) || W.finestra("Paky"), /Tocca alla|Al verdetto/); await W.dorme(300); }
       else if (v.fase === "giudizio") { await decidi(C, 0); }
       else if (v.fase === "esito") { (v.giocatori || []).forEach(function (g) { var w = W.finestra(g.nome); if (w) W.clicca(w, /Avanti|Classifica/); }); await W.dorme(600); }
+      else if (v.fase === "ruoli") { var hn = nomeDi(C, v.hostId) || "Paky"; await partiRuoli(C, hn); }
       else await W.dorme(300);
     }
     if (vm(C).fase !== "fine") no("la partita non arriva alla classifica (" + vm(C).fase + ", round " + vm(C).round + ")");
@@ -169,29 +183,35 @@
     return "capo " + nc + " sparito → capo " + nomeDi(C, comp) + "; squadra vuota → giocate le " + scelte.length + " carte segnate";
   } });
 
-  // ===================== spn3: chi arriva tardi sceglie la squadra =====================
-  COPIONE.aggiungi("spn3", { nome: "Sì… però: chi arriva mentre si giocano le carte sceglie la squadra ed entra subito; all'arringa entra dal round dopo; tutti fanno il giudice", fai: async function () {
-    var X = await stanza(["Giulia", "Luca", "Sara"]), C = X.C, v = vm(C), tot0 = v.totale, note = [];
+  // ===================== spn3: chi arriva tardi (coi ruoli) =====================
+  COPIONE.aggiungi("spn3", { nome: "Sì… però: chi arriva mentre si gioca guarda il round e sceglie il suo posto alla schermata dei ruoli dopo", fai: async function () {
+    var X = await stanza(["Giulia", "Luca", "Sara"], { round: 3 }), C = X.C, v = vm(C), tot0 = v.totale, note = [];
+    if (tot0 !== 3) no("con «3 round» i round sono " + tot0);
     var wt = await W.apriTel("Tom", { hash: "gioco=sipero&stanza=" + C, x: 740, spiaSp: true });
-    if (!await W.aspetta(function () { return wt.document.querySelector(".sp-entra"); }, 8000)) no("Tom non vede la scelta della squadra («" + T(wt).slice(0, 140) + "»)");
-    var m0 = membri(C, 0).length, m1 = membri(C, 1).length, piccola = m0 < m1 ? 0 : m1 < m0 ? 1 : -1;
-    if (piccola >= 0 && !/più piccola/.test(wt.document.querySelector(".sp-entra .c" + piccola).textContent)) no("la squadra più piccola non ha «👈 è più piccola»");
-    if (!/entri dal prossimo round/.test(T(wt))) no("Tom non legge che può anche guardare ed entrare dal prossimo round");
-    var k = piccola >= 0 ? piccola : 1;
-    wt.document.querySelector(".sp-entra .c" + k).click();
-    var idT = null;
-    if (!await W.aspetta(function () { idT = idDi(C, "Tom"); return idT && vm(C).assegna[idT] === k; }, 5000)) no("Tom non entra nella squadra " + (k + 1));
-    if (vm(C).totale !== tot0 + 1) no("con Tom i round non diventano " + (tot0 + 1) + " (" + vm(C).totale + ")");
-    if (!await W.aspetta(function () { return wt.document.querySelectorAll(".sp-carta").length >= 3; }, 5000)) no("Tom non riceve la mano della squadra");
-    note.push("Tom nella squadra " + (k + 1) + ", round " + vm(C).totale);
-    await finoArringa(C);
-    var wb = await W.apriTel("Bea", { hash: "gioco=sipero&stanza=" + C, x: 925, spiaSp: true });
-    if (!await W.aspetta(function () { return /entri dal prossimo round/.test(T(wb)) || (vm(C).giocatori || []).some(function (g) { return g.nome === "Bea"; }) && vm(C).fase !== "arringa"; }, 8000)) no("Bea all'arringa non legge «entri dal prossimo round» («" + T(wb).slice(0, 140) + "»)");
-    if (wb.document.querySelector(".sp-entra")) no("all'arringa Bea può scegliere la squadra");
+    if (!await W.aspetta(function () { return /finito questo round scegli anche tu/.test(T(wt)); }, 8000)) no("Tom non legge «finito questo round scegli anche tu…» («" + T(wt).slice(0, 160) + "»)");
+    if (wt.document.querySelector(".sp-entra")) no("Tom può entrare a metà round");
+    var idT = idDi(C, "Tom");
+    if (vm(C).assegna[idT] != null) no("Tom è già in una squadra");
+    if (vm(C).totale !== tot0) no("con Tom i round cambiano (" + vm(C).totale + ")");
+    if (!/Questo round guardi|Guardi/.test((wt.document.querySelector(".sp-mio") || {}).textContent || "")) no("Tom non legge che questo round guarda");
+    note.push("Tom guarda il round 1");
+    // fine del round: la schermata dei ruoli, Tom sceglie la squadra più piccola
+    await finoGiudizio(C); await decidi(C, 0);
+    var fine = Date.now() + 30000;
+    while (vm(C).fase === "esito" && Date.now() < fine) { (vm(C).giocatori || []).forEach(function (g) { var w = W.finestra(g.nome); if (w) W.clicca(w, /Avanti/); }); await W.dorme(600); }
+    if (vm(C).fase !== "ruoli") no("dopo il round non c'è la schermata dei ruoli (" + vm(C).fase + ")");
+    if (!await W.aspetta(function () { return wt.document.querySelector(".sp-rc"); }, 5000)) no("Tom non vede la schermata dei ruoli");
+    var sc = vm(C).scelte || {}, c = [0, 0]; Object.keys(sc).forEach(function (id) { if (sc[id] === 0 || sc[id] === 1) c[sc[id]]++; });
+    var k = c[0] <= c[1] ? 0 : 1;
+    wt.document.querySelector(".sp-rc.c" + k).click();
+    if (!await W.aspetta(function () { return (vm(C).scelte || {})[idT] === k; }, 4000)) no("Tom non entra nella Squadra " + (k + 1) + " (" + JSON.stringify(vm(C).scelte) + ")");
+    await partiRuoli(C);
+    if (vm(C).assegna[idT] !== k) no("al round 2 Tom non è nella Squadra " + (k + 1));
+    if (!await W.aspetta(function () { return /Sei nella/.test((wt.document.querySelector(".sp-mio") || {}).textContent || ""); }, 4000)) no("Tom non legge «Sei nella Squadra…»");
+    note.push("al round 2 Tom nella Squadra " + (k + 1));
     await finoAllaFine(C, 300000);
-    var sf = vm(C).statFine || {}, giud = Object.keys(sf).map(function (id) { return nomeDi(C, id) + " " + sf[id].roundGiudice; });
-    Object.keys(sf).forEach(function (id) { if (sf[id].roundGiudice !== 1) no("alla fine " + nomeDi(C, id) + " ha fatto il giudice " + sf[id].roundGiudice + " volte (" + giud.join(", ") + ")"); });
-    note.push("giudici: " + giud.join(", ") + " · round " + vm(C).totale);
+    if (vm(C).totale !== 3 || vm(C).round !== 3) no("la partita non finisce dopo 3 round (" + vm(C).round + " di " + vm(C).totale + ")");
+    note.push("finita dopo 3 round");
     return note.join(" · ");
   } });
 
@@ -301,6 +321,7 @@
     note.push("ricarica sull'esito: stella rimasta");
     // il round dopo: Paky sparisce, il vice tiene la partita con capo e segni
     var fine = Date.now() + 30000; while (vm(C).fase === "esito" && Date.now() < fine) { (vm(C).giocatori || []).forEach(function (g) { var w = W.finestra(g.nome); if (w) W.clicca(w, /Avanti/); }); await W.dorme(600); }
+    if (vm(C).fase === "ruoli") await partiRuoli(C);
     v = vm(C); if (v.fase !== "gioco") no("non comincia il round dopo");
     var sq2 = v.step.sq, capo2 = v.capo[sq2];
     A.muore("Paky");
@@ -314,6 +335,8 @@
   // ===================== spn7: la memoria delle uscite =====================
   COPIONE.aggiungi("spn7", { nome: "Sì… però: la memoria delle carte uscite (mazzo nuovo con le mai viste in cima; l'host segna quelle arrivate in mano)", fai: async function () {
     var P = await W.apriTel("Paky", { x: 0 });
+    if (P.SGCuore && P.SGCuore.precarica) P.SGCuore.precarica("sipero");   // (il gioco si scarica quando serve)
+    await W.aspetta(function () { return P.__sipero && P.SG_SIPERO; }, 15000);
     var S = P.__sipero, dati = P.SG_SIPERO;
     if (!S || !S.pilaFresca) no("niente pilaFresca nelle prove");
     // viste le carte dalla 11ª alla 330ª (la memoria ne tiene 320 per tipo), dalla più vecchia alla più recente
@@ -372,8 +395,8 @@
     await misure(W.finestra(nc), nc, "il compagno col riquadro del capo");
     await misure(W.finestra(ng), ng, "il giudice che aspetta");
     var wt = await W.apriTel("Tom", { hash: "gioco=sipero&stanza=" + C, x: 1110 });
-    await W.aspetta(function () { return wt.document.querySelector(".sp-entra"); }, 8000);
-    await misure(wt, "Tom", "chi arriva e sceglie la squadra");
+    await W.aspetta(function () { return /finito questo round/.test(T(wt)); }, 8000);
+    await misure(wt, "Tom", "chi arriva e guarda il round");
     var wg = await finoGiudizio(C);
     wg.document.querySelector(".sp-vota.c1").click(); await W.dorme(200);
     await misure(wg, nomeDi(C, vm(C).giudiceId), "il verdetto da confermare");
@@ -386,4 +409,7 @@
     await misure(W.finestra(nc), nc, "l'esito con la stella");
     return "capo, compagno, giudice, Tom, verdetto ed esito senza scorrere a 360x640 e 412x915";
   } });
+  // (per le prove dei ruoli, preferiti/sipero-ruoli.js)
+  COPIONE.aiuti.sp = { stanza: stanza, partiRuoli: partiRuoli, giocaCapo: giocaCapo, finoArringa: finoArringa, finoGiudizio: finoGiudizio, decidi: decidi, finoAllaFine: finoAllaFine,
+    nomeDi: nomeDi, idDi: idDi, telDi: telDi, bottone: bottone, carte: carte, membri: membri, misura: misura };
 })();

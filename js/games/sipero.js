@@ -59,12 +59,14 @@
   function siDa(imp) { return imp && imp.si === "solo" ? "solo" : "squadre"; }
   function biancaDa(imp) { var b = imp ? imp.bianca : undefined; return !(b === 0 || b === false || b === "0" || b === "no"); }
   // la riga "📜 Si gioca così" (anche per gli amici in saletta)
+  // 👥 online a squadre (23 nov 2026, il proprietario): quanti round (3, 5 o 7) e prima di ognuno la schermata dei ruoli
+  function roundDa(imp) { return [3, 5, 7].indexOf(+(imp && imp.round)) >= 0 ? +imp.round : 5; }
   function riassuntoImp(imp) {
     imp = imp || {};
     var solo = siDa(imp) === "solo", giri = [1, 2, 3].indexOf(+imp.giri) >= 0 ? +imp.giri : 1, arr = +imp.arringa || 0;
     var s = seqDa(imp);
     return [solo ? "🙋 Ognuno per sé" : "👥 A squadre", solo ? null : (imp.modalita === "custom" && !s.vuota ? "🎛️ Fasi personalizzate" : "📜 Fasi classiche"),
-      !solo && imp.squadre === "mano" ? "✋ squadre scelte dall'host (un round)" : "🔁 " + giri + (giri === 1 ? " giro" : " giri"),
+      !solo && imp.modo === "online" ? "🔁 " + roundDa(imp) + " round, ruoli scelti da voi" : "🔁 " + giri + (giri === 1 ? " giro" : " giri"),
       "🎤 arringa " + (arr ? arr + " secondi" : "libera"), biancaDa(imp) ? "🃏 carta bianca" : null].filter(Boolean).join(" · ");
   }
   // classifica con il posto: a pari punti lo stesso posto
@@ -587,6 +589,23 @@
       ".sp-lente-nota{display:block;margin-top:5px;font-size:.78rem;font-weight:600;color:var(--o-tenue)}",
       ".btn.sp-stelle-b{width:100%;margin:8px 0 0}",
       ".sp-stelle{display:flex;flex-direction:column;gap:2px}.sp-stelle .sp-lente-r{font-size:.98rem}",
+      // 👥 la scritta «Sei nella Squadra 1» sotto la barra e la schermata dei ruoli
+      ".sp-mio{flex:0 0 auto;margin:2px 10px 0;padding:3px 10px;border-radius:10px;font-weight:800;font-size:.82rem;text-align:center;line-height:1.25}",
+      ".sp-mio.c0{background:var(--sp-rosso-f,#c92a2a);color:#fff}.sp-mio.c1{background:var(--sp-blu-f,#1864ab);color:#fff}.sp-mio.g{background:var(--o-oro,#ffc247);color:#1a1300}.sp-mio.x{background:rgba(255,255,255,.08);color:var(--o-tenue,#a6acc8)}",
+      ".sp-rc-guida{flex:0 0 auto;margin:8px 12px 4px;text-align:center;font-weight:800;font-size:.95rem}",
+      ".sp-rc-cols{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:4px 10px}",
+      ".sp-rc{display:flex;flex-direction:column;min-height:0;min-width:0;border:0;border-radius:16px;padding:8px 5px;color:inherit;font:inherit;text-align:center;cursor:pointer;background:var(--o-carta-piena,#151a2e);box-shadow:inset 0 0 0 2px var(--rc);transition:transform .12s}",
+      ".sp-rc:active{transform:scale(.97)}.sp-rc.cg{--rc:#ffc247}.sp-rc.c0{--rc:#ff8787}.sp-rc.c1{--rc:#74c0fc}",
+      ".sp-rc.mio{box-shadow:inset 0 0 0 3px var(--rc),0 0 16px rgba(255,255,255,.12)}.sp-rc.cg.mio{background:linear-gradient(rgba(255,194,71,.22),rgba(255,194,71,.22)),var(--o-carta-piena,#151a2e)}",
+      ".sp-rc.c0.mio{background:linear-gradient(rgba(255,135,135,.22),rgba(255,135,135,.22)),var(--o-carta-piena,#151a2e)}.sp-rc.c1.mio{background:linear-gradient(rgba(116,192,252,.22),rgba(116,192,252,.22)),var(--o-carta-piena,#151a2e)}",
+      ".sp-rc.no{opacity:.5;cursor:default}",
+      ".sp-rc-testa{font-weight:900;font-size:.98rem;color:var(--rc);padding:2px 0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".sp-rc-lista{flex:1 1 auto;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:5px}",
+      ".sp-rc-p{display:flex;align-items:center;gap:5px;font-weight:700;font-size:.82rem;min-width:0;background:rgba(255,255,255,.07);border-radius:10px;padding:3px 5px;text-align:left}",
+      ".sp-rc-p.io{background:rgba(255,255,255,.16)}.sp-rc-p .sp-av{width:26px;height:26px;flex:0 0 26px}.sp-rc-p span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".sp-rc-stato{font-size:.74rem;font-weight:800;color:var(--o-tenue,#a6acc8);padding-top:6px;min-height:1.3em}.sp-rc.mio .sp-rc-stato{color:var(--rc)}",
+      ".sp-rc-liberi,.sp-rc-punti{flex:0 0 auto;margin:6px 12px 0;text-align:center;font-size:.82rem;color:var(--o-tenue,#a6acc8)}.sp-rc-punti:empty{display:none}",
+      ".sp-rc-nota.no{color:#ffb3b3}",
       ".sp-round .sp-giudbox .sp-av{width:54px;height:54px}.sp-round .sp-chi span.sp-pers{font-size:1rem;padding-right:12px}.sp-round .sp-chi .sp-av{width:40px;height:40px}"
     ].join("\n");
     document.head.appendChild(st);
@@ -669,7 +688,8 @@
     ui.turno = el("div", { class: "sp-turno" });
     ui.azione = el("div", { class: "sp-azione" });
     ui.piede = el("div", { class: "sp-piede" });
-    ui.scena = el("div", { class: "sp-scena" + (t.guarda ? " sp-targa" : "") }, [ui.barra, ui.tavolo, ui.turno, ui.azione, ui.piede]);
+    ui.mio = el("div", { class: "sp-mio", hidden: "hidden" });   // 👥 «Sei nella Squadra 1» / «Sei il giudice»: sempre chiaro dove sei
+    ui.scena = el("div", { class: "sp-scena" + (t.guarda ? " sp-targa" : "") }, [ui.barra, ui.mio, ui.tavolo, ui.turno, ui.azione, ui.piede]);
     s._contenuto.appendChild(ui.scena);
     t.mostra(s);
     return ui;
@@ -1015,6 +1035,7 @@
       dove.modalita = "classica";
       dove.sequenza = leggiSeqSalvata() || seqPulita(CLASSICA);
       dove.giri = 1;
+      dove.round = 5;
       dove.arringa = 0;
       dove.squadre = "sorte";
       dove.si = "squadre";   // «🙋 Ognuno per sé» = "solo"
@@ -1040,7 +1061,7 @@
       box.appendChild(rigaChip([
         { val: "squadre", ic: "👥", txt: "A squadre", sotto: "Due squadre, carte a turno" },
         { val: "solo", ic: "🙋", txt: "Ognuno per sé", sotto: "Ognuno il suo scenario" }
-      ], function () { return dove.si; }, function (v) { dove.si = v; soloNo.hidden = squadreBox.hidden = (v === "solo"); }));
+      ], function () { return dove.si; }, function (v) { dove.si = v; soloNo.hidden = squadreBox.hidden = (v === "solo"); giriBox.hidden = online && v !== "solo"; }));
       box.appendChild(soloNo);
 
       // --- le fasi ---
@@ -1084,9 +1105,17 @@
       soloNo.appendChild(pannello);
 
       // --- quanti round ---
-      box.appendChild(el("div", { class: "etichetta", text: "Quanto si gioca" }));
-      box.appendChild(rigaChip([{ val: 1, txt: "1 giro" }, { val: 2, txt: "2 giri" }, { val: 3, txt: "3 giri" }], function () { return dove.giri; }, function (v) { dove.giri = v; }, 3));
-      box.appendChild(el("p", { class: "modulo-nota", text: "In un giro ognuno fa il giudice una volta: con 4 giocatori, 1 giro = 4 round." }));
+      var giriBox = el("div"); box.appendChild(giriBox);   // (online a squadre si sceglie quanti round, qui sotto)
+      giriBox.hidden = online && dove.si !== "solo";
+      giriBox.appendChild(el("div", { class: "etichetta", text: "Quanto si gioca" }));
+      giriBox.appendChild(rigaChip([{ val: 1, txt: "1 giro" }, { val: 2, txt: "2 giri" }, { val: 3, txt: "3 giri" }], function () { return dove.giri; }, function (v) { dove.giri = v; }, 3));
+      giriBox.appendChild(el("p", { class: "modulo-nota", text: "In un giro ognuno fa il giudice una volta: con 4 giocatori, 1 giro = 4 round." }));
+      if (online) {
+        box.appendChild(squadreBox);
+        squadreBox.appendChild(el("div", { class: "etichetta", text: "Quanti round" }));
+        squadreBox.appendChild(rigaChip([{ val: 3, txt: "3 round" }, { val: 5, txt: "5 round" }, { val: 7, txt: "7 round" }], function () { return dove.round; }, function (v) { dove.round = v; }, 3));
+        squadreBox.appendChild(el("p", { class: "modulo-nota", text: "Prima di ogni round ognuno sceglie se fare il giudice o in che squadra stare." }));
+      }
 
       // --- l'arringa ---
       box.appendChild(el("div", { class: "etichetta", text: "L'arringa" }));
@@ -1097,15 +1126,6 @@
       box.appendChild(rigaChip([{ val: 1, txt: "Sì" }, { val: 0, txt: "No" }], function () { return dove.bianca; }, function (v) { dove.bianca = v; }, 2));
       box.appendChild(el("p", { class: "modulo-nota", text: "Una volta a partita ognuno può scrivere una carta sua, Bonus o Malus, al posto di una della mano." }));
 
-      // --- le squadre (solo online) ---
-      if (online) {
-        box.appendChild(squadreBox);
-        squadreBox.appendChild(el("div", { class: "etichetta", text: "Squadre e giudice" }));
-        squadreBox.appendChild(rigaChip([
-          { val: "sorte", ic: "🎲", txt: "A sorte", sotto: "Cambiano a ogni round, il giudice gira" },
-          { val: "mano", ic: "✋", txt: "Le scelgo io", sotto: "Un round solo, in saletta" }
-        ], function () { return dove.squadre; }, function (v) { dove.squadre = v; }));
-      }
     },
 
     avvia: function (t) {
@@ -1539,13 +1559,14 @@
       capo: [null, null], capi: {},  // 👑 il capo di ogni squadra in questo round (decide lui le carte) e quante volte l'ha fatto ognuno
       segni: {},                     // 👆 le carte che ognuno ha segnato nella mano della sua squadra (id → [testi]): le vedono solo i compagni
       stella: null, stelle: [],      // ⭐ la carta che ha convinto il giudice in questo round; quelle di tutta la partita
+      ruoli: false, scelte: {},      // 👥 online a squadre: prima di ogni round ognuno sceglie (id → "g", 0 o 1); si parte col tasto dell'host
       esitoOra: 0, roundOra: 0       // quando il giudice ha deciso / quando è cominciato il round (per la suspense e la presentazione)
     };
     function leggiRegole(imp) {
       imp = imp || {};
       var s = seqDa(imp), si = siDa(imp);
       st.regole = { seq: s.seq, vuota: si === "solo" ? false : s.vuota, giri: [1, 2, 3].indexOf(+imp.giri) >= 0 ? +imp.giri : 1,
-        arringa: +imp.arringa || 0, squadre: si !== "solo" && imp.squadre === "mano" ? "mano" : "sorte", si: si, bianca: biancaDa(imp) ? 1 : 0 };
+        arringa: +imp.arringa || 0, squadre: si !== "solo" ? "ruoli" : "sorte", round: roundDa(imp), si: si, bianca: biancaDa(imp) ? 1 : 0 };
     }
     leggiRegole(t.impostazioni);
     // "⚙️ Regole" nella saletta: l'host cambia le regole quando vuole (prima di cominciare)
@@ -1600,6 +1621,7 @@
         else if (m.t === "segna") segna(id, m.carte);
         else if (m.t === "squadra") scegliSquadra(id, m.sq);
         else if (m.t === "stella") stella(id, m.i);
+        else if (m.t === "ruolo") scegliRuolo(id, m.r);
       },
       onErrore: function (e) { if (e && e.type === "no-mqtt") senzaReteS(t); }   // gli altri intoppi li ripara la rete da sola
     }, { ripresa: ripresa });   // (con la ripresa gli amici non tornano in saletta)
@@ -1650,7 +1672,7 @@
       }
       if (t.puoSedersi && !t.puoSedersi(id, nome)) { bd(); return; }   // non è tra chi gioca: riceve le foto e guarda
       if (st.giocatori.length >= MAX) { rete.inviaVeloce({ t: "piena", to: id }); return; }
-      st.giocatori.push({ id: id, nome: nome, omino: avatarOkS(m.omino), via: false, guarda: st.fase !== "lobby" });
+      st.giocatori.push({ id: id, nome: nome, omino: avatarOkS(m.omino), via: false, guarda: st.fase !== "lobby" && st.fase !== "ruoli" });   // (nella scelta dei ruoli sceglie subito anche lui)
       // 🙋 arrivato mentre si scelgono i Bonus: entra subito nel giro (ha la sua mano e uno scenario suo)
       if (st.fase !== "lobby" && entraSolo(id)) { bd(); ominiA(null); manoS(id); return; }
       bd();
@@ -1684,13 +1706,13 @@
     // chi arriva tardi e gioca già da questo round: un posto in più nel giro dei giudici (tutti lo stesso numero di volte)
     function nuovoInPartita(p, ruolo) {
       p.guarda = false; st.assegna[p.id] = ruolo;
-      if (st.ordine.indexOf(p.id) < 0) { st.ordine.push(p.id); if (!st.manuale) st.totale += st.regole.giri; }
+      if (st.ordine.indexOf(p.id) < 0) { st.ordine.push(p.id); if (!st.manuale && !st.ruoli) st.totale += st.regole.giri; }
       statPersona(st, p.id).roundGiocati++; st.giocato[p.id] = 1;
     }
     // 👥 chi arriva tardi a squadre, mentre si giocano le carte, sceglie la squadra ed entra subito
     function scegliSquadra(id, k) {
       var p = pById(id);
-      if (!p || p.via || !p.guarda || st.solo || st.manuale || st.fase !== "gioco" || (k !== 0 && k !== 1)) return;
+      if (!p || p.via || !p.guarda || st.solo || st.manuale || st.ruoli || st.fase !== "gioco" || (k !== 0 && k !== 1)) return;   // (coi ruoli si entra alla prossima scelta)
       nuovoInPartita(p, k);
       if (!capoVivo(k)) st.capo[k] = id;
       bd(); manoA(id);
@@ -1707,6 +1729,7 @@
       if (vec in st.mv) { st.mv[nuovo] = st.mv[vec]; delete st.mv[vec]; }
       // 👑 👆 il capo e le carte segnate
       if (st.capo) st.capo = st.capo.map(function (x) { return x === vec ? nuovo : x; });
+      if (st.scelte && vec in st.scelte) { st.scelte[nuovo] = st.scelte[vec]; delete st.scelte[vec]; }
       ["capi", "segni"].forEach(function (k) { if (st[k] && vec in st[k]) { st[k][nuovo] = st[k][vec]; delete st[k][vec]; } });
       var R = st.R;
       if (R) {
@@ -1723,6 +1746,7 @@
       var p = pById(id); if (!p || id === IO) return;
       if (st.fase === "lobby") { st.giocatori = st.giocatori.filter(function (x) { return x.id !== id; }); delete st.assegna[id]; bd(); return; }
       p.via = true;   // a partita iniziata tiene il suo posto (e il suo ruolo): se rientra, riprende da lì
+      if (st.fase === "ruoli" && st.scelte) delete st.scelte[id];   // (nella scelta dei ruoli il suo posto si libera)
       if (!st.solo && st.capo) [0, 1].forEach(function (k) { if (st.capo[k] === id) { scegliCapo(k); segniSquadra(k); } });   // 👑 il capo passa a un compagno
       bd();
       if (st.solo) controllaSolo(); else controllaVuota();
@@ -1799,7 +1823,8 @@
       var g = giudice(), r = st.regole;
       var v = { fase: st.fase, codice: st.codice, pronta: st.pronta, hostId: IO,
         giocatori: st.giocatori.map(function (p) { return { id: p.id, nome: p.nome, via: !!p.via, guarda: !!p.guarda, punti: st.punti[p.id] || 0, omino: st.fase === "lobby" ? (p.omino || null) : undefined }; }),
-        regole: { seq: r.seq, vuota: r.vuota, giri: r.giri, arringa: r.arringa, squadre: r.squadre, si: r.si, bianca: r.bianca },
+        regole: { seq: r.seq, vuota: r.vuota, giri: r.giri, arringa: r.arringa, squadre: r.squadre, round: r.round, si: r.si, bianca: r.bianca },
+        ruoli: !!st.ruoli, scelte: st.fase === "ruoli" ? st.scelte : null, piano: st.fase === "ruoli" ? pianoVm() : null,
         solo: st.fase === "lobby" ? r.si === "solo" : st.solo, bianche: Object.keys(st.bianche),
         pronti: st.fase === "esito" ? prontiVeri() : [], servono: servono(), kAv: kAv(),
         manuale: st.manuale, round: st.round, totale: st.totale + inArrivo() * ((st.regole && st.regole.giri) || 1), assegna: st.assegna,
@@ -1826,7 +1851,7 @@
     }
     // chi è arrivato a partita in corso e gioca dal round dopo (non è ancora nel giro dei giudici)
     function inArrivo() {
-      if (st.manuale || st.fase === "lobby" || st.fase === "fine") return 0;
+      if (st.manuale || st.ruoli || st.fase === "lobby" || st.fase === "fine") return 0;
       return st.giocatori.filter(function (p) { return !p.via && st.ordine.indexOf(p.id) < 0; }).length;
     }
     function bd() {
@@ -1886,7 +1911,9 @@
       st.solo = r.si === "solo";
       st.manuale = !st.solo && r.squadre === "mano";
       if (st.manuale) { if (!manualeOk()) return; st.totale = 1; }
+      else if (!st.solo) { if (pres.length < MIN) return; st.totale = r.round; st.assegna = {}; }   // 👥 a squadre: i round scelti dall'host, i ruoli li scelgono loro
       else { if (pres.length < MIN) return; st.totale = pres.length * r.giri; st.assegna = {}; }
+      st.ruoli = !st.solo && !st.manuale; st.scelte = {};
       st.seq = r.seq; st.arringaSec = r.arringa;
       st.ordine = pres.map(function (p) { return p.id; });
       st.round = 0; st.punti = {}; st.giudicati = {}; st.giocato = {}; st.coppie = {};
@@ -1894,8 +1921,70 @@
       st.bianche = {}; st.firme = {}; st.pronti = []; st.R = null; st.mv = {};
       st.capo = [null, null]; st.capi = {}; st.segni = {}; st.stella = null; st.stelle = [];
       st.giocatori.forEach(function (p) { p.guarda = false; });
-      prossimoRound();
+      if (st.ruoli) vaiRuoli(); else prossimoRound();
       ominiA(null);
+    }
+    // 👥 la schermata dei ruoli (all'inizio e dopo ogni round): ognuno tocca giudice, Squadra 1 o Squadra 2. NIENTE timer:
+    // si parte solo col tasto di chi tiene la partita (il proprietario: «se c'è discussione sui ruoli, fai discutere»).
+    // Le squadre di prima restano segnate (si cambia con un tocco); il giudice di prima no.
+    function vaiRuoli() {
+      ferma();
+      st.fase = "ruoli"; st.capo = [null, null]; st.segni = {}; st.stella = null; st.pronti = [];
+      var pre = {};
+      presenti().forEach(function (p) { p.guarda = false; var a = st.assegna[p.id]; if (a === 0 || a === 1) pre[p.id] = a; });
+      st.scelte = pre;
+      bd();
+    }
+    function contaRuoli(senza) {
+      var c = [0, 0], g = 0;
+      presenti().forEach(function (p) { if (p.id === senza) return; var r = st.scelte[p.id]; if (r === 0 || r === 1) c[r]++; else if (r === "g") g++; });
+      return { sq: c, g: g };
+    }
+    // un tocco: dove vuole andare (lo stesso tocco di nuovo = torna libero). Un giudice solo (vince chi ha toccato per primo);
+    // in una squadra che ha già 2 persone più dell'altra non si entra
+    function scegliRuolo(id, r) {
+      var p = pById(id);
+      if (st.fase !== "ruoli" || !p || p.via) return;
+      if (r == null || st.scelte[id] === r) { delete st.scelte[id]; return bd(); }
+      var c = contaRuoli(id);
+      if (r === "g") { if (c.g) return; }
+      else if (r === 0 || r === 1) { if (c.sq[r] - c.sq[1 - r] >= 2) return; }
+      else return;
+      st.scelte[id] = r; bd();
+    }
+    // com'è il round se si parte adesso: chi non ha scelto va nella squadra più piccola; senza giudice lo sceglie il gioco
+    // tra chi l'ha fatto meno volte (senza lasciare vuota una squadra); una squadra vuota = non si parte
+    function pianoRuoli() {
+      var pres = presenti();
+      if (pres.length < MIN) return { ok: false, perche: "Servono almeno 3 persone: un giudice e uno per squadra." };
+      var base = {}, pos = {};
+      pres.forEach(function (p, i) { pos[p.id] = i; var r = st.scelte[p.id]; if (r === "g" || r === 0 || r === 1) base[p.id] = r; });
+      function riempi(a) {
+        var c = [0, 0];
+        pres.forEach(function (p) { if (a[p.id] === 0 || a[p.id] === 1) c[a[p.id]]++; });
+        pres.forEach(function (p) { if (a[p.id] == null) { var k = c[0] <= c[1] ? 0 : 1; a[p.id] = k; c[k]++; } });
+        return c;
+      }
+      var a = null, giud = pres.filter(function (p) { return base[p.id] === "g"; })[0], note = [];
+      if (giud) { a = Object.assign({}, base); riempi(a); }
+      else {
+        var cands = pres.slice().sort(function (x, y) { return ((st.giudicati[x.id] || 0) - (st.giudicati[y.id] || 0)) || ((base[x.id] == null ? 0 : 1) - (base[y.id] == null ? 0 : 1)) || (pos[x.id] - pos[y.id]); });
+        for (var i = 0; i < cands.length && !a; i++) { var tA = Object.assign({}, base); tA[cands[i].id] = "g"; var cc = riempi(tA); if (cc[0] && cc[1]) { a = tA; giud = cands[i]; } }
+        if (!a) { giud = cands[0]; a = Object.assign({}, base); a[giud.id] = "g"; riempi(a); }
+        note.push("⚖️ Il giudice lo fa " + giud.nome + " (nessuno l'ha scelto)");
+      }
+      var n = [0, 0]; pres.forEach(function (p) { if (a[p.id] === 0 || a[p.id] === 1) n[a[p.id]]++; });
+      if (!n[0] || !n[1]) return { ok: false, perche: "La " + nomeSq(n[0] ? 1 : 0) + " è vuota: qualcuno ci deve andare." };
+      if (pres.some(function (p) { return base[p.id] == null && a[p.id] !== "g"; })) note.push("Chi non ha scelto va nella squadra più piccola");
+      return { ok: true, nota: note.join(" · "), assegna: a };
+    }
+    function pianoVm() { var p = pianoRuoli(); return { ok: p.ok, perche: p.perche || "", nota: p.nota || "" }; }
+    // ▶ «Si parte» (solo chi tiene la partita)
+    function parti(id) {
+      if (id !== IO || st.fase !== "ruoli") return;
+      var p = pianoRuoli(); if (!p.ok) return;
+      st.assegna = p.assegna;
+      prossimoRound();
     }
     function prossimoRound() {
       ferma();
@@ -1903,9 +1992,10 @@
       st.pronti = []; st.segni = {}; st.stella = null; st.capo = [null, null]; st.roundOra = Date.now();
       var pres = presenti();
       // chi è arrivato a partita in corso gioca da questo round: un round in più, così fa il giudice anche lui
-      if (!st.manuale) pres.forEach(function (p) { if (st.ordine.indexOf(p.id) < 0) { st.ordine.push(p.id); st.totale += st.regole.giri; } });
+      if (!st.manuale && !st.ruoli) pres.forEach(function (p) { if (st.ordine.indexOf(p.id) < 0) { st.ordine.push(p.id); st.totale += st.regole.giri; } });
+      if (st.ruoli) pres.forEach(function (p) { if (st.ordine.indexOf(p.id) < 0) st.ordine.push(p.id); p.guarda = st.assegna[p.id] == null; });
       if (st.round > st.totale || (!st.manuale && pres.length < MIN)) return fine();
-      if (!st.manuale) {
+      if (!st.manuale && !st.ruoli) {
         pres.forEach(function (p) { p.guarda = false; });
         // il giudice: chi l'ha fatto meno volte, nell'ordine d'arrivo
         var g = pres.slice().sort(function (a, b) {
@@ -2001,7 +2091,7 @@
       var r = st.round;
       st.esitoTo = setTimeout(function () { st.esitoTo = null; if (st.fase === "esito" && st.round === r) bd(); }, 2600);
     }
-    function prossimo() { if (st.fase === "esito") prossimoRound(); }
+    function prossimo() { if (st.fase !== "esito") return; if (st.ruoli) { if (st.round < st.totale) vaiRuoli(); else fine(); } else prossimoRound(); }
     // ⭐ il giudice tocca, sullo scenario che ha vinto, la carta che l'ha convinto (una per round): resta nelle «carte della serata»
     function stella(id, i) {
       var g = giudice();
@@ -2145,6 +2235,7 @@
       st.fase = "lobby"; st.round = 0; st.totale = 0; st.classifica = null; st.vincitore = null; st.sorte = false;
       st.scen = scenVuoti(); st.mani = null; st.passi = []; st.passo = 0;
       st.R = null; st.pronti = []; st.capo = [null, null]; st.segni = {}; st.stella = null;
+      st.ruoli = false; st.scelte = {};
       bd();
     }
     var cb = {
@@ -2159,6 +2250,7 @@
       onSegna: function (carte) { segna(IO, carte); },
       onSquadra: function (k) { scegliSquadra(IO, k); },
       onStella: function (i) { stella(IO, i); },
+      onRuolo: function (r) { scegliRuolo(IO, r); }, onParti: function () { parti(IO); },
       onAssegna: function (pid, val) {
         if (st.fase !== "lobby" || !pById(pid)) return;
         if (val === "g") Object.keys(st.assegna).forEach(function (id) { if (st.assegna[id] === "g") delete st.assegna[id]; });   // un giudice solo
@@ -2209,6 +2301,7 @@
       onSegna: function (carte) { clearTimeout(S.segnaTo); S.segnaTo = setTimeout(function () { invia({ t: "segna", carte: carte }); }, 150); },
       onSquadra: function (k) { invia({ t: "squadra", sq: k }); },
       onStella: function (i) { invia({ t: "stella", i: i }); },
+      onRuolo: function (r) { invia({ t: "ruolo", r: r }); }, onParti: function () {},
       onAssegna: function () {}, onComincia: function () {}, onNuova: function () {}, onProssimo: function () {},
       onGioca: function (carte) { invia({ t: "gioca", carte: carte }); },
       onGiudica: function (k) { invia(S.vm && S.vm.solo ? { t: "giudica", chi: k } : { t: "giudica", sq: k }); },
@@ -2291,6 +2384,7 @@
     V.ultimoVm = vm; V.cb = cb;   // (la fine della luce del verdetto ridisegna con l'ultima foto)
     if (vm.fase === "lobby") { V.ui = null; V.fineSess = null; V.roundVisto = "fuori"; return lobbyOn(V, vm, cb); }
     if (vm.fase === "fine") { V.ui = null; V.roundVisto = "fuori"; return fineOn(V, vm, cb); }
+    if (vm.fase === "ruoli") { V.ui = null; V.roundVisto = "fuori"; return ruoliOn(V, vm, cb); }
     var solo = !!vm.solo;
     if (!V.ui || !document.body.contains(V.ui.s) || V.ui.solo !== solo) V.ui = creaScena(V.t, cb.onEsci, solo);
     if (solo) aggiornaSolo(V, vm, cb); else aggiornaOn(V, vm, cb);
@@ -2328,7 +2422,7 @@
       V.lobbySig = sig;
       var n = V.lobbyNodo; svuota(n);
       var solo = r.si === "solo";
-      var giri = r.squadre === "mano" ? "🔁 Un round, squadre e giudice scelti da chi organizza" :
+      var giri = r.squadre === "ruoli" ? "🔁 " + r.round + " round: prima di ogni round scegliete voi chi fa il giudice e in che squadra stare" : r.squadre === "mano" ? "🔁 Un round, squadre e giudice scelti da chi organizza" :
         "🔁 " + r.giri + (r.giri === 1 ? " giro" : " giri") + ": ognuno fa il giudice " + (r.giri === 1 ? "una volta" : r.giri + " volte") + (solo ? "" : ", squadre a sorte a ogni round");
       n.appendChild(el("div", { class: "sp-info" }, [
         el("div", { text: solo ? "🙋 Ognuno per sé: 2 Bonus sul tuo scenario, poi 1 Malus su quello del vicino" : "📜 " + (r.vuota ? "Personalizzata senza fasi" : riassuntoSeq(r.seq)) }),
@@ -2366,8 +2460,78 @@
       spettatore: t.guarda ? "👀 Guardi soltanto" : false,   // (chi guarda col link)
       giocatori: pres.map(function (g) { return { id: g.id, nome: g.nome, omino: g.omino || null, host: g.id === (vm.hostId || "host"), tu: g.id === cb.myId }; }),
       extra: [V.lobbyNodo], nota: cb.sonoHost && pres.length >= MIN && !ok ? nota : null,
-      attesa: r.squadre === "mano" ? "Aspetta: chi organizza sta scegliendo il giudice e le squadre. 🤨" : "Aspetta che si cominci: giudice e squadre li decide la sorte. 🤨",
+      attesa: r.squadre === "ruoli" ? "Aspetta che si cominci: poi scegliete chi fa il giudice e le squadre. 🤨" : r.squadre === "mano" ? "Aspetta: chi organizza sta scegliendo il giudice e le squadre. 🤨" : "Aspetta che si cominci: giudice e squadre li decide la sorte. 🤨",
       onComincia: cb.onComincia, onEsci: cb.onEsci });
+  }
+
+  // 👥 la schermata dei ruoli (online a squadre, prima di ogni round): tre colonne, ognuno tocca dove vuole andare.
+  // Niente timer: si parte col tasto di chi tiene la partita. Si rifà solo la parte che cambia (niente lampeggio)
+  function ruoliOn(V, vm, cb) {
+    var t = V.t, el = t.el, R = V.ruoli;
+    if (!R || !document.body.contains(R.s)) {
+      stile();
+      var s = t.schermata({}); s.classList.add("sp-piena");
+      R = V.ruoli = { s: s, k: {} };
+      R.tit = el("b"); R.sotto = el("small");
+      var barra = el("div", { class: "sp-barra" }, [el("button", { class: "sp-esci", "aria-label": "Esci", text: "‹", onclick: cb.onEsci }), el("div", { class: "sp-fase" }, [R.tit, R.sotto])]);
+      R.cols = ["g", 0, 1].map(function (r) {
+        var c = { r: r, lista: el("div", { class: "sp-rc-lista" }), stato: el("div", { class: "sp-rc-stato" }) };
+        c.nodo = el("button", { type: "button", class: "sp-rc " + (r === "g" ? "cg" : "c" + r), onclick: function () {
+          if (c.nodo.classList.contains("no")) return;
+          vibra(15); cb.onRuolo(r);
+        } }, [el("div", { class: "sp-rc-testa", text: r === "g" ? "⚖️ Giudice" : emoSq(r) + " " + nomeSq(r) }), c.lista, c.stato]);
+        return c;
+      });
+      R.guida = el("p", { class: "sp-rc-guida" });
+      R.liberi = el("div", { class: "sp-rc-liberi" }); R.punti = el("div", { class: "sp-rc-punti" });
+      R.azione = el("div", { class: "sp-azione" }); R.piede = el("div", { class: "sp-piede" });
+      R.scena = el("div", { class: "sp-scena sp-ruoli-sc" + (t.guarda ? " sp-targa" : "") }, [barra, R.guida,
+        el("div", { class: "sp-rc-cols" }, R.cols.map(function (c) { return c.nodo; })), R.liberi, R.punti, R.azione, R.piede]);
+      s._contenuto.appendChild(R.scena);
+      t.mostra(s);
+      var f = t.faccine && !t.guarda ? t.faccine() : null; if (f) { f.classList.add("sp-faccine"); R.azione.appendChild(f); }
+    }
+    var sc = vm.scelte || {}, pres = vm.giocatori.filter(function (g) { return !g.via; }), mio = sc[cb.myId];
+    var guardo = !!t.guarda || !pres.some(function (g) { return g.id === cb.myId; });
+    testoSe(R.tit, "Round " + Math.min(vm.round + 1, vm.totale) + " di " + vm.totale);
+    testoSe(R.sotto, "Chi fa cosa?");
+    testoSe(R.guida, guardo ? "👀 Stanno scegliendo chi fa il giudice e le squadre" : mio === "g" ? "⚖️ Fai il giudice: puoi ancora cambiare" : mio === 0 || mio === 1 ? "Sei nella " + emoSq(mio) + " " + nomeSq(mio) + ": puoi ancora cambiare" : "👆 Tocca dove vuoi andare: giudice o una squadra");
+    var conta = { g: 0, 0: 0, 1: 0 }, contaSenzaMe = [0, 0];
+    pres.forEach(function (g) { var r = sc[g.id]; if (r === "g" || r === 0 || r === 1) { conta[r]++; if (g.id !== cb.myId && r !== "g") contaSenzaMe[r]++; } });
+    R.cols.forEach(function (c) {
+      var membri = pres.filter(function (g) { return sc[g.id] === c.r; });
+      var km = JSON.stringify(membri.map(function (g) { return [g.id, g.nome, !!cb.omino(g.id)]; }));
+      if (R.k[c.r] !== km) {
+        R.k[c.r] = km; svuota(c.lista);
+        membri.forEach(function (g) {
+          c.lista.appendChild(el("div", { class: "sp-rc-p" + (g.id === cb.myId ? " io" : "") }, [el("span", { class: "sp-av", html: avatarHtml(g.nome, cb.omino(g.id)) }), el("span", { text: g.id === cb.myId ? "Tu" : g.nome })]));
+        });
+      }
+      var qui = mio === c.r, no = false, stato = "";
+      if (guardo) no = true;
+      else if (qui) stato = "✓ Sei qui";
+      else if (c.r === "g" && conta.g) { no = true; stato = "C'è già"; }
+      else if (c.r !== "g" && contaSenzaMe[c.r] - contaSenzaMe[1 - c.r] >= 2) { no = true; stato = "Troppi rispetto all'altra"; }
+      else stato = c.r === "g" ? "Tocca per fare il giudice" : "Tocca per entrare";
+      c.nodo.classList.toggle("mio", qui); c.nodo.classList.toggle("no", no);
+      testoSe(c.stato, stato);
+    });
+    var liberi = pres.filter(function (g) { var r = sc[g.id]; return r !== "g" && r !== 0 && r !== 1; });
+    testoSe(R.liberi, liberi.length ? "Devono ancora scegliere: " + liberi.map(function (g) { return g.id === cb.myId ? "tu" : g.nome; }).join(", ") : "✓ Hanno scelto tutti");
+    var conPunti = vm.round > 0 ? pres.slice().sort(function (a, b) { return b.punti - a.punti; }) : [];
+    testoSe(R.punti, conPunti.length ? "🏆 " + conPunti.map(function (g) { return (g.id === cb.myId ? "Tu" : g.nome) + " " + g.punti; }).join(" · ") : "");
+    // il piede: il tasto di chi tiene la partita (spento col perché) o chi aspetta
+    var pz = vm.piano || { ok: false, perche: "" }, host = vm.giocatori.filter(function (g) { return g.id === (vm.hostId || "host"); })[0];
+    var kp = JSON.stringify([cb.sonoHost, pz, host ? host.nome : ""]);
+    if (R.kp !== kp) {
+      R.kp = kp; svuota(R.piede);
+      if (cb.sonoHost) {
+        var b = el("button", { class: "btn btn-primario", text: "▶ Si parte", onclick: function () { if (!pz.ok) return; b.disabled = true; vibra(20); cb.onParti(); } });
+        if (!pz.ok) b.disabled = true;
+        R.piede.appendChild(el("div", { class: "sp-nota sp-rc-nota" + (pz.ok ? "" : " no"), text: pz.ok ? (pz.nota || "Quando siete pronti, tocca «Si parte»") : pz.perche }));
+        R.piede.appendChild(b);
+      } else R.piede.appendChild(el("div", { class: "sp-nota sp-rc-nota", text: (pz.ok && pz.nota ? pz.nota + " · " : "") + "Quando siete pronti, " + (host ? host.nome : "chi organizza") + " fa partire il round ▶" }));
+    }
   }
 
   var SUSPENSE = 3000;   // 🥁 quanto gira la luce prima del verdetto (ms)
@@ -2402,6 +2566,11 @@
     barra(ui, fase, round + (vm.fase === "gioco" && step ? " · fase " + step.fi + " di " + step.ftot : ""),
       "⚖️ " + (me.giudice ? "Tu" : vm.giudiceNome || "—") + (vm.giudiceVia ? " 💤" : ""), vm.giudiceId ? { nome: vm.giudiceNome, omino: cb.omino(vm.giudiceId) } : null);
 
+    // 👥 dove sono io in questo round (il colore della mia squadra)
+    var mioCls = me.giudice ? "g" : me.sq >= 0 ? "c" + me.sq : "x";
+    var mioTx = me.giudice ? "⚖️ Sei il giudice" : me.sq >= 0 ? "Sei nella " + emoSq(me.sq) + " " + nomeSq(me.sq) : t.guarda ? "👀 Guardi la partita" : "👀 Questo round guardi";
+    if (ui.mio.className !== "sp-mio " + mioCls) ui.mio.className = "sp-mio " + mioCls;
+    testoSe(ui.mio, mioTx); ui.mio.hidden = false;
     // il tavolo (in testa a ogni scenario le faccine di chi lo gioca, 👑 accanto al capo)
     // (il giudice, mentre si giocano le carte, ha il tavolo grande: deve solo leggere, e prima aveva mezzo schermo vuoto)
     var giudTavolo = vm.fase === "gioco" && !!step && !!me.giudice;
@@ -2449,10 +2618,10 @@
       }
       else if (me.sq < 0) {
         // ✋ arrivato a partita in corso: sceglie la squadra ed entra subito (o guarda ed entra dal prossimo round)
-        var scegli = me.guarda && !t.guarda && io && !io.via && !vm.manuale;
+        var scegli = me.guarda && !t.guarda && io && !io.via && !vm.manuale && !vm.ruoli;
         chiave = "guarda|" + me.guarda + "|" + !!t.guarda + "|" + (scegli ? sqs[0].length + "-" + sqs[1].length : "");
         fai = function () {
-          if (!scegli) { messaggio(ui, "👀", t.guarda ? "Guardi la partita: fai il tifo!" : me.guarda ? "Partita in corso: entri dal prossimo round. Intanto guardi!" : "Questo round lo giocano gli altri: tu guardi."); faccine(ui.azione); return; }
+          if (!scegli) { messaggio(ui, "👀", t.guarda ? "Guardi la partita: fai il tifo!" : me.guarda ? (vm.ruoli ? "Partita in corso: finito questo round scegli anche tu dove giocare. Intanto guardi!" : "Partita in corso: entri dal prossimo round. Intanto guardi!") : "Questo round lo giocano gli altri: tu guardi."); faccine(ui.azione); return; }
           var piccola = sqs[0].length === sqs[1].length ? -1 : (sqs[0].length < sqs[1].length ? 0 : 1);
           var box = el("div", { class: "sp-entra" }, [el("p", { text: "✋ Sei arrivato a partita in corso: scegli la tua squadra ed entri subito!" })]);
           [0, 1].forEach(function (k) {
