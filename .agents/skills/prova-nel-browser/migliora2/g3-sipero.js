@@ -102,7 +102,10 @@
 
   // ===================== sp1: le regole =====================
   COPIONE.aggiungi("sp1", { nome: "Sì… però: Ognuno per sé e carta bianca senza grafica, riassunto, impostazioni fuori pagina", fai: async function () {
-    var w = await W.apriTel("Paky", { x: 0, spiaSp: true }), X = w.__sipero, g = w.__gSp;
+    var w = await W.apriTel("Paky", { x: 0, spiaSp: true });
+    if (w.SGCuore && w.SGCuore.precarica) w.SGCuore.precarica("sipero");   // (23 nov 2026: il gioco si scarica quando serve)
+    await W.aspetta(function () { return w.__sipero && w.__gSp && w.SG_SIPERO; }, 15000);
+    var X = w.__sipero, g = w.__gSp;
     if (!X || !g) no("non vedo window.__sipero o il gioco registrato");
     var mazzi = { bonus: { carte: w.SG_SIPERO.bonus.slice(), pila: w.SG_SIPERO.bonus.slice() }, malus: { carte: w.SG_SIPERO.malus.slice(), pila: w.SG_SIPERO.malus.slice() } };
     var tt = { mischia: function (a) { return a.slice().sort(function () { return Math.random() - 0.5; }); } };
@@ -137,15 +140,15 @@
     if (X.pulisciScritta("   ") !== "") no("una carta vuota");
     if (JSON.stringify(X.presDopo(["a", "b", "c", "d"], "c")) !== '["d","a","b"]') no("chi presenta dopo il giudice: " + JSON.stringify(X.presDopo(["a", "b", "c", "d"], "c")));
     // la riga «📜 Si gioca così»
-    var r1 = g.riassunto({}), r2 = g.riassunto({ si: "solo", giri: 2, arringa: 60, bianca: 0 }), r3 = g.riassunto({ squadre: "mano", modalita: "custom", sequenza: [{ tipo: "bonus", n: 1, bers: "se" }] });
+    var r1 = g.riassunto({}), r2 = g.riassunto({ si: "solo", giri: 2, arringa: 60, bianca: 0 }), r3 = g.riassunto({ modo: "online", round: 7, modalita: "custom", sequenza: [{ tipo: "bonus", n: 1, bers: "se" }] });
     if (r1 !== "👥 A squadre · 📜 Fasi classiche · 🔁 1 giro · 🎤 arringa libera · 🃏 carta bianca") no("riassunto di partenza: " + r1);
     if (r2 !== "🙋 Ognuno per sé · 🔁 2 giri · 🎤 arringa 60 secondi") no("riassunto ognuno per sé: " + r2);
-    if (r3 !== "👥 A squadre · 🎛️ Fasi personalizzate · ✋ squadre scelte dall'host (un round) · 🎤 arringa libera · 🃏 carta bianca") no("riassunto squadre a mano: " + r3);
+    if (r3 !== "👥 A squadre · 🎛️ Fasi personalizzate · 🔁 7 round, ruoli scelti da voi · 🎤 arringa libera · 🃏 carta bianca") no("riassunto online a squadre (23 nov 2026: i round e la schermata dei ruoli): " + r3);
     // le impostazioni col box fuori dalla pagina (come nella Sala)
     var box = w.document.createElement("div"), dove = {};
     g.impostazioni(box, dove, { el: w.SG._util.el, sala: true, modo: "online", giocatori: ["Paky"] });
     if (dove.si !== "squadre" || dove.bianca !== 1) no("di partenza: a squadre e carta bianca sì (" + dove.si + ", " + dove.bianca + ")");
-    if (!/Si gioca/.test(box.textContent) || !/Ognuno per sé/.test(box.textContent) || !/Carta bianca/.test(box.textContent) || !/Squadre e giudice/.test(box.textContent)) no("mancano scelte online: «" + box.textContent.slice(0, 160) + "»");
+    if (!/Si gioca/.test(box.textContent) || !/Ognuno per sé/.test(box.textContent) || !/Carta bianca/.test(box.textContent) || !/Quanti round/.test(box.textContent)) no("mancano scelte online: «" + box.textContent.slice(0, 160) + "»");
     var chip = [].filter.call(box.querySelectorAll(".modo-chip"), function (b) { return /Ognuno per sé/.test(b.textContent); })[0];
     chip.click();
     if (dove.si !== "solo") no("toccato «Ognuno per sé» la regola non cambia");
@@ -381,6 +384,13 @@
     }
     if (!/carta bianca/i.test(T(W.finestra("Giulia")))) no("in saletta non si legge la carta bianca");
     W.clicca(P, /Comincia/);
+    // (23 nov 2026) online a squadre prima di ogni round c'è la schermata dei ruoli: «▶ Si parte» con i ruoli scelti dal gioco
+    async function siParte() {
+      if (!await W.aspetta(function () { return vm(C).fase === "ruoli"; }, 8000)) return;
+      var bp = await W.aspetta(function () { var x = bottone(P, /Si parte/); return x && !x.disabled ? x : null; }, 5000); if (!bp) no("niente «▶ Si parte»");
+      bp.click();
+    }
+    await siParte();
     var v = await W.aspetta(function () { var x = vm(C); return x.fase === "gioco" && x.step ? x : null; }, 8000);
     if (!v || v.solo) no("la partita a squadre non comincia");
     // chi gioca per primo scrive la sua carta e la gioca
@@ -399,7 +409,7 @@
     note.push("carta bianca di " + chi + " firmata");
     // Marco arriva a partita in corso: guarda
     var wm = await W.apriTel("Marco", { hash: "gioco=sipero&stanza=" + C, x: 740, spiaSp: true });
-    if (!await W.aspetta(function () { return /entri dal prossimo round/.test(T(W.finestra("Marco"))); }, 8000)) no("Marco arrivato tardi non guarda («" + T(W.finestra("Marco")).slice(0, 80) + "»)");
+    if (!await W.aspetta(function () { return /entri dal prossimo round|finito questo round/.test(T(W.finestra("Marco"))); }, 8000)) no("Marco arrivato tardi non guarda («" + T(W.finestra("Marco")).slice(0, 80) + "»)");
     // si gioca il resto del round coi tocchi (chi è di turno gioca), poi arringa e verdetto
     var fino = Date.now() + 60000;
     while (Date.now() < fino && vm(C).fase === "gioco") {
@@ -426,6 +436,7 @@
     if (vm(C).fase === "esito") { W.finestra("Giulia").document.querySelector(".sp-pronto").click(); }
     if (!await W.aspetta(function () { return vm(C).fase !== "esito"; }, 4000)) no("con 2 su 3 non si va avanti");
     note.push("«⏩ Avanti»: 3 su 4, poi 2 su 3 con Sara uscita");
+    await siParte();
     v = await W.aspetta(function () { var x = vm(C); return x.round === 2 && x.fase === "gioco" ? x : null; }, 4000);
     if (!v) no("non parte il round 2 (" + vm(C).fase + ")");
     var idM = (v.giocatori.filter(function (g) { return g.nome === "Marco"; })[0] || {}).id;
