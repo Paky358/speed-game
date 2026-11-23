@@ -17,6 +17,8 @@
 // 290: 🤝 tutti insieme online in 4 (una lancetta sola per tutti, punti di gruppo, il voto alla compagnia, tutti primi).
 // 292: MAI SPOILER nella rivelazione (23 nov 2026): finché la tendina non si è aperta i punti in alto e sotto la ruota restano
 //      quelli di prima (ognuno per sé e a squadre); dopo il cartello dei punti sono quelli nuovi. Chi guarda non vibra.
+// 293: a pari punti (23 nov 2026, scelta C del proprietario): stesso posto, stessa medaglia (medaglie per posto) e stessi punti della
+//      Classifica della serata; e le medaglie per posto (due 2° con l'argento, poi 4° senza bronzo).
 // 291: ✋ chi arriva tardi (ognuno per sé in 3): Sara apre il link a partita cominciata → «prossimi», entra dal turno dopo
 //      con 0 punti e fa anche lei il sensitivo; 👀 Bea col link guarda=1: mai tra i giocatori, targhetta del core, niente faccine del gioco.
 // Ogni scenario dura più di 45 s: lancialo senza aspettarlo (window.__run = COPIONE.prova(n)) e poi leggi COPIONE.esiti.
@@ -794,6 +796,39 @@
     await giro("solo", ["Giulia", "Luca"]);
     senzaErrori();
     return "punti fermi durante il rullo e nuovi dopo: " + L.join(", ");
+  } });
+  // ---- 293: pari punti = stessa medaglia e stessi punti della serata ----
+  COPIONE.aggiungi(293, { nome: "Lunghezza d'Onda: a pari punti stesso posto, stessa medaglia e stessi punti della Classifica della serata", fai: async function () {
+    var Z = await salaECominci(["Giulia", "Luca"]), C = Z.C, S = Z.S, P = W.finestra("Paky");
+    await regola(P, /Ognuno per sé/); await regola(P, /^🎯 Classico/); await regola(P, /^1 giro$/); await regola(P, /^45 s$/);
+    await comincia(C);
+    // nessuno muove la lancetta: tutti a 0 punti (anche il sensitivo, che prende la media)
+    var fino2 = Date.now() + 240000;
+    while (Date.now() < fino2 && vm(C).fase === "gioco") {
+      var v = vm(C);
+      if (v.passo === "indovina") { await W.dorme(500); continue; }
+      await giocaPasso(C, { veloce: true });
+    }
+    var f = vm(C).fine;
+    if (!f) no("la partita non finisce");
+    var cl = f.classifica || [];
+    if (!cl.length || !cl.every(function (r) { return r.pos === 1 && r.punti === 0; })) no("a pari punti non sono tutti primi: " + JSON.stringify(cl));
+    // le medaglie sui telefoni: tutte uguali
+    var nomi = ["Paky", "Giulia", "Luca"];
+    if (!await W.aspetta(function () { return nomi.every(function (n) { var w = W.finestra(n); return w && w.document.querySelectorAll(".classifica .pos").length === 3; }); }, 6000)) no("la classifica non si vede");
+    nomi.forEach(function (n) {
+      var m = [].map.call(W.finestra(n).document.querySelectorAll(".classifica .pos"), function (x) { return x.textContent.trim(); });
+      if (m.some(function (x) { return x !== m[0]; })) no(n + " vede medaglie diverse a pari punti: " + m.join(" "));
+    });
+    // la Classifica della serata: gli stessi punti a tutti
+    if (!await W.aspetta(function () { var t = vm(S).torneo; return t && t.punti && nomi.every(function (n) { return t.punti[n] != null; }); }, 8000)) no("la Classifica della serata non ha i punti di tutti (" + JSON.stringify((vm(S).torneo || {}).punti) + ")");
+    var tp = vm(S).torneo.punti, pp = nomi.map(function (n) { return tp[n]; });
+    if (pp.some(function (x) { return x !== pp[0]; })) no("a pari punti la serata dà punti diversi: " + JSON.stringify(tp));
+    // le medaglie per posto (la funzione del gioco, sui posti di una classifica con due pari al 2°)
+    var w = W.finestra("Paky"), med = w.__luMedaglie ? w.__luMedaglie([1, 2, 2, 4, 5]) : null;
+    if (med && med.join(" ") !== "🥇 🥈 🥈 4° 5°") no("le medaglie per posto sono «" + med.join(" ") + "»");
+    senzaErrori();
+    return "tutti a 0: tutti 1°, la stessa medaglia su ogni telefono e " + pp[0] + " punti della serata a testa" + (med ? "; per posto: " + med.join(" ") : "");
   } });
   function votoDi(f) { var q = f.max ? f.tot / f.max : 0; return q >= 0.78 ? "Telepatia" : q >= 0.57 ? "Ci capiamo al volo" : q >= 0.35 ? "C'è campo" : "Fuori frequenza"; }
 })();

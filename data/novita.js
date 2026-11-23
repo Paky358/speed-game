@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 420,
+    data: "23 novembre 2026",
+    titolo: "📡 Stessa Lunghezza d'Onda: medaglie per posto e avatar a ventaglio",
+    descrizione: [
+      "🥇 Nella classifica finale le medaglie vanno per posto, come nelle gare: chi è pari ha lo stesso posto, la stessa medaglia e gli stessi punti nella classifica della serata. Con due secondi, tutti e due hanno l'argento e chi viene dopo è quarto.",
+      "🎯 Quando si scopre il bersaglio, in tanti gli avatar con la lancetta vicina si aprono a ventaglio: ognuno si vede bene col suo cartellino dei punti."
+    ]
+  },
+  {
     v: 419,
     data: "23 novembre 2026",
     titolo: "📡 Stessa Lunghezza d'Onda: niente spoiler nella rivelazione",

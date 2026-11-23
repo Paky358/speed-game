@@ -24,6 +24,8 @@
   var FRASI = ["Più a destra!", "Più a sinistra!", "Fidatevi di me", "Ma che dici?!", "È ovvio!", "Ci sta", "Non ci credo", "Lo sapevo!"];
 
   function fmtN(n) { var s = String(Math.round(Math.abs(n || 0))).replace(/\B(?=(\d{3})+(?!\d))/g, "."); return (n < 0 ? "−" : "") + s; }   // 1.000
+  // il ventaglio degli avatar sul bordo nella rivelazione: [giro verso l'esterno, spostamento di lato] per il 1°, 2°, 3°… vicino
+  var VENTAGLIO = [[0, 0], [1, -4.5], [1, 4.5], [2, 0], [2, -8], [2, 8], [3, -4], [3, 4], [3, 0]];
   function avatarValido(o) { return o && typeof o === "object" && JSON.stringify(o).length < 3000 ? o : null; }
   function mescola(a) { a = a.slice(); for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), x = a[i]; a[i] = a[j]; a[j] = x; } return a; }
   function caso(a) { return a[Math.floor(Math.random() * a.length)]; }
@@ -1796,9 +1798,10 @@
         var messi = [];
         ids.forEach(function (id, i) {
           var p = gioc(vm, id), pt = (R.pts || {})[id] || 0, ultimo = i === ids.length - 1, v = R.lanP[id];
-          // vicini tra loro: uno sopra l'altro, così si vedono tutti
-          var sopra = messi.filter(function (x) { return Math.abs(x - v) < 6; }).length; messi.push(v);
-          Q.vola(id, v, srcAvatar(ui.omini[id], p ? p.nome : "?"), { r: 101 + sopra * 17, cls: (ultimo && pt ? "re " : "") + (pt === 4 ? "ok" : ""), testo: (id === ui.cb.myId ? "Tu " : "") + (pt ? "+" + pt : "0") }, subito ? 10 : 30 + i * 300);
+          // vicini tra loro: a ventaglio (un giro più fuori e di lato), così si vedono tutti col loro cartellino
+          var sopra = messi.filter(function (x) { return Math.abs(x - v) < 7; }).length; messi.push(v);
+          var vt = VENTAGLIO[Math.min(sopra, VENTAGLIO.length - 1)], vv = lim(v + vt[1], 0, 100);
+          Q.vola(id, vv, srcAvatar(ui.omini[id], p ? p.nome : "?"), { r: 101 + vt[0] * 17, cls: (ultimo && pt ? "re " : "") + (pt === 4 ? "ok" : ""), testo: (id === ui.cb.myId ? "Tu " : "") + (pt ? "+" + pt : "0") }, subito ? 10 : 30 + i * 300);
         });
         var c = ids.some(function (id) { return (R.pts || {})[id] === 4; });
         var meglio = ids.reduce(function (m, id) { return Math.max(m, (R.pts || {})[id] || 0); }, 0), mio = (R.pts || {})[ui.cb.myId];
@@ -1846,10 +1849,10 @@
   }
 
   // ----- fine partita: premi della serata, classifica con medaglie a pari merito, faccine, tasti del core -----
-  function medaglie(posti) {
-    var gruppi = 0, prec = null;
-    return posti.map(function (p) { if (p !== prec) { gruppi++; prec = p; } return ["🥇", "🥈", "🥉"][gruppi - 1] || p + "°"; });
-  }
+  // C1 (scelta del proprietario, 23 nov 2026): medaglie per posto, come nelle gare. A pari punti lo stesso posto, la stessa medaglia e gli
+  // stessi punti della serata (il posto va uguale a t.risultato): due 2° hanno l'argento e il dopo è 4°, senza bronzo
+  function medaglie(posti) { return posti.map(function (p) { return ["🥇", "🥈", "🥉"][p - 1] || p + "°"; }); }
+  window.__luMedaglie = medaglie;   // (per le prove)
   function finale(t, vm, cb) {
     stile();
     var f = vm.fine || {}, cl = f.classifica || [], targa = !!t.guarda && !t.eliminazione, fac = targa ? null : t.faccine(), sq = f.formula === "squadre";
