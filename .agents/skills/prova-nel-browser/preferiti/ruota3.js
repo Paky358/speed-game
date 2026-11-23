@@ -155,11 +155,11 @@
             if (pa && pa.getBoundingClientRect().bottom > ra.bottom + 1) no("su " + n + " la ruota è tagliata in basso");   // (15 nov 2026: sempre intera)
             return;
           }
-          var picc = d.querySelector(".ru-alto.nascosta") || (pa && pa.getBoundingClientRect().width < 0.75 * w);
+          var picc = d.querySelector(".ru-alto.nascosta") || !d.querySelector(".ru-alto.on") || (pa && pa.getBoundingClientRect().width < 0.75 * w);   // (19 nov 2026: senza studio, mentre si sceglie la lettera, la ruota sparisce)
           if (!picc) no("mentre si sceglie la consonante su " + n + " la ruota è ancora grande");
-          if (!q || !q.getClientRects().length) no("mentre si sceglie la consonante su " + n + " non c'è la tastiera");
+          if (![].some.call(d.querySelectorAll(".ru-qwerty .ru-qr"), function (r) { return r.getClientRects().length; })) no("mentre si sceglie la consonante su " + n + " non c'è la tastiera");   // (19 nov 2026: per scegliere la tastiera in ordine alfabetico, righe sue)
           var b = d.querySelector(".st-barra"), r = pa && pa.getBoundingClientRect();
-          if (b && r && !d.querySelector(".ru-alto.nascosta") && r.bottom > b.getBoundingClientRect().top + 2 + 0.06 * r.height) no("su " + n + " la ruota piccola finisce sotto i tasti");
+          if (b && r && !d.querySelector(".ru-alto.nascosta") && d.querySelector(".ru-alto.on") && r.bottom > b.getBoundingClientRect().top + 2 + 0.06 * r.height) no("su " + n + " la ruota piccola finisce sotto i tasti");
         });
         L.push("poi a " + chi + " la ruota si rimpicciolisce e compare la tastiera; gli altri la ruota grande");
       } else {

@@ -2077,6 +2077,7 @@
         c._d = el("span", { class: "ru-delta" }); c.appendChild(c._d);   // il «+800» che salta fuori quando si incassa
       }
       c._v = v; c._t = tt; ui.chip[p.id] = c; ui.punti.appendChild(c);
+      if (!ui.fitSu) { ui.fitSu = function () { if (!ui.S || !ui.S.vivo()) { window.removeEventListener("resize", ui.fitSu); return; } setTimeout(function () { Object.keys(ui.chip).forEach(function (id) { ui.chip[id]._fk = ""; }); fitChips(ui); }, 120); }; window.addEventListener("resize", ui.fitSu); }
     });
     ui.striscia = el("div", { class: "ru-striscia" }); ui.striscia.hidden = true;   // 🔔 i giochi veloci: campanella e «vale…» sotto il tabellone
     ui.sbagli = el("div", { class: "ru-sbagli" }); ui.sbagli.hidden = true;   // ❌ le lettere chiamate che non ci sono (14 nov 2026: la tastiera non c'è sempre)
@@ -2404,7 +2405,7 @@
       var off = ((((sotto(a) + 0.5) * 15 + a) % 360) + 540) % 360 - 180;
       luceSu(ui, sp[sotto(a)], off);
       // 🔍 poco dopo la fermata lo zoom torna indietro: la ruota di nuovo intera (il 15 nov il proprietario: «tagliata in basso non mi va bene»)
-      if (ui.flat && ui.zoomOn) dopo(ui, 1200, function () { if (k === ui.giroK && ui.zoomOn && !ui.rafGiro) { ui.zoomOn = false; ruotaAlta(ui, !!ui.alta, false); } });
+      if (ui.flat && ui.zoomOn) { clearTimeout(ui.tZoom); ui.tZoom = setTimeout(function () { if (S.vivo() && k === ui.giroK && ui.zoomOn && !ui.rafGiro) { ui.zoomOn = false; ui.kAlto = ""; if (ui.alta) posAlto(ui); ruotaAlta(ui, !!ui.alta, false); } }, 1200); }   // (non un «dopo»: il cambio di fase non deve cancellarlo)
       vibra(30);
       var arriva = sp[(sotto(a) + (dir === 1 ? 23 : 1)) % 24];   // (fermata col piolo sulla linguetta proprio prima della Bancarotta: sospiro di sollievo)
       if (manca(a) < PIEGA && arriva && arriva.s === "bancarotta") { try { ST.FX.applauso("piano"); } catch (e) {} }
@@ -2615,7 +2616,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       var kc = tcT + "|" + tcM;
       if (ui.kCat !== kc) {
         ui.kCat = kc; ui.cat.textContent = "";
-        ui.cat.appendChild(ui.el("span", { class: "t", text: tcT }));
+        ui.cat.appendChild(ui.el("span", { class: "t", text: tcT.replace(/ +· +/g, "\u00a0· ") }));
         if (tcM) ui.cat.appendChild(ui.el("span", { class: "m", text: tcM }));
         catInDueRighe(ui);
       }
@@ -2677,6 +2678,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       ui.mostrati[id] = val;
     });
     ui.modoLeggii = tot;
+    if (ui.flat) fitChips(ui);
     // le luci: nella frase lampo restano accese tutte quelle di chi può ancora prenotare
     if (!ui.show) {
       if (f === "lampo" && L && !L.chi) ids.forEach(function (id, i) { var p = trovaG(vm, id); ST.accendi(S, i, !!p && !p.via && L.fuori.indexOf(id) < 0); });
@@ -2782,6 +2784,8 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
     if (!totali(f)) { ui.soldiPrec = {}; vm.giocatori.forEach(function (p) { ui.soldiPrec[p.id] = p.soldi || 0; }); }
     // la barra ha cambiato altezza (es. è comparsa la tastiera): rimetto a fuoco l'inquadratura
     var bh = S.barraEl.offsetHeight;
+    if (ui.flat) { var bmz = banda(ui, true), kmz = Math.round(bmz.top) + "|" + Math.round(bmz.bot);
+      if (kmz !== ui.kMezzo) { ui.kMezzo = kmz; S.vista.style.setProperty("--ru-mezzo", bmz.top.toFixed(0) + "px"); S.vista.style.setProperty("--ru-basso", Math.max(0, S.VH - bmz.bot).toFixed(0) + "px"); } }
     if (bh !== ui.barraH) { var primaB = ui.barraH === -1; ui.barraH = bh; if (!primaB && S.shot) ST.camera(S, S.shot(), 350); if (ui.quadro.classList.contains("on")) posQuadro(ui); if (ui.alta) posAlto(ui); }
     if (ui.flat) { adattaTab(ui); if (ui.alta) posAlto(ui); }   // (📺 la tastiera è arrivata o andata via: tabellone e ruota si rimettono nello spazio vero)
     if (ui.altoEl.classList.contains("tocca") !== !!ui.puoGirare) ui.altoEl.classList.toggle("tocca", !!ui.puoGirare);
@@ -2851,6 +2855,27 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
     var cl = vm.giocatori.filter(function (p) { return !p.via; }).slice().sort(function (a, b) { return (b.totale || 0) - (a.totale || 0); });
     ui.fm.appendChild(el("div", { class: "ru-fm-box ru-fm-cl" }, [ el("div", { class: "ru-fm-tit", text: "CLASSIFICA" }) ].concat(cl.map(function (p, i) {
       return el("div", { class: "riga" }, [ el("b", { class: "pos", text: (i + 1) + "°" }), fac(p, 30), el("span", { class: "nm", text: p.nome }), el("b", { class: "v", text: fmtN(p.totale || 0) }) ]); }))));
+  }
+  // 🔢 (23 nov 2026) il punteggio sta sempre intero: se il riquadro è stretto (in 4 sul telefono basso) la faccina va piccola in alto
+  // accanto al nome e il numero prende tutta la larghezza; se non basta ancora, numero e «in gioco» si rimpiccioliscono (mai tagliati)
+  function fitChips(ui) {   // (stretti tutti insieme o nessuno: la misura la dà la riga intera, così i riquadri restano uguali)
+    var ids = Object.keys(ui.chip), W = ui.punti.clientWidth; if (!W || !ids.length) return;
+    var st = W / ids.length < 112;
+    ids.forEach(function (id) { var ch = ui.chip[id]; if (ch.classList.contains("stretto") !== st) { ch.classList.toggle("stretto", st); ch._fk = ""; } });
+    ids.forEach(function (id) { fitChip(ui.chip[id]); });
+  }
+  function fitChip(ch) {
+    if (!ch || !ch._v) return;
+    var w = ch.clientWidth, k = ch._v.textContent + "|" + (ch._t ? ch._t.textContent : "") + "|" + w + "|" + ch.className;
+    if (!w || ch._fk === k) return;
+    ch._fk = k;
+    [[ch._v, 10], [ch._t, 7]].forEach(function (x) {
+      var e = x[0]; if (!e) return;
+      e.style.fontSize = "";
+      if (e.scrollWidth <= e.clientWidth + 1) return;
+      var s = parseFloat(getComputedStyle(e).fontSize) || 14;
+      while (s > x[1] && e.scrollWidth > e.clientWidth + 1) { s -= 0.5; e.style.fontSize = s + "px"; }
+    });
   }
   // il «+800» (o «−400») che salta fuori sul punteggio di chi incassa o perde
   function popChip(ui, id, d) {
@@ -2994,7 +3019,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
     ST.FX.rullo(1.4);
     dopo(ui, 1500, function () {
       var B = ui.vm.busta, iv = B ? ui.ids.indexOf(B.id) : -1;
-      ui.bustaAperta = true; aggiornaBuste(ui, ui.vm);
+      ui.bustaAperta = true; aggiornaBuste(ui, ui.vm); if (ui.ridisegna) ui.ridisegna();
       ST.lampo(S); ST.pubblico(S, "ovazione"); ST.coriandoli(); ST.FX.fanfara(); if (iv >= 0) ST.faccia(S, iv, "evviva");
       if (B && B.id === ui.cb.myId && !ui.cb.telefono) vibra([30, 40, 70]);
     });
@@ -3062,7 +3087,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       var tx = !L ? "" : f === "lampofine" ? (cruci ? (L.vince ? "🧩 " + nomeDi(vm, ui.cb, L.vince, true) + " comincia la manche" : "Nessuna parola trovata") :
           L.vince ? "🎉 " + nomeDi(vm, ui.cb, L.vince, true) + " +" + fmtN(PREMIO_LAMPO) : "Nessuno l'ha indovinata") :
         L.chi ? "✍️ " + nomeDi(vm, ui.cb, L.chi, true) + " risponde…" :
-        cruci ? fmtN(CRUCI_PAROLA) + " a parola · trovate " + trovate + " di 4" : "Vale " + fmtN(PREMIO_LAMPO) + " · lettera " + L.n + " di " + L.tot;
+        cruci ? fmtN(CRUCI_PAROLA) + " a parola · trovate " + trovate + " di 4" : "Vale " + fmtN(PREMIO_LAMPO) + " · lettere " + L.n + "/" + L.tot;
       if (ui.lampoSub.textContent !== tx) ui.lampoSub.textContent = tx;
     } else if (tipo === "buste") aggiornaBuste(ui, vm);
     else if (tipo === "fin") aggiornaFin(ui, vm);
@@ -3122,6 +3147,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
     ui.kOrol = k; clearInterval(ui.tOrol); ui.tOrol = null;
     ui.orol.classList.toggle("on", !!k);
     if (!k) return;
+    if (ui.flat) ui.orol.style.top = Math.max(0, ui.tab.offsetTop - 8) + "px";   // (23 nov 2026: prima finiva sopra la riga che spiega o sopra la tastiera)
     var fine = Date.now() + vm.resta - (vm.grazia || 0), ultimo = -1;
     // (nella finale ticchetta solo per chi sta ancora giocando, e solo negli ultimi 10 secondi: chi ha finito o guarda, silenzio)
     var suona = vm.fase === "vdecidi" ? 99 : k.indexOf("ft:") === 0 ? 10 : 0;
@@ -3304,7 +3330,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
     var me = trovaG(vm, cb.myId);
     var chiave = [f, att, vm.turno, vm.chiamate.join(""), mioTurno, JSON.stringify(vm.puo), f === "lampo" ? "" : vm.tab, me ? (me.via ? "via" : "in") : "no", vm.kTempo || "", vm.cons,
       L ? [L.chi, L.fuori.join(","), L.prove, L.k].join("/") : "", ui.segreto || "", (vm.lock || []).join(","), F ? [F.b, vm.miaFin ? [vm.miaFin.ok, vm.miaFin.passo, vm.miaFin.scad, vm.miaFin.scelto, vm.miaFin.ch, vm.miaFin.voc].join(",") : "-", ui.finScrivi || ""].join("/") : "",
-      vm.busta ? vm.busta.id + "/" + vm.busta.scelta : "", ui.premuto || "", vm.kAv || "", vm.mres ? vm.mres.vinto : "", ui.segNota === segK(vm) ? "tardi" : "", sl || "", !mioTurno && vm.sel && vm.sel.id === att ? vm.sel.L : ""].join("|");
+      vm.busta ? vm.busta.id + "/" + vm.busta.scelta + "/" + (ui.bustaAperta ? 1 : 0) : "", ui.premuto || "", vm.kAv || "", vm.mres ? vm.mres.vinto : "", ui.segNota === segK(vm) ? "tardi" : "", sl || "", !mioTurno && vm.sel && vm.sel.id === att ? vm.sel.L : ""].join("|");
     ui.scrivi = mioTurno && (f === "risolvi" || f === "ftempo" || (f === "lampo" && !!(L && L.chi))) || !!ui.segreto;
     if (chiave === ui.kTast) { if (ui.scrivi) statoScritto(ui); if (ui.avAgg) ui.avAgg(vm); if (ui.finAgg) ui.finAgg(vm); return; }   // (cambia solo il numero di «⏩ Avanti», o chi ha risolto la finale)
     ui.kTast = chiave; svuota(ui.azioni); ui.okBtn = null; ui.annBtn = null; ui.rsStato = null; ui.avAgg = null; ui.finAgg = null;
@@ -3321,7 +3347,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
     if (f === "mapre") return aspetta("❓ " + nAtt + " apre il Mistero… +" + fmtN(MIST_PREMIO) + " o Bancarotta?");
     if (f === "mrivela") return aspetta(vm.mres && vm.mres.vinto ? "💰 Mistero: +" + fmtN(MIST_PREMIO) + " per " + nAtt + "!" : "💥 Mistero: Bancarotta per " + nAtt + "!");
     if (f === "finemanche") {
-      if (!cb.online || cb.telefono || !vm.kAv) return aspetta(vm.manche >= vm.mancheTot ? "Ultima manche finita!" : "Tra poco la manche " + (vm.manche + 1) + "… (sui leggii i totali)");
+      if (!cb.online || cb.telefono || !vm.kAv) return aspetta(vm.manche >= vm.mancheTot ? "Ultima manche finita!" : "Tra poco la manche " + (vm.manche + 1) + "…" + (ui.flat ? "" : " (sui leggii i totali)"));
       // online: il riepilogo col conto alla rovescia (lo tiene l'host) e «⏩ Avanti» per chi gioca
       var vv = vm.vince;
       stato((vv ? "🎉 " + nomeDi(vm, cb, vv.id, true) + " risolve: +" + fmtN(vv.vincita) + " · " : "") + (vm.manche >= vm.mancheTot ? "ultima manche finita!" : "poi la manche " + (vm.manche + 1)), "piccolo");
@@ -3331,6 +3357,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       if (ui.facc) ui.azioni.appendChild(ui.facc);
       return;
     }
+    if (f === "lampofine" && L && L.tri && L.tri.n < L.tri.di) return aspetta((L.vince ? "🎉 " + nomeDi(vm, cb, L.vince, true) + " la indovina! " : "Nessuno l'ha indovinata. ") + "Ora la frase " + (L.tri.n + 1) + " di " + L.tri.di + " del Triplete…");
     if (f === "lampofine") return aspetta(L && L.vince ? "🎉 " + nomeDi(vm, cb, L.vince, true) + " comincia la manche!" : "Si gioca senza premio: comincia la manche…");
     // ---- PRENOTA ----
     if (f === "lampo" && L && !L.chi) {
@@ -3348,7 +3375,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
         ui.azioni.appendChild(gr);
         return;
       }
-      if (!me) return aspetta("👀 Frase lampo: chi la sa prenota!");
+      if (!me) return aspetta("👀 " + (L.tipo === "cruci" ? "CruciRuota: chi sa una parola prenota!" : String((GIOCHI_VELOCI[L.tipo] || GIOCHI_VELOCI.classica).nome).replace(/!$/, "") + ": chi la sa prenota!"));
       if (me.via) return aspetta("Rientro nella partita…");
       if (L.fuori.indexOf(cb.myId) >= 0) return aspetta("❌ Sei fuori da questa frase: tocca agli altri");
       if (ui.premuto === L.k + ":" + L.prove) { stato("⏳ Prenotato! Vediamo chi è stato più veloce…"); return; }
@@ -3357,6 +3384,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       return;
     }
     // ---- ✉️ LA BUSTA DI CHI HA VINTO ----
+    if (f === "fesito" && vm.busta && !ui.bustaAperta) return aspetta("✉️ " + vm.busta.nome + " apre la busta " + ((vm.busta.scelta || 0) + 1) + "…");
     if (f === "fesito") return aspetta(vm.busta ? "🎉 " + vm.busta.nome + " vince " + fmtN(vm.busta.premio || 0) + " Speed Coins!" + (vm.busta.dopo ? (!cb.telefono && vm.busta.dopo[0] === cb.myId ? " Ora tocca a te!" : " Ora la busta di " + nomeDi(vm, cb, vm.busta.dopo[0], true) + "…") : "") : "");
     if (f === "fbusta") {
       var B = vm.busta || {};
@@ -3412,7 +3440,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
         return aspetta("🔒 Soluzione bloccata! A fine manche: giusta, prendi i punti; sbagliata, ne perdi metà · Tocca a " + nomeDi(vm, cb, att) + "…");
       if (me && !cb.telefono && ui.segNota === segK(vm) && FASI_SEG.indexOf(f) >= 0 && !(vm.lock && vm.lock.indexOf(cb.myId) >= 0))
         return aspetta("⏰ Troppo tardi per «La so!»: ormai è scoperto il 40% delle lettere · Tocca a " + nomeDi(vm, cb, att) + "…");
-      if (f === "lampo" && L && L.chi) return aspetta(L.tipo === "cruci" ? "🧩 " + nAtt + " risponde alla CruciRuota…" : "✍️ " + nAtt + " prova a risolvere la frase lampo…");
+      if (f === "lampo" && L && L.chi) return aspetta(L.tipo === "cruci" ? "🧩 " + nAtt + " risponde alla CruciRuota…" : "✍️ " + nAtt + " prova a risolvere " + ({ tempo: "la ruota del tempo", mondo: "il GiraMondo", triplete: "la frase del Triplete" }[L.tipo] || "la frase lampo") + "…");
       if (me && me.via) return aspetta("Rientro nella partita…");
       var tx = f === "sceltaexp" ? "🚂 " + nAtt + " decide: Express o no?" : f === "mistero" ? "❓ " + nAtt + " decide: apre il Mistero?" :
         vm.exp ? "🚂 " + nAtt + " è sull'Express: +" + fmtN(vm.expTot || 0) + "… si ferma?" :
@@ -3747,6 +3775,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       ".ru-orol{position:absolute;right:2px;top:100%;margin-top:6px;width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 30%,#3b2f8f,#14113a);box-shadow:0 0 0 3px #ffd43b,0 6px 14px rgba(0,0,0,.6);color:#fff;font-size:1.6rem;font-weight:900;opacity:0;transform:scale(.6);transition:opacity .25s,transform .25s;font-variant-numeric:tabular-nums}",
       ".ru-orol.on{opacity:1;transform:none}.ru-orol.urgente{box-shadow:0 0 0 3px #ff4d6d,0 0 18px rgba(255,77,109,.8)}",
       ".ru-orol.on.tic b{animation:ruTic .35s ease-out}",
+      ".ru-flat .ru-orol{right:-4px;margin-top:0;width:42px;height:42px;font-size:1.25rem;z-index:3}",
       "@keyframes ruTic{from{transform:scale(1.45)}to{transform:none}}",
       // la luce dorata sulla ruota (spicchio da 2.000, Express, round veloce)
       ".ru-oro{position:absolute;inset:-8%;border-radius:50%;background:radial-gradient(circle,rgba(255,224,102,0) 45%,rgba(255,212,59,.85) 62%,rgba(255,212,59,0) 74%);opacity:0;pointer-events:none}",
@@ -3823,7 +3852,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       ".ru-buste{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;width:96%}",
       ".ru-busta{position:relative;width:29%;aspect-ratio:1.45;border-radius:10px;background:linear-gradient(160deg,#fff4d6,#f2d48a);box-shadow:0 6px 14px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;color:#7a4b00;transition:transform .35s,opacity .35s}",
       ".ru-busta:before{content:'';position:absolute;left:0;right:0;top:0;height:55%;background:linear-gradient(to bottom right,transparent 49%,rgba(122,75,0,.25) 50%) left/50% 100% no-repeat,linear-gradient(to bottom left,transparent 49%,rgba(122,75,0,.25) 50%) right/50% 100% no-repeat}",
-      ".ru-busta .n{position:relative;font-size:30px;font-weight:900}",
+      ".ru-busta .n{position:relative;font-size:30px;font-weight:900;transition:transform .35s,opacity .35s}.ru-busta.aperta .n{transform:translateY(-38%) scale(.7);opacity:.55}",
       ".ru-busta .v{position:absolute;left:0;right:0;bottom:6px;font-size:15px;font-weight:900;color:#2b8a3e;opacity:0;transition:opacity .4s}",
       ".ru-busta.via{display:none}.ru-busta.spenta{opacity:.38;transform:scale(.9)}",
       ".ru-busta.scelta{transform:translateY(-8px) scale(1.12);box-shadow:0 0 0 4px #ffd43b,0 0 26px rgba(255,212,59,.85)}",
@@ -3834,7 +3863,8 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       ".ru-fin-sch{box-sizing:border-box}",   // (chi ha finito o guarda vede il maxischermo da vicino: con la telecamera su tutti, metà stava dietro il tabellone)
       ".ru-fin-lista{display:flex;flex-direction:column;gap:10px;width:92%}",
       ".ru-fin-riga{display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:14px;background:rgba(255,255,255,.08);font-size:24px;font-weight:800;color:#e7ecff;transition:background .3s}",
-      ".ru-fin-riga .n{flex:1;min-width:0;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".ru-fin-riga .n{flex:1 1 auto;min-width:3.2em;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".ru-fin-riga b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ru-fin-riga i:empty{display:none}",
       ".ru-fin-riga b{flex:none;font-weight:900}.ru-fin-riga i{flex:none;min-width:3.6em;text-align:right;font-style:normal;font-weight:900;color:#ffd43b;font-variant-numeric:tabular-nums}",
       ".ru-fin-riga.ok{background:rgba(81,207,102,.22);box-shadow:inset 0 0 0 2px rgba(81,207,102,.7)}.ru-fin-riga.via{opacity:.4}",
       // i tasti, nella barra dello studio
@@ -3927,6 +3957,9 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       ".ru-flat .ru-alto.on .ru-piatto-alto{transform:translate(var(--tx,0),var(--ty,0)) scale(var(--s,1))}",
       ".ru-flat .ru-alto.on.vicino .ru-piatto-alto{transform:translate(var(--txv,0),var(--tyv,0)) scale(var(--sv,1));transition:transform .55s cubic-bezier(.3,0,.2,1)}",
       ".ru-flat .st-terzo{bottom:auto;top:calc(var(--ru-mezzo,40%) + 8px)}",
+      ".ru-flat.ru-m-ruota .st-terzo{top:auto;bottom:calc(var(--ru-basso,30%) + 8px)}",
+      // (23 nov 2026) quando si scrive con la tastiera il riquadro della finale non si vede in trasparenza sotto i tasti
+      ".ru-flat.ru-m-lettere .ru-quadro-box{visibility:hidden;opacity:0}",
       // i punteggi: la faccina piccola al posto del pallino, il Jolly accanto, il «+800» che salta fuori
       ".ru-flat .ru-punti{flex-wrap:nowrap;gap:5px}",
       ".ru-flat .ru-chip{position:relative;flex:1 1 0;min-width:0;max-width:none;height:38px;display:flex;flex-wrap:wrap;align-content:center;column-gap:4px;row-gap:0;padding:0 6px 0 33px;border-radius:12px;",
@@ -3936,10 +3969,10 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       ".ru-flat .ru-chip b{font-size:.95rem}.ru-flat .ru-chip small{align-self:center;font-size:.6rem}",
       ".ru-flat .ru-chip.on{border-color:var(--o-oro);box-shadow:inset 0 0 0 1.5px var(--o-oro),0 0 12px -2px rgba(255,194,71,.6);background:rgba(40,30,70,.95)}.ru-flat .ru-chip.on .n{color:var(--o-testo)}",
       ".ru-flat .ru-chip .ru-jolly{position:absolute;right:-3px;top:-6px;font-size:.7rem;line-height:1;padding:2px 4px;border-radius:6px;background:#7048e8;color:#fff;display:none}.ru-flat .ru-chip .ru-jolly.on{display:inline-block}",
-      ".ru-delta{position:absolute;left:50%;top:100%;z-index:3;font-weight:900;font-size:15px;white-space:nowrap;pointer-events:none;opacity:0;text-shadow:0 2px 0 rgba(0,0,0,.5);transform:translate(-50%,-40%)}",
+      ".ru-delta{position:absolute;left:50%;top:50%;z-index:3;font-weight:900;font-size:15px;white-space:nowrap;pointer-events:none;opacity:0;padding:1px 7px;border-radius:9px;background:rgba(7,4,26,.92);box-shadow:0 2px 8px rgba(0,0,0,.5);transform:translate(-50%,-50%)}",
       ".ru-delta.su{color:#6ff0a6}.ru-delta.giu{color:#ff8d98}",
       ".ru-delta.on{animation:ruDelta 1.5s ease-out}",
-      "@keyframes ruDelta{0%{opacity:0;transform:translate(-50%,-70%) scale(.6)}15%{opacity:1;transform:translate(-50%,0) scale(1.15)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,30%)}}",
+      "@keyframes ruDelta{0%{opacity:0;transform:translate(-50%,-20%) scale(.6)}15%{opacity:1;transform:translate(-50%,-50%) scale(1.12)}75%{opacity:1;transform:translate(-50%,-50%)}100%{opacity:0;transform:translate(-50%,-95%)}}",
       // la tastiera: c'è solo quando si scelgono o si scrivono le lettere, coi tasti grandi; le vocali (da comprare) azzurre
       ".ru-flat.ru-m-ruota .ru-qwerty .ru-qr,.ru-flat.ru-m-quadro .ru-qwerty .ru-qr,.ru-flat.ru-m-lampo .ru-qwerty .ru-qr,.ru-flat.ru-m-tab .ru-qwerty .ru-qr{display:none}",
       // 📺 la ruota sta solo nella striscia libera (14 nov 2026): quello che esce si taglia, mai sopra le scritte
@@ -3973,6 +4006,12 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
       ".ru-flat .ru-chip small.inc{background:rgba(111,240,166,.2);color:#6ff0a6}",
       ".ru-flat .ru-chip.scuoti{animation:pzScuotiR .45s}@keyframes pzScuotiR{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}",
       ".ru-flat .ru-chip.incassa b{color:var(--o-oro)}",
+      // (23 nov 2026) il riquadro stretto: faccina piccola in alto accanto al nome, numero e «in gioco» su tutta la larghezza
+      ".ru-flat .ru-chip.stretto{padding:4px 4px 3px;align-content:flex-start;row-gap:0}",
+      ".ru-flat .ru-chip.stretto canvas.fac{left:4px;top:4px;margin-top:0;width:18px;height:18px}",
+      ".ru-flat .ru-chip.stretto .n{box-sizing:border-box;padding-left:21px;line-height:18px;font-size:.66rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".ru-flat .ru-chip.stretto b{font-size:1.06rem;line-height:1.2;text-align:center;overflow:hidden}",
+      ".ru-flat .ru-chip.stretto small{margin:0 auto;font-size:.54rem;padding:0 4px;text-overflow:clip}",
       ".ru-msg.nascosto{display:none}",
       ".ru-flat .ru-cat .t{flex:0 1 auto;min-width:0;text-align:center}",
       ".ru-flat .ru-cat .m{flex:none;white-space:nowrap;font-size:.66em;letter-spacing:.02em;line-height:1;padding:4px 8px;border-radius:99px;color:var(--o-testo);background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);text-shadow:none}",

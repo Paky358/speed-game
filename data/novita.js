@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 414,
+    data: "23 novembre 2026",
+    titolo: "🎡 La Ruota della Fortuna: tutto in ordine",
+    descrizione: [
+      "🔢 I punteggi in alto non si tagliano più: in 4 sul telefono piccolo la faccina va accanto al nome e il numero e «in gioco» si vedono interi.",
+      "🎡 Dopo l'ultimo zoom sulla lancetta la ruota torna sempre intera (prima, se usciva l'Express o il Mistero, restava ingrandita e tagliata).",
+      "✉️ La busta: la cifra si legge solo quando la busta si apre, non più prima del rullo di tamburi.",
+      "✨ Il «+1.000» che salta fuori sta sul punteggio e non copre più le scritte; i cartelli di passaggio non coprono più la riga sotto il tabellone e, quando c'è la ruota, stanno sotto (la lancetta resta libera).",
+      "⏱️ L'orologio dei secondi sta sull'angolo del tabellone, mai sopra la tastiera o le scritte; nel riquadro della finale i nomi si leggono interi; scrivendo, il riquadro non si vede più in trasparenza sotto i tasti.",
+      "💬 Scritte giuste per ogni gioco veloce (non più «frase lampo» nella ruota del tempo, nel GiraMondo, nel Triplete e nel CruciRuota); nel Triplete dopo la prima frase si dice qual è la prossima; i titoli su due righe non cominciano più con «·»."
+    ]
+  },
+  {
     v: 413,
     data: "23 novembre 2026",
     titolo: "🃏 Black Jack: si gioca subito",
