@@ -61,6 +61,10 @@
     var mio = function (n) { return (W.finestra(n).document.querySelector(".sp-mio") || {}).textContent || ""; };
     if (!await W.aspetta(function () { return /Sei il giudice/.test(mio("Giulia")) && /Squadra 1/.test(mio("Sara")) && /Squadra 2/.test(mio("Marco")); }, 4000)) no("le scritte «Sei…» non tornano (" + [mio("Giulia"), mio("Sara"), mio("Marco")].join(" | ") + ")");
     note.push("Marco nella 2, scritte «Sei nella…» giuste");
+    // (23 nov 2026, scelta C: a squadre dopo «Si parte» niente presentazione del round su nessun telefono)
+    await W.dorme(600);
+    ["Paky", "Giulia", "Sara", "Luca", "Marco"].forEach(function (n) { if (W.finestra(n).document.querySelector(".sp-presenta")) no(n + " vede ancora la presentazione del round"); });
+    note.push("niente presentazione del round");
     // il round: vince la Squadra 2 → Luca e Marco 1 punto, gli altri 0
     await S.finoGiudizio(C); await S.decidi(C, 1);
     var pt = {}; (vm(C).giocatori || []).forEach(function (g) { pt[g.nome] = g.punti; });
@@ -213,9 +217,9 @@
     if (!/squadra più piccola/.test(T(w))) no("non dice che chi resta va nella squadra più piccola");
     note.push("squadra vuota = spento");
     siParte(w).click();
-    if (!await W.aspetta(function () { return S.bottone(w, /Via ▶/); }, 3000)) no("dopo «Si parte» niente presentazione del round");
-    if (!/Luca/.test(T(w))) no("nella presentazione non c'è il giudice Luca");
-    note.push("si parte");
+    if (!await W.aspetta(function () { return S.bottone(w, /^Sono /); }, 3000)) no("dopo «Si parte» non si passa dritti al telefono («" + T(w).slice(0, 120) + "»)");
+    if (/Via ▶|Le fasi:/.test(T(w))) no("dopo «Si parte» c'è ancora la schermata del round");
+    note.push("si parte, dritti al gioco");
     var r = await roundL(w);
     if (r !== "ruoli") no("dopo il round 1 niente schermata dei ruoli (" + r + ")");
     if (!/Round 2 di 3/.test(T(w))) no("niente «Round 2 di 3»");
@@ -225,9 +229,9 @@
     if (/il giudice lo fa Luca/.test(T(w))) no("round 2: il gioco rifà giudice Luca");
     note.push("round 2: squadre di prima segnate, giudice libero");
     siParte(w).click();
-    if (!await W.aspetta(function () { return S.bottone(w, /Via ▶/); }, 3000)) no("round 2 non parte");
+    if (!await W.aspetta(function () { return S.bottone(w, /^Sono /); }, 3000)) no("round 2 non parte");
     r = await roundL(w); if (r !== "ruoli") no("dopo il round 2 niente ruoli (" + r + ")");
-    siParte(w).click(); await W.aspetta(function () { return S.bottone(w, /Via ▶/); }, 3000);
+    siParte(w).click(); await W.aspetta(function () { return S.bottone(w, /^Sono /); }, 3000);
     r = await roundL(w); if (r !== "fine") no("dopo 3 round non c'è la classifica (" + r + ")");
     note.push("3 round e la classifica");
     return note.join(" · ");

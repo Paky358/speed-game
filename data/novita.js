@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 418,
+    data: "23 novembre 2026",
+    titolo: "🤨 Sì... però: dopo «Si parte» si gioca subito",
+    descrizione: [
+      "A squadre, dopo «▶ Si parte» non c'è più la schermata che ripeteva giudice e squadre: li avete appena scelti, quindi si va dritti al gioco.",
+      "Vale online e sullo stesso telefono."
+    ]
+  },
+  {
     v: 417,
     data: "23 novembre 2026",
     titolo: "🤨 Sì... però: giudice e squadre anche sullo stesso telefono",

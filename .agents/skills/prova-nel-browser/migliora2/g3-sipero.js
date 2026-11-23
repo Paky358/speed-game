@@ -527,9 +527,7 @@
     w = await avviaLocale(["Paky", "Giulia", "Luca", "Sara", "Bea"], { si: "squadre", giri: 1, bianca: 1 });
     // (dal 23 nov 2026 prima la schermata dei ruoli: chi ha il telefono tocca «Si parte», il gioco sistema chi resta)
     if (!await W.aspetta(function () { return w.document.querySelector(".sp-ruoli-sc") && bottone(w, /Si parte/); }, 3000)) no("niente schermata dei ruoli");
-    W.clicca(w, /Si parte/);
-    if (!await W.aspetta(function () { return /Squadra 1/.test(T(w)) && bottone(w, /Via ▶/); }, 3000)) no("niente schermata delle squadre");
-    W.clicca(w, /Via ▶/);
+    W.clicca(w, /Si parte/);   // (dal 23 nov 2026 niente schermata del round: dritti al primo passaggio del telefono)
     var primo = await W.aspetta(function () { var b = bottone(w, /^Sono /); return b ? b.textContent : null; }, 3000);
     if (!primo) no("niente passaggio del telefono");
     bottone(w, /^Sono /).click();

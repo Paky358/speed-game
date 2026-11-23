@@ -1273,22 +1273,9 @@
     st.mani = nuoveMani(t, st.mazzi, st.scen);
     st.passi = creaPassi(st.seq, (st.round - 1) % 2);
     st.passo = 0;
-
-    stile();
-    var s = t.schermata({ icona: "🥊", titolo: "Round " + st.round + " di " + st.totale, indietro: st.esci });
-    var box = el("div", { class: "sp-round" });
-    box.appendChild(el("div", { class: "sp-giudbox" }, [avatar(t, st.giudice), el("span", { text: "⚖️ Giudice: " + st.giudice })]));
-    [0, 1].forEach(function (k) {
-      if (k === 1) box.appendChild(el("div", { class: "sp-contro", text: "contro" }));
-      box.appendChild(el("div", { class: "sp-sqbox c" + k }, [el("b", { text: emoSq(k) + " " + nomeSq(k) }),
-        el("div", { class: "sp-chi" }, st.squadre[k].map(function (nome) { return persona(t, nome); }))]));
-    });
-    box.appendChild(el("div", { class: "sp-seqinfo", text: "Le fasi: " + riassuntoSeq(st.seq) }));
-    if (st.avvisoSeq && st.round === 1) box.appendChild(el("div", { class: "sp-avviso", text: "Nella Personalizzata non c'era nessuna fase: si gioca la Classica." }));
-    box.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin:0", text: "Passatevi il telefono a turno: le carte in mano sono segrete, quelle giocate vanno sul tavolo." }));
-    s._contenuto.appendChild(box);
-    s._piede.appendChild(el("button", { class: "btn btn-primario", text: "Via ▶", onclick: function () { prossimoPasso(t, st); } }));
-    t.mostra(s);
+    // (23 nov 2026, il proprietario sulla scelta C: «toglila, non ha senso»: dopo «Si parte» niente schermata del round
+    //  con giudice e squadre, già viste nella schermata dei ruoli: si va dritti al primo passaggio del telefono)
+    prossimoPasso(t, st);
   }
 
   function prossimoPasso(t, st) {
@@ -2477,6 +2464,7 @@
     V.roundVisto = vm.fase === "gioco" || vm.fase === "arringa" || vm.fase === "giudizio" || vm.fase === "esito" ? k : "fuori";
     if (prima === undefined || prima === k) return;
     if (vm.fase !== "gioco" || V.introK === k || (vm.inizio || 0) > 2500 || !vm.giudiceId) return;
+    if (!vm.solo) return;   // 👥 a squadre niente presentazione: giudice e squadre si sono appena visti nella schermata dei ruoli (23 nov 2026, scelta C del proprietario: «toglila, non ha senso»)
     if (vm.solo ? vm.passoS !== "bonus" : !(vm.step && vm.step.i === 0)) return;
     V.introK = k;
     function persona(g, capo) { return { nome: g.id === cb.myId ? "Tu" : g.nome, omino: cb.omino(g.id), capo: capo }; }   // (23 nov 2026: «Paky (tu)» si tagliava)
