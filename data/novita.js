@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 419,
+    data: "23 novembre 2026",
+    titolo: "📡 Stessa Lunghezza d'Onda: niente spoiler nella rivelazione",
+    descrizione: [
+      "🥁 Mentre suona il rullo e la tendina sta per aprirsi, i punti in alto e accanto ai nomi restano quelli di prima: cambiano solo quando si scopre il bersaglio. Prima si capiva già chi aveva fatto punti.",
+      "🎯 A squadre, col centro pieno la scommessa dell'altra squadra non vale: adesso lo dice («col centro pieno la scommessa non vale») invece di «ha sbagliato la scommessa».",
+      "✋ Chi arriva a partita cominciata legge sempre che entra dal prossimo turno, anche a squadre e mentre il sensitivo sceglie.",
+      "In alto, a inizio partita nessuno è «in testa» con 0 punti, e a pari punti c'è scritto «In 2 a 3». Mentre il sensitivo sceglie la scala si legge «sta scegliendo la scala».",
+      "Gli avatar sul bordo della mezza ruota non escono più dallo schermo, chi guarda soltanto non sente vibrare il telefono, e a fine partita la classifica in tanti non scorre più."
+    ]
+  },
+  {
     v: 418,
     data: "23 novembre 2026",
     titolo: "🤨 Sì... però: dopo «Si parte» si gioca subito",

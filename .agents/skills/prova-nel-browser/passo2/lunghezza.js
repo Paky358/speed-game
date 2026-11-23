@@ -15,6 +15,8 @@
 // 288: 6 a squadre, escono in tre uno dopo l'altro: squadre rifatte, poi ognuno per sé, fino alla fine.
 // 289: misure ognuno per sé con 6 telefoni (avatar sul bordo) e la classifica finale.
 // 290: 🤝 tutti insieme online in 4 (una lancetta sola per tutti, punti di gruppo, il voto alla compagnia, tutti primi).
+// 292: MAI SPOILER nella rivelazione (23 nov 2026): finché la tendina non si è aperta i punti in alto e sotto la ruota restano
+//      quelli di prima (ognuno per sé e a squadre); dopo il cartello dei punti sono quelli nuovi. Chi guarda non vibra.
 // 291: ✋ chi arriva tardi (ognuno per sé in 3): Sara apre il link a partita cominciata → «prossimi», entra dal turno dopo
 //      con 0 punti e fa anche lei il sensitivo; 👀 Bea col link guarda=1: mai tra i giocatori, targhetta del core, niente faccine del gioco.
 // Ogni scenario dura più di 45 s: lancialo senza aspettarlo (window.__run = COPIONE.prova(n)) e poi leggi COPIONE.esiti.
@@ -117,7 +119,7 @@
     if (!await W.aspetta(function () { return vm(C).fase === "gioco"; }, 8000)) no("la partita non comincia");
   }
 
-  COPIONE.lu = { trascina: trascina, giocaPasso: giocaPasso, finoAllaFine: finoAllaFine, tocca: tocca, tel: tel };
+  COPIONE.lu = { trascina: trascina, giocaPasso: giocaPasso, finoAllaFine: finoAllaFine, tocca: tocca, tel: tel, fino: fino, salaECominci: salaECominci, regola: regola, comincia: comincia };
 
   COPIONE.aggiungi(280, { nome: "Lunghezza d'Onda: 3 telefoni senza squadre, ricariche, sensitivo spento, Rivincita, Cambia gioco", fai: async function () {
     var Z = await salaECominci(["Giulia", "Luca"]), C = Z.C, P = W.finestra("Paky");
@@ -196,8 +198,10 @@
     var fin = vm(C).fine;
     if (!fin || !fin.classifica || fin.classifica.length !== 3) no("classifica finale sbagliata");
     senzaErrori();
-    // Rivincita: 3-2-1 da solo e si rigioca
+    // Rivincita (dal 22 nov 2026, v403): tutti nella saletta con le regole di prima, poi l'host tocca «Comincia»
     W.clicca(P, /Rivincita/, ".fine-tasti button");
+    if (!await W.aspetta(function () { return vm(C).fase === "lobby"; }, 12000)) no("la Rivincita non torna in saletta (" + vm(C).fase + ")");
+    await comincia(C);
     if (!await W.aspetta(function () { return vm(C).fase === "gioco" && vm(C).partita === 2; }, 12000)) no("la Rivincita non riparte (" + vm(C).fase + ")");
     if (!await finoAllaFine(C, 200000, { veloce: true })) no("la rivincita non finisce");
     await W.aspetta(function () { return A.tastiFineDi(P); }, 5000);
@@ -684,7 +688,7 @@
     if (v.formula !== "insieme") no("non si gioca tutti insieme (" + v.formula + ")");
     if (v.turniTot !== 4) no("i turni sono " + v.turniTot + " (in 4 con 1 giro: 4)");
     // in alto il totale di tutti
-    if (!await W.aspetta(function () { return /Tutti insieme/.test(T(W.finestra("Luca"))); }, 4000)) no("Luca non legge «🤝 Tutti insieme» in alto");
+    if (!await W.aspetta(function () { return /🤝 Insieme/.test(T(W.finestra("Luca"))); }, 4000)) no("Luca non legge «🤝 Insieme» in alto");
     // fino a «indovina»: tutti tranne il sensitivo hanno «Ci siamo» e muovono la stessa lancetta
     await fino(C, function (x) { return x.passo === "indovina"; }, 30000) || await W.aspetta(function () { return vm(C).passo === "indovina"; }, 20000);
     v = vm(C);
@@ -747,6 +751,49 @@
     if (!await W.aspetta(function () { return /l'hai guardata/.test(T(B)); }, 6000)) no("a fine partita Bea non legge «Questa partita l'hai guardata»");
     senzaErrori();
     return "Sara: prossimi → dentro al turno 2 con 0 punti, sensitivo una volta, in classifica; Bea guarda col link (targhetta, mai in partita)";
+  } });
+  // ---- 292: i punti non cambiano prima che la tendina si apra ----
+  COPIONE.aggiungi(292, { nome: "Lunghezza d'Onda: nella rivelazione i punti cambiano solo dopo che la tendina si è aperta (ognuno per sé e a squadre)", fai: async function () {
+    var L = [];
+    async function giro(formula, amici) {
+      var Z = await salaECominci(amici), C = Z.C, P = W.finestra("Paky");
+      if (formula === "solo") await regola(P, /Ognuno per sé/);
+      await regola(P, /^🎯 Classico/);
+      await comincia(C);
+      var controllati = 0, fino2 = Date.now() + 150000;
+      while (Date.now() < fino2 && controllati < 2 && vm(C).fase === "gioco") {
+        var v = vm(C);
+        if (v.passo === "indovina") {
+          // lancette vicine al centro: così qualcuno fa punti
+          var gioc = v.players.filter(function (p) { return !p.via && p.id !== v.sens && (formula !== "squadre" || p.sq === v.sensSq); });
+          for (var i = 0; i < gioc.length; i++) { var w = tel(C, gioc[i].id); if (w) await trascina(w, 50); }
+        }
+        if (v.passo === "scommette" || (v.passo === "indovina" && formula === "squadre")) { await giocaPasso(C, { veloce: true }); continue; }
+        if (v.passo !== "rivela") { await giocaPasso(C, { veloce: true }); continue; }
+        // la rivelazione appena arrivata: i testi in alto e sotto la ruota sui telefoni di tutti
+        var nomi = v.players.map(function (p) { return p.nome; });
+        var prima = nomi.map(function (n) { var w = W.finestra(n); return w ? [].map.call(w.document.querySelectorAll(".lu-box b, .lu-p i"), function (x) { return x.textContent.trim(); }).join(",") : ""; });
+        var guadagno = formula === "squadre" ? (v.rivela.pt || 0) + (v.rivela.scom && v.rivela.scom.giusta ? 1 : 0) : Object.keys(v.rivela.pts || {}).reduce(function (s, k) { return s + v.rivela.pts[k]; }, 0);
+        await W.dorme(900);
+        var durante = nomi.map(function (n) { var w = W.finestra(n); return w ? [].map.call(w.document.querySelectorAll(".lu-box b, .lu-p i"), function (x) { return x.textContent.trim(); }).join(",") : ""; });
+        // (il conto alla rovescia in alto cambia: si guardano solo le cifre dei punti, senza il turno)
+        function pulito(s) { return String(s); }   // (i punti in alto e accanto ai nomi, senza il conto alla rovescia)
+        if (guadagno > 0) {
+          durante.forEach(function (d, i) { if (pulito(d).replace(/s/g, "") !== pulito(prima[i]).replace(/s/g, "")) no(formula + ": durante il rullo " + nomi[i] + " vede i punti cambiati («" + pulito(prima[i]) + "» → «" + pulito(d) + "»)"); });
+          await W.dorme(3200);
+          var dopo = nomi.map(function (n) { var w = W.finestra(n); return w ? [].map.call(w.document.querySelectorAll(".lu-box b, .lu-p i"), function (x) { return x.textContent.trim(); }).join(",") : ""; });
+          if (dopo.every(function (d, i) { return pulito(d).replace(/s/g, "") === pulito(prima[i]).replace(/s/g, ""); })) no(formula + ": dopo la rivelazione i punti non sono cambiati");
+          controllati++;
+        }
+        await giocaPasso(C, { veloce: true });
+      }
+      if (controllati < 1) no(formula + ": nessuna rivelazione con punti da controllare");
+      L.push(formula + " " + controllati + " rivelazioni");
+      W.clicca(P, /‹/, ".lu-esci"); await W.dorme(300);
+    }
+    await giro("solo", ["Giulia", "Luca"]);
+    senzaErrori();
+    return "punti fermi durante il rullo e nuovi dopo: " + L.join(", ");
   } });
   function votoDi(f) { var q = f.max ? f.tot / f.max : 0; return q >= 0.78 ? "Telepatia" : q >= 0.57 ? "Ci capiamo al volo" : q >= 0.35 ? "C'è campo" : "Fuori frequenza"; }
 })();

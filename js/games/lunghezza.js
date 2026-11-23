@@ -358,7 +358,7 @@
     };
     Q.tag = function (testo) { testo = testo || ""; if (testo !== Q.tagTx) { Q.tagTx = testo; tag.textContent = testo; tag.classList.toggle("vis", !!testo); } posTag(); };
     // gli avatar sul bordo del quadrante (ognuno per sé)
-    function posMk(m) { sposta(m, punto(m._v, m._r), m._sc); }
+    function posMk(m) { var p = punto(m._v, m._r), g = geo(), mz = 17; if (g.w > 2 * mz) p.x = lim(p.x, mz, g.w - mz); sposta(m, p, m._sc); }
     Q.marker = function (id, v, src, opz) {
       opz = opz || {};
       var m = Q.mk[id];
@@ -1402,7 +1402,10 @@
       } else { Q.tendina("chiusa", false); Q.bers(null); }
     }
     // ---- in alto: punti e turno ----
-    if (!ui.anim) mettiPunti(ui, vm, r);
+    // (la rivelazione: finché la tendina non si è aperta i punti restano quelli di prima, se no si capisce chi ha fatto punti)
+    var kRv = "riv|" + vm.partita + "|" + vm.turno, Rv = vm.passo === "rivela" ? vm.rivela : null;
+    var vmP = Rv && !Rv.saltato && (ui.kRiv !== kRv ? (vm.resta || 0) >= T_RIVELA - 2 : ui.anim) ? puntiPrima(vm) : vm;
+    if (!ui.anim) mettiPunti(ui, vmP, r);
     var turnoTesto = vm.formula === "squadre" ? (vm.spareggio ? "Spareggio" : "Turno " + vm.turno) : "Turno " + vm.turno + (vm.turniTot ? "/" + vm.turniTot : "");
     tx(ui.turnoTx, (r.guardo ? "👀 " : "") + turnoTesto);
     // ---- il sensitivo e la parola ----
@@ -1457,7 +1460,7 @@
       }
     }
     // ---- chi c'è (conferme, lucchetti, voti, punti) ----
-    mettiGente(ui, vm, r);
+    mettiGente(ui, vmP, r);
     // ---- il pannello in basso (fatto una volta per turno e passo) ----
     pannello(ui, vm, r, seg);
     // ---- in fondo: il sensitivo è muto mentre gli altri indovinano ----
@@ -1473,7 +1476,7 @@
     if (vm.pausa) return "📶 " + nome + " si ricollega… il tempo è fermo";
     if (vm.passo === "sceglie") {
       if (r.sensIo) return vm.modo === "classico" ? "🎯 Classico: inventa la parola giusta" : "🤔 Cosa ne pensi? Decidi tu dove sta";
-      return vm.modo === "cosa" && vm.sub === "piazza" ? "Sta decidendo dove mettere questa parola:" : (vm.modo === "classico" ? "🎯 Classico: sta inventando l'indizio" : "🤔 Cosa ne pensi? Sta scegliendo la parola");
+      return vm.modo === "cosa" && vm.sub === "piazza" ? "Sta decidendo dove mettere questa parola:" : (vm.modo === "classico" ? (vm.sub === "scala" ? "🎯 Classico: sta scegliendo la scala" : "🎯 Classico: sta inventando l'indizio") : "🤔 Cosa ne pensi? Sta scegliendo la parola");
     }
     if (vm.passo === "indovina") {
       if (r.sensIo) return "Guarda gli altri cercare il tuo bersaglio…";
@@ -1485,7 +1488,7 @@
     return "";
   }
   function mettiPunti(ui, vm, r) {
-    var my = r.io;
+    var my = r.io ? gioc(vm, r.io.id) || r.io : null;   // (dalla foto passata: nella rivelazione i punti di prima)
     if (vm.formula === "squadre") {
       ui.a.className = "lu-box a sq" + (my && my.sq === 0 && !r.guardo ? " mia" : "") + (vm.sensSq === 0 && vm.passo !== "rivela" ? " tocca" : "");
       ui.b.className = "lu-box b sq" + (my && my.sq === 1 && !r.guardo ? " mia" : "") + (vm.sensSq === 1 && vm.passo !== "rivela" ? " tocca" : "");
@@ -1495,13 +1498,14 @@
     }
     if (vm.formula === "insieme") {
       ui.a.className = "lu-box a ins"; ui.b.className = "lu-box b";
-      tx(ui.aT, "🤝 Tutti insieme"); tx(ui.aN, fmtN(vm.tot || 0));
+      tx(ui.aT, "🤝 Insieme"); tx(ui.aN, fmtN(vm.tot || 0));
       tx(ui.bT, "Su"); tx(ui.bN, fmtN((vm.turniTot || 0) * 4));
       return;
     }
     var ord = vm.players.slice().sort(function (a, b) { return b.punti - a.punti; }), primo = ord[0];
     ui.a.className = "lu-box a"; ui.b.className = "lu-box b";
-    tx(ui.aT, "In testa"); tx(ui.aN, primo ? primo.nome.split(" ")[0] + " " + fmtN(primo.punti) : "");
+    var pari = primo ? ord.filter(function (q) { return q.punti === primo.punti; }).length : 0;
+    tx(ui.aT, "In testa"); tx(ui.aN, !primo || !primo.punti ? "—" : pari > 1 ? "In " + pari + " a " + fmtN(primo.punti) : primo.nome.split(" ")[0] + " " + fmtN(primo.punti));
     if (my && !r.guardo) { tx(ui.bT, "Tu · " + (1 + ord.filter(function (q) { return q.punti > my.punti; }).length) + "°"); tx(ui.bN, fmtN(my.punti)); }
     else if (r.aspetto) { tx(ui.bT, "Entri tra poco"); tx(ui.bN, "✋"); }
     else { tx(ui.bT, "Guardi"); tx(ui.bN, "👀"); }
@@ -1581,7 +1585,7 @@
   function pannello(ui, vm, r, seg) {
     var t = ui.t, cb = ui.cb, Q = ui.Q, tipo = tipoPannello(vm, r);
     if (tipo === "s-cosa-parola" && ui.scrivo) tipo = "s-cosa-scrivo";
-    var k = tipo + "|" + vm.partita + "|" + vm.turno + (tipo === "s-cosa-parola" && seg ? "|" + (seg.parole || []).join(",") : "") + (tipo === "s-classico-scala" ? "|" + !!seg : "") + (tipo === "attesa" ? "|" + !!vm.scala : "") + (tipo === "rivela" ? "|" + (vm.rip || 0) : "");   // (rivelazione: dopo una ripresa il conto riparte)
+    var k = tipo + "|" + vm.partita + "|" + vm.turno + (tipo === "s-cosa-parola" && seg ? "|" + (seg.parole || []).join(",") : "") + (tipo === "s-classico-scala" ? "|" + !!seg : "") + (tipo === "attesa" || tipo === "guarda" ? "|" + !!vm.scala + "|" + !!r.aspetto : "") + (tipo === "rivela" ? "|" + (vm.rip || 0) : "");   // (rivelazione: dopo una ripresa il conto riparte)
     if (k !== ui.kPan) {
       ui.kPan = k; svuota(ui.pan); ui.panEl = {}; ui.root.classList.remove("scrive");
       var P = ui.panEl, el = t.el;
@@ -1698,7 +1702,7 @@
       } else if (tipo === "pausa") {
         ui.pan.appendChild(el("div", { class: "lu-nota", text: "📶 Il sensitivo si sta ricollegando: il tempo è fermo. Se non torna, si passa al prossimo." }));
       } else if (tipo === "attesa") {
-        ui.pan.appendChild(el("div", { class: "lu-nota", text: vm.scala ? "Intanto guardate la scala: preparatevi a discutere!" : "Il sensitivo sta scegliendo la scala…" }));
+        ui.pan.appendChild(el("div", { class: "lu-nota", text: r.aspetto ? "✋ Entri dal prossimo turno, con 0 punti: intanto guarda!" : vm.scala ? "Intanto guardate la scala: preparatevi a discutere!" : "Il sensitivo sta scegliendo la scala…" }));
       } else if (tipo === "guarda") {
         var tg = r.sensIo ? (r.sq ? (r.ins ? "Guarda gli altri cercare il bersaglio 🍿" : "Guarda la tua squadra cercare il bersaglio 🍿") : "Guarda dove mettono la lancetta gli altri 🍿") : r.aspetto ? "✋ Entri dal prossimo turno, con 0 punti: intanto guarda!" : r.guardo ? (ui.t.guarda ? "👀 Guardi la partita" : "👀 Guardi la partita: entri alla prossima.") :
           vm.passo === "scommette" ? "Aspettate la scommessa della Squadra " + SQ[1 - vm.sensSq] + "…" :
@@ -1746,7 +1750,7 @@
     if (R.saltato) righe.push(["b", R.saltato]);
     else if (vm.formula === "squadre") {
       righe.push(["b", R.tele ? "🧠 TELEPATIA! +4 alla Squadra " + SQ[R.sq] : R.pt === 4 ? "🎯 Centro! +4 alla Squadra " + SQ[R.sq] : R.pt ? "+" + R.pt + " alla Squadra " + SQ[R.sq] : "Fuori! Nessun punto alla Squadra " + SQ[R.sq]]);
-      if (R.scom) righe.push(["s", (R.scom.lato === "sx" ? "⬅️" : "➡️") + " La Squadra " + SQ[R.scom.sq] + (R.scom.giusta ? " aveva ragione: +1" : " ha sbagliato la scommessa") + (R.scom.pari ? " (pari: valeva il primo voto)" : "")]);
+      if (R.scom) righe.push(["s", (R.scom.lato === "sx" ? "⬅️" : "➡️") + " La Squadra " + SQ[R.scom.sq] + (R.scom.giusta ? " aveva ragione: +1" : R.pt === 4 ? ": col centro pieno la scommessa non vale" : " ha sbagliato la scommessa") + (R.scom.pari ? " (pari: valeva il primo voto)" : "")]);
       if (R.rimonta) righe.push(["b", "🔁 Centro e siete ancora dietro: RIGIOCATE!"]);
     } else if (vm.formula === "insieme") {
       righe.push(["b", R.tele ? "🧠 TELEPATIA! +4 per tutti" : R.pt === 4 ? "🎯 Centro! +4 per tutti" : R.pt ? "+" + R.pt + " per tutti" : "Fuori! Nessun punto"]);
@@ -1777,7 +1781,7 @@
     if (vm.formula !== "solo") { Q.vediLan(true); Q.lan(R.lan, true); } else Q.vediLan(false);
     function esito() {
       if (vm.formula !== "solo") {
-        Q.lumini(R.tele ? 4 : R.pt); if (!subito) vibraEsito(R.pt, R.tele);
+        Q.lumini(R.tele ? 4 : R.pt); if (!subito && !r.guardo) vibraEsito(R.pt, R.tele);   // (chi guarda soltanto non vibra)
         if (R.tele) { Q.pop("🧠 TELEPATIA!", "tele"); Q.coriandoli(); suono("tele"); }
         else if (R.pt === 4) { Q.pop("🎯 CENTRO! +4", "centro"); Q.coriandoli(); suono("centro"); }
         else if (R.pt) { Q.pop("+" + R.pt, "buono"); suono("buono"); }
@@ -1816,10 +1820,22 @@
     dopo(2000, esito);
     dopo(2850, function () { ui.anim = false; contaPunti(ui, ui.vm, ruolo(ui, ui.vm)); });
   }
+  // i punti di prima della rivelazione (la foto porta già quelli nuovi): quelli di questo turno tolti
+  function puntiPrima(vm) {
+    var R = vm.rivela || {}, x = {}, k;
+    for (k in vm) x[k] = vm[k];
+    if (vm.formula === "squadre") {
+      x.sqPunti = (vm.sqPunti || [0, 0]).slice();
+      if (R.sq === 0 || R.sq === 1) x.sqPunti[R.sq] -= R.pt || 0;
+      if (R.scom && R.scom.giusta) x.sqPunti[R.scom.sq] -= 1;
+    } else if (vm.formula === "insieme") x.tot = (vm.tot || 0) - (R.pt || 0);
+    else x.players = vm.players.map(function (p) { var q = {}, j; for (j in p) q[j] = p[j]; q.punti = (p.punti || 0) - ((R.pts || {})[p.id] || 0); return q; });
+    return x;
+  }
   // i punti in alto che contano fino al nuovo valore
   function contaPunti(ui, vm, r) {
     var da = [Number(String(ui.aN.textContent).replace(/\D/g, "")) || 0, Number(String(ui.bN.textContent).replace(/\D/g, "")) || 0];
-    mettiPunti(ui, vm, r);
+    mettiPunti(ui, vm, r); mettiGente(ui, vm, r);
     if (vm.formula === "solo") return;
     var a = vm.formula === "insieme" ? [vm.tot || 0, (vm.turniTot || 0) * 4] : [vm.sqPunti[0], vm.sqPunti[1]], n = [ui.aN, ui.bN];
     [0, 1].forEach(function (i) {
@@ -1838,8 +1854,11 @@
     stile();
     var f = vm.fine || {}, cl = f.classifica || [], targa = !!t.guarda && !t.eliminazione, fac = targa ? null : t.faccine(), sq = f.formula === "squadre";
     var ins = f.formula === "insieme";
-    var titolo = sq ? (f.vinc < 0 ? "Pareggio!" : "Vince la Squadra " + SQ[f.vinc] + "!") : ins ? votoCompagnia(f.tot || 0, f.max || 0) : "Classifica finale";
-    var s = t.schermata({ chiara: true, icona: sq ? (f.vinc < 0 ? "🤝" : "🏆") : ins ? "🤝" : "🏆", titolo: titolo });
+    var voto = ins ? votoCompagnia(f.tot || 0, f.max || 0) : "", vIc = voto.split(" ")[0];
+    var titolo = sq ? (f.vinc < 0 ? "Pareggio!" : "Vince la Squadra " + SQ[f.vinc] + "!") : ins ? voto.slice(vIc.length + 1) : "Classifica finale";
+    var s = t.schermata({ chiara: true, icona: sq ? (f.vinc < 0 ? "🤝" : "🏆") : ins ? vIc : "🏆", titolo: titolo });
+    if (targa) s.classList.add("lu-fine-targa");   // (il posto in basso per la targhetta di chi guarda)
+    s._contenuto.style.display = "flow-root";   // (il margine dell'ultima riga resta dentro: la classifica non «scorre» di 3 punti)
     if (ins) s._contenuto.appendChild(t.el("div", { class: "lu-fin-sq lu-fin-ins" }, [t.el("div", { class: bravi(f.tot || 0, f.max || 0) ? "vince" : "" }, [
       t.el("span", { text: "Il voto alla compagnia" }), t.el("b", { text: fmtN(f.tot || 0) + " su " + fmtN(f.max || 0) }), t.el("small", { text: "Tutti insieme: la squadra siete voi" })])]));
     if (sq) s._contenuto.appendChild(t.el("div", { class: "lu-fin-sq" }, [0, 1].map(function (q) {
@@ -1847,7 +1866,7 @@
     })));
     if (f.premi && f.premi.length) s._contenuto.appendChild(t.el("div", { class: "lu-premi" }, f.premi.map(function (p) { return t.el("div", { text: p }); })));
     var extra = (f.premi || []).length * 34 + (sq || ins ? 70 : 0);
-    var fitta = cl.length > 6 || cl.length * 66 + 300 + extra + (fac ? 56 : 0) > (window.innerHeight || 640);
+    var fitta = cl.length > 6 || cl.length * 66 + 300 + extra + (fac ? 56 : 0) + (targa ? 110 : 0) > (window.innerHeight || 640);   // (chi guarda: la targhetta e la frase in fondo)
     var ol = t.el("ol", { class: "classifica" + (fitta ? " fitta" : "") }), med = medaglie(cl.map(function (r) { return r.pos; }));
     cl.forEach(function (r, i) {
       ol.appendChild(t.el("li", { class: r.pos === 1 ? "vincitore" : "" }, [
@@ -1861,8 +1880,8 @@
     // I TASTI DI FINE LI METTE IL CORE (Rivincita col 3-2-1, Cambia gioco, Ci sto); se torna false, quelli di sempre
     if (!t.tastiFine(s._piede, { host: cb.sonoHost, nuova: cb.sonoHost ? cb.onNuova : null, esci: cb.onEsci })) {
       if (cb.sonoHost) s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "↻ Nuova partita (stessi amici)", onclick: cb.onNuova }));
-      else s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: "Se l'host fa un'altra partita, torni da solo nella saletta." }));
-      s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));
+      else s._contenuto.appendChild(t.el("p", { class: "modulo-nota", style: "text-align:center;margin-top:10px", text: targa ? "👀 Se l'host fa un'altra partita, entri anche tu nella saletta." : "Se l'host fa un'altra partita, torni da solo nella saletta." }));
+      if (!targa) s._piede.appendChild(t.el("button", { class: "btn btn-fantasma", text: "🏠 Esci", onclick: cb.onEsci }));   // (chi guarda esce col ✕ della targhetta)
     }
     t.mostra(s);
     return s;
@@ -2079,7 +2098,7 @@
         var altra = 1 - T.sq; L.sqPunti[T.sq] += pt;
         righe.push(["b", tele ? "🧠 TELEPATIA! +4 alla Squadra " + SQ[T.sq] : pt === 4 ? "🎯 Centro! +4 alla Squadra " + SQ[T.sq] : pt ? "+" + pt + " alla Squadra " + SQ[T.sq] : "Fuori! Nessun punto"]);
         var giusta = false;
-        if (T.lato) { giusta = pt < 4 && (T.lato === "sx" ? T.bers < T.lan : T.bers > T.lan); if (giusta) L.sqPunti[altra]++; righe.push(["s", (T.lato === "sx" ? "⬅️" : "➡️") + " La Squadra " + SQ[altra] + (giusta ? " aveva ragione: +1" : " ha sbagliato la scommessa")]); }
+        if (T.lato) { giusta = pt < 4 && (T.lato === "sx" ? T.bers < T.lan : T.bers > T.lan); if (giusta) L.sqPunti[altra]++; righe.push(["s", (T.lato === "sx" ? "⬅️" : "➡️") + " La Squadra " + SQ[altra] + (giusta ? " aveva ragione: +1" : pt === 4 ? ": col centro pieno la scommessa non vale" : " ha sbagliato la scommessa")]); }
         if (mio && squadraDi(mio) === T.sq && mio !== T.sens && pt === 4) L.stat.centri++;
         if (mio === T.sens && pt === 4) L.stat.centriDati++;
         if (mio && squadraDi(mio) === altra && giusta) L.stat.scommesseGiuste++;
@@ -2232,7 +2251,7 @@
       ".lu-casuale{flex:none;border:0;border-radius:999px;padding:5px 11px;background:#ffd43b;color:#332500;font:inherit;font-size:13px;font-weight:950}.lu-sq-nota{min-width:0;font-size:12px;font-weight:700;line-height:1.25;opacity:.75}",
       ".lu-fin-sq{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:0 0 8px}.lu-fin-sq>div{border-radius:14px;padding:6px;text-align:center;background:var(--carta,rgba(255,255,255,.08))}.lu-fin-sq>div.a{box-shadow:inset 0 -4px #e64980}.lu-fin-sq>div.b{box-shadow:inset 0 -4px #4263eb}",
       ".lu-fin-sq.lu-fin-ins{grid-template-columns:1fr}.lu-fin-sq span{display:block;font-weight:800;font-size:14px;opacity:.85}.lu-fin-sq b{display:block;font-size:30px;font-weight:1000;line-height:1.1}.lu-fin-sq small{display:block;font-weight:700;font-size:14px;margin-top:4px}.lu-fin-sq>div.vince{outline:3px solid #ffd43b;outline-offset:-3px}",
-      ".lu-premi{display:flex;flex-direction:column;gap:4px;margin:0 0 8px}.lu-premi div{border-radius:12px;padding:5px 10px;background:rgba(255,212,59,.16);font-weight:800;font-size:13.5px;line-height:1.25}",
+      ".lu-premi{display:flex;flex-direction:column;gap:3px;margin:0 0 4px}.lu-premi div{border-radius:12px;padding:3px 10px;background:rgba(255,212,59,.16);font-weight:800;font-size:13.5px;line-height:1.18}",
       // 🌙 Notte vivace: «Le squadre» e la classifica finale sono schermate dell'app (.oro): riquadri di vetro, i premi di vetro (non più giallo-marrone) e la squadra che vince col filo d'oro dell'app
       ".oro .lu-fin-sq>div{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta)}.oro .lu-fin-sq>div.vince{outline-color:var(--n-monete)}",
       ".oro .lu-premi div{background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,0)),var(--o-carta);box-shadow:inset 0 0 0 1px var(--o-filo)}",
@@ -2246,7 +2265,7 @@
       ".lu-nx{flex:none;width:24px;height:24px;border:0;border-radius:50%;background:rgba(127,127,127,.3);color:inherit;font:inherit;font-size:.75rem;font-weight:900;cursor:pointer;touch-action:manipulation}",
       // «⏩ Avanti» a maggioranza nella rivelazione
       ".lu-quanti{margin-left:8px;font-size:.78em;opacity:.7}.lu-btn.fatto:disabled{opacity:.8}",
-      ".lu.lu-targa{padding-bottom:calc(62px + env(safe-area-inset-bottom))}.lu.lu-targa .lu-fondo{display:none}",
+      ".schermata.lu-fine-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}.lu.lu-targa{padding-bottom:calc(62px + env(safe-area-inset-bottom))}.lu.lu-targa .lu-fondo{display:none}",
       ".lu.scrive .lu-testa,.lu.scrive .lu-gente,.lu.scrive .lu-fondo,.lu.scrive .lu-parola.pensa{display:none}.lu.scrive .lu-dial{min-height:80px}",
       "@media(max-height:700px){.lu{gap:5px}.lu-testa{min-height:34px}.lu-av{width:34px;height:34px}.lu-btn{min-height:44px}.lu-btn.piccolo{min-height:36px}.lu-btn.parola{min-height:40px}.lu-carta{min-height:42px}.lu-gente{max-height:48px}.lu-p{padding:1px 7px 1px 1px}.lu-p img{width:18px;height:18px}.lu-est{min-height:30px}.lu-fondo{min-height:36px}}",
       // 🌙 Notte vivace: fondo blu notte dell'app, riquadri e tasti di vetro scuro; il quadrante resta com'è
@@ -2304,7 +2323,7 @@
       "A turno uno è il <b>sensitivo</b>: solo lui sa dov'è il <b>bersaglio</b> sulla scala (es. <b>Freddo ←→ Caldo</b>).",
       "<b>🤔 Cosa ne pensi?</b>: esce una parola pronta (o la scrive lui) e il sensitivo, di nascosto, la mette dove pensa <b>lui</b>. <b>🎯 Classico</b>: il bersaglio è a caso e il sensitivo inventa una parola che stia proprio lì.",
       "Gli altri spostano la <b>lancetta</b> dove credono che sia il bersaglio: <b>4 punti</b> al centro, poi <b>3</b> e <b>2</b>. Il sensitivo non può aiutare!",
-      "<b>A squadre</b>: la squadra del sensitivo muove una lancetta comune e conferma con «Ci siamo»; l'altra squadra scommette se il bersaglio è <b>più a sinistra o più a destra</b> (+1). Centro ma ancora dietro? Si rigioca!",
+      "<b>A squadre</b>: la squadra del sensitivo muove una lancetta comune e conferma con «Ci siamo»; l'altra squadra scommette se il bersaglio è <b>più a sinistra o più a destra</b> (+1; col centro pieno non vale). Centro ma ancora dietro? Si rigioca!",
       "<b>Ognuno per sé</b> (anche in meno di 4): ognuno ha la sua lancetta; il sensitivo prende la media dei punti degli altri.",
       "<b>🤝 Tutti insieme</b>: una lancetta sola, tutti contro il gioco. Alla fine il <b>voto alla compagnia</b>: quanto siete sulla stessa lunghezza d'onda? Online ognuno fa il sensitivo una volta per giro; sullo stesso telefono si giocano 7 turni.",
       "<b>Sullo stesso telefono</b>: il telefono sta in mezzo al tavolo. A squadre oppure tutti insieme.",
