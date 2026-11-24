@@ -547,6 +547,115 @@
     { gioco: "lunghezza", livello: "oro",     icona: "🔭", nome: "Occhio di Lince",    desc: "Fai centro 40 volte",                                 stat: "centri",          meta: 40 },
   ];
 
+  // ---- 🏆 LA MINI ASTA FANTACALCIO (24 nov 2026, la lista del proprietario: le idee di Gemini controllate sul gioco vero con le
+  //      simulazioni, D:/SG-asta-prove/trofei/LEGGIMI.md). Stanno sotto «astafanta» (la pagina della Mini Asta; le due coppe vecchie
+  //      del fanta restano sotto L'Asta). Un trofeo = UNA scheda coi suoi livelli: righe con lo stesso «grp», la prima col nome
+  //      com'è, le altre con II, III, IV (il nome fa da chiave per l'avviso e per i premi: dev'essere diverso a ogni livello).
+  //      «fam» = la famiglia nella pagina. Il PLATINO della Mini Asta è il primo livello dei trofei segnati 👑 (plat), non tutti:
+  //      vedi platinato. I contatori li salva asta.js (salvaTrofeiFanta) SOLO sul podio, mai durante la giornata (niente spoiler).
+  //      Riga: [grp, icona, nome, stat, livelli ("B1 A5 O15 D40"), descrizione per 1, descrizione per {n}, 1 = nel Platino]
+  (function () {
+    var L = { B: "bronzo", A: "argento", O: "oro", D: "diamante" }, ROM = ["", " II", " III", " IV"];
+    var SQ = [["Atalanta", "🔵", "La Dea ti Sorride", "dell'Atalanta"], ["Bologna", "🗼", "Sotto le Due Torri", "del Bologna"], ["Cagliari", "🏝️", "Forza Paris", "del Cagliari"],
+      ["Como", "⛵", "Gol sul Lago", "del Como"], ["Fiorentina", "⚜️", "Il Giglio Fiorisce", "della Fiorentina"], ["Frosinone", "🐤", "Il Canarino Canta", "del Frosinone"],
+      ["Genoa", "🐲", "Il Grifone Vola", "del Genoa"], ["Inter", "🐍", "Il Morso del Biscione", "dell'Inter"], ["Juventus", "👵", "Omaggio alla Signora", "della Juventus"],
+      ["Lazio", "🦅", "L'Aquila Vola", "della Lazio"], ["Lecce", "☀️", "Il Sole del Salento", "del Lecce"], ["Milan", "😈", "Il Diavolo ci Mette la Coda", "del Milan"],
+      ["Monza", "🏎️", "Gol a Tutta Velocità", "del Monza"], ["Napoli", "🌋", "Sotto il Vesuvio", "del Napoli"], ["Parma", "🧀", "Gol al Parmigiano", "del Parma"],
+      ["Roma", "🐺", "La Lupa Ulula", "della Roma"], ["Sassuolo", "🧱", "Piastrella d'Oro", "del Sassuolo"], ["Torino", "🐂", "Il Toro Carica", "del Torino"],
+      ["Udinese", "🦓", "Zebrette al Galoppo", "dell'Udinese"], ["Venezia", "🛶", "Gol in Gondola", "del Venezia"]];
+    var F = [
+      ["🔨 All'asta", [
+        ["allin", "🎰", "All-In da Casinò", "allIn", "B1 A5 O15 D35", "Spendi almeno 10 crediti per un calciatore", "Spendi almeno 10 crediti per un calciatore, {n} volte", 1],
+        ["braccino", "🦖", "Braccino Corto", "braccino", "B1 A3 O10", "Finisci l'asta con almeno 8 crediti avanzati", "Finisci l'asta con almeno 8 crediti avanzati, {n} volte", 1],
+        ["contabile", "🧮", "Contabile Svizzero", "contabile", "B1 A5 O15 D35", "Finisci l'asta con 0 crediti avanzati", "Finisci l'asta con 0 crediti avanzati, {n} volte", 1],
+        ["padrino", "🎩", "Il Padrino del Mercato", "padrino", "A1 O3 D8", "Da 6 giocatori in su: compra il calciatore più pagato dell'asta e vinci", "Da 6 giocatori in su: compra il più pagato dell'asta e vinci, {n} volte", 0]]],
+      ["⚽ I gol", [
+        ["bomber", "⚽", "Bomber di Razza", "golA", "B2 A8 O25 D60", null, "{n} gol dei tuoi attaccanti", 1],
+        ["dischetto", "🥅", "Freddo dal Dischetto", "rigSegnati", "A1 O5 D10", "Un rigore segnato da un tuo calciatore", "{n} rigori segnati dai tuoi calciatori", 1],
+        ["legno", "🌲", "Abbonato al Legno", "legni", "B3 A10 O40 D100", null, "{n} pali o traverse dei tuoi calciatori", 1],
+        ["festa", "🎉", "Festa del Gol", "marcatoriMax", "A2 D3", null, "{n} tuoi calciatori diversi in gol nella stessa giornata", 1],
+        ["centrocampo", "🎯", "Centrocampo Totale", "cenTotale", "A1 O5", "Tutti e due i tuoi centrocampisti fanno gol o assist nella stessa giornata", "Tutti e due i tuoi centrocampisti fanno gol o assist, in {n} giornate", 1],
+        ["sinfonia", "🎼", "Sinfonia Perfetta", "sinfonia", "D1", "Un tuo calciatore fa l'assist a un altro tuo che segna", null, 0]]],
+      ["🗺️ Le squadre di Serie A", [
+        ["giro", "🗺️", "Giro d'Italia", "squadreDiverse", "B5 A10 O15 D20", null, "Fai gol con calciatori di {n} squadre diverse", 1],
+        ["derby", "⚔️", "Re dei Derby", "derbySquadre", "O6", null, "Fai gol con Inter, Milan, Roma, Lazio, Juventus e Torino", 0]
+      ].concat(SQ.map(function (q) { return ["sq" + q[0], q[1], q[2], "golSq" + q[0], "B1", "Fai gol con un calciatore " + q[3], null, 0]; }))],
+      ["🧤 Portieri e difesa", [
+        ["saracinesca", "🧱", "Saracinesca", "inviolate", "B1 A5 O20 D50", "Porta inviolata del tuo portiere", "Porta inviolata del tuo portiere, {n} volte", 1],
+        ["ipnotizzatore", "🌀", "Ipnotizzatore", "rigParati", "A1 O3", "Il tuo portiere para un rigore", "Il tuo portiere para {n} rigori", 0],
+        ["goleador", "🚀", "Difensore Goleador", "golDif", "A1 O3 D6", "Un gol del tuo difensore", "{n} gol del tuo difensore", 1],
+        ["piedi", "👟", "Piedi Educati", "assDif", "A1 O4 D8", "Un assist del tuo difensore", "{n} assist del tuo difensore", 1],
+        ["fedina", "🗿", "Fedina Pulita", "fedine", "B1 A3 O10 D25", "Una giornata senza nessun malus (né gol presi, né cartellini, né errori)", "{n} giornate senza nessun malus", 1],
+        ["catenaccio", "🔒", "Catenaccio d'Autore", "vinteInviolate", "A1 O5 D15", "Vinci con la porta inviolata", "Vinci con la porta inviolata, {n} volte", 1],
+        ["muraglia", "🛡️", "Doppia Muraglia", "muraglie", "D1", "Porta inviolata e gol del tuo difensore nella stessa giornata", null, 0],
+        ["miracolo", "🧤", "Miracolo tra i Pali", "porFvMax", "D9.5", null, "Il tuo portiere fa fantavoto 9,5 o più", 0],
+        ["muro", "🧼", "Muro Invalicabile", "muriInvalicabili", "D1", "Con le 3 giornate: porta inviolata in tutte e tre", null, 0]]],
+      ["✨ Momenti rari", [
+        ["holly", "🤯", "Roba da Holly e Benji", "golImpossibili", "D1", "Un tuo calciatore segna in rovesciata, da centrocampo o dal calcio d'angolo, o segna il tuo portiere", null, 0],
+        ["classe", "🥄", "Colpo di Classe", "colpiClasse", "O1", "Un gol di tacco, a scavetto o un rigore a cucchiaio", null, 0],
+        ["monitor", "📺", "Giustizia al Monitor", "rigVar", "O1", "Un tuo rigore nato dal VAR, segnato", null, 0],
+        ["alieno", "👽", "Fantavoto Alieno", "fvMax", "B10 A12 O14 D15", null, "Un tuo calciatore fa fantavoto {n} o più", 1],
+        ["pallone", "🏅", "Portati a Casa il Pallone", "golMax", "A2 D3", null, "Un tuo calciatore segna {n} gol nella stessa giornata", 1],
+        ["sfortuna", "🧲", "Più Forte della Sfortuna", "sfortune", "A1 O4", "Un tuo calciatore prende un palo (o un gol annullato) e poi segna nella stessa partita", "Palo (o gol annullato) e poi gol nella stessa partita, {n} volte", 1]]],
+      ["⏱️ Finale di partita", [
+        ["cesarini", "⏱️", "Zona Cesarini", "golZona", "B1 A5 O15 D40", "Un gol dei tuoi dal 75'", "{n} gol dei tuoi dal 75'", 1],
+        ["respiro", "💨", "All'Ultimo Respiro", "golRecupero", "A1 O5 D12", "Un gol dei tuoi nel recupero", "{n} gol dei tuoi nel recupero", 1],
+        ["fuochi", "🔥", "Fuochi d'Artificio", "fuochi", "O1", "Due gol dei tuoi dal 75' nella stessa giornata", null, 0],
+        ["ribaltone", "🔄", "Il Ribaltone", "ribaltoni", "A1 O5 D15", "Al 75' non eri primo, e vinci", "Al 75' non eri primo, e vinci: {n} volte", 1],
+        ["cortomuso", "🐎", "Corto Muso", "cortiMusi", "A1 O3", "Vinci di mezzo punto esatto", "Vinci di mezzo punto esatto, {n} volte", 0],
+        ["fotofinish", "📸", "Al Fotofinish", "fotofinish", "O1", "Vinci grazie a un bonus nel recupero (senza, non saresti primo)", null, 0],
+        ["risalita", "🧗", "Risalita dagli Abissi", "risalite", "O1", "Da 5 giocatori in su: ultimo all'intervallo, e chiudi sul podio", null, 0]]],
+      ["🏆 Classifica e serate", [
+        ["prima", "🎉", "Prima Volta", "partite", "B1", "Finisci la tua prima Mini Asta", null, 1],
+        ["re", "🏆", "Re della Serata", "vinte", "B1 A5 O15 D40", "Vinci una Mini Asta", "Vinci {n} Mini Aste", 1],
+        ["podio", "🥉", "Abbonato al Podio", "podi", "B3 A10 O30 D75", null, "Da 5 giocatori in su: sul podio {n} volte", 0],
+        ["mvp", "⭐", "Cacciatore di MVP", "mvp", "B1 A5 O20 D50", "Il «Migliore in campo» è tuo", "Il «Migliore in campo» è tuo, {n} volte", 1],
+        ["monstre", "📈", "Punteggio Monstre", "puntiMax", "B35 A38 O40 D42", null, "Fai {n} fantapunti in una giornata", 1],
+        ["secchione", "📰", "Pagella da Secchione", "secchioni", "O1", "I tuoi 4 di movimento tutti con voto 6,5 o più", null, 0],
+        ["inarrestabile", "☄️", "Inarrestabile", "filaMax", "B2 A3 D4", null, "Vinci {n} Mini Aste di fila", 0],
+        ["stadio", "🏟️", "Stadio Pieno", "vinteInOtto", "B1 A3 O10", "Vinci una partita da 8 giocatori in su", "Vinci {n} partite da 8 giocatori in su", 0],
+        ["maratoneta", "🏃", "Maratoneta", "treGiornate", "B1 A5 O15 D35", "Finisci una Mini Asta da 3 giornate", "Finisci {n} Mini Aste da 3 giornate", 0],
+        ["triplete", "🎖️", "Triplete!", "triplete", "D1", "Primo in tutte e 3 le giornate", null, 0]]],
+      ["⏳ Stagioni passate", [
+        ["macchina", "⏳", "Macchina del Tempo", "partitePassate", "B1 A5 O20 D50", "Gioca con una stagione passata", "Gioca {n} partite con le stagioni passate", 1],
+        ["storico", "📚", "Storico della Serie A", "stagioniGiocate", "B2 A4 O8 D12", null, "Gioca con {n} stagioni diverse (quella di oggi compresa)", 1],
+        ["nostalgia", "📼", "Nostalgia Canaglia", "vinteVecchie", "B1 A5 O15", "Vinci con una stagione dalla 2015-16 alla 2019-20", "Vinci {n} volte con le stagioni dalla 2015-16 alla 2019-20", 1],
+        ["ere", "🕰️", "Padrone delle Ere", "stagioniVinte", "A3 O6 D12", null, "Vinci con {n} stagioni diverse", 0],
+        ["archivio", "🎞️", "Leggenda d'Archivio", "stagioniMvp", "A3 O6 D10", null, "Il «Migliore in campo» in {n} stagioni passate diverse", 0],
+        ["amarcord", "👴", "Amarcord da 10 e Lode", "amarcord", "O1", "Un tuo calciatore fa fantavoto 12 o più in una stagione passata", null, 0],
+        ["futuro", "🚗", "Ritorno al Futuro", "ritornoFuturo", "O1", "Nello stesso giorno vinci con una stagione passata e con quella di oggi", null, 0],
+        ["dominio", "🏛️", "Dominio Storico", "dominio", "O1", "Vinci una Mini Asta da 3 giornate con una stagione passata", null, 0]]],
+      ["🃏 Figurine", [
+        ["orocolato", "🥇", "Oro Colato", "golOro", "B1 A5 O15 D40", "Un gol di una tua figurina d'oro", "{n} gol delle tue figurine d'oro", 1],
+        ["fuoritutto", "🏷️", "Fuoritutto", "fuoritutto", "B1 A5 O15", "Compra una figurina d'oro per 5 crediti o meno", "Compra {n} figurine d'oro per 5 crediti o meno", 0],
+        ["galacticos", "✨", "Galacticos", "galacticos", "A1 O5 D12", "3 figurine d'oro nella stessa asta", "3 figurine d'oro nella stessa asta, {n} volte", 1],
+        ["sottobosco", "🍄", "Sottobosco d'Oro", "mvpBronzo", "A1 O4", "Una tua figurina di bronzo è il «Migliore in campo»", "Una tua figurina di bronzo è il «Migliore in campo», {n} volte", 0],
+        ["argentovivo", "🥈", "Argento Vivo", "argentoVivo", "A1 O3", "Vinci con almeno 4 figurine d'argento", "Vinci con almeno 4 figurine d'argento, {n} volte", 0],
+        ["paccooro", "🎭", "Pacco d'Oro", "bidoneOro", "A1 O3", "Una tua figurina d'oro è il «Bidone»", "Una tua figurina d'oro è il «Bidone», {n} volte", 0],
+        ["davide", "🐜", "Davide contro Golia", "davide", "O1", "Vinci con almeno 4 figurine di bronzo", null, 0],
+        ["arcobaleno", "🌈", "Arcobaleno di Bonus", "arcobaleno", "O1", "Un bonus da una figurina d'oro, una d'argento e una di bronzo nella stessa giornata", null, 0],
+        ["eroe", "🦸", "Eroe di Bronzo", "eroeBronzo", "O1", "Doppietta di una tua figurina di bronzo", null, 0]]],
+      ["😂 Fanno ridere", [
+        ["bidone", "🗑️", "Bidone d'Oro", "bidoni", "B1 A5 O15 D35", "Il «Bidone» della giornata è tuo", "Il «Bidone» della giornata è tuo, {n} volte", 1],
+        ["doccia", "🚿", "Doccia Anticipata", "rossi", "A1 O5 D12", "Un tuo calciatore prende il rosso", "{n} cartellini rossi dei tuoi calciatori", 1],
+        ["rapina", "🤬", "Rapina al VAR", "annullati", "A1 O4", "Un gol dei tuoi annullato dal VAR", "{n} gol dei tuoi annullati dal VAR", 0],
+        ["affare", "📉", "L'Affare del Secolo", "affariSecolo", "A1", "Un calciatore pagato 10 crediti o più prende il rosso o è il «Bidone»", null, 0],
+        ["fuocoamico", "💀", "Fuoco Amico", "autogol", "O1", "Un tuo calciatore fa autogol", null, 0],
+        ["orbita", "🛸", "Palla in Orbita", "rigSbagliati", "O1", "Un tuo calciatore sbaglia un rigore", null, 0],
+        ["miracolati", "🤪", "Vittoria da Miracolati", "miracolati", "D1", "Vinci con un autogol o un rosso nella tua rosa", null, 0],
+        ["macellai", "🚦", "Squadra di Macellai", "macellai", "O1", "3 cartellini dei tuoi nella stessa giornata", null, 0],
+        ["vergogna", "💩", "Triplete della Vergogna", "vergogna", "D1", "Da 4 giocatori in su, con le 3 giornate: ultimo in tutte e tre", null, 0]]]
+    ];
+    F.forEach(function (fam) {
+      fam[1].forEach(function (x) {
+        x[4].split(" ").forEach(function (lv, i) {
+          var n = parseFloat(lv.slice(1)), d = n === 1 && x[5] ? x[5] : (x[6] || x[5]).replace("{n}", String(n).replace(".", ","));
+          TROFEI.push({ gioco: "astafanta", livello: L[lv[0]], icona: x[1], nome: x[2] + ROM[i], desc: d, stat: x[3], meta: n, grp: x[0], fam: fam[0], plat: i === 0 && x[7] ? 1 : 0 });
+        });
+      });
+    });
+  })();
+
   function valoreStat(prof, gioco, chiave) {
     var st = (window.SGNube && SGNube.statGioco) ? SGNube.statGioco(gioco) : {};
     var v = (st && st[chiave]) || 0;
@@ -557,7 +666,12 @@
   function trofeiDi(gid) { return TROFEI.filter(function (t) { return t.gioco === gid; }); }
   function trofeoFatto(prof, t) { return valoreStat(prof, t.gioco, t.stat) >= t.meta; }
   function contaTrofei(prof, gid) { var l = trofeiDi(gid), n = 0; l.forEach(function (t) { if (trofeoFatto(prof, t)) n++; }); return { fatti: n, tot: l.length }; }
-  function platinato(prof, gid) { var c = contaTrofei(prof, gid); return c.tot > 0 && c.fatti === c.tot; }
+  function platinato(prof, gid) {
+    var l = trofeiDi(gid), p = l.filter(function (t) { return t.plat; });   // 👑 (Mini Asta, 24 nov 2026) il Platino = il primo livello dei trofei segnati, se il gioco li segna
+    if (p.length) return p.every(function (t) { return trofeoFatto(prof, t); });
+    var c = contaTrofei(prof, gid); return c.tot > 0 && c.fatti === c.tot;
+  }
+  function verPlatino(prof, gid) { var p = trofeiDi(gid).filter(function (t) { return t.plat; }), n = 0; p.forEach(function (t) { if (trofeoFatto(prof, t)) n++; }); return p.length ? { fatti: n, tot: p.length } : null; }
   var ICONE_LIV = { bronzo: "🥉", argento: "🥈", oro: "🥇", diamante: "💎" };
   function perLivello(prof, gid) {   // i trofei di un gioco divisi per tipo: { bronzo: { fatti, tot }, ... }
     var r = {}; trofeiDi(gid).forEach(function (t) { var p = r[t.livello] || (r[t.livello] = { fatti: 0, tot: 0 }); p.tot++; if (trofeoFatto(prof, t)) p.fatti++; });
@@ -615,6 +729,34 @@
     mostra(s);
   }
   // schermata di un singolo gioco: platino in cima + trofei per livello
+  // 🏆 (Mini Asta, 24 nov 2026) i trofei a livelli: UNA scheda per trofeo (righe con lo stesso grp), divise per famiglia (fam).
+  // La scheda mostra il prossimo livello da prendere (descrizione, barra, quanto manca) e sotto tutti i livelli (✓ quelli presi)
+  function schedeTrofei(prof, lista, box) {
+    var fam = [], per = {};
+    lista.forEach(function (t) { if (!per[t.fam]) { per[t.fam] = []; fam.push(t.fam); } var g = per[t.fam].filter(function (x) { return x.grp === t.grp; })[0]; if (!g) per[t.fam].push(g = { grp: t.grp, righe: [] }); g.righe.push(t); });
+    fam.forEach(function (f) {
+      var gs = per[f], prese = 0, livelli = 0;
+      gs.forEach(function (g) { g.righe.forEach(function (t) { livelli++; if (trofeoFatto(prof, t)) prese++; }); });
+      box.appendChild(el("div", { class: "etichetta", text: f + " · " + prese + "/" + livelli }));
+      gs.forEach(function (g) {
+        var r = g.righe, val = valoreStat(prof, r[0].gioco, r[0].stat), fatti = r.filter(function (t) { return val >= t.meta; }), pross = r.filter(function (t) { return val < t.meta; })[0];
+        var t = pross || r[r.length - 1], tutti = !pross, perc = tutti ? 100 : Math.max(0, Math.min(100, Math.round(val * 100 / t.meta)));
+        var numero = function (x) { return String(x).replace(".", ","); };
+        box.appendChild(el("div", { class: "trofeo tr-scheda " + LIVELLI[t.livello].cls + (tutti ? " fatto" : "") }, [
+          el("div", { class: "tr-ico", text: fatti.length ? r[0].icona : "🔒" }),
+          el("div", { class: "tr-corpo" }, [
+            el("div", { class: "tr-nome", text: r[0].nome + (r[0].plat ? " 👑" : "") + (tutti ? "  ✓" : "") }),
+            el("div", { class: "tr-desc", text: t.desc }),
+            el("div", { class: "tr-barra" }, [ el("div", { class: "tr-fill", style: "width:" + perc + "%" }) ]),
+            el("div", { class: "tr-piede" }, [
+              el("div", { class: "tr-chips" }, r.map(function (x) { return el("span", { class: "tr-chip " + LIVELLI[x.livello].cls + (val >= x.meta ? " si" : ""), text: ICONE_LIV[x.livello] + " " + numero(x.meta) + (val >= x.meta ? " ✓" : "") }); })),
+              el("div", { class: "tr-num", text: tutti ? "✓" : numero(Math.min(val, t.meta)) + " / " + numero(t.meta) })
+            ])
+          ])
+        ]));
+      });
+    });
+  }
   function schermataSfideGioco(gid) {
     var g = null; giochi.forEach(function (x) { if (x.id === gid) g = x; }); if (!g) g = { nome: gid, icona: "🎮" };
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
@@ -622,14 +764,14 @@
     if (!prof) { s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Accedi al profilo per vedere i tuoi trofei." })); s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "‹ Tutti i giochi", onclick: schermataSfide })); mostra(s); return; }
     var lista = trofeiDi(gid), c = contaTrofei(prof, gid);
     // trofeo Platino (sempre mostrato: è il traguardo del gioco)
-    var plat = c.tot > 0 && c.fatti === c.tot;
+    var plat = platinato(prof, gid), vp = verPlatino(prof, gid), cp = vp || c;   // 👑 (vp: il Platino col primo livello dei trofei segnati)
     s._contenuto.appendChild(el("div", { class: "trofeo tl-platino" + (plat ? " fatto" : "") }, [
       el("div", { class: "tr-ico", text: plat ? "💠" : "🔒" }),
       el("div", { class: "tr-corpo" }, [
-        el("div", { class: "tr-nome", text: "Platino" + (plat ? "  ✓" : "") }),
-        el("div", { class: "tr-desc", text: "Sblocca tutti i trofei del gioco" }),
-        el("div", { class: "tr-barra" }, [ el("div", { class: "tr-fill", style: "width:" + Math.round(c.fatti * 100 / Math.max(1, c.tot)) + "%" }) ]),
-        el("div", { class: "tr-num", text: c.fatti + " / " + c.tot })
+        el("div", { class: "tr-nome", text: (vp && gid === "astafanta" ? "Leggenda della Mini Asta" : "Platino") + (plat ? "  ✓" : "") }),
+        el("div", { class: "tr-desc", text: vp ? "Prendi il primo livello di tutti i trofei con 👑" : "Sblocca tutti i trofei del gioco" }),
+        el("div", { class: "tr-barra" }, [ el("div", { class: "tr-fill", style: "width:" + Math.round(cp.fatti * 100 / Math.max(1, cp.tot)) + "%" }) ]),
+        el("div", { class: "tr-num", text: cp.fatti + " / " + cp.tot })
       ])
     ]));
     if (!lista.length) {
@@ -639,7 +781,8 @@
       ORDINE_LIV.forEach(function (l) { var p = pl[l] || { fatti: 0, tot: 0 }; celle.push(el("div", { class: "sm-liv " + LIVELLI[l].cls }, [ el("div", { class: "sm-ico", text: ICONE_LIV[l] }), el("div", { class: "sm-num", html: "<b>" + p.fatti + "</b>/" + p.tot }), el("div", { class: "sm-nome", text: LIVELLI[l].nome }) ])); });
       celle.push(el("div", { class: "sm-liv tl-platino" }, [ el("div", { class: "sm-ico", text: "💠" }), el("div", { class: "sm-num", html: "<b>" + (plat ? 1 : 0) + "</b>/1" }), el("div", { class: "sm-nome", text: "Platino" }) ]));
       s._contenuto.appendChild(el("div", { class: "sfide-sommario sm-gioco" }, [ el("div", { class: "sm-livelli" }, celle) ]));
-      ORDINE_LIV.forEach(function (liv) {
+      if (lista[0].grp) schedeTrofei(prof, lista, s._contenuto);   // 🏆 (Mini Asta) una scheda per trofeo coi suoi livelli, per famiglia
+      else ORDINE_LIV.forEach(function (liv) {
         var gruppo = lista.filter(function (t) { return t.livello === liv; });
         if (!gruppo.length) return;
         s._contenuto.appendChild(el("div", { class: "etichetta", text: ICONE_LIV[liv] + " " + LIVELLI[liv].nome + " · " + (pl[liv] ? pl[liv].fatti : 0) + "/" + gruppo.length }));

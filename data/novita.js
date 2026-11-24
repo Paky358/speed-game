@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 427,
+    data: "24 novembre 2026",
+    titolo: "Mini Asta: arrivano i trofei! 🏆",
+    descrizione: [
+      "🏆 90 trofei nuovi solo per la Mini Asta, con bronzo, argento, oro e diamante: i gol, una squadra per ogni club di Serie A, i portieri, i momenti rari, il finale di partita, le stagioni passate, le figurine e quelli che fanno ridere.",
+      "👑 Il Platino «Leggenda della Mini Asta»: prendi il primo livello di tutti i trofei con la corona (si può fare anche giocando sempre su un telefono solo).",
+      "🤐 Niente spoiler: i trofei arrivano solo sul podio, quando la giornata si è vista tutta. Anche le coppe di prima della Mini Asta ora arrivano lì e non più all'inizio della giornata.",
+      "📋 Nella pagina dei trofei ogni trofeo è una scheda sola coi suoi livelli e quanto ti manca."
+    ]
+  },
+  {
     v: 426,
     data: "24 novembre 2026",
     titolo: "Scarabocchio: più spazio alla lavagna ✏️",
