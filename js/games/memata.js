@@ -117,8 +117,10 @@
     var stato = t.el("div", { class: "me-carica", text: "Carico il meme…" });
     // le scritte troppo piccole (riquadri minuscoli) si leggono anche in chiaro, sotto il meme
     var chiaro = t.el("div", { class: "me-chiaro" });
-    quadro.appendChild(img); box.appendChild(quadro); box.appendChild(stato); box.appendChild(chiaro);
-    var P = { el: box, quadro: quadro, img: img, rec: null, testi: [], q: [], sel: -1, pronta: false, onRotta: null, onTocco: null };
+    // «modello da imgflip.com» (lo chiedono le regole di Imgflip): attaccato sotto il meme, a destra
+    var cred = t.el("a", { class: "me-cred", href: "https://imgflip.com", target: "_blank", rel: "noopener", text: "modello da imgflip.com" });
+    quadro.appendChild(img); box.appendChild(quadro); box.appendChild(stato); box.appendChild(chiaro); box.appendChild(cred);
+    var P = { el: box, cred: cred, quadro: quadro, img: img, rec: null, testi: [], q: [], sel: -1, pronta: false, onRotta: null, onTocco: null };
     img.addEventListener("load", function () { P.pronta = true; stato.style.display = "none"; quadro.style.visibility = ""; quadro.classList.remove("senza"); P.adatta(); });
     // l'immagine non arriva: i riquadri restano (si scrive lo stesso) e chi tiene la partita, se può, dà un altro meme
     img.addEventListener("error", function () { P.pronta = false; stato.textContent = "📶 L'immagine non arriva"; stato.style.display = ""; quadro.style.visibility = ""; quadro.classList.add("senza"); if (P.onRotta && P.rec) P.onRotta(P.rec[0]); });
@@ -165,11 +167,14 @@
         var ch = chiaro.offsetHeight + 4;
         if (ah - ch > 40) { disponi(aw, ah - ch); box.classList.add("con-chiaro"); }
       } else { chiaro.style.display = "none"; box.classList.remove("con-chiaro"); }
+      // i crediti sotto il meme, a destra (dopo che il meme ha preso il suo posto)
+      cred.style.top = (quadro.offsetTop + quadro.offsetHeight + 1) + "px"; cred.style.right = Math.max(0, aw - quadro.offsetLeft - quadro.offsetWidth) + "px";
     };
     function disponi(aw, ah) {
-      var fsMin = 99;
+      var fsMin = 99, CR = box.closest(".me-scena.scrive") ? 0 : 15;   // (CR: il posto della riga dei crediti sotto il meme; con la tastiera aperta i crediti non ci sono)
+      ah = Math.max(20, ah - CR);
       var sc = Math.min(aw / P.rec[2], ah / P.rec[3]), w = Math.max(1, Math.floor(P.rec[2] * sc)), h = Math.max(1, Math.floor(P.rec[3] * sc));
-      quadro.style.width = w + "px"; quadro.style.height = h + "px";
+      quadro.style.width = w + "px"; quadro.style.height = h + "px"; quadro.style.marginBottom = CR + "px";
       P.q.forEach(function (v, i) {
         var tx = pulisci(P.testi[i] || ""), bw = v.q[2] / 1000 * w, bh = v.q[3] / 1000 * h, pad = Math.max(1, Math.min(bw, bh) * 0.04);
         v.el.classList.toggle("vuoto", !tx.trim());
@@ -734,8 +739,7 @@
     ui.P.onRotta = function (id) { if (ui.mio && ui.mio.rec && ui.mio.rec[0] === id && UI && UI.vm && UI.vm.stato === "scrivi") cb.manda({ t: "rotta", g: ui.mio.g, id: id }); };
     ui.P.onTocco = function (i) { ui.sel = i; scegliRiquadro(ui); };
     ui.root.appendChild(ui.P.el);
-    ui.cred = el("a", { class: "me-cred", href: "https://imgflip.com", target: "_blank", rel: "noopener", text: "modello da imgflip.com" });
-    ui.root.appendChild(ui.cred);
+    ui.cred = ui.P.cred;
     // --- scrivere ---
     ui.scrivi = el("div", { class: "me-scrivi" });
     ui.chips = el("div", { class: "me-chips" });
@@ -905,7 +909,7 @@
     var guardo = !io || io.via, aspetto = (vm.prossimi || []).some(function (p) { return p.id === cb.myId; });
     var st = vm.stato, R = ui.root;
     R.className = "me-scena st-" + st + (ui.targa ? " me-con-targa" : "") + (R.classList.contains("scrive") ? " scrive" : "") + (vm.fin ? " fin" : "");
-    tx(ui.giro, (aspetto ? "✋ Entri al prossimo round · " : guardo ? "👀 Guardi · " : "") + (vm.fin ? "🔥 Ultimo round" : "Round " + vm.giro + " di " + vm.giri));
+    tx(ui.giro, (guardo ? "👀 Guardi · " : "") + (vm.fin ? "🔥 Ultimo round" : "Round " + vm.giro + " di " + vm.giri));
     tempo(ui);
     var titolo = "", nota = "", mioMeme = null;
     mostraSe(ui.scrivi, false); mostraSe(ui.vota, false); mostraSe(ui.riv, false);
@@ -951,6 +955,10 @@
     } else if (st === "ripresa") {
       titolo = "🔁 Si riprende…"; nota = "Aspettiamo che rientrino tutti";
     }
+    // chi è arrivato tardi: lo dice la riga sotto (nella barra in alto si tagliava; e all'ultimo round non c'è un round dopo)
+    if (aspetto && st !== "ripresa") nota = (vm.giro >= vm.giri ? "✋ Ultimo round: giochi dalla prossima partita" : "✋ Giochi dal prossimo round") + (nota ? " · " + nota : "");
+    // senza meme sullo schermo (si aspetta chi scrive) titolo e riga stanno al centro, non uno in cima e uno in fondo
+    R.classList.toggle("attesa", !ui.P.rec && (st === "scrivi" || st === "vuoto"));
     tx(ui.titolo, titolo); tx(ui.nota, nota);
     // i punti di tutti (solo nella rivelazione, sotto)
     var pt = st === "rivela" && vm.riv && vm.riv.finito;
@@ -1035,9 +1043,9 @@
   }
 
   // ---------- la fine ----------
+  // le medaglie per POSTO come in tutta l'app (v421): posti [1, 2, 2, 4] = 🥇🥈🥈4° (prima andavano per gruppi: il 4° prendeva il bronzo)
   function medaglie(posti) {
-    var gruppi = 0, prec = null;
-    return posti.map(function (p) { if (p !== prec) { gruppi++; prec = p; } return ["🥇", "🥈", "🥉"][gruppi - 1] || p + "°"; });
+    return posti.map(function (p) { var posto = 1 + posti.filter(function (q) { return q < p; }).length; return ["🥇", "🥈", "🥉"][posto - 1] || posto + "°"; });
   }
   function finale(t, vm, cb) {
     stile(); caricaFont();
@@ -1057,7 +1065,6 @@
         t.el("div", { class: "me-serata-tit" }, [t.el("b", { text: "⭐ Il meme della serata" }), t.el("span", { text: vm.serata.id === cb.myId ? "Il tuo! 🎉" : "di " + vm.serata.nome + " · " + fmtN(vm.serata.pt) + " punti" })]),
         foto ]));
       box.appendChild(P.el);
-      box.appendChild(t.el("a", { class: "me-cred", href: "https://imgflip.com", target: "_blank", rel: "noopener", text: "modello da imgflip.com" }));
       s._contenuto.appendChild(box);
       setTimeout(function () { P.metti(vm.serata.rec, vm.serata.testi, {}); }, 0);
       window.addEventListener("resize", function rs() { if (!s.isConnected) return window.removeEventListener("resize", rs); P.adatta(); });
@@ -1139,7 +1146,9 @@
       ".me-q.modifica .me-qn{display:block}",
       ".me-q.modifica.sel{outline:3px solid var(--o-oro);background:rgba(224,34,90,.14)}",
       ".me-q.modifica:not(.vuoto) .me-qn{opacity:.55}",
-      ".me-cred{flex:none;align-self:flex-end;margin-top:-6px;font-size:.68rem;color:var(--o-tenue);text-decoration:none;opacity:.8}",
+      ".me-cred{position:absolute;line-height:14px;white-space:nowrap;font-size:.68rem;color:var(--o-tenue);text-decoration:none;opacity:.8}",
+      // si aspetta chi scrive (niente meme): titolo e riga al centro dello spazio
+      ".me-scena.attesa .me-meme{display:none}.me-scena.attesa .me-titolo{margin-top:auto}.me-scena.attesa .me-nota{margin-bottom:auto}",
       // scrivere
       ".me-scrivi{flex:none;display:flex;flex-direction:column;gap:8px}",
       ".me-riga{display:flex;align-items:center;gap:8px}",
@@ -1191,7 +1200,7 @@
       ".me-scena>.sl-faccine{align-self:center;flex:none}",
       ".me-scena.me-con-targa{padding-bottom:calc(62px + env(safe-area-inset-bottom))}",
       // la fine: il meme della serata in alto, la classifica sotto
-      ".schermata.me-fine>.contenuto{display:flex;flex-direction:column;min-height:0}",
+      ".schermata.me-fine>.contenuto{display:flex;flex-direction:column;min-height:0;padding-bottom:6px}",   // (padding: il cerchietto delle faccine sporgeva di 3 px e la classifica scorreva)
       ".schermata.me-fine-meme>.testa{display:none}",
       ".me-serata{display:flex;flex-direction:column;gap:8px;flex:1 1 0;min-height:max(170px,calc(var(--alt,100vh) * .4));margin-bottom:10px}",
       ".classifica.me-tre{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.classifica.me-tre li{padding:4px 6px}.classifica.me-tre .pos{font-size:.9rem;width:1.3em}.classifica.me-tre .nome{font-size:.82rem}",

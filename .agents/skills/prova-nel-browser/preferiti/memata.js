@@ -171,7 +171,7 @@
     await W.apriTel("Marco", { hash: "gioco=memata&stanza=" + C, x: 555, prima: vibrazioni });
     var M = F("Marco");
     if (!await W.aspetta(function () { return (vm(C).prossimi || []).some(function (p) { return p.nome === "Marco"; }); }, 8000)) no("Marco non è tra chi entra al prossimo round");
-    if (!await W.aspetta(function () { return /Entri al prossimo round/.test(T(F("Marco"))); }, 6000)) no("Marco non legge «Entri al prossimo round» («" + T(F("Marco")).slice(0, 120) + "»)");
+    if (!await W.aspetta(function () { return /Giochi dal prossimo round/.test(T(F("Marco"))); }, 6000)) no("Marco non legge «Giochi dal prossimo round» («" + T(F("Marco")).slice(0, 120) + "»)");
     if (campo(M)) no("Marco ha il campo per scrivere a round cominciato");
     // Giulia scrive senza consegnare e ricarica: ritrova lo stesso meme e il testo
     await MM.scrivi(F("Giulia"), ["prima della ricarica", "secondo"], false);

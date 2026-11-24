@@ -9,6 +9,18 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 423,
+    data: "24 novembre 2026",
+    titolo: "Memata: chi arriva tardi, l'attesa e le medaglie 😂",
+    descrizione: [
+      "✋ Chi arriva a partita cominciata legge sotto il meme «Giochi dal prossimo round» (prima la scritta in alto si tagliava); se arriva all'ultimo round legge «Ultimo round: giochi dalla prossima partita», perché un round dopo non c'è.",
+      "👀 Chi guarda mentre gli altri scrivono vede le scritte al centro dello schermo, non una in cima e una in fondo.",
+      "🖼️ «modello da imgflip.com» sta attaccato sotto il meme, non più in fondo allo spazio, lontano.",
+      "🥇 Nella classifica finale le medaglie vanno per posto, come negli altri giochi: con due terzi il dopo è 5°, non un altro bronzo.",
+      "📏 La classifica finale non scorre più di qualche pixel sotto il dito."
+    ]
+  },
+  {
     v: 422,
     data: "24 novembre 2026",
     titolo: "Fine partita: la riga della serata più corta 🏆",
