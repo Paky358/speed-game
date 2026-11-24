@@ -2,7 +2,7 @@
 // Si carica da sola (copione-prova.js prima). Con prezzo/difetti/foto.js fa anche le foto (W.scatta).
 // sm1: le medaglie per posto (1° oro, 2° argento, 3° bronzo, poi «4°»; a pari merito lo stesso posto, il dopo salta).
 // sm2: sullo stesso telefono (Patata, la fine chiamata dal tavolo) con 4, 6, 8, 10 persone dai nomi lunghi, a 360x640 e 412x915:
-//      la riga «🏆 Classifica della serata» sta in due righe, niente «…», ogni nome intero, chi non ci sta = «e altri N»;
+//      la riga «🏆 Serata» (dalla v422, prima «Classifica della serata») sta in due righe, niente «…», ogni nome intero, chi non ci sta = «e altri N»;
 //      le medaglie della classifica di fine partita per posto.
 // sm3: online nella Sala in 6 e in 10 coi nomi lunghi (Linea del tempo, la fine dal tavolo), 360x640: la riga «🏆 Serata» intera,
 //      sempre il proprio posto, «e altri N» giusto.

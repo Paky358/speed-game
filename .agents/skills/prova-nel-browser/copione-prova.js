@@ -3153,7 +3153,7 @@
       var t1 = await W.aspetta(function () { return P.__tav; }, 4000); if (!t1) no("la Patata non parte");
       t1.fine([{ nome: "Paky", pos: 1 }, { nome: "Giulia", pos: 2 }]);
       var riga = function () { var b = P.document.querySelector(".fine-serata"); return b ? b.textContent : ""; };
-      if (!await W.aspetta(function () { return /Classifica della serata: Paky\s1° · Giulia\s2°/.test(riga()); }, 3000)) no("a fine partita non c'è «🏆 Classifica della serata: Paky 1° · Giulia 2°» («" + riga() + "»)");
+      if (!await W.aspetta(function () { return /🏆 Serata: Paky\s1° · Giulia\s2°/.test(riga()); }, 3000)) no("a fine partita non c'è «🏆 Serata: Paky 1° · Giulia 2°» («" + riga() + "»)");
       var mis = await misureSchermata(P, "Paky"); if (mis) no("la fine con la riga della serata: " + mis);
       if (!W.clicca(P, /Rigioca/)) no("non c'è «↻ Rigioca»");
       // (dalla v403 «Rigioca» passa dalla pagina delle regole con quelle di prima: si tocca «Comincia»)

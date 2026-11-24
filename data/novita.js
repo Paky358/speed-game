@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 422,
+    data: "24 novembre 2026",
+    titolo: "Fine partita: la riga della serata più corta 🏆",
+    descrizione: [
+      "🏆 Sullo stesso telefono, a fine partita, la riga dice «🏆 Serata:» come online (prima «Classifica della serata:»): nelle due righe ci stanno più nomi."
+    ]
+  },
+  {
     v: 421,
     data: "24 novembre 2026",
     titolo: "Fine partita: medaglie per posto e la serata intera 🏆",

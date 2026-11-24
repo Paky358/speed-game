@@ -1792,7 +1792,7 @@
     s._contenuto.appendChild(ol);
     if (faccine) { faccine.classList.add("fine-faccine"); s._contenuto.appendChild(faccine); }   // partita online: le faccine anche qui
     if (tf && tf(s._piede)) return mostra(s);
-    // sullo stesso telefono, più giochi di fila con lo stesso gruppo: "🏆 Classifica della serata: Paky 1° · Luca 2°" (tocco → la classifica)
+    // sullo stesso telefono, più giochi di fila con lo stesso gruppo: "🏆 Serata: Paky 1° · Luca 2°" (24 nov 2026: corta come online) (tocco → la classifica)
     if (!faccine && cuore.torneo && cuore.torneo.auto && cuore.torneo._fine === classifica) {
       var clS = cuore.classificaTorneo();
       // (24 nov 2026: la riga va a capo, al massimo due righe, con quelli che ci stanno e «e altri N»: mai un nome tagliato a metà)
@@ -1802,7 +1802,7 @@
       var serataK = function (k) {   // (a pari punti, stesso posto: prima diceva 1°, 2°, 3° anche se erano tutti pari)
         var v = clS.slice(0, k).map(function (r, i) { var p = r.punti != null ? 1 + clS.filter(function (q) { return q.punti > r.punti; }).length : i + 1; return r.nome + " " + p + "°"; });
         if (clS.length > k) v.push("e altri " + (clS.length - k));
-        return "🏆 Classifica della serata: " + v.join(" · ") + " ›";
+        return "🏆 Serata: " + v.join(" · ") + " ›";
       };
       var misuraS = function () {
         if (!bS.isConnected) return;
