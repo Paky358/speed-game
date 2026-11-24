@@ -18,11 +18,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  pubblica:
+  # 24 nov 2026: due passaggi (prima il pacchetto, poi "Metti online"), come l esempio ufficiale di GitHub.
+  # In un passaggio solo "Metti online" a volte non trovava il pacchetto ("No artifacts named github-pages").
+  costruisci:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - name: Prendi il codice
         uses: actions/checkout@v4
@@ -34,10 +33,18 @@ jobs:
         run: touch dist/.nojekyll
 
       - name: Impacchetta per Pages
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: dist
+          include-hidden-files: true   # (la v5 li lascerebbe fuori: serve .nojekyll)
 
+  pubblica:
+    needs: costruisci
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
       - name: Metti online
         id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
