@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 426,
+    data: "24 novembre 2026",
+    titolo: "Scarabocchio: più spazio alla lavagna ✏️",
+    descrizione: [
+      "🏷️ Sotto la lavagna solo nomi e punti, senza faccine: ci stanno più giocatori insieme.",
+      "😂 Dopo aver indovinato il tasto delle reazioni sta in fondo alla riga dei giocatori: la lavagna non si rimpicciolisce più mentre gli altri disegnano.",
+      "⭕ Mentre uno sceglie e ai punti del turno, al posto della barra lunga c'è solo il tasto tondo delle reazioni."
+    ]
+  },
+  {
     v: 425,
     data: "24 novembre 2026",
     titolo: "Scarabocchio: le faccine intere ✏️",

@@ -436,8 +436,10 @@
       ".sb-basso[hidden],.sb-scrivi[hidden]{display:none}",
       ".sb-posto-targa{flex:0 0 auto;height:calc(58px + env(safe-area-inset-bottom))}",   // chi guarda soltanto: la targhetta del core sta qui
       ".sb-fine-targa{padding-bottom:calc(58px + env(safe-area-inset-bottom))}",
-      ".sb-sopra .sb-faccine{width:min(320px,92%);flex:0 0 auto}",
-      ".sb-riga .sb-faccine{margin-top:4px}",
+      ".sb-sopra .sb-faccine{flex:0 0 auto}",
+      ".sb-riga.con-fac{display:flex;align-items:center;gap:6px}.sb-riga.con-fac>.sb-gente{flex:1 1 auto;min-width:0}",
+      ".sb-riga>.sb-faccine{flex:0 0 auto;margin:0;padding:0;background:none;box-shadow:none}.sb-riga>.sb-faccine .sl-fa-apri{width:38px;height:38px}",
+      ".sb-chip.solo{padding:5px 10px;flex-direction:column;align-items:flex-start;gap:0;justify-content:center}",
       ".sb-podio{font-size:2rem;text-align:center;margin:0 0 6px}",
       ".sb-perche{text-align:center;font-weight:800;margin:0 0 8px;color:#ffa94d}",
       ".sb-gal-tit{font-weight:900;margin:14px 0 6px}",
@@ -850,11 +852,8 @@
         if (p.via) return;
         var c = chips[p.id];
         if (!c) {
-          c = chips[p.id] = { n: el("div", { class: "sb-chip" }), fig: el("div", { class: "sb-chip-fig" }), nome: el("div", { class: "sb-chip-nome" }), pt: el("div", { class: "sb-chip-pt" }) };
-          c.n.appendChild(c.fig); c.n.appendChild(el("div", {}, [c.nome, c.pt])); gente.appendChild(c.n);
-          c.cfg = omini[p.id] || null;
-          var cfg = omini[p.id] || (window.SGOmino ? SGOmino.casuale(p.nome) : null);
-          if (cfg && window.SGOmino) c.fig.innerHTML = SGOmino.svg(cfg, { quadrato: true });
+          c = chips[p.id] = { n: el("div", { class: "sb-chip solo" }), nome: el("div", { class: "sb-chip-nome" }), pt: el("div", { class: "sb-chip-pt" }) };   // solo nome e punti (24 nov 2026, il proprietario: «togliere le faccine… così si recupera spazio»)
+          c.n.appendChild(el("div", {}, [c.nome, c.pt])); gente.appendChild(c.n);
         }
         c.nome.textContent = p.id === io ? "Tu" : p.nome;
         c.pt.textContent = fmtN(p.punti) + " pt";
@@ -963,8 +962,9 @@
       strumenti.hidden = !puoi; gente.hidden = false;
       // chi aspetta mentre gli altri indovinano (ha già indovinato, o è appena arrivato): sotto chi gioca, le faccine
       var conFac = vm.fase === "disegno" && !dis && (ok || !me), fRiga = conFac ? faccine() : null, faccineMosse = false;
-      if (fRiga && fRiga.parentNode !== riga) { riga.appendChild(fRiga); faccineMosse = true; }
+      if (fRiga && fRiga.parentNode !== riga) { riga.appendChild(fRiga); faccineMosse = true; }   // in fondo alla riga dei giocatori, ferma a destra (24 nov 2026): la lavagna resta grande uguale
       else if (!conFac && fac && fac.parentNode === riga) { riga.removeChild(fac); faccineMosse = true; }
+      riga.classList.toggle("con-fac", !!(fac && fac.parentNode === riga));
       if (puoi !== primaPuoi || cambiato || faccineMosse) misura();   // gli strumenti (o le faccine) prendono più posto delle figurine: rifaccio le misure
       aggGente(vm);
       // sopra la lavagna
@@ -1042,7 +1042,7 @@
       aggiorna: aggiorna,
       omini: function (m) {
         for (var id in m) if (m[id]) omini[id] = m[id];
-        Object.keys(chips).forEach(function (id) { var c = chips[id], cfg = omini[id]; if (cfg && c.cfg !== cfg && window.SGOmino) { c.cfg = cfg; c.fig.innerHTML = SGOmino.svg(cfg, { quadrato: true }); } });
+        
       },
       // un pezzo di tratto arrivato da chi disegna
       tratto: function (m) {
