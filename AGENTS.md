@@ -244,7 +244,7 @@ Lista `TROFEI` in js/cuore/trofei.js (`{ gioco, livello, icona, nome, desc, stat
   - **REGOLA ANTI-SPOILER: i contatori della Mini Asta si salvano SOLO sul podio** (`podioRivela` → `opz.onPodio`), una volta per sessione, mai per chi guarda né nella prova. Prima la Mini Asta online salvava le coppe all'inizio della giornata, e «🏆 Al Primo Posto sbloccato!» poteva svelare chi vinceva.
   - **Le tappe.**
     - Tappa 1 (v427): 90 trofei che si contano dalla giornata e dalle rose.
-    - Tappa 2: rialzi, d'ufficio, affari, buste, spareggi, ruota, scambi e gufo; i contatori li tiene chi tiene la partita.
+    - Tappa 2 (v428): gli altri 19, coi contatori che tiene chi tiene la partita. Stanno in `g.tr` (`trDi`): `rialzi` (in `rilanciaFanta`/`rilanciaO`), `ufficio` (il d'ufficio), `b007`/`spareggi` (`trofeoBusta`), `ruote`, `scambi` con `con`/`dati`/`presi` (in `faiScambio`, chiavi `chiaveCalc`). Gli affari a 1 credito sono `g.st.affari`. Vanno nella foto solo a fine partita (`tr` in `vmFanta`, `trFoto`). Il gufo si conta dai tocchi che ha il telefono (`R.gufi`): il podio passa `R` a `onPodio`.
   - **Le prove** (in `preferiti/asta-trofei.js`; la spia è `W.__spiaProgressi`/`W.__statFinte` in telefoni-finti.js):
     - tf1: online in 3 più chi guarda; niente prima del podio, una volta sola, anche ricaricando.
     - tf2: stesso telefono.

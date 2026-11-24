@@ -108,6 +108,10 @@
       });
       if ((((S.stat.Paky || {}).astafanta || {}).golA || 0) < 1) no("il gol dell'attaccante di Paky non conta («Bomber di Razza»)");
       if (conta(S, "Bea", "astafanta") || conta(S, "Bea", "asta")) no("Bea guarda e prende i trofei");
+      // 🦅 (tappa 2) i contatori che tiene chi tiene la partita arrivano a tutti: i d'ufficio (l'ultimo di ogni ruolo va da solo) e gli affari a 1
+      var uff = 0, aff = 0; NOMI.forEach(function (n) { var st2 = (S.stat[n] || {}).astafanta || {}; uff += st2.ufficio || 0; aff += st2.affari || 0; });
+      if (uff < 3) no("d'ufficio contati " + uff + " (almeno uno per ruolo)");
+      x.push("d'ufficio " + uff + ", affari a 1 credito " + aff);
       x.push("sul podio un salvataggio a testa (Bea niente); vince " + vince.join(", ") + "; Paky: " + JSON.stringify((S.stat.Paky || {}).astafanta).slice(0, 160));
       var avvisi = NOMI.filter(function (n) { return q(W.finestra(n), ".avviso-trofeo"); });
       if (!await W.aspetta(function () { return NOMI.some(function (n) { return q(W.finestra(n), ".avviso-trofeo"); }); }, 6000)) no("sul podio non arriva nessun «Trofeo sbloccato!»");

@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 428,
+    data: "24 novembre 2026",
+    titolo: "Mini Asta: tutti i 109 trofei 🏆",
+    descrizione: [
+      "🔨 Trofei nuovi dell'asta: rialzare su te stesso, i calciatori d'ufficio, gli affari a 1 credito e, con le buste, vincere di 1 credito, gli spareggi e la ruota.",
+      "🤝 Dieci trofei degli scambi: la Legge dell'Ex, il Lupo di Wall Street, il Traditore, il Pacco Postale e gli altri.",
+      "🦉 Online anche il Gufo Certificato, l'Amuleto Umano e la Maledizione Decisiva.",
+      "🤐 Come sempre arrivano solo sul podio, quando la giornata si è vista tutta."
+    ]
+  },
+  {
     v: 427,
     data: "24 novembre 2026",
     titolo: "Mini Asta: arrivano i trofei! 🏆",

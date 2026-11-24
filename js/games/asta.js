@@ -189,6 +189,45 @@
     if (vinta && invUltima) piu("vinteInviolate");
     if (me.prima && conInv === 3) piu("muriInvalicabili");
     if (vinta && rossoOAut) piu("miracolati");
+    // 🔨🤝 (tappa 2) quello che sa solo chi tiene la partita (ctx.tr): rialzi, d'ufficio, affari, buste, spareggi, ruota, scambi
+    var tr = ctx.tr || null;
+    function giorniDi(r) { return !r.gio ? [] : r.prima ? [r.prima[0], r.prima[1], r.gio] : [r.gio]; }
+    function topDi(r) { var b = -1, bv = -1e9; (r.kit || []).forEach(function (c, j) { var x = 0; giorniDi(r).forEach(function (G) { var y = G && G.cal && G.cal[j]; if (y) x += y.fv; }); if (x > bv) { bv = x; b = j; } }); return b; }
+    var mvpRiga = (premi.filter(function (x) { return x.titolo === "Il migliore in campo"; })[0] || {}).chi || null;
+    if (tr) {
+      piu("rialzi", tr.rialzi || 0); piu("ufficio", tr.ufficio || 0); piu("affari", tr.affari || 0); piu("agente007", tr.b007 || 0); piu("spareggi", tr.spareggi || 0); piu("ruote", tr.ruote || 0);
+      piu("scambi", tr.scambi || 0); if ((tr.scambi || 0) >= 3) piu("reMercato");
+      var arrivati = {};
+      (tr.con || []).forEach(function (cid, i) {
+        var socio = righe.filter(function (r) { return r.id === cid || "nome:" + r.nome === cid; })[0], dati = (tr.dati || [])[i] || [], presi = (tr.presi || [])[i] || [];
+        presi.forEach(function (k) { arrivati[k] = 1; });
+        if (!socio || !me.gio) return;
+        function fvDi(r, k) { var j = (r.kit || []).map(chiaveCalc).indexOf(k); if (j < 0) return null; var x = 0, ev = []; giorniDi(r).forEach(function (G) { var y = G && G.cal && G.cal[j]; if (y) { x += y.fv; ev = ev.concat(y.ev || []); } }); return { fv: x, ev: ev, j: j }; }
+        var fD = dati.map(function (k) { return fvDi(socio, k); }).filter(Boolean), fP = presi.map(function (k) { return fvDi(me, k); }).filter(Boolean), sd = 0, sp = 0, bon = 0;
+        fD.forEach(function (x) { sd += x.fv; }); fP.forEach(function (x) { sp += x.fv; x.ev.forEach(function (q) { if (q.d > 0) bon += q.d; }); });
+        if (fD.some(function (x) { return x.ev.some(function (q) { return q.t === "gol"; }); })) piu("leggeEx");
+        if (fD.length && fD.length === fP.length && Math.abs(sd - sp) < 1e-6) piu("paceFiscale");
+        if (fD.length && fP.length && sp - sd >= 5) piu("lupo");
+        if (fD.some(function (x) { return x.ev.some(function (q) { return q.t === "esp" || q.t === "aut"; }); })) piu("paccoPostale");
+        if (vinta && socio.pos === 2) piu("traditore");
+        if (vinta && secondo != null && bon > 0 && mieiP - bon <= secondo) piu("scambioDecisivo");
+        if (mvpRiga === socio && fD.some(function (x) { return x.j === topDi(socio); })) piu("rimorso");
+      });
+      if (kit.filter(function (c) { return arrivati[chiaveCalc(c)]; }).length >= 3 && me.pos <= 3) piu("rivoluzioni");
+    }
+    // 🦉🍀 (tappa 2, solo online) i tocchi del gufo e del portafortuna (ctx.gufi: { "p|ei": { id: [tocchi, "g"|"f"] } })
+    var gu = ctx.gufi, io = ctx.mioId;
+    if (gu && io != null && A) Object.keys(gu).forEach(function (k) {
+      var x = gu[k] && gu[k][io], E = x && x[0] ? gufoEv(A, k) : null; if (!E) return;
+      var entra = E.t === "gol" || E.t === "rig";
+      if (x[1] === "f") { if (entra) piu("amuleti"); return; }
+      if (entra) return;
+      piu("gufoRiuscito");
+      if (k.indexOf(":") < 0 && E.m >= 75 && E.chi) {   // 🧙 dal 75', il tiro di chi in quel momento era in testa (la giornata sola o la terza)
+        var suo = righe.filter(function (r) { return (r.kit || []).some(function (c) { return chiaveCalc(c) === E.chi; }); })[0];
+        if (suo && suo !== me && suo.gio) { var vS = vivoMinuto(suo, E.m, "v75"); if (righe.every(function (r) { return r === suo || !r.gio || vivoMinuto(r, E.m, "v75") < vS; })) piu("maledizioni"); }
+      }
+    });
     // 🗺️ le squadre: quante diverse coi gol (anche quelle delle stagioni passate) e le 6 dei derby
     var conGol = {}; Object.keys(st).forEach(function (k) { if (/^golSq/.test(k) && st[k] > 0) conGol[k] = 1; }); Object.keys(inc).forEach(function (k) { if (/^golSq/.test(k)) conGol[k] = 1; });
     max("squadreDiverse", Object.keys(conGol).length);
@@ -197,7 +236,7 @@
   }
   function dataOggi() { var d = new Date(); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
   // sul podio: i trofei della Mini Asta (meId: online il mio id; sullo stesso telefono null = chi ha il nome del profilo)
-  function salvaTrofeiFanta(t, righe, A, meId, online, sessione) {
+  function salvaTrofeiFanta(t, righe, A, meId, online, sessione, extra) {
     try {
       if (!righe || righe.length < 2 || !sessione || t.guarda || (t.linkParams && t.linkParams.prova) || (t.impostazioni && t.impostazioni.prova)) return;
       if (!(window.SGNube && SGNube.disponibile && SGNube.disponibile() && SGNube.profilo && SGNube.profilo() && SGNube.salvaProgressi)) return;
@@ -211,7 +250,8 @@
       if (st.ultimaPartitaTrofei === sessione) return;
       PARTITE_SALVATE[chiave] = 1;
       try { if (window.localStorage) localStorage.setItem(loc, String(sessione)); } catch (e) {}
-      var c = contaTrofeiFanta(righe, A, me, { stat: st, stagione: STAG_ATT, oggi: dataOggi() });
+      extra = extra || {};
+      var c = contaTrofeiFanta(righe, A, me, { stat: st, stagione: STAG_ATT, oggi: dataOggi(), tr: extra.tr || (extra.trDi ? extra.trDi(me) : null), gufi: extra.gufi || null, mioId: online ? meId : null });
       if (window.SG_PROVA_TROFEI) window.SG_PROVA_TROFEI(c, me);   // (solo per le prove)
       SGNube.salvaProgressi(null, "astafanta", c.incr, c.rec, c.set.concat([["ultimaPartitaTrofei", sessione]]));
     } catch (e) { if (window.console) console.warn("trofei Mini Asta", e); }
@@ -2195,6 +2235,8 @@
   }
   // i numeri per i titoli scherzosi di fine partita
   function statNuove() { return { rilanci: 0, salti: 0, cecchino: 0, affari: 0, maxPrezzo: 0, maxCarta: "" }; }
+  function trDi(g) { return g.tr || (g.tr = { rialzi: 0, ufficio: 0, b007: 0, spareggi: 0, ruote: 0, scambi: 0, dati: [], presi: [], con: [] }); }   // 🏆 (24 nov 2026) i contatori dei trofei della Mini Asta che sa solo chi tiene la partita
+  function trFoto(g) { var x = trDi(g), o = {}; Object.keys(x).forEach(function (k) { o[k] = x[k]; }); o.affari = (g.st && g.st.affari) || 0; return o; }
   function segnaRilancio(g, salto, grosso, ultimoSec) { if (!g) return; g.st = g.st || statNuove(); g.st.rilanci++; if (salto >= grosso) g.st.salti++; }
   function segnaVinta(g, prezzo, carta, cecchino, automatica) {
     if (!g) return; g.st = g.st || statNuove();
@@ -9601,7 +9643,7 @@
   function podioRivela(R) {   // il podio: i primi tre sui gradini (il primo con le braccia alzate), sotto gli altri
     if (!vivoRivela(R) || R.finito) return;
     fermaRivela(R); R.finito = true; gufoVia(R);
-    if (R.opz.onPodio) { var alPodio = R.opz.onPodio; R.opz.onPodio = null; setTimeout(function () { try { alPodio(); } catch (e) {} }, 600); }   // 🏆 (24 nov 2026) i trofei SOLO sul podio: prima la giornata si è vista tutta
+    if (R.opz.onPodio) { var alPodio = R.opz.onPodio; R.opz.onPodio = null; setTimeout(function () { try { alPodio(R); } catch (e) {} }, 600); }   // 🏆 (24 nov 2026) i trofei SOLO sul podio: prima la giornata si è vista tutta
     // il tasto in alto diventa «📸 Foto» (la rosa da mandare nel gruppo); se non c'è la foto, sparisce
     if (R.opz.foto) { R.salta.textContent = "📸 Foto"; R.salta.onclick = function () { R.opz.foto(); }; R.salta.style.visibility = ""; } else R.salta.style.visibility = "hidden";   // (online gli amici non hanno «Salta», ma «📸 Foto» sì)
     var el = document.createElement.bind(document), w = R.righe[0], gio = !!(w && w.gio);
@@ -10094,7 +10136,7 @@
       var righe = st.classifica;
       st.titoli = titoliFine(st.giocatori, FANTA_BUDGET, righe);
       return rivelaFanta(t, righe, { chiave: "rl|" + st.sessione, onEsci: function () { esciAsta(t, st); }, titoli: st.titoli, serieA: st.serieA, saltaRose: !!(st.scambiFatto && st.giornata),
-        onPodio: function () { salvaTrofeiFanta(t, righe, st.serieA, null, false, st.sessione); },   // 🏆 (24 nov 2026) sul podio   // 🔄 (dopo gli scambi: dritti alla giornata)
+        onPodio: function () { salvaTrofeiFanta(t, righe, st.serieA, null, false, st.sessione, { trDi: function (r) { var g = st.giocatori[r.id]; return g ? trFoto(g) : null; } }); },   // 🏆 (24 nov 2026) sul podio   // 🔄 (dopo gli scambi: dritti alla giornata)
         foto: function () { fotoRose(righe, null); },
         bottoni: function () { return [t.el("button", { class: "btn btn-primario", text: "Avanti ▶", onclick: function () { titoliFanta(t, st, righe); } })]; } });
     }
@@ -11545,6 +11587,12 @@
     P.apre = t; P.fine = t + (n ? 0.55 : 0.2); P.dur = t + (n ? 1.3 : 1.8);   // (10 nov 2026: chi ha vinto resta 1 s in meno, poi l'«AGGIUDICATO!»)
     return P;
   }
+  function trofeoBusta(g, B, r) {   // 🕵️ vinta di 1 credito sulla seconda (non nello spareggio) · 🧊 lo spareggio vinto
+    if (!g) return;
+    if (B.sp) { trDi(g).spareggi++; return; }
+    var l = Object.keys(B.offerte || {}).map(function (k) { return +B.offerte[k] || 0; }).sort(function (a, b) { return b - a; });
+    if (l.length > 1 && l[1] > 0 && l[0] - l[1] === 1) trDi(g).b007++;
+  }
   function apriMs(x) {   // quanto resta a schermo l'apertura (x: l'apertura, o solo quante buste con un'offerta)
     if (typeof x === "number") { var l = []; for (var i = 0; i < x; i++) l.push({ id: i, q: i + 1 }); x = { base: 0, buste: l }; }
     return Math.round(1000 * pianoApri(x).dur);
@@ -11842,7 +11890,7 @@
     if (!elegg.length) { st.mazzo.shift(); return prossimaFanta(t, st); }        // carta di troppo: la salto
     st.nCarta = (st.nCarta || 0) + 1;
     if ((elegg.length === 1 && st.giocatori.length > 1) || rifiutatiTutti(st.mazzo, carta.ruolo)) {   // uno solo ne ha bisogno, o tutti quelli del ruolo rifiutati 2 volte: d'ufficio a 1 (da solo, per provare, si fa l'asta lo stesso)
-      var i = elegg[Math.floor(Math.random() * elegg.length)]; st.mazzo.shift(); assegnaFanta(st.giocatori[i], carta, 1);
+      var i = elegg[Math.floor(Math.random() * elegg.length)]; st.mazzo.shift(); assegnaFanta(st.giocatori[i], carta, 1); trDi(st.giocatori[i]).ufficio++;   // 🦅
       st.giriVuoti = 0; FX.aggiudicato();
       return esitoFanta(t, st, i, carta, 1, "forzata", elegg.length === 1 ? "unico" : "ufficio");
     }
@@ -11884,6 +11932,7 @@
     var base = a.leader === null ? a.offerta - 1 : a.offerta, max = maxFanta(g);
     if (max < base + 1) return;
     var prezzo = Math.min(base + (st.salto || 1), max);   // il salto scelto (se non ci arriva, fin dove può)
+    if (a.leader === i) trDi(g).rialzi++;   // 🤡 (trofeo «Il Mio Peggior Nemico»)
     segnaRilancio(g, prezzo - base, 5);
     a.ultimoSec = a.scadenza && a.scadenza - Date.now() < 2000 ? i : null;   // 🎯 all'ultimo secondo
     a.offerta = prezzo; a.leader = i; delete a.passati[i];
@@ -11982,11 +12031,11 @@
     st.pausa = setTimeout(function () {
       if (st.finita) return;
       if (r.nessuno) return accolloFanta(t, st);
-      if (r.primi.length === 1) return vintaFantaB(t, st, r.primi[0].id, r.prezzo);
+      if (r.primi.length === 1) { trofeoBusta(st.giocatori[r.primi[0].id], B, r); return vintaFantaB(t, st, r.primi[0].id, r.prezzo); }
       if (!B.sp && !r.max) return bustaFantaLocale(t, st, B.carta, r.primi.map(function (x) { return x.id; }), r.prezzo);   // ⚔️ lo spareggio, solo tra loro
       var w = Math.floor(Math.random() * r.primi.length);   // 🎡 ancora pari: la ruota
       disegnaBusteLocale(t, st, B.carta, { ruota: { n: B.n, nomi: r.primi.map(function (x) { return x.nome; }), vince: w, piano: pianoRuota(r.primi.length, w), parte: Date.now() + 300, dur: RUOTA_MS, massimo: r.max ? 1 : 0 } });
-      st.pausa = setTimeout(function () { if (!st.finita) vintaFantaB(t, st, r.primi[w].id, r.prezzo); }, 300 + RUOTA_MS + RUOTA_FERMA);
+      st.pausa = setTimeout(function () { if (!st.finita) { trDi(st.giocatori[r.primi[w].id]).ruote++; vintaFantaB(t, st, r.primi[w].id, r.prezzo); } }, 300 + RUOTA_MS + RUOTA_FERMA);
     }, 250 + apriMs(ap));
   }
   function vintaFantaB(t, st, i, prezzo) {
@@ -12036,6 +12085,7 @@
   }
   function faiScambio(ga, gb, da, db) {   // i calciatori passano di rosa (col prezzo pagato); i ruoli restano giusti, i crediti non si toccano
     var va = ga.kit.filter(function (c) { return da.indexOf(chiaveKit(c)) >= 0; }), vb = gb.kit.filter(function (c) { return db.indexOf(chiaveKit(c)) >= 0; });
+    [[ga, gb, va, vb], [gb, ga, vb, va]].forEach(function (x) { var t = trDi(x[0]); t.scambi++; t.con.push(x[1].id != null ? x[1].id : "nome:" + x[1].nome); t.dati.push(x[2].map(chiaveCalc)); t.presi.push(x[3].map(chiaveCalc)); });   // 🤝 (i trofei degli scambi: chi, con chi, chi è andato e chi è arrivato)
     ga.kit = ga.kit.filter(function (c) { return da.indexOf(chiaveKit(c)) < 0; }).concat(vb);
     gb.kit = gb.kit.filter(function (c) { return db.indexOf(chiaveKit(c)) < 0; }).concat(va);
     return { va: va, vb: vb };
@@ -12556,7 +12606,7 @@
       st.nCarta++;
       // uno solo ne ha bisogno, o tutti i rimasti del ruolo sono stati rifiutati 2 volte: d'ufficio a 1 (a caso tra chi ne ha bisogno)
       if (elegg.length === 1 || rifiutatiTutti(st.mazzo, carta.ruolo)) {
-        var g = elegg[Math.floor(Math.random() * elegg.length)]; st.mazzo.shift(); assegnaFanta(g, carta, 1); st.giriVuoti = 0;
+        var g = elegg[Math.floor(Math.random() * elegg.length)]; st.mazzo.shift(); assegnaFanta(g, carta, 1); st.giriVuoti = 0; trDi(g).ufficio++;   // 🦅
         FX.aggiudicato(); return esito({ chiId: g.id, chiNome: g.nome, carta: carta, prezzo: 1, tipo: "forzata", motivo: elegg.length === 1 ? "unico" : "ufficio" });
       }
       if (aBusta(st.compra, carta)) return apriBustaF(elegg.map(function (g) { return g.id; }), 0);   // ✉️ a busta chiusa
@@ -12580,6 +12630,7 @@
       if (prezzo === "tardi") { if (a.leader !== id) tardi(id); if (m.tk != null) bd(); return; }   // (un tocco vecchio di chi guida non conta, senza "troppo tardi"; la foto dice al suo telefono che è arrivato)
       if (prezzo === "doppio" || prezzo === "attesa") return;
       if (prezzo == null || maxFanta(g) < prezzo) { if (m.tk != null) bd(); return; }   // (la foto dice al suo telefono che il tocco è arrivato)
+      if (a.leader === id) trDi(g).rialzi++;   // 🤡 (trofeo «Il Mio Peggior Nemico»)
       segnaRilancio(g, prezzo - (senza ? a.offerta - 1 : a.offerta), 5);
       a.ultimoSec = st.scadenza && st.scadenza - Date.now() < 2000 ? id : null;   // 🎯 all'ultimo secondo
       a.offerta = prezzo; a.leader = id; delete a.passati[id];
@@ -12636,12 +12687,12 @@
       if (st.fase !== "apri") return;
       st.apri = null;
       if (r.nessuno) return accollo();
-      if (r.primi.length === 1) return vintaB(perId(st, r.primi[0].id), r.prezzo);
+      if (r.primi.length === 1) { trofeoBusta(perId(st, r.primi[0].id), B, r); return vintaB(perId(st, r.primi[0].id), r.prezzo); }
       if (!B.sp && !r.max) return apriBustaF(r.primi.map(function (x) { return x.id; }), r.prezzo);   // ⚔️ lo spareggio, solo tra loro
       var w = Math.floor(Math.random() * r.primi.length);   // 🎡 ancora pari: la ruota (la decido io, gira uguale su tutti i telefoni)
       st.ruota = { n: B.n, carta: vistaF(B.carta), nCarta: st.nCarta, ids: r.primi.map(function (x) { return x.id; }), nomi: r.primi.map(function (x) { return x.nome; }), vince: w, piano: pianoRuota(r.primi.length, w), parte: Date.now() + RUOTA_VIA, fine: Date.now() + RUOTA_VIA + RUOTA_MS, massimo: r.max ? 1 : 0 };   // (parte fra 0,7 s: la foto arriva a tutti prima)
       st.fase = "ruota"; bd();
-      TM.dopo(function () { if (st.fase !== "ruota") return; st.ruota = null; vintaB(perId(st, r.primi[w].id), r.prezzo); }, RUOTA_VIA + RUOTA_MS + RUOTA_FERMA);
+      TM.dopo(function () { if (st.fase !== "ruota") return; st.ruota = null; var gw = perId(st, r.primi[w].id); if (gw) trDi(gw).ruote++; vintaB(gw, r.prezzo); }, RUOTA_VIA + RUOTA_MS + RUOTA_FERMA);
     }
     function vintaB(g, prezzo) {
       if (!g) return prossima();
@@ -12799,7 +12850,7 @@
       giocatori: st.giocatori.map(function (g) {
         return { id: g.id, nome: g.nome, omino: g.omino || null, crediti: g.crediti, conta: { P: g.conta.P, D: g.conta.D, C: g.conta.C, A: g.conta.A },
           vuoti: slotVuoti(g), max: maxFanta(g), asteVinte: g.asteVinte || 0, via: !!g.via, creditiSpesi: FANTA_BUDGET - g.crediti, stelle: 0,
-          kit: g.kit.map(function (c) { return { nome: c.nome, squadra: c.squadra, ruolo: c.ruolo, prezzo: c.prezzo || 0 }; }) };   // (i valori restano nascosti fino alla fine)
+          kit: g.kit.map(function (c) { return { nome: c.nome, squadra: c.squadra, ruolo: c.ruolo, prezzo: c.prezzo || 0 }; }), tr: st.fase === "fine" ? trFoto(g) : undefined };   // (i valori restano nascosti fino alla fine; 🏆 tr: i contatori dei trofei, solo a fine partita)
       }),
       asta: a ? {
         carta: { nome: a.carta.nome, squadra: a.carta.squadra, ruolo: a.carta.ruolo }, nCarta: st.nCarta,
@@ -12856,7 +12907,7 @@
       return rivelaFanta(t, vm.classifica || [], { chiave: "ro|" + (vm.codice || "") + "|" + vm.sessione, titoli: vm.titoli || [], mio: io ? io.id : null, serieA: vm.serieA || null,
         capo: !!cb.sonoHost, onPasso: cb.onPasso || null, passi: vm.passi || {}, nomeCapo: vm.nomeCapo || ((vm.giocatori || [])[0] || {}).nome || "",
         cron: vm.cron || null, onVel: cb.onVel || null, onSalta: cb.onSalta || null, prova: proprietario(t),
-        onPodio: function () { salvaTrofeiAsta(t, vm, cb.myId, true); salvaTrofeiFanta(t, vm.classifica || [], vm.serieA || null, cb.myId, true, vm.sessione); },   // 🏆 (24 nov 2026) i trofei sul podio, mai all inizio della giornata
+        onPodio: function (R) { salvaTrofeiAsta(t, vm, cb.myId, true); var gT = trova(vm.giocatori, cb.myId); salvaTrofeiFanta(t, vm.classifica || [], vm.serieA || null, cb.myId, true, vm.sessione, { tr: gT && gT.tr, gufi: (R && R.gufi) || vm.gufi || null }); },   // 🏆 (24 nov 2026) i trofei sul podio, mai all inizio della giornata
         gufi: vm.gufi || null, onGufo: io && !t.guarda ? (cb.onGufo || null) : null, onFischio: cb.onFischio || null,   // 🦉 / 🍀 (chi guarda vede i gufetti ma non tocca)
         foto: function () { fotoRose(vm.classifica || [], io ? io.nome : null); },   // 📸 la mia rosa (chi guarda: tutte)
         onEsci: function () { t.conferma("Uscire dalla partita?", null, "Esci", function () { cb.onEsci(); }); },

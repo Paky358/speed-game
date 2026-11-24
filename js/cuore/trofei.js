@@ -565,6 +565,12 @@
       ["Udinese", "🦓", "Zebrette al Galoppo", "dell'Udinese"], ["Venezia", "🛶", "Gol in Gondola", "del Venezia"]];
     var F = [
       ["🔨 All'asta", [
+        ["rialzo", "🤡", "Il Mio Peggior Nemico", "rialzi", "B1 A5 O15 D40", "Rialza sulla tua stessa offerta", "Rialza sulla tua stessa offerta {n} volte", 1],
+        ["ufficio", "🦅", "Avvoltoio d'Ufficio", "ufficio", "B3 A15 O50 D120", null, "Prendi {n} calciatori «d'ufficio»", 1],
+        ["buio", "🕶️", "Affare al Buio", "affari", "B1 A10 O30 D75", "Compra un calciatore a 1 credito senza rilanci (il d'ufficio non vale)", "Compra {n} calciatori a 1 credito senza rilanci", 1],
+        ["agente", "🕵️", "Agente 007", "agente007", "B1 A3 O10 D25", "Con le buste: vinci con 1 credito più della seconda offerta", "Con le buste: vinci con 1 credito più della seconda, {n} volte", 0],
+        ["nervi", "🧊", "Nervi d'Acciaio", "spareggi", "B1 A3 O10", "Con le buste: vinci uno spareggio", "Con le buste: vinci {n} spareggi", 0],
+        ["ruota", "🎡", "Baciato dalla Fortuna", "ruote", "B1 A3 O10", "La ruota dello spareggio sceglie te", "La ruota dello spareggio sceglie te, {n} volte", 0],
         ["allin", "🎰", "All-In da Casinò", "allIn", "B1 A5 O15 D35", "Spendi almeno 10 crediti per un calciatore", "Spendi almeno 10 crediti per un calciatore, {n} volte", 1],
         ["braccino", "🦖", "Braccino Corto", "braccino", "B1 A3 O10", "Finisci l'asta con almeno 8 crediti avanzati", "Finisci l'asta con almeno 8 crediti avanzati, {n} volte", 1],
         ["contabile", "🧮", "Contabile Svizzero", "contabile", "B1 A5 O15 D35", "Finisci l'asta con 0 crediti avanzati", "Finisci l'asta con 0 crediti avanzati, {n} volte", 1],
@@ -604,7 +610,10 @@
         ["ribaltone", "🔄", "Il Ribaltone", "ribaltoni", "A1 O5 D15", "Al 75' non eri primo, e vinci", "Al 75' non eri primo, e vinci: {n} volte", 1],
         ["cortomuso", "🐎", "Corto Muso", "cortiMusi", "A1 O3", "Vinci di mezzo punto esatto", "Vinci di mezzo punto esatto, {n} volte", 0],
         ["fotofinish", "📸", "Al Fotofinish", "fotofinish", "O1", "Vinci grazie a un bonus nel recupero (senza, non saresti primo)", null, 0],
-        ["risalita", "🧗", "Risalita dagli Abissi", "risalite", "O1", "Da 5 giocatori in su: ultimo all'intervallo, e chiudi sul podio", null, 0]]],
+        ["risalita", "🧗", "Risalita dagli Abissi", "risalite", "O1", "Da 5 giocatori in su: ultimo all'intervallo, e chiudi sul podio", null, 0],
+        ["gufo", "🦉", "Gufo Certificato", "gufoRiuscito", "B1 A5 O15 D40", "Online: tocchi «Gufa!» e il rigore o la punizione non entra", "Online: gufi e non entra, {n} volte", 0],
+        ["amuleto", "🍀", "Amuleto Umano", "amuleti", "A1 O5 D12", "Online: tocchi «Portafortuna» e il tuo calciatore segna", "Online: portafortuna e segna, {n} volte", 0],
+        ["maledizione", "🧙", "Maledizione Decisiva", "maledizioni", "O1", "Online, dal 75': gufi il rigore di chi è in testa, e lo sbaglia", null, 0]]],
       ["🏆 Classifica e serate", [
         ["prima", "🎉", "Prima Volta", "partite", "B1", "Finisci la tua prima Mini Asta", null, 1],
         ["re", "🏆", "Re della Serata", "vinte", "B1 A5 O15 D40", "Vinci una Mini Asta", "Vinci {n} Mini Aste", 1],
@@ -616,6 +625,17 @@
         ["stadio", "🏟️", "Stadio Pieno", "vinteInOtto", "B1 A3 O10", "Vinci una partita da 8 giocatori in su", "Vinci {n} partite da 8 giocatori in su", 0],
         ["maratoneta", "🏃", "Maratoneta", "treGiornate", "B1 A5 O15 D35", "Finisci una Mini Asta da 3 giornate", "Finisci {n} Mini Aste da 3 giornate", 0],
         ["triplete", "🎖️", "Triplete!", "triplete", "D1", "Primo in tutte e 3 le giornate", null, 0]]],
+      ["🔄 Scambi", [
+        ["stretta", "🤝", "Stretta di Mano", "scambi", "B1 A5 O15 D40", "Fai uno scambio a fine asta", "Fai {n} scambi a fine asta", 1],
+        ["ex", "💔", "Legge dell'Ex", "leggeEx", "B1 A5 O15", "Il calciatore che hai ceduto segna", "Il calciatore che hai ceduto segna, {n} volte", 1],
+        ["pace", "⚖️", "Pace Fiscale", "paceFiscale", "B1", "I calciatori scambiati chiudono con lo stesso fantavoto", null, 1],
+        ["traditore", "🗡️", "Il Traditore", "traditore", "A1", "Vinci, e secondo arriva chi ha scambiato con te", null, 0],
+        ["lupo", "🐺", "Il Lupo di Wall Street", "lupo", "A1 O5", "Chi hai ricevuto fa almeno 5 fantapunti più di chi hai ceduto", "Chi hai ricevuto fa almeno 5 fantapunti in più, {n} volte", 1],
+        ["rimorso", "🤦", "Rimorso Istantaneo", "rimorso", "A1", "Chi hai ceduto diventa il «Migliore in campo»", null, 0],
+        ["decisivo", "⚡", "Scambio Decisivo", "scambioDecisivo", "A1 O5", "Vinci grazie ai bonus di chi hai preso con uno scambio", "Vinci grazie a uno scambio, {n} volte", 1],
+        ["mercato", "💼", "Re del Calciomercato", "reMercato", "A1 O5", "3 scambi nello stesso mercato", "3 scambi nello stesso mercato, {n} volte", 0],
+        ["pacco", "📦", "Pacco Postale", "paccoPostale", "O1", "Chi hai ceduto prende il rosso o fa autogol", null, 0],
+        ["rivoluzione", "🌪️", "Rivoluzione Totale", "rivoluzioni", "D1", "Cambi 3 dei tuoi 5 calciatori con gli scambi e finisci sul podio", null, 0]]],
       ["⏳ Stagioni passate", [
         ["macchina", "⏳", "Macchina del Tempo", "partitePassate", "B1 A5 O20 D50", "Gioca con una stagione passata", "Gioca {n} partite con le stagioni passate", 1],
         ["storico", "📚", "Storico della Serie A", "stagioniGiocate", "B2 A4 O8 D12", null, "Gioca con {n} stagioni diverse (quella di oggi compresa)", 1],
