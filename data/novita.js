@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 424,
+    data: "24 novembre 2026",
+    titolo: "Memata: il meme vicino ai tasti, in due più veloce 😂",
+    descrizione: [
+      "✍️ Mentre scrivi il meme sta in basso, appoggiato sopra i tasti: sul telefono alto occhio e pollice restano vicini (lo spazio libero va in alto).",
+      "👥 In due niente più «Di chi sarà?»: ognuno sa già qual è il suo, quindi si vedono subito i due meme coi voti.",
+      "👀 Chi guarda o è arrivato tardi, mentre gli altri scrivono, vede i gettoni di chi gioca: la ✅ si accende su chi ha consegnato."
+    ]
+  },
+  {
     v: 423,
     data: "24 novembre 2026",
     titolo: "Memata: chi arriva tardi, l'attesa e le medaglie 😂",

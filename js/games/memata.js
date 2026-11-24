@@ -165,7 +165,7 @@
         chiaro.textContent = vere.map(function (x, i) { return x ? (piene > 1 ? (i + 1) + " · " : "") + x : ""; }).filter(Boolean).join("   ");
         chiaro.style.display = "block";
         var ch = chiaro.offsetHeight + 4;
-        if (ah - ch > 40) { disponi(aw, ah - ch); box.classList.add("con-chiaro"); }
+        if (ah - ch > 40) { disponi(aw, ah - ch); quadro.style.marginBottom = (parseFloat(quadro.style.marginBottom) || 0) + ch + "px"; box.classList.add("con-chiaro"); }
       } else { chiaro.style.display = "none"; box.classList.remove("con-chiaro"); }
       // i crediti sotto il meme, a destra (dopo che il meme ha preso il suo posto)
       cred.style.top = (quadro.offsetTop + quadro.offsetHeight + 1) + "px"; cred.style.right = Math.max(0, aw - quadro.offsetLeft - quadro.offsetWidth) + "px";
@@ -416,7 +416,7 @@
         players: H.players.map(function (p) {
           var x = H.mem[p.id];
           return { id: p.id, nome: p.nome, punti: p.punti, via: !!p.via, forse: !!p.forse, fatto: !!(x && x.f),
-            omino: H.fase === "lobby" || H.fase === "fine" ? (p.omino || null) : undefined };
+            omino: H.fase === "lobby" || H.fase === "fine" ? (p.omino || null) : H.stato === "scrivi" && p.omino && JSON.stringify(p.omino).length < 400 ? p.omino : undefined };
         }),
         guarda: H.guarda, prossimi: H.prossimi.map(function (x) { return { id: x.id, nome: x.nome }; }),
         classifica: H.classifica };
@@ -590,6 +590,9 @@
       // chi è a pari punti col 3° (e ha preso qualcosa) sale sul podio anche lui: se no il suo meme non si rivede mai
       while (prima > 0 && lista.length - prima < 5 && lista[prima].pt > 0 && lista[prima - 1].pt === lista[prima].pt) prima--;
       H.riv = { lista: lista, passo: 0, podio: prima, tot: 2 * (lista.length - prima) };
+      // 👥 in due (scelta B del proprietario, 24 nov 2026) ognuno sa già qual è il suo meme: niente rullo né «Di chi sarà?»,
+      // si vedono subito i due meme coi voti (si salta ogni passo pari, quello del rullo)
+      if (Object.keys(H.mem).length <= 2) { H.riv.due = 1; H.riv.passo = 1; }
       H.stato = "rivela"; H.scadenza = 0;
       bd(); passoRivela();
     }
@@ -597,7 +600,8 @@
       var p = H.riv.passo;
       if (p >= H.riv.tot - 1) return fineRivela();   // l'ultimo (il primo posto) è svelato
       var primo = H.riv.podio + Math.floor(p / 2) === H.riv.lista.length - 1;
-      var ms = p % 2 === 0 ? (primo ? 2000 : 1200) : PASSO_RIV;   // (il rullo del primo posto è un po' più lungo; il proprietario, 31 ott: «ci mette troppo»)
+      var ms = p % 2 === 0 ? (primo ? 2000 : 1200) : PASSO_RIV;
+      if (H.riv.due) return dopo(PASSO_RIV, function () { H.riv.passo += 2; bd(); passoRivela(); });   // (il rullo del primo posto è un po' più lungo; il proprietario, 31 ott: «ci mette troppo»)
       dopo(ms, function () { H.riv.passo++; bd(); passoRivela(); });
     }
     function fineRivela() {
@@ -734,6 +738,9 @@
     ui.root.appendChild(el("div", { class: "me-barra" }, [el("button", { class: "me-esci", "aria-label": "Esci", text: "‹", onclick: cb.onEsci }), ui.giro, ui.tempo]));
     ui.titolo = el("div", { class: "me-titolo" });
     ui.root.appendChild(ui.titolo);
+    // chi aspetta senza meme (guarda, è arrivato tardi) vede i gettoni di chi gioca, con la ✅ su chi ha consegnato (scelta C, 24 nov 2026)
+    ui.gente = el("div", { class: "me-gente" });
+    ui.root.appendChild(ui.gente);
     // il meme (uno solo per tutte le fasi)
     ui.P = pannelloMeme(t);
     ui.P.onRotta = function (id) { if (ui.mio && ui.mio.rec && ui.mio.rec[0] === id && UI && UI.vm && UI.vm.stato === "scrivi") cb.manda({ t: "rotta", g: ui.mio.g, id: id }); };
@@ -959,6 +966,7 @@
     if (aspetto && st !== "ripresa") nota = (vm.giro >= vm.giri ? "✋ Ultimo round: giochi dalla prossima partita" : "✋ Giochi dal prossimo round") + (nota ? " · " + nota : "");
     // senza meme sullo schermo (si aspetta chi scrive) titolo e riga stanno al centro, non uno in cima e uno in fondo
     R.classList.toggle("attesa", !ui.P.rec && (st === "scrivi" || st === "vuoto"));
+    if (st === "scrivi" && !ui.P.rec) gente(ui, vm, cb);
     tx(ui.titolo, titolo); tx(ui.nota, nota);
     // i punti di tutti (solo nella rivelazione, sotto)
     var pt = st === "rivela" && vm.riv && vm.riv.finito;
@@ -987,6 +995,23 @@
     if (guardo && !ui.targa && !ui.faccine && st !== "scrivi") { ui.faccine = ui.t.faccine(); if (ui.faccine) R.appendChild(ui.faccine); }
     if (ui.faccine) mostraSe(ui.faccine, guardo);
     mostraSe(ui.cred, !!ui.P.rec && ui.P.el.style.visibility !== "hidden");
+  }
+
+  // i gettoni di chi gioca mentre si scrive: si rifanno solo se cambia chi c'è, la ✅ si accende e basta (niente lampeggio)
+  function gente(ui, vm, cb) {
+    var vivi = vm.players.filter(function (p) { return !p.via; });
+    var k = vivi.map(function (p) { return p.id + (p.omino ? "o" : ""); }).join(",");
+    if (ui.kGente !== k) {
+      ui.kGente = k; ui.gPer = {};
+      while (ui.gente.firstChild) ui.gente.removeChild(ui.gente.firstChild);
+      vivi.forEach(function (p) {
+        var cfg = p.omino || (window.SGOmino && SGOmino.casuale ? SGOmino.casuale(p.nome) : null), html = "";
+        try { html = cfg && window.SGOmino ? SGOmino.svg(cfg, { quadrato: true }) : ""; } catch (e) {}
+        var d = ui.t.el("div", { class: "me-g" }, [ui.t.el("span", { class: "me-gav", html: html }), ui.t.el("b", { text: "✅" }), ui.t.el("span", { class: "me-gn", text: p.id === cb.myId ? "Tu" : p.nome })]);
+        ui.gente.appendChild(d); ui.gPer[p.id] = d;
+      });
+    }
+    vivi.forEach(function (p) { var d = ui.gPer[p.id]; if (d) d.classList.toggle("fatto", !!p.fatto); });
   }
 
   // ---------- la rivelazione ----------
@@ -1149,6 +1174,15 @@
       ".me-cred{position:absolute;line-height:14px;white-space:nowrap;font-size:.68rem;color:var(--o-tenue);text-decoration:none;opacity:.8}",
       // si aspetta chi scrive (niente meme): titolo e riga al centro dello spazio
       ".me-scena.attesa .me-meme{display:none}.me-scena.attesa .me-titolo{margin-top:auto}.me-scena.attesa .me-nota{margin-bottom:auto}",
+      // mentre si scrive il meme sta in basso, appoggiato sopra i tasti (scelta A, 24 nov 2026): occhio e pollice vicini
+      ".me-scena.st-scrivi .me-meme{align-items:flex-end}",
+      // i gettoni di chi gioca, per chi aspetta (scelta C)
+      ".me-gente{display:none;flex:none;flex-wrap:wrap;justify-content:center;align-self:center;gap:12px 8px;max-width:380px;padding:16px 0 6px}",
+      ".me-scena.attesa.st-scrivi .me-gente{display:flex}",
+      ".me-g{position:relative;width:62px;display:flex;flex-direction:column;align-items:center;gap:4px;opacity:.5;transition:opacity .3s}.me-g.fatto{opacity:1}",
+      ".me-gav{width:50px;height:50px;display:block}.me-gav svg{width:100%;height:100%;display:block}",
+      ".me-g>b{display:none;position:absolute;top:-5px;right:0;font-size:1rem;line-height:1}.me-g.fatto>b{display:block;animation:meSu .4s cubic-bezier(.2,1.5,.4,1)}",
+      ".me-gn{max-width:62px;font-size:.74rem;font-weight:800;color:var(--o-testo);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
       // scrivere
       ".me-scrivi{flex:none;display:flex;flex-direction:column;gap:8px}",
       ".me-riga{display:flex;align-items:center;gap:8px}",
