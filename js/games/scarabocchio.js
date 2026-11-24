@@ -367,6 +367,7 @@
       ".sb-righe b{color:#8ce99a}",
       ".sb-fig{width:64px;height:64px;border-radius:50%;overflow:hidden;background:rgba(255,255,255,.12)}",
       ".sb-fig svg,.sb-chip-fig svg{display:block;width:170%;height:auto;margin:-6% 0 0 -35%}",
+      ".sb-fig svg.gettone,.sb-chip-fig svg.gettone{width:100%;height:100%;margin:0}",   // il gettone intero (non la testa ritagliata dell avatar di prima)
       ".sb-riga{flex:0 0 auto;padding:5px 6px 2px}",
       ".sb-strumenti{display:flex;flex-direction:column;gap:6px;align-items:stretch}",
       ".sb-strumenti[hidden],.sb-gente[hidden]{display:none}",
@@ -853,7 +854,7 @@
           c.n.appendChild(c.fig); c.n.appendChild(el("div", {}, [c.nome, c.pt])); gente.appendChild(c.n);
           c.cfg = omini[p.id] || null;
           var cfg = omini[p.id] || (window.SGOmino ? SGOmino.casuale(p.nome) : null);
-          if (cfg && window.SGOmino) c.fig.innerHTML = SGOmino.svg(cfg);
+          if (cfg && window.SGOmino) c.fig.innerHTML = SGOmino.svg(cfg, { quadrato: true });
         }
         c.nome.textContent = p.id === io ? "Tu" : p.nome;
         c.pt.textContent = fmtN(p.punti) + " pt";
@@ -886,7 +887,7 @@
     // chi indovina per primo: la sua faccina salta in cima alla lavagna su tutti i telefoni (a lui anche una vibrazione)
     function festaPrimo(vm, id, piu) {
       var fig = el("div", { class: "sb-chip-fig" }), cfg = omini[id] || (window.SGOmino ? SGOmino.casuale(nomeDi(vm, id)) : null);
-      if (cfg && window.SGOmino) fig.innerHTML = SGOmino.svg(cfg);
+      if (cfg && window.SGOmino) fig.innerHTML = SGOmino.svg(cfg, { quadrato: true });
       var io1 = id === io, n = el("div", { class: "sb-primo" }, [fig, el("div", {}, [
         el("div", { text: io1 ? "⚡ Per primo! +" + fmtN(piu) : "⚡ " + nomeDi(vm, id) + " per primo!" }),
         el("small", { text: io1 ? "Hai indovinato prima di tutti" : "ha indovinato prima di tutti" }) ])]);
@@ -1016,7 +1017,7 @@
           sopra.appendChild(el("div", { class: "sb-righe", text: (nostre.length ? "📝 = una parola vostra. " : "") + "Gli altri non vedono la parola: disegnala senza scrivere!" }));
         } else {
           var cfg = omini[vm.disegnatore];
-          if (cfg && window.SGOmino) sopra.appendChild(el("div", { class: "sb-fig", html: SGOmino.svg(cfg) }));
+          if (cfg && window.SGOmino) sopra.appendChild(el("div", { class: "sb-fig", html: SGOmino.svg(cfg, { quadrato: true }) }));
           sopra.appendChild(el("div", { class: "sb-tit", html: "✏️ <b>" + esc(nomeDi(vm, vm.disegnatore)) + "</b> sta scegliendo cosa disegnare…" }));
           sopra.appendChild(el("div", { class: "sb-righe", text: "Preparati a indovinare: scrivi le risposte qui sotto!" }));
         }
@@ -1041,7 +1042,7 @@
       aggiorna: aggiorna,
       omini: function (m) {
         for (var id in m) if (m[id]) omini[id] = m[id];
-        Object.keys(chips).forEach(function (id) { var c = chips[id], cfg = omini[id]; if (cfg && c.cfg !== cfg && window.SGOmino) { c.cfg = cfg; c.fig.innerHTML = SGOmino.svg(cfg); } });
+        Object.keys(chips).forEach(function (id) { var c = chips[id], cfg = omini[id]; if (cfg && c.cfg !== cfg && window.SGOmino) { c.cfg = cfg; c.fig.innerHTML = SGOmino.svg(cfg, { quadrato: true }); } });
       },
       // un pezzo di tratto arrivato da chi disegna
       tratto: function (m) {

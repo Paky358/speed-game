@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 425,
+    data: "24 novembre 2026",
+    titolo: "Scarabocchio: le faccine intere ✏️",
+    descrizione: [
+      "😀 Sotto la lavagna, nella festa di chi indovina per primo e mentre uno sceglie cosa disegnare si vede la faccina intera di ognuno (prima era tagliata a metà, come la testa dei vecchi avatar)."
+    ]
+  },
+  {
     v: 424,
     data: "24 novembre 2026",
     titolo: "Memata: il meme vicino ai tasti, in due più veloce 😂",
