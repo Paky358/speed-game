@@ -234,8 +234,8 @@ Lista `TROFEI` in js/cuore/trofei.js (`{ gioco, livello, icona, nome, desc, stat
 - **I trofei della Mini Asta** (24 nov 2026, novità v427; la lista del proprietario: le idee di Gemini controllate sul gioco vero con le simulazioni, coi 20 crediti veri, D:/SG-asta-prove/trofei/LEGGIMI.md).
   - **Dove stanno.** Sotto `astafanta`, la pagina della Mini Asta; le statistiche in `stat.astafanta`. Le coppe vecchie del fanta («Rosa al Completo», «Re del Fantacalcio») restano sotto `asta`.
   - **Come si scrivono.** In trofei.js le righe nascono da una lista corta (blocco «🏆 LA MINI ASTA FANTACALCIO»): `[grp, icona, nome, stat, "B1 A5 O15 D40", descrizione per 1, per {n}, 1 = nel Platino]`.
-    - Un trofeo = UNA scheda coi suoi livelli: righe con lo stesso `grp`, nomi «…», «… II», «… III». Il nome fa da chiave per avviso e premi: dev'essere diverso a ogni livello.
-    - `fam` = la famiglia nella pagina (`schedeTrofei`).
+    - Ogni livello è una riga a sé: righe con lo stesso `grp`, nomi «…», «… II», «… III», la soglia nella descrizione. Il nome fa da chiave per avviso e premi: dev'essere diverso a ogni livello.
+    - **La pagina è come quella degli altri giochi** (25 nov 2026, novità v429; il proprietario: «divisi tra bronzo, argento, oro, diamante, non per categorie»): sezioni per livello, un trofeo per riga col suo contatore, 👑 accanto al nome di quelli del Platino. NIENTE schede a famiglie né chip coi livelli (la v427-428 le aveva: bocciate). `fam` serve solo a ordinare la lista.
   - **Il Platino «Leggenda della Mini Asta»** = il primo livello dei trofei con `plat` (👑), non tutti (`platinato` e `verPlatino`). Ogni gioco che segna `plat` usa questa regola.
   - **I conti** li fa asta.js (`contaTrofeiFanta`, `salvaTrofeiFanta`) dai dati della giornata e delle rose: classifica, prezzi, crediti avanzati, figurine, stagione.
     - Record con `recs`: `fvMax`, `puntiMax`, `golMax`, `marcatoriMax`, `porFvMax`, `filaMax`, `squadreDiverse`, `derbySquadre`, `stagioni*`.

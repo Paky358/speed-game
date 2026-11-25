@@ -511,16 +511,6 @@ body::before{
 .trofeo.fatto{ box-shadow:0 0 0 1px rgba(255,255,255,.18), var(--ombra); }
 .trofeo.tl-oro.fatto{ box-shadow:0 0 0 1px rgba(255,210,90,.5), var(--ombra); }
 .trofeo.tl-diamante.fatto, .trofeo.tl-platino.fatto{ box-shadow:0 0 0 1px rgba(150,225,255,.5), var(--ombra); }
-/* 🏆 (Mini Asta, 24 nov 2026) la scheda di un trofeo a livelli: sotto la barra i livelli (✓ quelli presi) e quanto manca */
-.trofeo .tr-piede{ display:flex; align-items:flex-end; gap:8px; margin-top:5px; }
-.trofeo .tr-piede .tr-num{ margin:0 0 0 auto; flex:0 0 auto; }
-.trofeo .tr-chips{ display:flex; flex-wrap:wrap; gap:4px; min-width:0; }
-.trofeo .tr-chip{ font-size:.7rem; font-weight:700; padding:1px 6px; border-radius:999px; white-space:nowrap; color:var(--testo-tenue); background:rgba(0,0,0,.22); border:1px solid rgba(255,255,255,.08); }
-.trofeo .tr-chip.si{ color:#fff; }
-.trofeo .tr-chip.tl-bronzo.si{ background:rgba(205,127,70,.45); }
-.trofeo .tr-chip.tl-argento.si{ background:rgba(180,192,208,.38); }
-.trofeo .tr-chip.tl-oro.si{ background:rgba(240,190,60,.45); }
-.trofeo .tr-chip.tl-diamante.si{ background:rgba(92,199,236,.42); }
 
 /* --- Avviso "Trofeo sbloccato!" (scende dall'alto per pochi secondi) --- */
 .avviso-trofeo{ position:fixed; left:50%; top:calc(10px + env(safe-area-inset-top)); z-index:9999;

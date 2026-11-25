@@ -551,7 +551,9 @@
   //      simulazioni, D:/SG-asta-prove/trofei/LEGGIMI.md). Stanno sotto «astafanta» (la pagina della Mini Asta; le due coppe vecchie
   //      del fanta restano sotto L'Asta). Un trofeo = UNA scheda coi suoi livelli: righe con lo stesso «grp», la prima col nome
   //      com'è, le altre con II, III, IV (il nome fa da chiave per l'avviso e per i premi: dev'essere diverso a ogni livello).
-  //      «fam» = la famiglia nella pagina. Il PLATINO della Mini Asta è il primo livello dei trofei segnati 👑 (plat), non tutti:
+  //      Nella pagina ogni livello è un trofeo a sé, diviso per bronzo/argento/oro/diamante come negli altri giochi (25 nov 2026,
+  //      il proprietario: «come li abbiamo sempre fatti… divisi tra bronzo, argento, oro, diamante, non per categorie»); «fam» resta
+  //      solo per ordinare la lista. Il PLATINO della Mini Asta è il primo livello dei trofei segnati 👑 (plat), non tutti:
   //      vedi platinato. I contatori li salva asta.js (salvaTrofeiFanta) SOLO sul podio, mai durante la giornata (niente spoiler).
   //      Riga: [grp, icona, nome, stat, livelli ("B1 A5 O15 D40"), descrizione per 1, descrizione per {n}, 1 = nel Platino]
   (function () {
@@ -749,34 +751,6 @@
     mostra(s);
   }
   // schermata di un singolo gioco: platino in cima + trofei per livello
-  // 🏆 (Mini Asta, 24 nov 2026) i trofei a livelli: UNA scheda per trofeo (righe con lo stesso grp), divise per famiglia (fam).
-  // La scheda mostra il prossimo livello da prendere (descrizione, barra, quanto manca) e sotto tutti i livelli (✓ quelli presi)
-  function schedeTrofei(prof, lista, box) {
-    var fam = [], per = {};
-    lista.forEach(function (t) { if (!per[t.fam]) { per[t.fam] = []; fam.push(t.fam); } var g = per[t.fam].filter(function (x) { return x.grp === t.grp; })[0]; if (!g) per[t.fam].push(g = { grp: t.grp, righe: [] }); g.righe.push(t); });
-    fam.forEach(function (f) {
-      var gs = per[f], prese = 0, livelli = 0;
-      gs.forEach(function (g) { g.righe.forEach(function (t) { livelli++; if (trofeoFatto(prof, t)) prese++; }); });
-      box.appendChild(el("div", { class: "etichetta", text: f + " · " + prese + "/" + livelli }));
-      gs.forEach(function (g) {
-        var r = g.righe, val = valoreStat(prof, r[0].gioco, r[0].stat), fatti = r.filter(function (t) { return val >= t.meta; }), pross = r.filter(function (t) { return val < t.meta; })[0];
-        var t = pross || r[r.length - 1], tutti = !pross, perc = tutti ? 100 : Math.max(0, Math.min(100, Math.round(val * 100 / t.meta)));
-        var numero = function (x) { return String(x).replace(".", ","); };
-        box.appendChild(el("div", { class: "trofeo tr-scheda " + LIVELLI[t.livello].cls + (tutti ? " fatto" : "") }, [
-          el("div", { class: "tr-ico", text: fatti.length ? r[0].icona : "🔒" }),
-          el("div", { class: "tr-corpo" }, [
-            el("div", { class: "tr-nome", text: r[0].nome + (r[0].plat ? " 👑" : "") + (tutti ? "  ✓" : "") }),
-            el("div", { class: "tr-desc", text: t.desc }),
-            el("div", { class: "tr-barra" }, [ el("div", { class: "tr-fill", style: "width:" + perc + "%" }) ]),
-            el("div", { class: "tr-piede" }, [
-              el("div", { class: "tr-chips" }, r.map(function (x) { return el("span", { class: "tr-chip " + LIVELLI[x.livello].cls + (val >= x.meta ? " si" : ""), text: ICONE_LIV[x.livello] + " " + numero(x.meta) + (val >= x.meta ? " ✓" : "") }); })),
-              el("div", { class: "tr-num", text: tutti ? "✓" : numero(Math.min(val, t.meta)) + " / " + numero(t.meta) })
-            ])
-          ])
-        ]));
-      });
-    });
-  }
   function schermataSfideGioco(gid) {
     var g = null; giochi.forEach(function (x) { if (x.id === gid) g = x; }); if (!g) g = { nome: gid, icona: "🎮" };
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
@@ -801,8 +775,7 @@
       ORDINE_LIV.forEach(function (l) { var p = pl[l] || { fatti: 0, tot: 0 }; celle.push(el("div", { class: "sm-liv " + LIVELLI[l].cls }, [ el("div", { class: "sm-ico", text: ICONE_LIV[l] }), el("div", { class: "sm-num", html: "<b>" + p.fatti + "</b>/" + p.tot }), el("div", { class: "sm-nome", text: LIVELLI[l].nome }) ])); });
       celle.push(el("div", { class: "sm-liv tl-platino" }, [ el("div", { class: "sm-ico", text: "💠" }), el("div", { class: "sm-num", html: "<b>" + (plat ? 1 : 0) + "</b>/1" }), el("div", { class: "sm-nome", text: "Platino" }) ]));
       s._contenuto.appendChild(el("div", { class: "sfide-sommario sm-gioco" }, [ el("div", { class: "sm-livelli" }, celle) ]));
-      if (lista[0].grp) schedeTrofei(prof, lista, s._contenuto);   // 🏆 (Mini Asta) una scheda per trofeo coi suoi livelli, per famiglia
-      else ORDINE_LIV.forEach(function (liv) {
+      ORDINE_LIV.forEach(function (liv) {
         var gruppo = lista.filter(function (t) { return t.livello === liv; });
         if (!gruppo.length) return;
         s._contenuto.appendChild(el("div", { class: "etichetta", text: ICONE_LIV[liv] + " " + LIVELLI[liv].nome + " · " + (pl[liv] ? pl[liv].fatti : 0) + "/" + gruppo.length }));
@@ -812,10 +785,10 @@
           s._contenuto.appendChild(el("div", { class: "trofeo " + LIVELLI[liv].cls + (fatto ? " fatto" : "") }, [
             el("div", { class: "tr-ico", text: fatto ? t.icona : "🔒" }),
             el("div", { class: "tr-corpo" }, [
-              el("div", { class: "tr-nome", text: t.nome + (fatto ? "  ✓" : "") }),
+              el("div", { class: "tr-nome", text: t.nome + (t.plat ? " 👑" : "") + (fatto ? "  ✓" : "") }),   // (👑: conta per il Platino della Mini Asta)
               el("div", { class: "tr-desc", text: t.desc }),
               el("div", { class: "tr-barra" }, [ el("div", { class: "tr-fill", style: "width:" + perc + "%" }) ]),
-              el("div", { class: "tr-num", text: Math.min(val, t.meta) + " / " + t.meta })
+              el("div", { class: "tr-num", text: String(Math.min(val, t.meta)).replace(".", ",") + " / " + String(t.meta).replace(".", ",") })
             ])
           ]));
         });

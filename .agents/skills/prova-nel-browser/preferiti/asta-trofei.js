@@ -9,8 +9,9 @@
 //     telefono sia sul podio; sul podio UN salvataggio «astafanta» e uno «asta» per ognuno dei 3 (Bea niente), coi conti giusti (una
 //     partita, la vittoria solo a chi vince, i gol di Paky); poi l'avviso; Giulia ricarica sul podio e non conta di nuovo.
 // tf2 Sullo stesso telefono in 2 (profilo di Paky): la giornata col ⏩, i trofei solo sul podio, una volta sola e solo per Paky.
-// tf3 La pagina dei trofei della Mini Asta: una scheda per trofeo (90 nella tappa 1) divisa per famiglia, coi livelli sotto, il Platino
-//     «Leggenda della Mini Asta» col primo livello dei 👑; coi contatori finti le schede giuste prese e la barra del Platino.
+// tf3 La pagina dei trofei della Mini Asta come quella degli altri giochi (25 nov 2026, il proprietario: «divisi tra bronzo, argento, oro,
+//     diamante, non per categorie»): sezioni per livello, un trofeo per riga col suo contatore (234 righe), niente schede a famiglie né
+//     chip; il Platino «Leggenda della Mini Asta» col primo livello dei 👑 (39); coi contatori finti le righe giuste prese.
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no;
@@ -166,28 +167,31 @@
     return x.join(" · ");
   } });
 
-  COPIONE.aggiungi("tf3", { nome: "La pagina dei trofei della Mini Asta: schede per famiglia coi livelli, il Platino col primo livello dei 👑", fai: async function () {
+  COPIONE.aggiungi("tf3", { nome: "La pagina dei trofei della Mini Asta come gli altri giochi: per livello, un trofeo per riga col contatore, il Platino col primo livello dei 👑", fai: async function () {
     var S = spia(), x = [];
     try {
       var P = await W.apriTel("Paky", { x: 0 });
       S.stat.Paky = { astafanta: { partite: 1, vinte: 6, golA: 3, legni: 12, fvMax: 12.5, golSqInter: 1, squadreDiverse: 5 } };
       var C = P.SGCuore; if (!C || !C.schermataSfideGioco) no("non trovo la pagina dei trofei");
       C.schermataSfideGioco("astafanta"); await W.dorme(400);
-      var schede = qa(P, ".trofeo.tr-scheda"), fam = qa(P, ".etichetta").map(function (e) { return e.textContent; });
-      var righe = C.trofeiDi("astafanta"), gruppi = {}; righe.forEach(function (t) { gruppi[t.grp] = 1; });
-      if (schede.length !== Object.keys(gruppi).length) no("schede " + schede.length + ", trofei " + Object.keys(gruppi).length);
-      if (fam.length < 10) no("famiglie: " + fam.join(" | "));
+      if (qa(P, ".tr-scheda, .tr-chip, .tr-chips").length) no("ci sono ancora le schede a famiglie o i chip dei livelli");
+      var righe = C.trofeiDi("astafanta"), file = qa(P, ".trofeo:not(.tl-platino)"), sez = qa(P, ".etichetta").map(function (e) { return e.textContent; });
+      if (file.length !== righe.length) no("righe nella pagina " + file.length + ", trofei " + righe.length);
+      if (sez.length !== 4 || !/Bronzo/.test(sez[0]) || !/Argento/.test(sez[1]) || !/Oro/.test(sez[2]) || !/Diamante/.test(sez[3])) no("le sezioni non sono i 4 livelli: " + sez.join(" | "));
       var nomi = {}; righe.forEach(function (t) { if (nomi[t.nome]) no("due righe col nome «" + t.nome + "»: l'avviso e i premi le confonderebbero"); nomi[t.nome] = 1; });
       var plat = q(P, ".trofeo.tl-platino"); if (!plat || !/Leggenda della Mini Asta/.test(plat.textContent) || !/👑/.test(plat.textContent)) no("il Platino non dice «Leggenda della Mini Asta» col 👑");
-      var nPlat = righe.filter(function (t) { return t.plat; }).length;
-      var re = schede.filter(function (s) { return /Re della Serata/.test(s.textContent); })[0];
-      if (!re || !/🥉 1 ✓/.test(re.textContent) || !/🥈 5 ✓/.test(re.textContent) || !/6 \/ 15/.test(re.textContent)) no("la scheda «Re della Serata» con 6 vittorie: «" + (re ? re.textContent : "?") + "»");
-      var al = schede.filter(function (s) { return /Fantavoto Alieno/.test(s.textContent); })[0];
-      if (!al || !/12,5 \/ 14/.test(al.textContent)) no("la scheda «Fantavoto Alieno» col record 12,5: «" + (al ? al.textContent : "?") + "»");
-      var dea = schede.filter(function (s) { return /Morso del Biscione/.test(s.textContent); })[0];
-      if (!dea || !dea.classList.contains("fatto")) no("«Il Morso del Biscione» (gol con l'Inter) non è preso");
-      var tagli = schede.filter(function (s) { return s.scrollWidth > s.clientWidth + 2; }).length; if (tagli) no(tagli + " schede escono di lato");
-      x.push(schede.length + " schede in " + fam.length + " famiglie, " + righe.length + " livelli, nel Platino " + nPlat + " · " + q(P, ".trofeo.tl-platino .tr-num").textContent);
+      var nPlat = righe.filter(function (t) { return t.plat; }).length, corone = file.filter(function (f) { return /👑/.test(f.querySelector(".tr-nome").textContent); }).length;
+      if (corone !== nPlat) no("righe col 👑 " + corone + ", trofei del Platino " + nPlat);
+      function riga(nome) { return file.filter(function (f) { return f.querySelector(".tr-nome").textContent.replace(/[👑✓]/g, "").trim() === nome; })[0] || null; }
+      function num(nome) { var r = riga(nome); return r ? r.querySelector(".tr-num").textContent : "(non c'è)"; }
+      if (!riga("Re della Serata II") || !riga("Re della Serata II").classList.contains("fatto") || num("Re della Serata II") !== "5 / 5") no("«Re della Serata II» con 6 vittorie: " + num("Re della Serata II"));
+      if (num("Re della Serata III") !== "6 / 15" || riga("Re della Serata III").classList.contains("fatto")) no("«Re della Serata III»: " + num("Re della Serata III"));
+      if (!/Vinci 15 Mini Aste/.test(riga("Re della Serata III").textContent)) no("la descrizione di «Re della Serata III» non dice la soglia");
+      if (num("Fantavoto Alieno III") !== "12,5 / 14") no("«Fantavoto Alieno III» col record 12,5: " + num("Fantavoto Alieno III"));
+      var bisc = riga("Il Morso del Biscione"); if (!bisc || !bisc.classList.contains("fatto") || !/🐍/.test(bisc.querySelector(".tr-ico").textContent)) no("«Il Morso del Biscione» (gol con l'Inter) non è preso con la sua icona");
+      if (!/🔒/.test(riga("Il Toro Carica").querySelector(".tr-ico").textContent)) no("un trofeo non preso non ha il lucchetto");
+      var tagli = file.filter(function (s) { return s.scrollWidth > s.clientWidth + 2; }).length; if (tagli) no(tagli + " righe escono di lato");
+      x.push(file.length + " trofei in " + sez.join(", ") + " · 👑 " + corone + " · Platino " + q(P, ".trofeo.tl-platino .tr-num").textContent);
     } finally { via(); }
     return x.join(" · ");
   } });

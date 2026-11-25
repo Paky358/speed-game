@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 429,
+    data: "25 novembre 2026",
+    titolo: "Mini Asta: la pagina dei trofei come gli altri giochi 🏆",
+    descrizione: [
+      "🥉 I trofei della Mini Asta sono divisi per bronzo, argento, oro e diamante, uno per riga col suo contatore, come in tutti gli altri giochi.",
+      "👑 La corona accanto al nome dice quali servono per il Platino «Leggenda della Mini Asta». I trofei già presi restano tutti."
+    ]
+  },
+  {
     v: 428,
     data: "24 novembre 2026",
     titolo: "Mini Asta: tutti i 109 trofei 🏆",
