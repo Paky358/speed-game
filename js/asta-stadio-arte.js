@@ -2,7 +2,8 @@
    L'ASTA, scena 2: LO STADIO del fantacalcio, di sera.
    - SGAstaArte.stadio()     sfondo a tutto schermo (viewBox 400×800, "slice": si taglia ai lati, le cose importanti stanno tra x 40 e 360)
    - SGAstaArte.seggiolino() il seggiolino di plastica blu visto di fronte, nel sistema dell'avatar (200×264): va DIETRO l'avatar seduto
-   - SGAstaArte.campo(rap)   mezzo campo visto dall'alto (300×300, si stira: è pensato per un rettangolo con larghezza / altezza = rap, di partenza 1,44)
+   - SGAstaArte.campo(rap)   il campo intero visto dall'alto, la riga di metà campo a metà (300×300, si stira nel rettangolo con larghezza / altezza = rap)
+   - SGAstaArte.campoGeo(rap) le sue scale (unità a metro), per mettere i calciatori con le stesse misure
    Solo stringhe SVG: niente filtri, niente testo, niente Math.random (le trame usano un caso fisso col seme). Id col prefisso "ast".
    ========================================================= */
 (function () {
@@ -274,20 +275,30 @@
   };
 
   // =========================================================
-  //  IL CAMPO: mezzo campo visto dall'alto (300×300, preserveAspectRatio none). Misure vere in metri (campo 68 di larghezza,
-  //  mezzo campo 52,5: area di rigore 40,32 × 16,5, area piccola 18,32 × 5,5, dischetto a 11 m, cerchi di 9,15 m, porta 7,32 m).
-  //  Le scale X e Y sono diverse apposta: stirato nel rettangolo di proporzioni `rap` (larghezza / altezza, di partenza 1,44,
-  //  circa 360×250) il campo torna con le proporzioni giuste, i cerchi tondi e le linee tutte dello stesso spessore (gli archi
-  //  sono strisce piene, non bordi). La porta resta in basso; in un rettangolo più alto si vede anche un pezzo dell'altra metà.
+  //  IL CAMPO: il campo intero visto dall'alto (300×300, preserveAspectRatio none), la nostra porta in basso, la riga di metà campo
+  //  ESATTAMENTE a metà (25 nov 2026, il proprietario: «la linea di centrocampo non è a centrocampo, sta più vicino alla porta che
+  //  all'attacco»: prima era mezzo campo, con un pezzo dell'altra metà in cima nei rettangoli alti, e la riga cadeva al 56-62%).
+  //  Misure vere in metri (campo 68 × 105: area di rigore 40,32 × 16,5, area piccola 18,32 × 5,5, dischetto a 11 m, cerchi di 9,15 m,
+  //  porta 7,32 m). Le scale X e Y sono diverse apposta: stirato nel rettangolo di proporzioni `rap` (larghezza / altezza) il campo
+  //  torna con i cerchi quasi tondi (al massimo 1,25 volte più alti o più larghi) e le linee tutte dello stesso spessore (gli archi sono
+  //  strisce piene, non bordi). Nei rettangoli molto alti c'è un po' d'erba oltre le linee di fondo, in quelli larghi ai lati.
+  //  SGAstaArte.campoGeo(rap) = le scale (unità del disegno a metro: sx, sy): i posti dei calciatori si mettono con le stesse misure.
   // =========================================================
+  function geoCampo(rap) {
+    rap = Math.max(.4, Math.min(2.2, +rap || .7));
+    var SX = 250 / 68, SY = 2.62, K = 1.25, r = SY / SX / rap;   // (SY 2,62: le due linee di fondo a 12,4 dal bordo, c'è posto per le reti)
+    if (r > K) SY = SX * rap * K;   // rettangolo molto alto: il campo un po' più corto
+    else if (r < 1 / K) SX = SY * K / rap;   // rettangolo largo: il campo più stretto
+    return { rap: rap, sx: SX, sy: SY };
+  }
+  A.campoGeo = geoCampo;
   A.campo = function (rap) {
-    rap = Math.max(.4, Math.min(2.2, +rap || 1.44));
-    var chiave = "campo" + rap.toFixed(2);
+    var G = geoCampo(rap);
+    var chiave = "campo" + G.rap.toFixed(2);
     if (pronti[chiave]) return pronti[chiave];
-    var p = "astC", SX = 250 / 68, SY = Math.max(SX * rap, 1.98), LW = .5, r = rnd(1898), d = "", s = "", i, a, b;   // (nei rettangoli molto alti il campo si allunga un po': la metà campo non scende sotto il 60%)
+    var p = "astC", SX = G.sx, SY = G.sy, LW = .5, r = rnd(1898), d = "", s = "", i, a, b;
     function X(m) { return 150 + m * SX; }
-    function Y(m) { return 284 - (52.5 - m) * SY; }
-    var mSu = Math.min(0, 52.5 - 290 / SY);   // fin dove arrivano le linee laterali (oltre il bordo in alto)
+    function Y(m) { return 150 + m * SY; }   // (0 = metà campo, 52,5 = la nostra linea di porta in basso, −52,5 quella in alto)
     function rettH(x0, x1, ym) { return "M" + q(X(x0) - LW * SX / 2, Y(ym) - LW * SY / 2) + " H" + n1(X(x1) + LW * SX / 2) + " v" + n1(LW * SY) + " H" + n1(X(x0) - LW * SX / 2) + " Z "; }
     function rettV(xm, y0, y1) { return "M" + q(X(xm) - LW * SX / 2, Y(y0) - LW * SY / 2) + " h" + n1(LW * SX) + " V" + n1(Y(y1) + LW * SY / 2) + " h" + n1(-LW * SX) + " Z "; }
     function arco(cx, cy, R, a0, a1) {   // un arco di cerchio (angoli in gradi, 90 = verso il basso) come striscia piena
@@ -295,9 +306,9 @@
       function P(rr, aa) { var t = aa * Math.PI / 180; return q(X(cx + rr * Math.cos(t)), Y(cy + rr * Math.sin(t))); }
       return "M" + P(ro, a0) + " A" + n1(ro * SX) + "," + n1(ro * SY) + " 0 " + g + " 1 " + P(ro, a1) + " L" + P(ri, a1) + " A" + n1(ri * SX) + "," + n1(ri * SY) + " 0 " + g + " 0 " + P(ri, a0) + " Z ";
     }
-    // l'erba: le strisce di taglio larghe 5,5 m dalla linea di porta in su (come nei campi veri: l'area piccola e l'area di rigore finiscono sul bordo di una striscia)
+    // l'erba: le strisce di taglio larghe 5,25 m (20 da una linea di fondo all'altra: la riga di metà campo cade sul bordo di una striscia)
     var CH = "#4aa850", SC = "#3a8f41", conf = [300, Y(52.5)];
-    for (i = 1; Y(52.5 - 5.5 * i) > 0; i++) conf.push(Y(52.5 - 5.5 * i));
+    for (i = 1; Y(52.5 - 5.25 * i) > 0; i++) conf.push(Y(52.5 - 5.25 * i));
     conf.push(0); a = "";
     for (i = 0; i < conf.length - 1; i += 2) a += "M0," + n1(conf[i + 1]) + " H300 V" + n1(conf[i]) + " H0 Z ";
     s += "<rect width='300' height='300' fill='" + SC + "'/><path d='" + a + "' fill='" + CH + "'/>";
@@ -305,26 +316,32 @@
     for (i = 0; i < 9; i++) { a += "M" + n1(r() * 10) + "," + n1(r() * 8) + " v1.4 "; b += "M" + n1(r() * 10) + "," + n1(r() * 8) + " v1.4 "; }
     d += "<pattern id='" + p + "t' width='10' height='8' patternUnits='userSpaceOnUse'><path d='" + a + "' stroke='#d9f2b0' stroke-width='.55' opacity='.16'/><path d='" + b + "' stroke='#0d3514' stroke-width='.6' opacity='.2'/></pattern>" +
       "<pattern id='" + p + "r' width='2.6' height='2.6' patternUnits='userSpaceOnUse'><path d='M0,0 L2.6,2.6 M2.6,0 L0,2.6' stroke='#fff' stroke-width='.35' opacity='.75'/></pattern>" +
-      rad(p + "l", .5, .4, .55, [[0, "#f4ffd8", .1], [1, "#f4ffd8", 0]]) + rad(p + "v", .5, .46, .72, [[.5, "#06140a", 0], [1, "#06140a", .42]]);
+      rad(p + "l", .5, .5, .6, [[0, "#f4ffd8", .1], [1, "#f4ffd8", 0]]) + rad(p + "v", .5, .5, .74, [[.5, "#06140a", 0], [1, "#06140a", .42]]);
     s += "<rect width='300' height='300' fill='url(#" + p + "t)'/><rect width='300' height='300' fill='url(#" + p + "l)'/>";
-    // le linee bianche
-    var L = rettH(-34, 34, 0) + rettV(-34, mSu, 52.5) + rettV(34, mSu, 52.5) + rettH(-34, 34, 52.5) +
-      rettH(-20.16, 20.16, 36) + rettV(-20.16, 36, 52.5) + rettV(20.16, 36, 52.5) +
-      rettH(-9.16, 9.16, 47) + rettV(-9.16, 47, 52.5) + rettV(9.16, 47, 52.5) +
-      arco(0, 0, 9.15, 0, 180) + arco(0, 0, 9.15, 180, 360) +   // (il cerchio di centrocampo intero: quello che esce dal disegno non si vede)
-      arco(0, 41.5, 9.15, -143.05, -36.95) + arco(-34, 52.5, 1, -90, 0) + arco(34, 52.5, 1, -180, -90);
+    // le linee bianche: le due metà uguali (in basso la nostra, in alto quella degli altri)
+    var L = rettH(-34, 34, 0) + rettV(-34, -52.5, 52.5) + rettV(34, -52.5, 52.5) + arco(0, 0, 9.15, 0, 180) + arco(0, 0, 9.15, 180, 360);
+    [1, -1].forEach(function (v) {   // v = 1 la metà in basso, −1 quella in alto
+      L += rettH(-34, 34, 52.5 * v) +
+        rettH(-20.16, 20.16, 36 * v) + rettV(-20.16, Math.min(36 * v, 52.5 * v), Math.max(36 * v, 52.5 * v)) + rettV(20.16, Math.min(36 * v, 52.5 * v), Math.max(36 * v, 52.5 * v)) +
+        rettH(-9.16, 9.16, 47 * v) + rettV(-9.16, Math.min(47 * v, 52.5 * v), Math.max(47 * v, 52.5 * v)) + rettV(9.16, Math.min(47 * v, 52.5 * v), Math.max(47 * v, 52.5 * v)) +
+        (v > 0 ? arco(0, 41.5, 9.15, -143.05, -36.95) + arco(-34, 52.5, 1, -90, 0) + arco(34, 52.5, 1, -180, -90)
+               : arco(0, -41.5, 9.15, 36.95, 143.05) + arco(-34, -52.5, 1, 0, 90) + arco(34, -52.5, 1, 90, 180));
+    });
     s += "<path d='" + L + "' fill='#f6faf2' opacity='.92'/>" +
-      "<ellipse cx='150' cy='" + n1(Y(41.5)) + "' rx='" + n1(.42 * SX) + "' ry='" + n1(.42 * SY) + "' fill='#f6faf2'/><ellipse cx='150' cy='" + n1(Y(0)) + "' rx='" + n1(.5 * SX) + "' ry='" + n1(.5 * SY) + "' fill='#f6faf2'/>";
-    // la porta: la rete fino a 2 m dietro la linea, la traversa vista dall'alto (con la sua ombra), i pali
-    var gx = 3.66, g0 = Y(52.5), g1 = Y(54.6), rete = "M" + q(X(-gx), g0) + " L" + q(X(gx), g0) + " L" + q(X(gx + .25), g1) + " L" + q(X(-gx - .25), g1) + " Z";
-    s += "<path d='" + rete + "' fill='#1d4a24' opacity='.45'/><path d='" + rete + "' fill='url(#" + p + "r)'/>" +
-      "<path d='M" + q(X(-gx), g0) + " L" + q(X(-gx - .25), g1) + " L" + q(X(gx + .25), g1) + " L" + q(X(gx), g0) + "' fill='none' stroke='#e9eef2' stroke-width='.9' stroke-linejoin='round' opacity='.85'/>" +
-      "<rect x='" + n1(X(-gx) - .4) + "' y='" + n1(g0 + .6) + "' width='" + n1(X(gx) - X(-gx) + .8) + "' height='2.4' fill='#000' opacity='.22'/>" +
-      "<rect x='" + n1(X(-gx) - 1) + "' y='" + n1(g0 - 1.3) + "' width='" + n1(X(gx) - X(-gx) + 2) + "' height='2.6' rx='1.2' fill='#fff' stroke='#8d97a3' stroke-width='.5'/>" +
-      "<ellipse cx='" + n1(X(-gx)) + "' cy='" + n1(g0) + "' rx='1.5' ry='1.9' fill='#fff' stroke='#7d8793' stroke-width='.6'/><ellipse cx='" + n1(X(gx)) + "' cy='" + n1(g0) + "' rx='1.5' ry='1.9' fill='#fff' stroke='#7d8793' stroke-width='.6'/>";
-    // le bandierine d'angolo (il vento le spinge tutte e due dalla stessa parte)
-    [-34, 34].forEach(function (m) {
-      var fx = X(m), fy = Y(52.5);
+      [41.5, -41.5, 0].map(function (m) { var rr = m ? .42 : .5; return "<ellipse cx='150' cy='" + n1(Y(m)) + "' rx='" + n1(rr * SX) + "' ry='" + n1(rr * SY) + "' fill='#f6faf2'/>"; }).join("");
+    // le porte: la rete fino a 2 m dietro la linea, la traversa vista dall'alto (con la sua ombra), i pali
+    var gx = 3.66;
+    [1, -1].forEach(function (v) {
+      var g0 = Y(52.5 * v), g1 = Y(54.6 * v), rete = "M" + q(X(-gx), g0) + " L" + q(X(gx), g0) + " L" + q(X(gx + .25), g1) + " L" + q(X(-gx - .25), g1) + " Z";
+      s += "<path d='" + rete + "' fill='#1d4a24' opacity='.45'/><path d='" + rete + "' fill='url(#" + p + "r)'/>" +
+        "<path d='M" + q(X(-gx), g0) + " L" + q(X(-gx - .25), g1) + " L" + q(X(gx + .25), g1) + " L" + q(X(gx), g0) + "' fill='none' stroke='#e9eef2' stroke-width='.9' stroke-linejoin='round' opacity='.85'/>" +
+        "<rect x='" + n1(X(-gx) - .4) + "' y='" + n1(v > 0 ? g0 + .6 : g0 - 3) + "' width='" + n1(X(gx) - X(-gx) + .8) + "' height='2.4' fill='#000' opacity='.22'/>" +
+        "<rect x='" + n1(X(-gx) - 1) + "' y='" + n1(g0 - 1.3) + "' width='" + n1(X(gx) - X(-gx) + 2) + "' height='2.6' rx='1.2' fill='#fff' stroke='#8d97a3' stroke-width='.5'/>" +
+        "<ellipse cx='" + n1(X(-gx)) + "' cy='" + n1(g0) + "' rx='1.5' ry='1.9' fill='#fff' stroke='#7d8793' stroke-width='.6'/><ellipse cx='" + n1(X(gx)) + "' cy='" + n1(g0) + "' rx='1.5' ry='1.9' fill='#fff' stroke='#7d8793' stroke-width='.6'/>";
+    });
+    // le bandierine d'angolo (il vento le spinge tutte dalla stessa parte)
+    [[-34, 52.5], [34, 52.5], [-34, -52.5], [34, -52.5]].forEach(function (m) {
+      var fx = X(m[0]), fy = Y(m[1]);
       s += "<path d='M" + q(fx + 1, fy + 1.4) + " l5.4,-.8 l.4,3.6 l-5.6,.6 Z' fill='#000' opacity='.2'/>" +
         "<path d='M" + q(fx, fy) + " l5.2,-1.2 l.5,3.4 l-5.4,.9 Z' fill='#ffd21f' stroke='" + LINEA + "' stroke-width='.5' stroke-linejoin='round'/>" +
         "<ellipse cx='" + n1(fx) + "' cy='" + n1(fy) + "' rx='1' ry='1.25' fill='#fff' stroke='" + LINEA + "' stroke-width='.5'/>";

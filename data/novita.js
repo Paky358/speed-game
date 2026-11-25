@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 431,
+    data: "25 novembre 2026",
+    titolo: "Mini Asta: niente doppioni in campo, lettere intere e campetti giusti ⚽",
+    descrizione: [
+      "👥 In campo non ci sono più due calciatori uguali: chi passa, chi tira e chi batte la rimessa sono sempre persone diverse, e nella stessa squadra non ci sono mai due maglie con lo stesso numero. Vale in tutte le stagioni e in tutte le azioni.",
+      "🔤 I nomi non hanno più le lettere tagliate sotto (la «g» di Rigoni, la «p», la «q», la «y»…): sul maxischermo dell'asta, nelle squadre, nel mercato degli scambi, nei punteggi della giornata, nelle pagelle e nella scheda dei calciatori.",
+      "🏟️ Nei campetti delle squadre all'asta la riga di metà campo è finalmente a metà: si vede il campo intero, con le due porte. Attaccante e centrocampisti stanno nella metà di sopra, difensore e portiere in quella di sotto, e nessuno sta più sulla riga o sul cerchio di centrocampo (anche in «👕 Tutte» e nella foto delle rose per WhatsApp)."
+    ]
+  },
+  {
     v: 430,
     data: "25 novembre 2026",
     titolo: "Mini Asta: copertina nuova e un assist più bello 👟",
