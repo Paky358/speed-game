@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 431,
+    data: "26 novembre 2026",
+    titolo: "Gioco nuovo: Pecora Nera 🐑",
+    descrizione: [
+      "🐑 Tutti leggono la stessa domanda («Una bibita estiva», «Se dico Gian, voi dite…») e scrivono di nascosto la risposta più scontata: vince chi pensa come gli altri!",
+      "➕ Prendi tanti punti quante persone hanno scritto la tua stessa risposta, te compreso. Chi resta da solo prende 0.",
+      "🥁 Le risposte escono una alla volta, in ordine a caso. Maiuscole, articoli, plurali e piccoli errori non contano; due risposte che sono la stessa cosa le unite voi con due tocchi.",
+      "🏁 Vince il primo che arriva al traguardo, che cambia con quanti siete. Da 3 a 10, online ognuno dal suo telefono o su un telefono solo passandovelo."
+    ]
+  },
+  {
     v: 430,
     data: "25 novembre 2026",
     titolo: "Mini Asta: copertina nuova e un assist più bello 👟",

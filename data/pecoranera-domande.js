@@ -1,6 +1,6 @@
-/* Le domande del gioco del gregge (nome di lavoro Holy Sheep): [domanda, categoria].
+/* Le domande di Pecora Nera (il gioco del gregge, nome di lavoro Holy Sheep): [domanda, categoria].
    Scritte da aiutanti e rilette il 25-26 nov 2026 (D:/SG-holy-sheep-prove/domande, con le risposte attese). */
-window.SG_HS_DOMANDE = [
+window.SG_PN_DOMANDE = [
   ["Se dico Gian, voi dite…","se-dico"],
   ["Se dico Tom, voi dite…","se-dico"],
   ["Se dico Batman, voi dite…","se-dico"],
