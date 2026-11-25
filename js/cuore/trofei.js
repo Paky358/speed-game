@@ -760,7 +760,7 @@
     // trofeo Platino (sempre mostrato: è il traguardo del gioco)
     var plat = platinato(prof, gid), vp = verPlatino(prof, gid), cp = vp || c;   // 👑 (vp: il Platino col primo livello dei trofei segnati)
     s._contenuto.appendChild(el("div", { class: "trofeo tl-platino" + (plat ? " fatto" : "") }, [
-      el("div", { class: "tr-ico", text: plat ? "💠" : "🔒" }),
+      el("div", { class: "tr-ico" }, [ el("span", { text: plat ? "💠" : "🔒" }) ]),   // (il simbolo in un pezzo suo: il lucchetto si spegne, la luce intorno no)
       el("div", { class: "tr-corpo" }, [
         el("div", { class: "tr-nome", text: (vp && gid === "astafanta" ? "Leggenda della Mini Asta" : "Platino") + (plat ? "  ✓" : "") }),
         el("div", { class: "tr-desc", text: vp ? "Prendi il primo livello di tutti i trofei con 👑" : "Sblocca tutti i trofei del gioco" }),
@@ -783,7 +783,7 @@
           var val = valoreStat(prof, t.gioco, t.stat), fatto = val >= t.meta;
           var perc = Math.max(0, Math.min(100, Math.round(val * 100 / t.meta)));
           s._contenuto.appendChild(el("div", { class: "trofeo " + LIVELLI[liv].cls + (fatto ? " fatto" : "") }, [
-            el("div", { class: "tr-ico", text: fatto ? t.icona : "🔒" }),
+            el("div", { class: "tr-ico" }, [ el("span", { text: fatto ? t.icona : "🔒" }) ]),
             el("div", { class: "tr-corpo" }, [
               el("div", { class: "tr-nome", text: t.nome + (t.plat ? " 👑" : "") + (fatto ? "  ✓" : "") }),   // (👑: conta per il Platino della Mini Asta)
               el("div", { class: "tr-desc", text: t.desc }),
