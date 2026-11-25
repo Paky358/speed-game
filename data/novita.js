@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 430,
+    data: "25 novembre 2026",
+    titolo: "Mini Asta: copertina nuova e un assist più bello 👟",
+    descrizione: [
+      "🖼️ Nella prima schermata la Mini Asta ha una copertina nuova: il martelletto aggiudica la figurina d'oro, che vola nella tua formazione coi voti e i fantavoti, come nel fantacalcio.",
+      "👟 Il simbolo dell'assist è nuovo: uno scarpino che calcia, nelle pagelle, nei punteggi della giornata e nella scheda dei calciatori."
+    ]
+  },
+  {
     v: 429,
     data: "25 novembre 2026",
     titolo: "Mini Asta: la pagina dei trofei come gli altri giochi 🏆",
