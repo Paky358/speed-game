@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 445,
+    data: "27 novembre 2026",
+    titolo: "Scarabocchio ha la copertina nuova ✏️",
+    descrizione: [
+      "✏️ Nella prima schermata Scarabocchio ha un'immagine nuova: un gatto disegnato male sulla lavagna e la chat degli amici che provano a indovinare, «una volpe?», «un cane?»… «GATTO!». Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
     v: 444,
     data: "26 novembre 2026",
     titolo: "L'Asta ha la copertina nuova 🔨",
