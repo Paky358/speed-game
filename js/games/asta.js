@@ -631,7 +631,7 @@
     "@keyframes stCerca{from{transform:scale(.92)}to{transform:scale(1.1)}}",
     // sotto la maglia il nome sui colori della sua squadra; nell'angolo quanto è stato pagato
     ".st-slot span{display:block;max-width:100%;margin-top:-1px;padding:1px 6px;border-radius:7px;border:1.5px solid rgba(255,255,255,.5);background:#2b3550;color:#fff;font-size:clamp(.6rem,calc(var(--mg,52px)*.22),.84rem);font-weight:900;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 2px 5px rgba(0,0,0,.45);}",
-    ".st-slot.vuoto span{visibility:hidden;}",
+    ".st-slot.vuoto span{visibility:hidden;}.st-slot span:empty::before,.sa-gioc span:empty::before{content:\" \";}",   // (⚽ 25 nov 2026: il nome vuoto alto come quello pieno, così il posto non si sposta quando si compra)
     ".st-paga{position:absolute;right:-22%;bottom:4%;padding:0 4px;border-radius:7px;background:rgba(10,14,30,.86);color:#ffe066;font-style:normal;font-weight:900;font-size:clamp(.5rem,calc(var(--mg,52px)*.17),.74rem);line-height:1.45;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,.5);}",
     ".st-slot.vuoto .st-paga,.st-paga:empty{display:none;}",
     ".st-slot.arriva .st-slot-fig{animation:stArriva .45s cubic-bezier(.2,1.6,.4,1);}",
@@ -1370,7 +1370,9 @@
     ".sa-sala:not(.st-stadio) .sa-foglio .as-palio,.sa-sala:not(.st-stadio) .sa-foglio .as-rose-p{background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px var(--o-filo);color:var(--o-testo);}",
     ".sa-sala:not(.st-stadio) .sa-foglio .as-palio .pr{border-top-color:var(--o-filo);}.sa-sala:not(.st-stadio) .sa-foglio .as-palio .pr.ora-c{color:var(--n-monete);}",
     ".sa-sala:not(.st-stadio) .sa-foglio .as-palio .ph,.sa-sala:not(.st-stadio) .sa-foglio .as-rose-nome{color:#fff;}",
-    ".sa-sala:not(.st-stadio) .sa-foglio .etichetta,.sa-sala:not(.st-stadio) .sa-foglio .as-rose-vuota{color:var(--o-tenue);}.sa-sala:not(.st-stadio) .sa-foglio .as-rose{border-top-color:var(--o-filo);}"
+    ".sa-sala:not(.st-stadio) .sa-foglio .etichetta,.sa-sala:not(.st-stadio) .sa-foglio .as-rose-vuota{color:var(--o-tenue);}.sa-sala:not(.st-stadio) .sa-foglio .as-rose{border-top-color:var(--o-filo);}",
+    // 🔤 (25 nov 2026, il proprietario: «la g di Rigoni è tagliata») le scritte che tagliano da sole quello che esce (overflow nascosto, per i «…») lasciano lo spazio per la coda di g, j, p, q, y: padding sotto e margine negativo uguale, così niente si sposta. Prova lg1 (preferiti/asta-lettere.js)
+    ".st-nome,.st-sq-nomi b,.st-sq-nomi small,.mc-rosa-t b,.mc-rose.alta .mc-sq,.st-gio-nome,.st-pf-nome b,.st-pf-nome small,.st-bar-in span,.st-pag-testa span,.st-pv>span,.st-tv-nome,.st-tv-altri,.st-tv-tit,.st-rivela.zona .st-gio-zona,.mc-p>span{padding-bottom:.24em;margin-bottom:-.24em;}"
   ].join("");
   document.head.appendChild(stile);
 
@@ -2973,7 +2975,65 @@
   //  Si costruisce una volta per partita: poi cambia solo quello che serve (niente lampeggio).
   // =========================================================
   var STADIO = null;
-  var POSTI_CAMPO = [ { r: "A", x: 50, y: 14 }, { r: "C", x: 25, y: 36 }, { r: "C", x: 75, y: 36 }, { r: "D", x: 50, y: 58 }, { r: "P", x: 50, y: 85 } ];
+  // ⚽ (25 nov 2026, il proprietario: «la linea di centrocampo non è a centrocampo, sta più vicino alla porta che all'attacco») il campetto è il
+  // campo intero con la riga di metà campo esattamente a metà (SGAstaArte.campo): i posti sono in metri dal centro del campo (y verso la
+  // nostra porta, in basso), lontani dalla riga e dal cerchio (9,15 m), e diventano percentuali con le stesse scale del disegno
+  var POSTI_M = [ { r: "A", x: 0, y: -31 }, { r: "C", x: -19, y: -14 }, { r: "C", x: 19, y: -14 }, { r: "D", x: 0, y: 20 }, { r: "P", x: 0, y: 43 } ];
+  function postiPer(rap) {
+    var G = window.SGAstaArte && SGAstaArte.campoGeo ? SGAstaArte.campoGeo(rap) : { sx: 250 / 68, sy: 2.62 };
+    return POSTI_M.map(function (p) { return { r: p.r, x: Math.round((150 + p.x * G.sx) / 3 * 10) / 10, y: Math.round((150 + p.y * G.sy) / 3 * 10) / 10 }; });
+  }
+  // i posti sul campetto vero (misurato): ognuno il più vicino possibile al suo posto in metri, ma MAI sulla riga di metà campo, MAI sul cerchio,
+  // mai addosso a un altro e dentro il campetto. ATT e CEN nella metà di sopra, DIF e POR in quella di sotto. Le misure di ogni posto: la maglia
+  // (o il cerchio tratteggiato) e sotto il nome largo quanto il posto (anche quando è vuoto: così i posti non si spostano quando si compra).
+  // Nei campetti bassi sotto il cerchio non c'è posto per difensore e portiere uno sopra l'altro: il difensore va di lato al cerchio.
+  // nodi: i 5 posti nell'ordine di POSTI_M (figli: la maglia, poi il nome)
+  function disponiCampo(campo, nodi) {
+    var w = campo.clientWidth, h = campo.clientHeight; if (!w || !h || !nodi || nodi.length !== POSTI_M.length) return;
+    var G = window.SGAstaArte && SGAstaArte.campoGeo ? SGAstaArte.campoGeo(Math.round(w / h * 20) / 20) : { sx: 250 / 68, sy: 2.62 };
+    var cx = w / 2, ym = h / 2, rx = 9.75 * G.sx / 300 * w, ry = 9.75 * G.sy / 300 * h, M = 2;
+    var forme = nodi.map(function (n) {   // i pezzi del posto rispetto al suo centro: [sinistra, sopra, destra, sotto]
+      var W0 = n.offsetWidth, H0 = n.offsetHeight, f = n.firstElementChild, fw = f && f.offsetParent ? f.offsetWidth : 0, fh = f && f.offsetParent ? f.offsetHeight : 0;
+      return { H: H0, parti: [ [-fw / 2, -H0 / 2, fw / 2, -H0 / 2 + fh], [-W0 / 2, -H0 / 2 + fh, W0 / 2, H0 / 2] ].filter(function (p) { return p[2] > p[0] && p[3] > p[1]; }) };
+    });
+    function pezzi(i, x, y) { return forme[i].parti.map(function (p) { return [x + p[0], y + p[1], x + p[2], y + p[3]]; }); }
+    function urta(b, c) { return b[0] < c[2] + M && c[0] < b[2] + M && b[1] < c[3] + M && c[1] < b[3] + M; }
+    function sulCerchio(b) { var nx = Math.max(b[0], Math.min(cx, b[2])) - cx, ny = Math.max(b[1], Math.min(ym, b[3])) - ym; return nx * nx / (rx * rx) + ny * ny / (ry * ry) < 1; }
+    var messi = [], pos = [];
+    function costo(i, x, y, su) {   // quanto è brutto quel punto: i guai pesano tantissimo, poi la distanza dal posto giusto
+      var c = 0, pz = pezzi(i, x, y);
+      pz.forEach(function (b) {
+        if (b[1] < ym + M && b[3] > ym - M) c += 1e6;   // sulla riga di metà campo
+        if (su ? b[3] > ym - M : b[1] < ym + M) c += 1e6;   // nella metà sbagliata
+        if (sulCerchio(b)) c += 1e6;
+        if (b[0] < 0 || b[2] > w || b[1] < 0 || b[3] > h) c += 1e5;   // fuori dal campetto
+        messi.forEach(function (j) { pezzi(j, pos[j][0], pos[j][1]).forEach(function (d) { if (urta(b, d)) c += 1e5; }); });
+      });
+      return c;
+    }
+    function metti(i, px, py, su, kx) {   // cerca il punto migliore vicino a (px, py) (kx: quanto costa spostarsi di lato)
+      var best = null, bc = Infinity, passo = Math.max(2, Math.round(Math.min(w, h) / 60));
+      var xs = [cx]; for (var x0 = 0; x0 <= w; x0 += passo) xs.push(x0);
+      for (var y = forme[i].H / 2; y <= h - forme[i].H / 2 + .1; y += passo) xs.forEach(function (x) {
+        var c = costo(i, x, y, su); if (c >= bc) return;
+        c += Math.abs(x - px) * (kx || 1.6) + Math.abs(y - py);
+        if (c < bc) { bc = c; best = [x, y]; }
+      });
+      pos[i] = best || [px, py]; messi.push(i);
+    }
+    function Xm(m) { return (150 + m * G.sx) / 300 * w; } function Ym(m) { return (150 + m * G.sy) / 300 * h; }
+    metti(4, cx, Ym(POSTI_M[4].y), false, 40);   // il portiere: al centro, davanti alla nostra porta (di lato solo se al centro proprio non ci sta)
+    metti(0, cx, Ym(POSTI_M[0].y), true, 40);    // l'attaccante: al centro, verso la porta degli altri
+    metti(1, Xm(POSTI_M[1].x), Ym(POSTI_M[1].y), true);   // i centrocampisti: uguali ai due lati
+    var d1 = pos[1], cS = costo(2, w - d1[0], d1[1], true);
+    if (cS < 1e5) { pos[2] = [w - d1[0], d1[1]]; messi.push(2); } else metti(2, Xm(POSTI_M[2].x), Ym(POSTI_M[2].y), true);
+    metti(3, cx, Ym(POSTI_M[3].y), false);   // il difensore: al centro se c'è posto sotto il cerchio, se no di lato
+    nodi.forEach(function (n, i) { var p = pos[i]; if (!p) return; var l = Math.round(p[0] / w * 1000) / 10 + "%", t = Math.round(p[1] / h * 1000) / 10 + "%"; if (n.style.left !== l) n.style.left = l; if (n.style.top !== t) n.style.top = t; });
+  }
+  function mettiPosti(slot, rap) {   // prima della misura: i posti in metri con la forma `rap` (larghezza / altezza), come il disegno
+    var P = postiPer(rap); slot.forEach(function (s, i) { var p = P[i]; if (p) { s.nodo.style.left = p.x + "%"; s.nodo.style.top = p.y + "%"; } });
+  }
+  var POSTI_CAMPO = POSTI_M.map(function (p) { return { r: p.r }; });   // (l'ordine dei posti: le misure le dà postiPer)
   function nomeCampo(n) {   // "Martinez L." → "Martinez" (via le iniziali)
     var s = String(n || ""), p = s.split(" ").filter(function (x) { return !/^[A-Za-zÀ-ÿ]{1,3}\.$/.test(x); });
     return p.join(" ") || s;
@@ -2985,7 +3045,9 @@
   }
   // i 5 posti di un campo (grande o piccolo): la maglia, il nome sotto, la maglia in trasparenza del calciatore all'asta, il prezzo pagato, il valore
   function postiCampo(el) {
-    return POSTI_CAMPO.map(function (p) {
+    var P0 = postiPer(0.7);
+    return POSTI_CAMPO.map(function (p, i) {
+      p = P0[i];
       var img = el("img", { class: "st-slot-maglia", alt: "" }), ombra = el("img", { class: "st-slot-ombra", alt: "" }), nm = el("span"),
         val = el("em", { class: "st-val" }), paga = el("em", { class: "st-paga" });
       var n = el("div", { class: "st-slot vuoto", style: "left:" + p.x + "%;top:" + p.y + "%" }, [
@@ -3023,7 +3085,8 @@
     if (mg !== S.mg) { S.mg = mg; S.wrap.style.setProperty("--mg", mg + "px"); }
     if (al !== S.al) { S.al = al; S.wrap.style.setProperty("--all", al + "px"); }
     var rap = (Math.round(w / h * 20) / 20).toFixed(2);
-    if (rap !== S.rap) { S.rap = rap; var fondo = arte("campo", "", rap); if (fondo) { S.campo.style.backgroundImage = "url(\"" + fondo + "\")"; S.campo.classList.add("dipinto"); } }
+    if (rap !== S.rap) { S.rap = rap; var fondo = arte("campo", "", rap); if (fondo) { S.campo.style.backgroundImage = "url(\"" + fondo + "\")"; S.campo.classList.add("dipinto"); } mettiPosti(S.slot, +rap); }
+    disponiCampo(S.campo, S.slot.map(function (s) { return s.nodo; }));
   }
   function chiaro(hex) { var n = parseInt(String(hex || "#000").slice(1), 16) || 0; return ((n >> 16) * 299 + (n >> 8 & 255) * 587 + (n & 255) * 114) / 1000 > 150; }
   // 🃏 LA SCOPERTA COI DORSI (10 nov 2026, il proprietario: «l'1 mi piace»): nella formazione finale le figurine arrivano di schiena e si girano una alla
@@ -3216,9 +3279,12 @@
       el("button", { class: "st-freccia", text: "‹", "aria-label": "Le squadre prima", onclick: function () { giraPagina(S, -1); } }), S.pagN,
       el("button", { class: "st-freccia", text: "›", "aria-label": "Le squadre dopo", onclick: function () { giraPagina(S, 1); } }) ]);
     if (S.pagine < 2) S.grTesta.style.display = "none";
-    if (window.ResizeObserver) { try { new ResizeObserver(function () { misuraGriglia(S); }).observe(S.carte); } catch (e) {} }
+    if (window.ResizeObserver) { try { var ro = new ResizeObserver(function () { misuraGriglia(S); }); ro.observe(S.carte); for (var k in S.sq) ro.observe(S.sq[k].campo); } catch (e) {} }   // (anche i campetti: si stringono quando arriva la faccina nella testa)
     mostraPagina(S, 0, persone);
     return el("div", { class: "st-griglia" }, [ S.grTesta, S.carte ]);
+  }
+  function disponiGriglia(S) {   // i posti di ogni campetto che si vede, sul campetto misurato
+    for (var k in S.sq) { var q = S.sq[k]; if (q.nodo.style.display !== "none") disponiCampo(q.campo, q.slot.map(function (s) { return s.nodo; })); }
   }
   function paginaDi(persone, id) { for (var i = 0; i < persone.length; i++) if (persone[i].id === id) return Math.floor(i / PER_PAGINA); return -1; }
   function mostraPagina(S, pg, persone) {
@@ -3226,6 +3292,7 @@
     persone.forEach(function (p, i) { var q = S.sq[p.id]; if (!q) return; var su = Math.floor(i / PER_PAGINA) === pg; if ((q.nodo.style.display !== "none") !== su) q.nodo.style.display = su ? "" : "none"; });
     var da = pg * PER_PAGINA + 1, a = Math.min(persone.length, da + PER_PAGINA - 1);
     S.pagN.textContent = "Squadre " + (da === a ? da : da + "–" + a) + " di " + persone.length;
+    if (S.carte && document.body.contains(S.carte)) disponiGriglia(S);
   }
   function giraPagina(S, dir) {
     var d = S.ultimiDati; if (!d || S.pagine < 2) return;
@@ -3242,7 +3309,8 @@
     var mg = 2 * Math.round(Math.max(22, Math.min(w * 0.23, h * 0.19, 84)) / 2);
     if (mg !== S.mg) { S.mg = mg; S.carte.style.setProperty("--mg", mg + "px"); }
     var rap = (Math.round(w / h * 20) / 20).toFixed(2);
-    if (rap !== S.rap) { S.rap = rap; var fondo = arte("campo", "", rap); if (fondo) for (var k in S.sq) { S.sq[k].campo.style.backgroundImage = "url(\"" + fondo + "\")"; S.sq[k].campo.classList.add("dipinto"); } }
+    if (rap !== S.rap) { S.rap = rap; var fondo = arte("campo", "", rap); for (var k in S.sq) { if (fondo) { S.sq[k].campo.style.backgroundImage = "url(\"" + fondo + "\")"; S.sq[k].campo.classList.add("dipinto"); } mettiPosti(S.sq[k].slot, +rap); } }
+    disponiGriglia(S);
   }
   // la panchina (solo sullo stesso telefono): le faccine di tutti, da toccare per offrire, e «passo»; chi ha l'offerta più alta alza il
   // cartellino col prezzo. Fino a 8 su una fila (da 6 in su più strette), in 9 o 10 su due
@@ -3562,7 +3630,7 @@
       var posti = slotRosa(g.kit), campo = el("div", { class: "sa-campo" }), fondo = arte("campo", "", "0.95");
       if (fondo) { campo.style.backgroundImage = "url(\"" + fondo + "\")"; campo.style.backgroundSize = "100% 100%"; campo.style.boxShadow = "0 1px 4px rgba(0,0,0,.3)"; }   // (lo stesso campo dello stadio)
       posti.forEach(function (c, i) {
-        var p = POSTI_CAMPO[i], col = c ? coloriSquadra(c.squadra) || ["#2b3550", "#9aa5bd"] : null;
+        var p = postiPer(0.95)[i], col = c ? coloriSquadra(c.squadra) || ["#2b3550", "#9aa5bd"] : null;
         campo.appendChild(el("div", { class: "sa-gioc" + (c ? "" : " vuoto"), style: "left:" + p.x + "%;top:" + p.y + "%" }, [
           c ? el("img", { class: "sa-maglia", src: maglia(c.squadra), alt: "" }) : el("i", { class: "sa-maglia", text: (FANTA_RUOLI[p.r] || {}).breve }),
           c ? el("span", { class: "sa-gioc-nome", text: nomeCampo(c.nome), style: "background:" + col[0] + ";color:" + (chiaro(col[0]) ? "#141414" : "#fff") }) : el("span")   // il nome sui colori della squadra
@@ -3571,6 +3639,11 @@
       box.appendChild(el("div", { class: "sa-squadra" }, [ el("div", { class: "sa-sq-nome", text: g.nome + " · " + g.crediti + " 💰" }), campo ]));
     });
     foglioSala(t, "👕 Le formazioni", box);
+    [].forEach.call(box.querySelectorAll(".sa-campo"), function (c) {
+      if (!c.clientWidth || !c.clientHeight) return;
+      var f = arte("campo", "", (Math.round(c.clientWidth / c.clientHeight * 20) / 20).toFixed(2)); if (f) c.style.backgroundImage = "url(\"" + f + "\")";
+      disponiCampo(c, [].slice.call(c.children));
+    });
   }
   function esciAsta(t, st) { t.conferma("Uscire dalla partita?", null, "Esci", function () { esciAstaOra(t, st); }); }   // la finestra dell'app
   function esciAstaOra(t, st) {
@@ -5266,6 +5339,7 @@
     if (et && (v === "rimessa" || v === "rimessalunga")) { var kR = lanciatore(sqA); if (kR) et.rim = { vero: true, k: kR, asp: aspCampo(kR), num: numeroMaglia(splitCalc(kR)).n }; }   // 🙌 chi batte la rimessa
     function lanciatore(sq) {   // (di solito un terzino o un'ala: un difensore o un centrocampista titolare, dal seme della partita, mai chi segna o passa)
       var presi = {}; noti.forEach(function (y) { presi[y.k] = 1; }); if (e.chi) presi[e.chi] = 1; if (e.ass) presi[e.ass] = 1;
+      if (et && et.tira && et.tira.k) presi[et.tira.k] = 1;   // 👥 (25 nov 2026) mai chi tira (può essere un titolare scelto dal seme, diverso da e.chi)
       var PESO = { D: 3, C: 2 }, l = undiciPiuForti(sq).map(function (x) { return { k: x.k, ruolo: x.r }; }).filter(function (c) { return c.k && !presi[c.k] && PESO[c.ruolo]; }), tot = 0;
       l.forEach(function (c) { tot += PESO[c.ruolo]; }); if (!tot) return null;
       var z = ((hashNome(P.c + "|" + P.f + "|" + Math.round(e.m * 10) + "|rim|" + sq) >>> 0) % 100000) / 100000 * tot;
@@ -5291,7 +5365,8 @@
     }
     function primoBattitore(sq, tipo) { var b = tiratoriDi(sq, tipo)[0]; return b ? (b.c ? b.c.k : trovaK(sq, b.nome)) : null; }
     function tiratoreVero(sq) {
-      var presi = {}; noti.forEach(function (y) { presi[y.k] = 1; });
+      var presi = {}; noti.forEach(function (y) { presi[y.k] = 1; }); if (e.ass) presi[e.ass] = 1;   // 👥 (25 nov 2026, il proprietario: due calciatori uguali in campo) mai chi ha fatto il passaggio: nell'uno-due del Sassuolo 2015-16 Magnanelli passava e tirava
+      if (et && et.passa && et.passa.k) presi[et.passa.k] = 1;
       var PESO = { A: 10, C: 3, D: 1 }, l = undiciPiuForti(sq).map(function (x) { return { k: x.k, ruolo: x.r, q: x.q }; }).filter(function (c) { return !presi[c.k] && PESO[c.ruolo]; }), tot = 0;   // 👕 (tra i titolari)
       if (!l.length) l = tuttiDi(sq).filter(function (c) { return !presi[c.k] && PESO[c.ruolo]; });
       l.forEach(function (c) { tot += PESO[c.ruolo] * ((c.q || 1) + 2); });
@@ -5339,6 +5414,7 @@
     }
     var sc = prepara(scena(t, v, esito, e.fin || null, et, op));
     x.sc = sc;
+    if (R.soloScene) { R.soloScene(sc, t === "rig" ? prepara(scena("frig", null, null, null, et, { verso: op.verso, lato: op.lato, seme: seme + 9, come: e.come, lento: true })) : null, x); return; }   // (solo le prove: le scene di un momento, senza disegnarle; doppioni in campo, preferiti/asta-doppioni.js)
     barraPartita(R, x); segnaInCampo(R, noti);
     var pos = R.az.lontano(sc), passi = [];   // (le scritte stanno nella metà campo lontana dall'azione)
     // 🤕 (16 nov 2026, il proprietario: «mi piace che non si vede direttamente il rigore, ma l'azione che ha portato al rigore e poi il rigore») prima
@@ -9104,7 +9180,8 @@
       return best;
     }
     function comparse(sc) {
-      var rig = sc.tipo === "rig" || sc.v === "ribattuta", out = [];
+      var rig = sc.tipo === "rig" || sc.v === "ribattuta", out = [], visti = {};
+      sc.attori.forEach(function (a) { if (!(a.chi && a.chi.vero && a.chi.k)) return; var kv = String(a.sq).slice(-1) + "|" + a.chi.k; if (visti[kv]) a.doppio = true; else visti[kv] = 1; });   // 👥 (25 nov 2026) rete di sicurezza: lo stesso calciatore vero in due attori = il secondo prende un altro titolare
       [["A", rig ? BASE_RIG_ATT : BASE_ATT], ["D", rig ? BASE_RIG_DIF : BASE_DIF]].forEach(function (q) {
         var sqQ = sc.sqN ? sc.sqN[q[0]] : null, posti = rig ? postiRig(q[1], sqQ, q[0] === "A") : postiModulo(sqQ, q[0] === "A");   // 🧩 (il modulo della squadra)
         var asse = sqQ ? titolariIn(sqQ, posti) : [], presi = [];   // 👕 (chi sta in ogni posto: i titolari)
@@ -9114,7 +9191,7 @@
           var s = pieno({ verso: 1 }, a.pts[0][1], a.pts[0][2]), best = null, bd = 9;
           posti.forEach(function (o) { if (o.via) return; var dd = Math.pow(o.x - s[0], 2) + Math.pow(o.y - s[1], 2) * 0.5; if (o.gk) dd += 5; if (dd < bd) { bd = dd; best = o; } });
           if (best) best.via = true;
-          if (!(a.chi && (a.chi.nome || a.chi.vero))) presi.push([a, best ? posti.indexOf(best) : -1]);   // (chi fa l'azione senza essere di nessuno: prende il posto di un titolare)
+          if (!(a.chi && (a.chi.nome || a.chi.vero)) || a.doppio) presi.push([a, best ? posti.indexOf(best) : -1]);   // (chi fa l'azione senza essere di nessuno: prende il posto di un titolare)
         });
         (sc.noti || []).forEach(function (nt) {
           if (nt.sq !== q[0]) return;
@@ -9141,12 +9218,13 @@
           for (i = 1; i < asse.length && !t; i++) if (lib(asse[i])) t = asse[i];
           var l = (al && al[ru]) || []; for (i = 0; i < l.length && !t; i++) if (!giaIn[l[i].k] && !nelleSq[l[i].k]) t = l[i];
           a.fig = t ? { asp: t.asp || null, num: t.num != null ? t.num : null, k: t.k || null } : null; if (t) giaIn[t.k] = 1;
+          if (a.doppio) a.chi = t ? { vero: true, k: t.k || null, asp: t.asp || null, num: t.num != null ? t.num : null } : null;
         });
         posti.forEach(function (o, i) {   // 👕 i titolari che nessuno ha comprato; dove non c'è un titolare libero, uno della panchina nel suo ruolo
           if (o.nome || i > 10) return;
-          var t = asse[i]; if (t && !vostri[t.k] && !giaIn[t.k]) { if (!o.via) { o.asp = t.asp; o.numA = t.num; } return; }
+          var t = asse[i]; if (t && !vostri[t.k] && !giaIn[t.k]) { if (!o.via) { o.asp = t.asp; o.numA = t.num; o.kA = t.k; } return; }
           if (!al) return;
-          var ru = o.ru || (i === 0 ? "P" : "C"), c = al[ru][usati[ru]++]; while (c && (giaIn[c.k] || nelleSq[c.k])) c = al[ru][usati[ru]++]; if (c && !o.via) { o.asp = c.asp; o.numA = c.num; }
+          var ru = o.ru || (i === 0 ? "P" : "C"), c = al[ru][usati[ru]++]; while (c && (giaIn[c.k] || nelleSq[c.k])) c = al[ru][usati[ru]++]; if (c && !o.via) { o.asp = c.asp; o.numA = c.num; o.kA = c.k; giaIn[c.k] = 1; }
         });
         piazzaArea(posti, q[0], sc, asse);   // ⚽ (16 nov 2026) sui piazzati e nelle azioni in area: tutti in area (vedi piazzaArea)
         if (sc.lineaFG != null && sc.varT != null) {   // 🚩 (15 nov 2026, il proprietario: «sono tutti compresi nel fuorigioco, non solo chi marca») la difesa sale in linea
@@ -9157,7 +9235,7 @@
             else o.x = limX - 0.015 - 0.012 * (i % 3);   // (chi attacca e non c'entra: in gioco)
           });
         }
-        posti.forEach(function (o, i) { if (!o.via) out.push({ sq: i === 0 ? "p" + q[0] : q[0], x: o.x, y: o.y, k: i * 1.7 + (q[0] === "A" ? 0 : 0.9), nome: o.nome || "", pr: o.pr || "", faccia: o.faccia || null, pc: o.pc || null, num: o.num != null ? o.num : null, numA: o.numA != null ? o.numA : null, asp: o.asp || null, n: i + (q[0] === "A" ? 0 : 11) }); });
+        posti.forEach(function (o, i) { if (!o.via) out.push({ sq: i === 0 ? "p" + q[0] : q[0], x: o.x, y: o.y, k: i * 1.7 + (q[0] === "A" ? 0 : 0.9), nome: o.nome || "", pr: o.pr || "", faccia: o.faccia || null, pc: o.pc || null, num: o.num != null ? o.num : null, numA: o.numA != null ? o.numA : null, asp: o.asp || null, id: o.kk || o.kA || null, n: i + (q[0] === "A" ? 0 : 11) }); });
       });
       return out;
     }
@@ -9477,6 +9555,7 @@
         if (!document.body.contains(cv) || A.sc !== null || Date.now() - t0 > 20000) { A.raf = 0; return; }
         if (t - ult >= 33) { ult = t; disegna(null, 0); } A.raf = requestAnimationFrame(vivo); })(0); }
     };   // la scena ferma (prima dell'azione), o il campo intero vuoto
+    A.comparse = comparse;   // (solo per le prove: chi c'è in campo, senza disegnare)
     A.foto = function (sc, p) { A.ferma(); A.sc = sc; if (!sc.folla) sc.folla = comparse(sc); disegna(sc, p); };
     A.camera = function (sc, p) { return camera(sc, p); };   // (per le prove: la telecamera a un momento, senza disegnare)
     // 📺 (11 nov 2026, il proprietario col Cervello: «il gol in fuorigioco annullato dal VAR») il fermo immagine del VAR: il momento del passaggio a
@@ -10294,8 +10373,9 @@
     ctx.beginPath(); ctx.moveTo(x + w * 0.03, y + h / 2); ctx.lineTo(x + w * 0.97, y + h / 2); ctx.stroke();
     ctx.beginPath(); ctx.arc(x + w / 2, y + h / 2, w * 0.09, 0, Math.PI * 2); ctx.stroke();
     var posti = slotRosa(kit), ms = w * (grande ? 0.16 : 0.15);
-    POSTI_CAMPO.forEach(function (p, i) {
-      var c = posti[i], cx = x + w * p.x / 100, cy = y + h * p.y / 100 - ms * 0.15;
+    // ⚽ (25 nov 2026) i posti su questo campetto largo: niente sulla riga di metà campo né sul cerchio (le maglie sono grandi: il difensore di lato)
+    [[50, 18.2], [18, 30.2], [82, 30.2], [80, 65.2], [50, 79.2]].forEach(function (p, i) {
+      var c = posti[i], cx = x + w * p[0] / 100, cy = y + h * p[1] / 100 - ms * 0.15;
       if (!c) { ctx.strokeStyle = "rgba(255,255,255,.8)"; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.arc(cx, cy, ms * 0.35, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); return; }
       magliaTela(ctx, cx, cy, ms, c.squadra);
       ctx.textAlign = "center"; ctx.fillStyle = "#fff"; ctx.shadowColor = "rgba(0,0,0,.8)"; ctx.shadowBlur = 6;

@@ -3735,8 +3735,11 @@ html body.tema-oro::before{ display:none; }
   box-shadow:inset 0 1px 0 rgba(255,255,255,.06), 0 10px 24px -14px rgba(0,0,0,.8); }
 .oro .sfida-gioco.platinato{ background:linear-gradient(135deg, var(--o-carta), var(--o-m-platino-a));
   box-shadow:0 0 0 1px var(--o-m-platino-f), inset 0 1px 0 rgba(255,255,255,.06), 0 10px 24px -14px rgba(0,0,0,.8); }
-.oro .trofeo.tl-platino{ border-color:color-mix(in srgb, var(--o-m-platino-f) 45%, transparent); }
-.oro .trofeo.fatto{ border-color:color-mix(in srgb, var(--liv-f, var(--o-filo-oro)) 55%, transparent); }
+/* 🏆 (25 nov 2026, il proprietario: «illuminiamo del colore il contorno dei trofei… si accendono tutti») il contorno di ogni trofeo ha il colore
+   del suo livello (bronzo, argento, oro, diamante, platino): spento a metà finché non lo prendi, acceso e luminoso quando è tuo. Vale per tutti i giochi */
+.oro .trofeo{ border-color:color-mix(in srgb, var(--liv-f, var(--o-filo)) 50%, transparent); }
+.oro .trofeo.fatto{ border-color:var(--liv-f, var(--o-filo-oro));
+  box-shadow:0 0 0 1px var(--liv-f, var(--o-filo-oro)), 0 0 16px -2px var(--liv-f, var(--o-filo-oro)), inset 0 1px 0 rgba(255,255,255,.06), 0 10px 24px -14px rgba(0,0,0,.8); }
 
 /* ---------------------------------------------------------
    3) BARRE: la pista chiara e sottile come nel riquadro del profilo in home, il riempimento dal lampone all'arancio
@@ -3773,7 +3776,11 @@ html body.tema-oro::before{ display:none; }
 .oro .sfida-gioco.platinato .sg-ico{ background:linear-gradient(160deg, var(--o-m-platino-b), var(--o-m-platino-a)); }
 /* trofeo ancora da prendere: tessera della stessa famiglia e lucchetto spento (prima era il simbolo più acceso della pagina) */
 .oro .trofeo .tr-ico{ background:linear-gradient(160deg, #252c4a, #151a2e); }
-.oro .trofeo:not(.fatto) .tr-ico{ filter:grayscale(1) opacity(.62); }
+.oro .trofeo:not(.fatto) .tr-ico>span{ filter:grayscale(1) opacity(.62); }
+/* 🏆 (25 nov 2026, il proprietario: «intendevo la luce anche attorno al lucchetto») anche il quadretto del simbolo ha il colore del livello:
+   intorno al lucchetto una luce spenta a metà, intorno al simbolo del trofeo preso piena (il lucchetto resta grigio: il filtro sta solo sul simbolo) */
+.oro .trofeo:not(.fatto) .tr-ico{ filter:none; box-shadow:inset 0 0 0 1.5px color-mix(in srgb, var(--liv-f, var(--o-filo)) 60%, transparent), 0 0 12px -3px color-mix(in srgb, var(--liv-f, var(--o-filo)) 70%, transparent); }
+.oro .trofeo.fatto .tr-ico{ box-shadow:inset 0 0 0 1.5px var(--liv-f, var(--o-filo-oro)), 0 0 14px -2px var(--liv-f, var(--o-filo-oro)); }
 
 /* ---------------------------------------------------------
    6) SCHERMATE DEL PROFILO (Benvenuto, Entra, Bentornato, Serve internet, il primo avatar)
