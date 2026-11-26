@@ -217,7 +217,7 @@
     var pwd = el("input", { class: "link-campo bp-pwd", type: "password", maxlength: "40", placeholder: "La tua password", autocomplete: "current-password", enterkeyhint: "go" });
     var avviso = el("div", { class: "link-avviso bp-avviso", "aria-live": "polite" });
     c.appendChild(nome); c.appendChild(pwd); c.appendChild(avviso);
-    c.appendChild(el("p", { class: "bp-nota", text: "Non ricordi la password? Scrivi a chi gestisce Revel House (il contatto è nella privacy): cancelliamo noi il profilo." }));
+    c.appendChild(el("p", { class: "bp-nota", text: "Non ricordi la password? Scrivi a revelhouse.app@gmail.com col nome del profilo: lo cancelliamo noi." }));
     var bVia = el("button", { class: "btn btn-rosso", text: "🗑️ Cancella per sempre", onclick: vai });
     function vai() {
       if (bVia.disabled) return;
