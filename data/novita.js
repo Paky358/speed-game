@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 442,
+    data: "26 novembre 2026",
+    titolo: "Il Prezzo è Giusto ha la copertina nuova 🏷️",
+    descrizione: [
+      "🏷️ Nella prima schermata Il Prezzo è Giusto ha un'immagine nuova: lo studio TV, lo scooter in palio sulla pedana e il display del prezzo con la cifra da indovinare, «?.450 €». Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
     v: 441,
     data: "26 novembre 2026",
     titolo: "La Ruota della Fortuna ha la copertina nuova 🎡",
