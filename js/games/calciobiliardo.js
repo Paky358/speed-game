@@ -28,6 +28,10 @@
   // attrito dell'erba: una parte che rallenta sempre e una che frena forte alla fine (niente palla che striscia piano piano)
   var ATT_D = Math.exp(-1.2 * DT), ATT_P = Math.exp(-0.85 * DT), DEC = 0.8 * DT;
   var E_URTO = 0.82, E_MURO = 0.72;                            // urti più morbidi del biliardo
+  // 🏓 la palla più viva (27 nov 2026, il proprietario: «la pallina rimbalza veramente poco»): scivola di più sull'erba e
+  // rimbalza più forte su sponde, pali e pedine (le pedine restano come prima). PALLA_VIVA = false: com'era
+  var PALLA_VIVA = true;
+  var ATT_P2 = PALLA_VIVA ? Math.exp(-0.65 * DT) : ATT_P, DEC_P = PALLA_VIVA ? 0.65 * DT : DEC, E_MURO_P = PALLA_VIVA ? 0.9 : E_MURO, E_URTO_P = PALLA_VIVA ? 0.9 : E_URTO;
   var MAX_SEC = 8;                                             // un tiro dura al massimo 8 secondi
   var TEMPO = 30;                                              // online: secondi per tirare
   // le due squadre (26 nov 2026, scelti dal proprietario): Lampone (sotto, chi apre la stanza) e Ciano (sopra)
@@ -127,10 +131,10 @@
     if (d2 >= RP * RP || d2 === 0) return;
     var d = Math.sqrt(d2), nx = dx / d, ny = dy / d, vn = s.vx[0] * nx + s.vy[0] * ny;
     s.x[0] = px + nx * RP; s.y[0] = py + ny * RP; s.pa = 1;   // la palla ha preso il palo (per l'esultanza e i trofei)
-    if (vn < 0) { s.vx[0] -= (1 + E_MURO) * vn * nx; s.vy[0] -= (1 + E_MURO) * vn * ny; if (ev) ev.palo = Math.max(ev.palo || 0, -vn); }
+    if (vn < 0) { s.vx[0] -= (1 + E_MURO_P) * vn * nx; s.vy[0] -= (1 + E_MURO_P) * vn * ny; if (ev) ev.palo = Math.max(ev.palo || 0, -vn); }
   }
   function muri(s, i, ev) {
-    var r = rag(i), x = s.x[i], y = s.y[i], v;
+    var r = rag(i), x = s.x[i], y = s.y[i], v, E = i === 0 ? E_MURO_P : E_MURO;
     if (i === 0 && (y < 0 || y > L)) {   // la palla dentro una porta: la rete ai lati e in fondo
       if (x < PL + r) { s.x[0] = PL + r; s.vx[0] = Math.abs(s.vx[0]) * 0.4; }
       if (x > PR - r) { s.x[0] = PR - r; s.vx[0] = -Math.abs(s.vx[0]) * 0.4; }
@@ -138,11 +142,11 @@
       if (y > L + FONDO - r) { s.y[0] = L + FONDO - r; s.vy[0] = -Math.abs(s.vy[0]) * 0.25; }
       return;
     }
-    if (x < r) { v = -s.vx[i]; s.x[i] = r; if (v > 0) { s.vx[i] = v * E_MURO; if (ev) ev.muro = Math.max(ev.muro, v); if (i === 0) s.sp = 1; } }
-    if (x > W - r) { v = s.vx[i]; s.x[i] = W - r; if (v > 0) { s.vx[i] = -v * E_MURO; if (ev) ev.muro = Math.max(ev.muro, v); if (i === 0) s.sp = 1; } }
+    if (x < r) { v = -s.vx[i]; s.x[i] = r; if (v > 0) { s.vx[i] = v * E; if (ev) ev.muro = Math.max(ev.muro, v); if (i === 0) s.sp = 1; } }
+    if (x > W - r) { v = s.vx[i]; s.x[i] = W - r; if (v > 0) { s.vx[i] = -v * E; if (ev) ev.muro = Math.max(ev.muro, v); if (i === 0) s.sp = 1; } }
     var bocca = i === 0 && x > PL && x < PR;   // davanti alla porta passa solo la palla
-    if (y < r && !bocca) { v = -s.vy[i]; s.y[i] = r; if (v > 0) { s.vy[i] = v * E_MURO; if (ev) ev.muro = Math.max(ev.muro, v); if (i === 0) s.sp = 1; } }
-    if (y > L - r && !bocca) { v = s.vy[i]; s.y[i] = L - r; if (v > 0) { s.vy[i] = -v * E_MURO; if (ev) ev.muro = Math.max(ev.muro, v); if (i === 0) s.sp = 1; } }
+    if (y < r && !bocca) { v = -s.vy[i]; s.y[i] = r; if (v > 0) { s.vy[i] = v * E; if (ev) ev.muro = Math.max(ev.muro, v); if (i === 0) s.sp = 1; } }
+    if (y > L - r && !bocca) { v = s.vy[i]; s.y[i] = L - r; if (v > 0) { s.vy[i] = -v * E; if (ev) ev.muro = Math.max(ev.muro, v); if (i === 0) s.sp = 1; } }
     if (i === 0) { palo(s, PL, 0, ev); palo(s, PR, 0, ev); palo(s, PL, L, ev); palo(s, PR, L, ev); }
   }
   function urto(s, i, j, ev) {
@@ -153,7 +157,7 @@
     s.x[i] -= nx * sov * mj / mt; s.y[i] -= ny * sov * mj / mt; s.x[j] += nx * sov * mi / mt; s.y[j] += ny * sov * mi / mt;
     var rv = (s.vx[j] - s.vx[i]) * nx + (s.vy[j] - s.vy[i]) * ny;
     if (rv >= 0) return;
-    var J = -(1 + E_URTO) * rv / (1 / mi + 1 / mj);
+    var J = -(1 + (i === 0 || j === 0 ? E_URTO_P : E_URTO)) * rv / (1 / mi + 1 / mj);
     s.vx[i] -= J * nx / mi; s.vy[i] -= J * ny / mi; s.vx[j] += J * nx / mj; s.vy[j] += J * ny / mj;
     if (ev) { var k2 = (i === 0 || j === 0) ? "calcio" : "dischi"; ev[k2] = Math.max(ev[k2] || 0, -rv); }   // calcio alla palla o scontro tra calciatori
   }
@@ -163,9 +167,9 @@
     for (i = 0; i < n; i++) {
       var vx = s.vx[i], vy = s.vy[i];
       if (!vx && !vy) continue;
-      var a = i === 0 ? ATT_P : ATT_D; vx *= a; vy *= a;
+      var a = i === 0 ? ATT_P2 : ATT_D, dec = i === 0 ? DEC_P : DEC; vx *= a; vy *= a;
       var v = Math.sqrt(vx * vx + vy * vy);
-      if (v <= DEC) { vx = 0; vy = 0; } else { var k = (v - DEC) / v; vx *= k; vy *= k; }
+      if (v <= dec) { vx = 0; vy = 0; } else { var k = (v - dec) / v; vx *= k; vy *= k; }
       s.vx[i] = vx; s.vy[i] = vy; s.x[i] += vx * DT; s.y[i] += vy * DT;
     }
     for (i = 0; i < n; i++) muri(s, i, ev);
@@ -330,7 +334,7 @@
     var SQ = o.squadre || [[{ nome: "" }], [{ nome: "" }]];
     var ui = { t: t, cb: cb, o: o, st: null, anim: null, mira: null, scelta: null, zoom: 1, turno: 0, fase: "mira", puoi: false, mie: [], solo: null,
       eventoVisto: null, scadenza: null, fineTempo: null, testo: { giu: "", su: "" }, facce: [[], []], avviso: null, stDopo: null,
-      sq: SQ, chi: [0, 0], pass: null, etichetta: null, aSquadre: SQ[0].length > 1 || SQ[1].length > 1 };
+      sq: SQ, chi: [0, 0], pass: null, etichetta: null, aSquadre: SQ[0].length > 1 || SQ[1].length > 1, scia: [], lampi: [] };
     var scena = el("div", { class: "cb-scena" + (o.ruota ? " ruota" : "") + (o.targa ? " con-targa" : "") + (o.muto ? "" : " con-audio") });
     ui.basso = o.targa ? 54 : 0;   // (il posto della targhetta di chi guarda, sotto la targhetta in basso)
     if (window.__CB) window.__CB.ui = ui;   // (per le prove: la mira col dito)
@@ -471,9 +475,17 @@
         var dt = A.ult ? Math.min(0.05, (now - A.ult) / 1000) : 0; A.ult = now; A.acc += dt;
         var ev = { calcio: 0, dischi: 0, muro: 0, palo: 0 }, g = -1, fine = false;
         while (A.acc >= DT) {
+          var bx0 = A.s.vx[0], by0 = A.s.vy[0];
           A.acc -= DT; A.passi++; g = passo(A.s, ev);
+          // 💥 la palla cambia strada di colpo (sponda, palo, pedina): un lampo dove rimbalza
+          var v0 = Math.hypot(bx0, by0), v1 = Math.hypot(A.s.vx[0], A.s.vy[0]);
+          if (v0 > 0.25 && v1 > 0.05 && bx0 * A.s.vx[0] + by0 * A.s.vy[0] < 0.4 * v0 * v1 && now - (ui.lampoT || 0) > 110) {
+            ui.lampoT = now; ui.lampi.push({ x: A.s.x[0], y: A.s.y[0], t: now, f: Math.min(1, v0 / 1.6) });
+          }
           if (g >= 0 || fermo(A.s) || A.passi > MAX_SEC / DT) { fine = true; break; }
         }
+        // ☄️ la scia: le ultime posizioni della palla (la strada vera, rimbalzi compresi)
+        if (Math.hypot(A.s.vx[0], A.s.vy[0]) > 0.04) ui.scia.push({ x: A.s.x[0], y: A.s.y[0], t: now, v: Math.hypot(A.s.vx[0], A.s.vy[0]) });
         if (ev.calcio > 0.06) sCalcio(ev.calcio / 2.4);
         if (ev.dischi > 0.06) sDischi(ev.dischi / 2.4);
         if (ev.muro > 0.25) sSponda(ev.muro / 2.4);
@@ -483,12 +495,19 @@
           if (ui.etichetta && ui.etichetta.fino !== Infinity) ui.etichetta = null;   // (il nome di chi ha tirato va via col tiro finito)
           ui.anim = null; ui.st = ui.stDopo ? daFoto(ui.stDopo) : A.s; ui.stDopo = null; disegna(ui);   // se la foto vera è già arrivata, vale quella
           A.fatto(g, A.s);
-          if (ui.zoom !== 1) gira();
+          if (ui.zoom !== 1 || codaViva(now)) gira();
           return;
         }
       }
       disegna(ui);
-      if (ui.anim || ui.mira || ui.zoom !== 1 || (ui.pass && ui.fase === "mira")) ui.raf = requestAnimationFrame(loop);   // (il passaggio: l'anello che si svuota)
+      // (il passaggio: l'anello che si svuota; a tiro finito la scia e i lampi che svaniscono)
+      if (ui.anim || ui.mira || ui.zoom !== 1 || (ui.pass && ui.fase === "mira") || codaViva(now)) ui.raf = requestAnimationFrame(loop);
+    }
+    function codaViva(now) {
+      now = now || performance.now();
+      while (ui.scia.length && now - ui.scia[0].t > SCIA_MS) ui.scia.shift();
+      while (ui.lampi.length && now - ui.lampi[0].t > LAMPO_MS) ui.lampi.shift();
+      return ui.scia.length > 0 || ui.lampi.length > 0;
     }
     // un tiro: tutti lo rivedono uguale, partendo dalla stessa foto (extra = il portiere che si tuffa nei rigori).
     // A squadre, sopra la pedina che parte il nome di chi ha tirato, piccolo
@@ -499,6 +518,7 @@
       var p = ui.aSquadre && tiro.q != null && SQ[tiro.q] ? SQ[tiro.q][(tiro.k | 0) % SQ[tiro.q].length] : null;
       ui.etichetta = p && p.nome ? { i: tiro.i, q: tiro.q, nome: p.nome, fino: Date.now() + 2200 } : null;
       ui.mira = null; ui.scelta = null; ui.stDopo = null; ui.anim = { s: s0, acc: 0, passi: 0, fatto: fatto || function () {} };
+      ui.scia = []; ui.lampi = [];
       gira();
     };
     // aggiorna solo quello che cambia (testi, punti, orologio, posizioni da ferme)
@@ -605,6 +625,7 @@
   // arriva prima (prima che il dito esca dallo schermo), così si tira forte anche dai lati
   // (BORDO_DITO: gli ultimi pixel dello schermo non contano, lì su Android c'è il gesto «indietro» che ruba il dito.
   //  ANNULLA: il dito tornato a meno di così da dove era partito = niente tiro)
+  var SCIA_MS = 650, LAMPO_MS = 420;   // quanto dura la scia dietro la palla e il lampo di un rimbalzo
   var ZOOM_MAX = 0.18, BORDO_DITO = 26, ANNULLA = 10;   // a tutta forza il campo si rimpicciolisce del 18% (la telecamera "si alza")
   function forza(ui) {
     var m = ui.mira; if (!m) return { p: 0, ux: 0, uy: 0 };
@@ -789,6 +810,22 @@
         g.beginPath(); g.moveTo(ax + ux * t0, ay + uy * t0); g.lineTo(ax + nx * t0 * 0.8, ay + ny * t0 * 0.8); g.lineTo(ax - nx * t0 * 0.8, ay - ny * t0 * 0.8); g.closePath(); g.fill(); g.stroke();
       }
     }
+    // ☄️ la scia della palla: una coda luminosa che segue la sua strada (più larga e accesa vicino alla palla, svanisce in
+    // SCIA_MS); più la palla va forte, più si accende. Due passate: un alone largo e tenue, poi il filo chiaro
+    var tNow = performance.now(), sc = ui.scia;
+    if (sc && sc.length > 1) {
+      g.lineCap = "round"; g.lineJoin = "round";
+      for (var pa = 0; pa < 2; pa++) {
+        for (var q2 = 1; q2 < sc.length; q2++) {
+          var a0 = sc[q2 - 1], a1 = sc[q2], vita = 1 - (tNow - a1.t) / SCIA_MS; if (vita <= 0) continue;
+          var forte = Math.min(1, a1.v / 1.4), bR = RP * S;
+          g.strokeStyle = pa ? "rgba(255,248,214," + (0.9 * vita * (0.5 + 0.5 * forte)).toFixed(3) + ")" : "rgba(255,206,92," + (0.38 * vita * (0.45 + 0.55 * forte)).toFixed(3) + ")";
+          g.lineWidth = (pa ? 1.5 : 3.6) * bR * (0.2 + 0.8 * vita);
+          g.beginPath(); g.moveTo(X(a0.x), Y(a0.y)); g.lineTo(X(a1.x), Y(a1.y)); g.stroke();
+        }
+      }
+      g.lineCap = "butt"; g.lineJoin = "miter";
+    }
     // i calciatori: immagini pronte (disco del colore della squadra col fulmine; l'attaccante con la faccia)
     var sp = ui.sp, lato = sp ? sp.lato : 0;
     for (i = 1; i < s.x.length; i++) {
@@ -825,6 +862,13 @@
     g.fillStyle = "#151515"; g.beginPath();
     for (var k = 0; k < 5; k++) { var a = -Math.PI / 2 + k * 2 * Math.PI / 5; g.lineTo(bx + Math.cos(a) * br * 0.38, by + Math.sin(a) * br * 0.38); }
     g.closePath(); g.fill();
+    // 💥 i lampi dei rimbalzi: un anello che si allarga e svanisce dove la palla ha cambiato strada
+    (ui.lampi || []).forEach(function (l) {
+      var fr = (tNow - l.t) / LAMPO_MS; if (fr < 0 || fr >= 1) return;
+      var rr = RP * S * (1.2 + 2.6 * fr) * (0.7 + 0.5 * l.f);
+      g.strokeStyle = "rgba(255,255,255," + ((1 - fr) * (0.45 + 0.45 * l.f)).toFixed(3) + ")"; g.lineWidth = 2.2 * (1 - fr) + 0.6;
+      g.beginPath(); g.arc(X(l.x), Y(l.y), rr, 0, Math.PI * 2); g.stroke();
+    });
     // a squadre: il nome di chi tira, piccolo, sopra la sua pedina (mentre parte, nel passaggio, e quando la scegli tu)
     var et = ui.etichetta;
     if (!et && ui.aSquadre && ui.fase === "mira" && ui.puoi && !ui.anim && ui.scelta && ui.sq[ui.turno]) {
