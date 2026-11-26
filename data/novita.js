@@ -9,7 +9,7 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 442,
+    v: 443,
     data: "26 novembre 2026",
     titolo: "Calcio Biliardo a squadre: 2 contro 2 ⚽",
     descrizione: [
@@ -20,6 +20,14 @@ window.SG_NOVITA = [
       "🏟️ Il campo è uno stadio vero: tribune piene coi colori delle squadre, prato a strisce, aree e dischetto, porte con la rete e i pali bianchi, bandierine e cartelloni luminosi ai lati.",
       "🎨 Le squadre sono Lampone (sotto) e Ciano (sopra).",
       "🚪 Online, se uno esce a metà partita i suoi tiri li fa il Bot; se una squadra resta senza persone, vince l'altra."
+    ]
+  },
+  {
+    v: 442,
+    data: "26 novembre 2026",
+    titolo: "Il Prezzo è Giusto ha la copertina nuova 🏷️",
+    descrizione: [
+      "🏷️ Nella prima schermata Il Prezzo è Giusto ha un'immagine nuova: lo studio TV, lo scooter in palio sulla pedana e il display del prezzo con la cifra da indovinare, «?.450 €». Così si capisce subito a cosa si gioca."
     ]
   },
   {
