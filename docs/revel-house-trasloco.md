@@ -33,11 +33,11 @@ Regola del proprietario: **nessuno deve perdere i dati**.
 1. https://github.com/new → nome del repository **revelhouse** → **Public** → «Create repository». Lasciarlo vuoto: lo riempie la pubblicazione.
 2. Nel repo `revelhouse`: Settings → **Deploy keys** → «Add deploy key».
    - Title: `pubblica da speed-game`.
-   - Key: la riga che comincia con `ssh-ed25519`, dal file della chiave pubblica che prepara Claude.
+   - Key: la riga che comincia con `ssh-ed25519`, dal file `D:\SG-revel-prove\chiave\chiave-pubblica-da-incollare-come-deploy-key.txt` (preparata il 26 nov; nella stessa cartella c’è LEGGIMI.txt coi passi).
    - Spuntare **Allow write access** → «Add key».
 3. Nel repo `speed-game`: Settings → Secrets and variables → **Actions** → «New repository secret».
    - Name: `CHIAVE_REVELHOUSE`.
-   - Secret: tutto il contenuto del file della chiave privata, comprese le righe `-----BEGIN…` e `-----END…`.
+   - Secret: tutto il contenuto di `D:\SG-revel-prove\chiave\CHIAVE-PRIVATA-da-incollare-come-segreto.txt` (aprirlo col Blocco note), comprese le righe `-----BEGIN…` e `-----END…`.
    - «Add secret».
 4. Dopo la prima pubblicazione con `FASE: anche`, nel repo `revelhouse`: Settings → **Pages**.
    - Source: «Deploy from a branch», Branch: **gh-pages**, cartella **/ (root)** → Save.
