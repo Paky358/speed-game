@@ -252,6 +252,27 @@
   // ---------- le scene per le foto (D:\SG-calcio-prove\lab\foto-gioco.js): ognuna torna [[telefono, file, larghezza, altezza]] ----------
   var F = { C: null };
   W.CQFOTO = {
+    // ☄️ la scia: contro il Bot, l'attaccante tira forte la palla contro la sponda (tre foto mentre corre)
+    scia: async function () {
+      A.pulisci(); var P = await tel("Paky", { x: 0 });
+      (await W.aspetta(function () { return A.tessera(P, "Calcio Biliardo"); }, 6000)).click(); await W.dorme(400);
+      [].find.call(P.document.querySelectorAll(".modo-grande"), function (b) { return /Contro il Bot/.test(b.textContent); }).click();
+      await W.aspetta(function () { return W.clicca(P, /Comincia/); }, 5000);
+      var M = await W.aspetta(function () { return P.__CB && P.__CB.locale && P.__CB.locale(); }, 5000);
+      await W.dorme(800);
+      var s = M.s, i = 5, dx = 0.97 - s.x[i], dy = (s.y[0] - 0.25) - s.y[i];
+      // dritto sulla palla, verso l'angolo in alto a destra: sponda, poi via
+      var ax = s.x[0] - s.x[i], ay = s.y[0] - s.y[i], d = Math.hypot(ax, ay) || 1;
+      P.__CB.ui.cb.onTiro(i, ax / d * 2.6 + 0.4, ay / d * 2.6);
+      await W.dorme(30);
+      F.P = P; return [["Paky", "s1-scia.png", 360, 740]];
+    },
+    scia2: async function () {   // (solo per la foto: la palla lanciata contro la sponda, si guarda e basta)
+      await W.dorme(2500); var P = F.P, s = P.__CB.locale().s;
+      P.__CB.ui.anima({ st: { x: s.x.slice(), y: s.y.slice() }, i: 0, vx: 2.4, vy: -1.3 });
+      await W.dorme(250); return [["Paky", "s2-scia.png", 360, 740]];
+    },
+    scia3: async function () { await W.dorme(80); return [["Paky", "s3-scia.png", 360, 740]]; },
     telefono: async function () {
       A.pulisci(); var P = await tel("Paky", { x: 0 });
       (await W.aspetta(function () { return A.tessera(P, "Calcio Biliardo"); }, 6000)).click(); await W.dorme(400);

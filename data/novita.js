@@ -9,11 +9,29 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 448,
+    v: 450,
+    data: "27 novembre 2026",
+    titolo: "L'Impostore ha la copertina nuova 🎭",
+    descrizione: [
+      "🎭 Nella prima schermata L'Impostore ha un'immagine nuova: tre carte «PIZZA» uguali e una carta nera con la maschera che dice «FOCACCIA», sotto il riflettore. Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
+    v: 449,
     data: "27 novembre 2026",
     titolo: "«Sì... però» ha la copertina nuova 🤨",
     descrizione: [
       "🤨 Nella prima schermata «Sì... però» ha un'immagine nuova: la carta verde «SÌ… Sai volare» e sopra, sbattuta, la carta rossa «PERÒ… solo in mutande». Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
+    v: 448,
+    data: "27 novembre 2026",
+    titolo: "Calcio Biliardo: la palla più viva, con la scia ☄️",
+    descrizione: [
+      "🏓 La palla rimbalza molto di più su sponde, pali e pedine e scivola più lontano sull'erba: le azioni sono più movimentate e i gol arrivano più spesso.",
+      "☄️ Quando corre, la palla lascia una scia luminosa che segue la sua strada, rimbalzi compresi: più va forte, più si accende.",
+      "💥 Dove la palla rimbalza si accende un piccolo lampo."
     ]
   },
   {
