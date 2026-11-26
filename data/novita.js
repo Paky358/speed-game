@@ -9,12 +9,22 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 434,
+    v: 435,
     data: "26 novembre 2026",
     titolo: "Mini Asta: rilanci più lisci ⚡",
     descrizione: [
       "⏱️ Se entri da ospite, quando tocchi per rilanciare la barra del tempo riparte subito, come per chi tiene la partita. Prima ripartiva solo quando arrivava la conferma: scendeva ancora un attimo e poi saltava su.",
       "⚡ I rilanci vanno più lisci su tutti i telefoni: la barra del tempo riparte senza far ricalcolare tutta la pagina, e i campetti delle squadre non si risistemano più da capo a ogni offerta (in tanti, dove la pagina delle squadre cambia a quasi ogni rilancio, era il lavoro più pesante)."
+    ]
+  },
+  {
+    v: 434,
+    data: "26 novembre 2026",
+    titolo: "Trofei: basta file di avvisi 🏆",
+    descrizione: [
+      "🏆 Quando prendete tanti trofei insieme (succede spesso con la Mini Asta) vedete solo i 3 più importanti, prima quelli di livello più alto.",
+      "➕ Poi un avviso solo, «Hai sbloccato altri trofei», col numero grande di quelli in più (per esempio +7). Toccandolo fuori dalle partite si apre la pagina dei trofei.",
+      "🎁 I premi in XP e Speed Coins arrivano lo stesso per tutti i trofei. Vale in tutti i giochi."
     ]
   },
   {

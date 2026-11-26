@@ -2785,6 +2785,14 @@ html body.tema-oro::before{ display:none; }
 .avviso-trofeo.oro .at-ico{ background:linear-gradient(150deg, var(--liv-a, var(--o-carta)), var(--liv-b, var(--o-oro-chiaro)));
   box-shadow:inset 0 0 0 1px var(--liv-f, var(--o-oro)); --emo-tinta:var(--liv-i, var(--o-oro-testo)); --emo-col:var(--liv-i, var(--o-oro-testo)); }
 .avviso-trofeo.oro .at-nome{ font-variant-numeric:lining-nums; font-family:var(--o-tit); font-weight:700; font-size:1.2rem; line-height:1.1; color:var(--o-testo); }
+/* 🔢 il quarto avviso «Hai sbloccato altri trofei» col «+N» grande al posto del simbolo (trofei.js, avvisoAltri) */
+.avviso-trofeo .at-ico.at-piu{ width:auto; min-width:58px; height:58px; padding:0 8px; box-sizing:border-box;
+  font-family:var(--o-tit, inherit); font-size:1.75rem; font-weight:800; letter-spacing:-.02em; font-variant-numeric:lining-nums tabular-nums;
+  color:#fff; background:linear-gradient(160deg,#ff4f82,#c8174f); box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 0 18px rgba(224,34,90,.45); }
+.avviso-trofeo .at-ico.at-piu.lungo{ font-size:1.35rem; }
+.avviso-trofeo.oro.tl-altri .at-ico.at-piu{ background:linear-gradient(160deg,#ff4f82,#c8174f); box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 0 18px rgba(224,34,90,.45); }
+.avviso-trofeo.tl-altri .at-nome{ white-space:normal; }
+.avviso-trofeo.tl-altri{ border-color:rgba(224,34,90,.55); }
 
 /* ---- la riga del livello nel chip della home ---- */
 .oro .chip-livello b{ color:var(--o-tasto-testo); background:var(--o-tasto); box-shadow:inset 0 1px 0 rgba(255,255,255,.28), 0 1px 3px rgba(0,0,0,.2); }

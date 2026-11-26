@@ -813,9 +813,9 @@
     if (!prof) { trofeiNoti = null; return; }
     var ora = trofeiSbloccati(prof), nuovi = {};
     if (trofeiNoti && trofeiNoti.uid === prof.uid) {
-      for (var k in ora) if (!trofeiNoti.set[k]) { codaTrofei.push(ora[k]); nuovi[k] = 1; }
-      // il Platino arriva per ultimo, dopo i trofei che l'hanno fatto scattare
-      codaTrofei.sort(function (a, b) { return (a.livello === "platino") - (b.livello === "platino"); });
+      var arrivati = [];
+      for (var k in ora) if (!trofeiNoti.set[k]) { arrivati.push(ora[k]); nuovi[k] = 1; }
+      if (arrivati.length) accodaTrofei(arrivati);   // (al massimo 3 avvisi di fila, poi «+N»)
       prossimoAvviso();
     }
     trofeiNoti = { uid: prof.uid, set: ora };
@@ -866,14 +866,93 @@
       sotto: r.premio ? "+" + cifre(r.premio) + " Speed Coins 🪙" : "Ancora " + manca + (manca === 1 ? " giorno" : " giorni") + " per il premio di " + cifre(pp.monete) + " 🪙" });
     prossimoAvviso();
   }
+  // 🔢 AL MASSIMO 3 AVVISI DI TROFEI DI FILA (26 nov 2026, il proprietario dopo la prima Mini Asta vinta: «sono stato
+  // almeno 20 secondi a toglierli tutti»): se ne arrivano di più si vedono i 3 più importanti (prima il livello più alto)
+  // e poi UN avviso solo «Hai sbloccato altri trofei» col «+N» grande. I premi (XP e monete) arrivano lo stesso per
+  // tutti (premiaTrofei). Gli avvisi di XP, livelli e giorni di fila non contano. La fila finisce quando la coda si svuota.
+  var MAX_AVVISI_TROFEI = 3, PESO_LIV = { platino: 5, diamante: 4, oro: 3, argento: 2, bronzo: 1 };
+  var filaTrofei = 0, riassunto = null;   // quanti avvisi di trofei sono già usciti in questa fila; l'avviso «+N» della fila
+  function eTrofeo(t) { return !!t && t.tipo !== "xp" && t.tipo !== "altri"; }
+  function accodaTrofei(arrivati) {
+    var attesa = codaTrofei.filter(eTrofeo), altri = codaTrofei.filter(function (t) { return !eTrofeo(t) && t !== riassunto; });
+    var tutti = attesa.concat(arrivati), posti = Math.max(0, MAX_AVVISI_TROFEI - filaTrofei), tieni = [], via = [];
+    if (riassunto) via = tutti;   // il «+N» c'è già: tutto lì dentro (mai un quinto avviso)
+    else {
+      // i più importanti: livello più alto; a pari livello quelli arrivati prima
+      var ord = tutti.map(function (t, i) { return { t: t, i: i }; });
+      ord.sort(function (x, y) { return (PESO_LIV[y.t.livello] || 0) - (PESO_LIV[x.t.livello] || 0) || x.i - y.i; });
+      ord.forEach(function (o, j) { (j < posti ? tieni : via).push(o.t); });
+      // si vedono nell'ordine in cui sono arrivati, il Platino per ultimo (dopo i trofei che l'hanno fatto scattare)
+      tieni.sort(function (a, b) { return (a.livello === "platino") - (b.livello === "platino") || tutti.indexOf(a) - tutti.indexOf(b); });
+    }
+    codaTrofei.length = 0;
+    tieni.forEach(function (t) { codaTrofei.push(t); });
+    if (via.length) {
+      if (!riassunto) riassunto = { tipo: "altri", lista: [] };
+      via.forEach(function (t) { riassunto.lista.push(t); });
+      if (riassunto.box) scriviRiassunto(riassunto);   // già uscito: cambia solo il numero (niente lampeggio)
+      else codaTrofei.push(riassunto);
+    }
+    altri.forEach(function (t) { codaTrofei.push(t); });
+  }
+  // il gioco di tutti i trofei in più (per aprire la sua pagina), o null se sono di giochi diversi
+  function giocoRiassunto(r) {
+    var g = r.lista.length ? r.lista[0].gioco : null;
+    r.lista.forEach(function (t) { if (t.gioco !== g) g = null; });
+    return g;
+  }
+  function scriviRiassunto(r) {
+    var xp = 0, mon = 0, n = r.lista.length, b = r.box;
+    r.lista.forEach(function (t) { var p = PREMI_TROFEI[t.livello]; if (p) { xp += p.xp; mon += p.monete; } });
+    b.querySelector(".at-piu").textContent = "+" + cifre(n);
+    b.querySelector(".at-piu").classList.toggle("lungo", n >= 100);
+    b.querySelector(".at-nome").textContent = n === 1 ? "Hai sbloccato un altro trofeo" : "Hai sbloccato altri trofei";
+    b.querySelector(".at-gioco").textContent = (n === 1 ? "Vai nella sezione Trofei per guardarlo" : "Vai nella sezione Trofei per guardarli") +
+      (xp ? " · +" + cifre(xp) + " XP · +" + cifre(mon) + " 🪙" : "");   // (cifra e simbolo mai su due righe)
+  }
+  // la pagina dei trofei si apre SOLO fuori dalle partite (le schermate col menu sotto): mai a partita in corso, né sul podio
+  function fuoriDaiGiochi() { var s = cuore.app && cuore.app.firstElementChild; return !!(s && s._menu); }
+  function avvisoAltri(r) {
+    r.box = el("div", { class: "avviso-trofeo tl-altri" }, [
+      el("div", { class: "at-ico at-piu" }),
+      el("div", { class: "at-corpo" }, [
+        el("div", { class: "at-su", text: "🏆 E non è finita!" }),
+        el("div", { class: "at-nome" }),
+        el("div", { class: "at-gioco" })
+      ])
+    ]);
+    scriviRiassunto(r);
+    return r.box;
+  }
+  // mette l'avviso in vista per ms millisecondi; un tocco lo chiude prima (e fa tocco(), se c'è)
+  function mostraAvviso(box, ms, tocco) {
+    var fatto = false, timer = setTimeout(chiudi, ms);
+    box.onclick = function () { var era = fatto; chiudi(); if (!era && tocco) tocco(); };
+    document.body.appendChild(box);   // fuori dalla schermata: resta anche se il gioco cambia pagina
+    requestAnimationFrame(function () { requestAnimationFrame(function () { box.classList.add("dentro"); }); });
+    function chiudi() {
+      if (fatto) return; fatto = true; clearTimeout(timer);
+      box.classList.remove("dentro");
+      setTimeout(function () { if (box.parentNode) box.parentNode.removeChild(box); avvisoAttivo = false; prossimoAvviso(); }, 380);
+    }
+  }
   function prossimoAvviso() {
-    if (avvisoAttivo || !codaTrofei.length) return;
+    if (avvisoAttivo) return;
+    if (!codaTrofei.length) { filaTrofei = 0; riassunto = null; return; }   // la fila è finita: la prossima riparte da 3
     avvisoAttivo = true;
     var t = codaTrofei.shift(), g = null, xp = t.tipo === "xp";   // xp = avviso di XP / livello / Prestigio
+    if (t.tipo === "altri") {   // il quarto: «Hai sbloccato altri trofei · +N»
+      mostraAvviso(avvisoAltri(t), 4200, function () {
+        if (!fuoriDaiGiochi()) return;   // a partita in corso si chiude e basta
+        var gid = giocoRiassunto(t); if (gid) schermataSfideGioco(gid); else schermataSfide();
+      });
+      suonoTrofeo(false);
+      return;
+    }
+    if (!xp) filaTrofei++;
     giochi.forEach(function (x) { if (x.id === t.gioco) g = x; });
     var liv = t.livello === "platino" ? "Platino" : (LIVELLI[t.livello] ? LIVELLI[t.livello].nome : "");
-    var fatto = false, timer = null;
-    var box = el("div", { class: "avviso-trofeo " + (xp ? t.cls : "tl-" + t.livello), onclick: function () { chiudi(); } }, [
+    var box = el("div", { class: "avviso-trofeo " + (xp ? t.cls : "tl-" + t.livello) }, [
       el("div", { class: "at-ico", text: t.icona || "🏆" }),
       el("div", { class: "at-corpo" }, [
         el("div", { class: "at-su", text: xp ? t.su : "🏆 Trofeo " + liv + " sbloccato!" }),
@@ -881,18 +960,11 @@
         el("div", { class: "at-gioco", text: xp ? t.sotto : (g ? g.nome : "") + premioTesto(t.livello) })   // il premio del trofeo
       ])
     ]);
-    document.body.appendChild(box);   // fuori dalla schermata: resta anche se il gioco cambia pagina
-    requestAnimationFrame(function () { requestAnimationFrame(function () { box.classList.add("dentro"); }); });
+    mostraAvviso(box, xp && t.cls === "tl-xp" ? 3000 : 3600);
     if (!xp) {
       suonoTrofeo(t.livello === "platino");
       try { if (navigator.vibrate) navigator.vibrate(t.livello === "platino" ? [40, 60, 40, 60, 80] : [30, 40, 30]); } catch (e) {}
     } else if (t.cls !== "tl-xp") suonoTrofeo(t.cls === "tl-platino");   // livello salito o Prestigio: il suono del trofeo
-    timer = setTimeout(chiudi, xp && t.cls === "tl-xp" ? 3000 : 3600);
-    function chiudi() {
-      if (fatto) return; fatto = true; clearTimeout(timer);
-      box.classList.remove("dentro");
-      setTimeout(function () { if (box.parentNode) box.parentNode.removeChild(box); avvisoAttivo = false; prossimoAvviso(); }, 380);
-    }
   }
   function suonoTrofeo(platino) {
     var ctx = audioCtx(); if (!ctx) return;
