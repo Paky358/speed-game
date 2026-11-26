@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 443,
+    data: "26 novembre 2026",
+    titolo: "Parola d'ordine ha la copertina nuova 🔵",
+    descrizione: [
+      "🔵 Nella prima schermata Parola d'ordine ha un'immagine nuova: le carte del gioco con le parole e l'indizio dei Blu, «MARE 2», che porta alle due parole girate, ONDA e PORTO. Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
     v: 442,
     data: "26 novembre 2026",
     titolo: "Il Prezzo è Giusto ha la copertina nuova 🏷️",
