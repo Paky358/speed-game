@@ -202,6 +202,9 @@
     var imp = t.impostazioni || {};
     var nomeHost = (t.giocatori && t.giocatori[0]) || t.nomeProfilo() || "Host";
     var IO = LOC ? null : (t.mioId || "host");   // io che tengo la partita (dopo un subentro: l'id da amico del vice). MAI "host" fisso
+    // il proprietario (IL PAPPONE) può far partire la partita online anche da solo o in due, per vedere com'è (26 nov 2026)
+    var PROVA_PROP = !LOC && String(t.nomeProfilo() || "").trim().toUpperCase() === "IL PAPPONE";
+    var MINIMO = PROVA_PROP ? 1 : MIN, VIVI = PROVA_PROP ? 1 : 2;   // per cominciare / per andare avanti
     var H = { fase: "lobby", codice: "…", pronta: LOC, partita: 0, n: 0, passo: "scrivi", durata: DURATE[PROVA.durata || imp.durata] ? PROVA.durata || imp.durata : "normale",
       meta: 0, dom: "", fatte: [], scade: 0, rivFine: 0, gruppi: null, unioni: [], muti: [], ultimi: {}, pari: null, vincitore: null,
       classifica: null, to: null, rip: 0, prima: null,
@@ -260,7 +263,7 @@
         p.forse = false;
         if (H.fase === "lobby") { H.players = H.players.filter(function (x) { return x.id !== id; }); bd(); return; }
         p.via = true;
-        if (H.fase === "gioco" && H.passo !== "ripresa" && presenti().length < 2) return fine();
+        if (H.fase === "gioco" && H.passo !== "ripresa" && presenti().length < VIVI) return fine();
         if (H.fase === "gioco" && H.passo === "scrivi") controllaTutti();
         bd();
       },
@@ -340,15 +343,15 @@
     function dopoRespiro() {
       H.to = null;
       var tutti = attesi.every(function (id) { var p = pById(id); return !p || !p.via; });
-      if (!(tutti && presenti().length >= 2) && ++nRespiri < 4) return respiro(RESPIRO * 1000);
-      if (presenti().length < 2) return fine();
+      if (!(tutti && presenti().length >= VIVI) && ++nRespiri < 4) return respiro(RESPIRO * 1000);
+      if (presenti().length < VIVI) return fine();
       if (H.prima === "gruppi" && H.gruppi) { H.passo = "gruppi"; return bd(); }
       apriScrivi();   // la domanda a metà: si riscrive con tutto il tempo (le risposte arrivate restano)
     }
 
     // ----- la partita -----
     function comincia() {
-      if (H.fase !== "lobby" || presenti().length < MIN) return;
+      if (H.fase !== "lobby" || presenti().length < MINIMO) return;
       H.fase = "gioco"; H.n = 0; H.partita++; H.classifica = null; H.vincitore = null; H.pari = null; H.ultimi = {}; H.fatte = [];
       H.players.forEach(function (p) { p.punti = 0; });
       H.meta = traguardo(presenti().length, H.durata);
@@ -454,7 +457,7 @@
     function nuova() { if (H.fase !== "fine") return; ferma(); H.fase = "lobby"; H.passo = "scrivi"; H.classifica = null; H.vincitore = null; H.players = presenti(); entrano(); H.players.forEach(function (p) { p.punti = 0; }); bd(); }
     t.onRivincita = nuova;
 
-    var cbHost = { sonoHost: true, locale: LOC, myId: IO, mia: null, onComincia: comincia, onNuova: nuova, onAvanti: avanti,
+    var cbHost = { sonoHost: true, locale: LOC, myId: IO, mia: null, minimo: MINIMO, onComincia: comincia, onNuova: nuova, onAvanti: avanti,
       onRisposta: function (testo, kk) { risposta(LOC ? cbHost.myId : IO, testo, kk); },
       onUnisci: function (a, b, kk) { unisci(LOC ? null : IO, a, b, kk); },
       onSepara: function (g, kk) { separa(LOC ? null : IO, g, kk); },
@@ -564,8 +567,8 @@
     var n = Math.max(MIN, vm.players.length);
     extra.push(t.el("p", { class: "modulo-nota", style: "text-align:center", text: "🏁 In " + n + " si vince a " + traguardo(n, vm.durata) + " punti" }));
     if (guardano.length) extra.push(t.el("p", { class: "modulo-nota", text: "👀 Guardano: " + guardano.map(function (p) { return p.id === cb.myId ? "tu" : p.nome; }).join(", ") }));
-    t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: MIN,
-      vuoti: Math.max(0, MIN - vm.players.length),
+    t.lobby({ host: cb.sonoHost, codice: vm.codice, pronta: vm.pronta, min: cb.minimo || MIN,
+      vuoti: Math.max(0, (cb.minimo || MIN) - vm.players.length),
       giocatori: vm.players.map(function (p, i) { return { id: p.id, nome: p.nome, omino: p.omino || null, host: vm.tiene ? p.id === vm.tiene : i === 0, tu: p.id === cb.myId }; }),
       extra: extra,
       spettatore: t.guarda ? "👀 Guardi soltanto" : guardo ? "👀 Questa volta guardi" : !cb.sonoHost && !dentro && vm.players.length >= MAX ? "👀 La stanza è piena: guardi la partita" : false,
@@ -1017,6 +1020,7 @@
     id: ID, nome: "Pecora Nera", icona: "🐑", tema: "oro",
     descrizione: "Tutti rispondono alla stessa domanda: vince chi scrive la cosa più scontata, come il resto del gregge!",
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 1,
+    provaDaSolo: true,   // il proprietario (IL PAPPONE) la prova anche da solo o in due: sullo stesso telefono (minDi del core) e online (MINIMO)
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono: ognuno scrive di nascosto", amici: true, min: MIN }],
     postiOnline: MAX,
     ritardatari: RITARDATARI,

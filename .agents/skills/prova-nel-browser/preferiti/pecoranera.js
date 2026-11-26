@@ -319,4 +319,34 @@
     if (pt.Paky !== 2 || pt.Giulia !== 2 || pt.Luca !== 0 || pt.Marco !== 0) no("punti: " + JSON.stringify(pt));
     return "gatti = gatto e Martina = Marina unite dal gioco; Martina/Marina separate da Giulia; punti " + JSON.stringify(pt);
   } });
+
+  // pn9 il proprietario (IL PAPPONE) parte da solo e in due, online; da solo anche sullo stesso telefono. Gli altri no.
+  COPIONE.aggiungi("pn9", { nome: "Pecora Nera: IL PAPPONE parte da solo o in due (online e stesso telefono), gli altri no", fai: async function () {
+    var P = await W.apriTel("IL PAPPONE", { x: 0, prima: prima() });
+    var C = await W.apriStanza(P, "Pecora Nera");
+    if (!await W.aspetta(function () { return W.clicca(P, /Comincia/); }, 5000)) no("da solo IL PAPPONE non può cominciare («" + T(P).slice(0, 120) + "»)");
+    if (!await W.aspetta(function () { return vm(C).fase === "gioco" && campo(P); }, 8000)) no("da solo la partita non parte");
+    await PN.domanda(C, { "IL PAPPONE": "latte" });
+    await PN.avanti(C, "IL PAPPONE");
+    if (vm(C).n !== 2) no("da solo non si va alla seconda domanda");
+    // in due: un'altra stanza con Giulia
+    W.COPIONE && COPIONE.aiuti.pulisci && COPIONE.aiuti.pulisci();
+    var P2 = await W.apriTel("IL PAPPONE", { x: 0, prima: prima() }), C2 = await W.apriStanza(P2, "Pecora Nera");
+    await W.apriTel("Giulia", { hash: "gioco=pecoranera&stanza=" + C2, x: 185, prima: prima() });
+    if (!await W.aspetta(function () { return !!giocatore(C2, "Giulia"); }, 8000)) no("Giulia non entra");
+    if (!await W.aspetta(function () { return W.clicca(P2, /Comincia/); }, 5000)) no("in due IL PAPPONE non può cominciare");
+    if (!await W.aspetta(function () { return vm(C2).fase === "gioco" && vm(C2).passo === "scrivi"; }, 8000)) no("in due la partita non parte");
+    await PN.domanda(C2, { "IL PAPPONE": "Coca", Giulia: "coca" });
+    await PN.avanti(C2, "IL PAPPONE");
+    var pt = punti(C2); if (pt["IL PAPPONE"] !== 2 || pt.Giulia !== 2) no("in due i punti sono " + JSON.stringify(pt));
+    // un altro account in due: non parte
+    COPIONE.aiuti.pulisci();
+    var L = await W.apriTel("Luca", { x: 0, prima: prima() }), C3 = await W.apriStanza(L, "Pecora Nera");
+    await W.apriTel("Sara", { hash: "gioco=pecoranera&stanza=" + C3, x: 185, prima: prima() });
+    if (!await W.aspetta(function () { return !!giocatore(C3, "Sara"); }, 8000)) no("Sara non entra");
+    W.clicca(L, /Comincia/); await W.dorme(1500);
+    if (vm(C3).fase !== "lobby") no("Luca in due ha fatto partire la partita");
+    var err = W.erroriTel(); if (err.length) no("errori: " + err.slice(0, 3).join(" / "));
+    return "IL PAPPONE da solo e in due ok (2 punti a testa); Luca in due resta in saletta";
+  } });
 })();
