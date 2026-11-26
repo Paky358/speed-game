@@ -2762,10 +2762,12 @@
   }
   // il tempo: la barra riparte a ogni rilancio; negli ultimi 3 secondi "5 e uno… 5 e due… 5 e tre…"
   function avviaConta(S, resta, tot, dice) {
-    fermaConta(S);
+    fermaConta(S, true);
     resta = Math.max(0, +resta || 0); tot = tot || SECONDI * 1000;
-    S.tempo.style.transition = "none"; S.tempo.style.transform = "scaleX(" + Math.min(1, resta / tot) + ")"; void S.tempo.offsetWidth;
-    S.tempo.style.transition = "transform " + resta + "ms linear"; S.tempo.style.transform = "scaleX(0)";
+    // ⚡ (26 nov 2026, il proprietario: «lagga durante i rilanci») la barra riparte con un'animazione del telefono: prima, per farla ripartire, la pagina
+    // si rimisurava tutta due o tre volte a ogni rilancio (col computer rallentato ×4 era il lavoro più grosso dei rilanci)
+    if (S.tempo.animate) { S.tempo.style.transition = "none"; S.tempo.style.transform = "scaleX(0)"; S.animT = S.tempo.animate([{ transform: "scaleX(" + Math.min(1, resta / tot) + ")" }, { transform: "scaleX(0)" }], { duration: Math.max(1, resta), easing: "linear" }); }
+    else { S.tempo.style.transition = "none"; S.tempo.style.transform = "scaleX(" + Math.min(1, resta / tot) + ")"; void S.tempo.offsetWidth; S.tempo.style.transition = "transform " + resta + "ms linear"; S.tempo.style.transform = "scaleX(0)"; }
     S.radice.classList.remove("ultimi");
     ["uno", "due", "tre"].forEach(function (parola, i) {
       var quando = resta - (3 - i) * 1000; if (quando < 0) return;
@@ -2778,12 +2780,14 @@
   }
   function tempoDa(S, d, dice) {   // il conto alla rovescia riparte a ogni rilancio (giro nuovo); se arriva una foto più fresca con meno tempo si accorcia (mai si allunga)
     var fine = Date.now() + Math.max(0, +d.resta || 0);
-    if (d.giro !== S.giro || fine < (S.fine || 0) - 700) { S.giro = d.giro; S.fine = fine; avviaConta(S, d.resta, d.durata, dice); }
+    if (d.giro !== S.giro && S.ott && !d.ott && Math.abs(fine - (S.fine || 0)) < 900) { S.giro = d.giro; S.ott = false; return; }   // (la foto conferma il mio tocco: la barra era già ripartita al tocco, non salta)
+    if (d.giro !== S.giro || fine < (S.fine || 0) - 700) { S.giro = d.giro; S.fine = fine; S.ott = !!d.ott; avviaConta(S, d.resta, d.durata, dice); }
   }
-  function fermaConta(S) {
+  function fermaConta(S, riparte) {   // (riparte: la barra riparte subito da capo, non serve fermarla dov'era)
     if (!S || !S.conta) return;
     S.conta.forEach(function (x) { clearTimeout(x); }); S.conta = [];
-    if (S.tempo) { var w = S.tempo.getBoundingClientRect().width, tw = S.tempo.parentNode ? S.tempo.parentNode.getBoundingClientRect().width : 0; S.tempo.style.transition = "none"; S.tempo.style.transform = "scaleX(" + (tw ? Math.min(1, w / tw) : 0) + ")"; }
+    if (S.animT) { try { if (riparte) S.animT.cancel(); else S.animT.pause(); } catch (e) {} if (riparte) S.animT = null; }   // (in pausa resta ferma dov'era, senza misurare)
+    else if (S.tempo && !riparte) { var w = S.tempo.getBoundingClientRect().width, tw = S.tempo.parentNode ? S.tempo.parentNode.getBoundingClientRect().width : 0; S.tempo.style.transition = "none"; S.tempo.style.transform = "scaleX(" + (tw ? Math.min(1, w / tw) : 0) + ")"; }
     if (S.radice) S.radice.classList.remove("ultimi");
   }
   function piedeAsta(S, d) {   // la riga d'aiuto e i tasti (online solo per chi gioca da questo telefono; sullo stesso telefono il salto del rilancio)
@@ -2988,6 +2992,7 @@
   // (o il cerchio tratteggiato) e sotto il nome largo quanto il posto (anche quando è vuoto: così i posti non si spostano quando si compra).
   // Nei campetti bassi sotto il cerchio non c'è posto per difensore e portiere uno sopra l'altro: il difensore va di lato al cerchio.
   // nodi: i 5 posti nell'ordine di POSTI_M (figli: la maglia, poi il nome)
+  var DISPOSTI = {}, N_DISPOSTI = 0;   // ⚡ (26 nov 2026, il proprietario: «lagga durante i rilanci») i posti già calcolati per un campetto di quella misura e con quei posti: il calcolo si fa una volta sola (in 6-8 la pagina delle squadre cambia a quasi ogni rilancio)
   function disponiCampo(campo, nodi) {
     var w = campo.clientWidth, h = campo.clientHeight; if (!w || !h || !nodi || nodi.length !== POSTI_M.length) return;
     var G = window.SGAstaArte && SGAstaArte.campoGeo ? SGAstaArte.campoGeo(Math.round(w / h * 20) / 20) : { sx: 250 / 68, sy: 2.62 };
@@ -2996,10 +3001,13 @@
       var W0 = n.offsetWidth, H0 = n.offsetHeight, f = n.firstElementChild, fw = f && f.offsetParent ? f.offsetWidth : 0, fh = f && f.offsetParent ? f.offsetHeight : 0;
       return { H: H0, parti: [ [-fw / 2, -H0 / 2, fw / 2, -H0 / 2 + fh], [-W0 / 2, -H0 / 2 + fh, W0 / 2, H0 / 2] ].filter(function (p) { return p[2] > p[0] && p[3] > p[1]; }) };
     });
+    var chiave = w + "x" + h + "|" + forme.map(function (f) { return f.H + ":" + f.parti.map(function (p) { return p.map(Math.round).join(","); }).join(";"); }).join("/");
+    function metti5(P) { nodi.forEach(function (n, i) { var p = P[i]; if (!p) return; if (n.style.left !== p[0]) n.style.left = p[0]; if (n.style.top !== p[1]) n.style.top = p[1]; }); }
+    if (DISPOSTI[chiave]) return metti5(DISPOSTI[chiave]);
     function pezzi(i, x, y) { return forme[i].parti.map(function (p) { return [x + p[0], y + p[1], x + p[2], y + p[3]]; }); }
     function urta(b, c) { return b[0] < c[2] + M && c[0] < b[2] + M && b[1] < c[3] + M && c[1] < b[3] + M; }
     function sulCerchio(b) { var nx = Math.max(b[0], Math.min(cx, b[2])) - cx, ny = Math.max(b[1], Math.min(ym, b[3])) - ym; return nx * nx / (rx * rx) + ny * ny / (ry * ry) < 1; }
-    var messi = [], pos = [];
+    var messi = [], pos = [], scatole = [];   // (scatole: i pezzi dei posti già messi)
     function costo(i, x, y, su) {   // quanto è brutto quel punto: i guai pesano tantissimo, poi la distanza dal posto giusto
       var c = 0, pz = pezzi(i, x, y);
       pz.forEach(function (b) {
@@ -3007,28 +3015,30 @@
         if (su ? b[3] > ym - M : b[1] < ym + M) c += 1e6;   // nella metà sbagliata
         if (sulCerchio(b)) c += 1e6;
         if (b[0] < 0 || b[2] > w || b[1] < 0 || b[3] > h) c += 1e5;   // fuori dal campetto
-        messi.forEach(function (j) { pezzi(j, pos[j][0], pos[j][1]).forEach(function (d) { if (urta(b, d)) c += 1e5; }); });
+        scatole.forEach(function (d) { if (urta(b, d)) c += 1e5; });
       });
       return c;
     }
     function metti(i, px, py, su, kx) {   // cerca il punto migliore vicino a (px, py) (kx: quanto costa spostarsi di lato)
-      var best = null, bc = Infinity, passo = Math.max(2, Math.round(Math.min(w, h) / 60));
+      var best = null, bc = Infinity, passo = Math.max(3, Math.round(Math.min(w, h) / 45));
       var xs = [cx]; for (var x0 = 0; x0 <= w; x0 += passo) xs.push(x0);
       for (var y = forme[i].H / 2; y <= h - forme[i].H / 2 + .1; y += passo) xs.forEach(function (x) {
         var c = costo(i, x, y, su); if (c >= bc) return;
         c += Math.abs(x - px) * (kx || 1.6) + Math.abs(y - py);
         if (c < bc) { bc = c; best = [x, y]; }
       });
-      pos[i] = best || [px, py]; messi.push(i);
+      pos[i] = best || [px, py]; messi.push(i); scatole = scatole.concat(pezzi(i, pos[i][0], pos[i][1]));
     }
     function Xm(m) { return (150 + m * G.sx) / 300 * w; } function Ym(m) { return (150 + m * G.sy) / 300 * h; }
     metti(4, cx, Ym(POSTI_M[4].y), false, 40);   // il portiere: al centro, davanti alla nostra porta (di lato solo se al centro proprio non ci sta)
     metti(0, cx, Ym(POSTI_M[0].y), true, 40);    // l'attaccante: al centro, verso la porta degli altri
     metti(1, Xm(POSTI_M[1].x), Ym(POSTI_M[1].y), true);   // i centrocampisti: uguali ai due lati
     var d1 = pos[1], cS = costo(2, w - d1[0], d1[1], true);
-    if (cS < 1e5) { pos[2] = [w - d1[0], d1[1]]; messi.push(2); } else metti(2, Xm(POSTI_M[2].x), Ym(POSTI_M[2].y), true);
+    if (cS < 1e5) { pos[2] = [w - d1[0], d1[1]]; messi.push(2); scatole = scatole.concat(pezzi(2, pos[2][0], pos[2][1])); } else metti(2, Xm(POSTI_M[2].x), Ym(POSTI_M[2].y), true);
     metti(3, cx, Ym(POSTI_M[3].y), false);   // il difensore: al centro se c'è posto sotto il cerchio, se no di lato
-    nodi.forEach(function (n, i) { var p = pos[i]; if (!p) return; var l = Math.round(p[0] / w * 1000) / 10 + "%", t = Math.round(p[1] / h * 1000) / 10 + "%"; if (n.style.left !== l) n.style.left = l; if (n.style.top !== t) n.style.top = t; });
+    var P = pos.map(function (p) { return p ? [Math.round(p[0] / w * 1000) / 10 + "%", Math.round(p[1] / h * 1000) / 10 + "%"] : null; });
+    if (++N_DISPOSTI > 80) { DISPOSTI = {}; N_DISPOSTI = 1; }
+    DISPOSTI[chiave] = P; metti5(P);
   }
   function mettiPosti(slot, rap) {   // prima della misura: i posti in metri con la forma `rap` (larghezza / altezza), come il disegno
     var P = postiPer(rap); slot.forEach(function (s, i) { var p = P[i]; if (p) { s.nodo.style.left = p.x + "%"; s.nodo.style.top = p.y + "%"; } });
@@ -3283,8 +3293,8 @@
     mostraPagina(S, 0, persone);
     return el("div", { class: "st-griglia" }, [ S.grTesta, S.carte ]);
   }
-  function disponiGriglia(S) {   // i posti di ogni campetto che si vede, sul campetto misurato
-    for (var k in S.sq) { var q = S.sq[k]; if (q.nodo.style.display !== "none") disponiCampo(q.campo, q.slot.map(function (s) { return s.nodo; })); }
+  function disponiGriglia(S, soloNuovi) {   // i posti di ogni campetto che si vede, sul campetto misurato (soloNuovi: cambiando pagina solo quelli mai sistemati: gli altri hanno ancora i loro posti)
+    for (var k in S.sq) { var q = S.sq[k]; if (q.nodo.style.display !== "none" && !(soloNuovi && q.disposto)) { q.disposto = true; disponiCampo(q.campo, q.slot.map(function (s) { return s.nodo; })); } }
   }
   function paginaDi(persone, id) { for (var i = 0; i < persone.length; i++) if (persone[i].id === id) return Math.floor(i / PER_PAGINA); return -1; }
   function mostraPagina(S, pg, persone) {
@@ -3292,7 +3302,7 @@
     persone.forEach(function (p, i) { var q = S.sq[p.id]; if (!q) return; var su = Math.floor(i / PER_PAGINA) === pg; if ((q.nodo.style.display !== "none") !== su) q.nodo.style.display = su ? "" : "none"; });
     var da = pg * PER_PAGINA + 1, a = Math.min(persone.length, da + PER_PAGINA - 1);
     S.pagN.textContent = "Squadre " + (da === a ? da : da + "–" + a) + " di " + persone.length;
-    if (S.carte && document.body.contains(S.carte)) disponiGriglia(S);
+    if (S.carte && document.body.contains(S.carte)) disponiGriglia(S, true);
   }
   function giraPagina(S, dir) {
     var d = S.ultimiDati; if (!d || S.pagine < 2) return;
@@ -3761,7 +3771,10 @@
       info: (vm.presi ? vm.presi + " · " : "") + (a ? ru.nome + " all'asta" : e.tipo === "accollo" ? "Nessuno lo vuole" : "Aggiudicato!") + (vm.presi ? "" : " · " + vm.restano + " in mazzo"),
       carta: carta, giroCarta: a ? a.nCarta : e.nCarta, prezzo: a ? v.offerta : e.prezzo, base: !!a && !v.leader, leader: a ? v.leader : (e.chiId || null),
       budget: FANTA_BUDGET, grosso: 5, piedeAlto: io ? "onl" : "",
-      persone: persone, io: myId || "—", mie: mie, giro: a ? a.giro : null, resta: a ? a.resta : 0, durata: a ? (a.durata || FANTA_RILANCIO_MS) : FANTA_RILANCIO_MS, puoPassare: false,
+      persone: persone, io: myId || "—", mie: mie, puoPassare: false,
+      // ⏱️ (26 nov 2026, il proprietario da ospite: «lagga un pochino durante i rilanci») col mio tocco ancora per strada la barra del tempo riparte
+      // SUBITO, come per chi tiene la partita (prima ripartiva solo quando tornava la foto: la barra scendeva ancora un attimo e poi saltava su)
+      giro: a ? (v.inArrivo ? "t" + v.tk : a.giro) : null, ott: !!(a && v.inArrivo), resta: a ? (v.inArrivo ? FANTA_RILANCIO_MS : a.resta) : 0, durata: a && !v.inArrivo ? (a.durata || FANTA_RILANCIO_MS) : FANTA_RILANCIO_MS,   // (dopo ogni offerta il tempo è sempre FANTA_RILANCIO_MS)
       kPiede: a ? [a.nCarta, hoPassato ? 1 : 0, inGara ? 1 : 0, max].join("|") : null,   // (prezzi e «Passo» cambiano al loro posto, anche quando divento io il capo: vedi tastiOfferta)
       esito: e ? { n: e.n, nCarta: e.nCarta, tipo: e.tipo, motivo: e.motivo || "", chiId: e.chiId, chiNome: e.chiNome, carta: e.carta, prezzo: e.prezzo } : null,
       avviso: a ? avvisoFanta(a.ultimoDuello, a.ultimaChiamata, a.ruolo) : "",
@@ -10622,7 +10635,7 @@
     var primo = c.tocchi[0], ultimo = c.tocchi[c.tocchi.length - 1];
     // il primo tocco ancora per strada parte da quello che mostra la foto? Se no qualcuno è arrivato prima (o un tocco si è perso)
     if (!primo || primo.vista !== vera.offerta || primo.vl !== String(vera.leader || "") || Date.now() - ultimo.ora > ATTESA_TOCCO_MS) { cb._coda = null; return vera; }
-    return { offerta: ultimo.prezzo, leader: cb.myId, inArrivo: true };
+    return { offerta: ultimo.prezzo, leader: cb.myId, inArrivo: true, tk: ultimo.tk };
   }
   // manda un tocco: da: { offerta, leader } (l'offerta come la vedo io), prezzo: dove voglio arrivare
   function mandaTocco(cb, n, da, prezzo, ridisegna) {
@@ -10633,7 +10646,7 @@
     var c = cb._coda && cb._coda.n === n ? cb._coda : (cb._coda = { n: n, tocchi: [] });
     c.tocchi.push({ tk: tk, vista: da.offerta, vl: String(da.leader || ""), prezzo: prezzo, ora: ora });
     cb.onRilancia({ n: n, prezzo: prezzo, vista: da.offerta, vl: String(da.leader || ""), tk: tk });
-    if (ridisegna) {
+    if (ridisegna && !cb.sonoHost) {   // (chi tiene la partita ha già ridisegnato col tocco: niente secondo disegno)
       ridisegna();   // il mio tabellone mostra subito l'offerta in arrivo
       clearTimeout(cb._toTocco);   // (se il tocco si perde, tra poco si torna alla foto)
       cb._toTocco = setTimeout(function () { if (cb._coda && !cb._uscito) ridisegna(); }, ATTESA_TOCCO_MS + 100);
