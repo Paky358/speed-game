@@ -3,7 +3,7 @@
 // lg1: in home e nel profilo la riga «Privacy · Regole d'uso · Crediti» coi link giusti (e mai dentro le partite: qui solo home e profilo).
 // lg2: «🗑️ Cancella il mio profilo»: conferma, password, SGNube.cancella con la password scritta, poi il telefono dimentica tutto (sg-*).
 // lg3: password sbagliata: resta sulla schermata, «Password sbagliata.», niente cancellato sul telefono.
-// lg4: le tre pagine si aprono, hanno «Revel House», i segnaposto [TITOLARE]/[CONTATTO] ben visibili, e i crediti caricano e cercano.
+// lg4: le tre pagine si aprono, hanno «Revel House», nessun segnaposto rimasto, l'email di contatto, il titolare nella privacy, e i crediti caricano e cercano.
 // SGNube è quello finto dei telefoni finti: la cancellazione vera (js/nube.js) si prova senza browser con un Firebase finto
 // (.agents/skills/crediti/prova-cancella.js). MAI account veri.
 (function () {
@@ -81,7 +81,7 @@
     return "password sbagliata: niente cancellato, si torna al profilo";
   } });
 
-  COPIONE.aggiungi("lg4", { nome: "Le tre pagine: si aprono, Revel House, segnaposto visibili, crediti con la ricerca", fai: async function () {
+  COPIONE.aggiungi("lg4", { nome: "Le tre pagine: si aprono, Revel House, contatto e titolare, crediti con la ricerca", fai: async function () {
     var err = [], fatti = [];
     for (var pg of ["privacy.html", "regole.html", "crediti.html"]) {
       var f = W.document.createElement("iframe"); f.style.cssText = "width:360px;height:640px;position:fixed;left:0;top:0;opacity:.01";
@@ -91,7 +91,9 @@
       if (!/Revel/.test(d.querySelector(".pg-marchio").textContent)) err.push(pg + ": niente Revel House");
       if (d.documentElement.scrollWidth > 362) err.push(pg + ": esce di lato (" + d.documentElement.scrollWidth + " px)");
       var sp = d.querySelectorAll(".segnaposto").length;
-      if (pg !== "crediti.html" && !sp) err.push(pg + ": niente segnaposto del contatto");
+      if (sp) err.push(pg + ": restano " + sp + " segnaposto");
+      if (pg !== "crediti.html" && !d.querySelector("a[href='mailto:revelhouse.app@gmail.com']")) err.push(pg + ": manca l'email di contatto");
+      if (pg === "privacy.html" && !/titolare del trattamento è Pasquale Cito/.test(d.body.textContent)) err.push("privacy: manca il titolare");
       if (pg === "crediti.html") {
         if (!await W.aspetta(function () { return d.querySelectorAll("details.cr-gruppo").length >= 4; }, 5000)) err.push("crediti: i gruppi delle foto non arrivano");
         var q = d.getElementById("cr-q"); q.value = "nutella"; q.dispatchEvent(new f.contentWindow.Event("input"));
@@ -99,7 +101,7 @@
         var li = d.querySelector("details.cr-gruppo[open] .cr-lista li");
         if (!li || !/Nutella/i.test(li.textContent) || !li.querySelector("a[href*='commons.wikimedia.org/wiki/File:']")) err.push("crediti: la ricerca «nutella» non trova la foto col link");
         fatti.push("crediti: " + d.getElementById("cr-conta").textContent);
-      } else fatti.push(pg + ": " + sp + " segnaposto");
+      } else fatti.push(pg + ": contatto" + (pg === "privacy.html" ? " e titolare" : ""));
       f.remove();
     }
     if (err.length) no(err.join("; "));
