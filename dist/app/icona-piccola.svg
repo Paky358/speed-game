@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Revel House - versione per le misure piccole (16, 24, 32): forme più grosse, niente coriandoli -->
+  <defs>
+    <linearGradient id="rpBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff5c90"/><stop offset=".5" stop-color="#e0225a"/><stop offset="1" stop-color="#a8186a"/>
+    </linearGradient>
+    <linearGradient id="rpCasa" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a3278"/><stop offset="1" stop-color="#10143a"/>
+    </linearGradient>
+    <radialGradient id="rpPorta" cx=".5" cy=".85" r=".95">
+      <stop offset="0" stop-color="#fffbe9"/><stop offset=".45" stop-color="#ffd978"/><stop offset="1" stop-color="#ffab55"/>
+    </radialGradient>
+    <clipPath id="rpTondo"><rect width="512" height="512" rx="114"/></clipPath>
+  </defs>
+  <g clip-path="url(#rpTondo)">
+    <rect width="512" height="512" fill="url(#rpBg)"/>
+    <rect x="338" y="120" width="54" height="110" rx="10" fill="#1d235c"/>
+    <path d="M256 84 L446 248 H398 V420 H114 V248 H66 Z" fill="url(#rpCasa)" stroke="url(#rpCasa)" stroke-width="30" stroke-linejoin="round"/>
+    <path d="M196 420 V340 A60 60 0 0 1 316 340 V420 Z" fill="url(#rpPorta)"/>
+  </g>
+</svg>

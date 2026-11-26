@@ -24,8 +24,8 @@ Regola del proprietario: **nessuno deve perdere i dati**.
 - **Limite che resta**: chi non riapre mai la vecchia app e ha dimenticato la password non si può recuperare. Non c'è un'email, come oggi.
 
 ## Le tre tappe (interruttore `FASE` in `.github/workflows/deploy.yml`)
-1. **spento** (oggi): tutto come prima.
-2. **anche**: dopo le impostazioni qui sotto, l'app va ANCHE su revelhouse.it. Il proprietario la prova dal suo telefono, e il vecchio indirizzo resta l'app normale.
+1. **spento**: tutto come prima.
+2. **anche** (dal 26 nov 2026 sera, oggi): dopo le impostazioni qui sotto, l'app va ANCHE su revelhouse.it. Il proprietario la prova dal suo telefono, e il vecchio indirizzo resta l'app normale.
 3. **porta**: quando il proprietario dice «pubblica il trasloco», il vecchio indirizzo diventa la porta.
 
 ## Cosa fa il proprietario (circa 20 minuti; le password le scrive solo lui)

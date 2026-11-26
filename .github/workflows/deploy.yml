@@ -25,7 +25,7 @@ concurrency:
 #            chi lo apre (anche dall'app installata) arriva su revelhouse.it col profilo e le sue cose.
 # Un push su master pubblica sempre tutto quello che la FASE dice: per chi pubblica (anche la chat di Mario) non cambia niente.
 env:
-  FASE: spento
+  FASE: anche
 
 jobs:
   # 24 nov 2026: due passaggi (prima il pacchetto, poi "Metti online"), come l esempio ufficiale di GitHub.
