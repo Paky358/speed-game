@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 436,
+    data: "26 novembre 2026",
+    titolo: "Mini Asta: vedi sempre il tuo attacco ⚽",
+    descrizione: [
+      "⚽ Nella giornata vedi sempre almeno 2 azioni del tuo attaccante e dei tuoi centrocampisti, di due giocatori diversi: niente più giornate con solo le parate del portiere. Anche se l'azione va male, almeno ti gasi (o insulti il tuo giocatore).",
+      "⚡ Nelle giornate veloci delle «3 giornate», se manca, l'azione che vedi è di un attaccante o di un centrocampista.",
+      "⏱️ La giornata dura come prima, e punti e gol restano quelli di sempre."
+    ]
+  },
+  {
     v: 435,
     data: "26 novembre 2026",
     titolo: "Mini Asta: rilanci più lisci ⚡",

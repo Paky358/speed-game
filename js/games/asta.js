@@ -4409,13 +4409,23 @@
     if (!COPPIE_ORA || !sq) return "";
     return COPPIE_ORA.map(function (cp) { for (var i = 0; i < cp.length; i++) { if (cp[i][0] === sq) return cp[i][1]; if (cp[i][1] === sq) return cp[i][0]; } return "?"; }).join(" · ");
   }
-  // 🎯 UN MINIMO DI AZIONI PER TUTTI (14 nov 2026, il proprietario: a volte qualcuno non vede quasi mai un'azione dei suoi calciatori; il jolly
+  // 🎯 UN MINIMO DI AZIONI PER TUTTI (14 nov 2026; dal 26 nov anche il minimo d'attacco, MIN_OFF più giù, il proprietario: a volte qualcuno non vede quasi mai un'azione dei suoi calciatori; il jolly
   // NON si fa): in ogni giornata intera ognuno vede almeno MIN_AZIONI azioni d'attacco dei suoi calciatori (tira o passa: i gialli e gli interventi
   // non contano), nelle giornate veloci delle 3 giornate almeno MIN_VELOCE. Se nei dati non ci sono, se ne aggiungono come quelle di sempre: stesse
   // scene, minuto a caso in tutta la partita (mai tutte alla fine), e finiscono come capita a quel calciatore (gol con la sua probabilità, se no
   // parata, palo, fuori…). Non si riconoscono: nessun segno nei dati. Quando la giornata è troppo lunga e si tagliano dei momenti, mai quelli che
   // servono a qualcuno per arrivare al minimo (taglioGiornata, sceltaVeloce)
   var MIN_AZIONI = 3, MIN_VELOCE = 1;
+  // ⚽ (26 nov 2026, il proprietario: «almeno del centrocampista offensivo e dell'attaccante le azioni le devono vedere… il difensore ci sta che potrebbe
+  // non vederla… minimo due solo dell'attaccante o del centrocampista»; «la nostra app deve intrattenere: pure se si vede un'azione andata male almeno si
+  // gasa, insulta il suo giocatore»). Nella giornata intera, oltre alle MIN_AZIONI in tutto, almeno MIN_OFF azioni dei suoi ATTACCANTI e CENTROCAMPISTI,
+  // e di due giocatori diversi quando si può; il difensore e il portiere non sono obbligati. Nelle veloci l'azione minima è di un attaccante o di un
+  // centrocampista. Le azioni in più sono come sempre (azioneGarantita): i gol subiti e il portiere come prima
+  var MIN_OFF = 2, OFFENSIVI = { A: 1, C: 1 };
+  function reqDi(minimo) {   // il minimo di una giornata: { tot: azioni in tutto, off: d'attacco, diversi: di due giocatori d'attacco diversi }
+    if (minimo && typeof minimo === "object") return minimo;
+    return (minimo != null ? minimo : MIN_AZIONI) >= MIN_AZIONI ? { tot: MIN_AZIONI, off: MIN_OFF, diversi: true } : { tot: MIN_VELOCE, off: MIN_VELOCE, diversi: false };
+  }
   // ⚖️ l'equilibrio come prima (simulazioni del 14 nov 2026, 30.000 partite in 2): le azioni in più spingono un po' chi ne aveva poche (la rosa più
   // forte vinceva 1,5 punti in meno e i punti medi salivano di 0,6). Due ritocchi che non si vedono: la forza conta un po' di più nel voto (FORTE_VOTO,
   // prima 0,04) e nel corso della partita il voto scende in media di VOTO_DERIVA (si parte sempre da 6). Prima 30,59 punti a rosa, la più forte vince
@@ -4455,16 +4465,30 @@
     P.ev.sort(function (a, b) { return a.m - b.m; }); rifaiRisultati(P);
   }
   function garantisciAzioni(A, righe, rose, comprati, minimo) {
+    var req = reqDi(minimo);
     righe.forEach(function (r) {
-      var mie = r.kit.map(chiaveCalc), conta = 0;
-      A.partite.forEach(function (P) { P.ev.forEach(function (e) { if (mie.some(function (k) { return azioneDi(e, k); })) conta++; }); });
-      for (var giro = 0; conta < minimo && giro < 20; giro++) {
-        var cand = r.kit.filter(function (c) { return c.ruolo !== "P"; }).map(function (c) { var k = chiaveCalc(c); return { c: c, y: (rose[c.squadra] || []).filter(function (z) { return z.k === k; })[0] }; }).filter(function (x) { return x.y; });
+      var mie = r.kit.map(chiaveCalc), tot, off, chiOff;
+      function conta() {   // le azioni dei miei nei dati: in tutto, d'attacco, e di quali attaccanti e centrocampisti
+        tot = 0; off = 0; chiOff = {};
+        A.partite.forEach(function (P) { P.ev.forEach(function (e) {
+          var t = false, o = false;
+          r.kit.forEach(function (c, i) { if (!azioneDi(e, mie[i])) return; t = true; if (OFFENSIVI[c.ruolo]) { o = true; chiOff[mie[i]] = 1; } });
+          if (t) tot++; if (o) off++;
+        }); });
+      }
+      conta();
+      var tutti = r.kit.filter(function (c) { return c.ruolo !== "P"; }).map(function (c) { var k = chiaveCalc(c); return { c: c, k: k, y: (rose[c.squadra] || []).filter(function (z) { return z.k === k; })[0] }; }).filter(function (x) { return x.y; });
+      var attacco = tutti.filter(function (x) { return OFFENSIVI[x.c.ruolo]; });
+      for (var giro = 0; giro < 20; giro++) {
+        var senza = attacco.filter(function (x) { return !chiOff[x.k]; });
+        var serveOff = off < req.off || (req.diversi && Object.keys(chiOff).length < 2 && senza.length > 0);   // (due giocatori d'attacco diversi, quando si può)
+        var cand = serveOff ? (senza.length ? senza : attacco) : tot < req.tot ? tutti : null;   // (d'attacco: prima chi non ne ha ancora)
+        if (!cand) break;
         var x = pescaPeso(cand, function (z) { return { A: 3, C: 2, D: 0.7 }[z.c.ruolo] || 0; }); if (!x) break;
         var P = A.partite.filter(function (p) { return p.c === x.c.squadra || p.f === x.c.squadra; })[0]; if (!P) break;
         var m = minuto();
         if (P.ev.some(function (e) { return e.t === "esp" && e.chi === x.y.k && e.m <= m; })) continue;   // (chi è espulso non tira più)
-        azioneGarantita(P, P.c === x.c.squadra ? "c" : "f", x.y, m, rose, comprati); conta++;
+        azioneGarantita(P, P.c === x.c.squadra ? "c" : "f", x.y, m, rose, comprati); conta();
       }
     });
   }
@@ -4979,14 +5003,30 @@
     return lista;
   }
   // 🎯 le azioni d'attacco che si vedono, rosa per rosa, e se togliere il momento x porterebbe qualcuno sotto il minimo
-  function azioniViste(lista) {
+  function azioniViste(lista) {   // per rosa: { tot: azioni che si vedono, off: d'attacco (attaccante o centrocampisti), chi: quante di ognuno di loro }
     var n = {};
-    lista.forEach(function (x) { if (!x.focus || x.via || x.lampo || !x.e) return; var visti = {}; (x.chi || []).forEach(function (q) { if (!visti[q.r.id] && azioneDi(x.e, chiaveCalc(q.c))) { visti[q.r.id] = 1; n[q.r.id] = (n[q.r.id] || 0) + 1; } }); });
+    lista.forEach(function (x) {
+      if (!x.focus || x.via || x.lampo || !x.e) return; var visti = {};
+      (x.chi || []).forEach(function (q) {
+        var k = chiaveCalc(q.c), id = q.r.id; if (!azioneDi(x.e, k)) return;
+        var z = n[id] = n[id] || { tot: 0, off: 0, chi: {} };
+        if (!visti[id]) { visti[id] = 1; z.tot++; }
+        if (OFFENSIVI[q.c.ruolo]) { if (!visti[id + "|o"]) { visti[id + "|o"] = 1; z.off++; } z.chi[k] = (z.chi[k] || 0) + 1; }
+      });
+    });
     return n;
   }
-  function serveAlMinimo(x, n, minimo) {
-    var visti = {};
-    return (x.chi || []).some(function (q) { if (visti[q.r.id] || !azioneDi(x.e, chiaveCalc(q.c))) return false; visti[q.r.id] = 1; return (n[q.r.id] || 0) <= minimo; });
+  function serveAlMinimo(x, n, minimo) {   // togliere il momento x porterebbe qualcuno sotto il minimo (in tutto, d'attacco, o a un solo giocatore d'attacco)?
+    var req = reqDi(minimo), visti = {}, serve = false;
+    (x.chi || []).forEach(function (q) {
+      var k = chiaveCalc(q.c), id = q.r.id, z = n[id]; if (!z || !azioneDi(x.e, k)) return;
+      if (!visti[id]) { visti[id] = 1; if (z.tot <= req.tot) serve = true; }
+      if (OFFENSIVI[q.c.ruolo]) {
+        if (!visti[id + "|o"]) { visti[id + "|o"] = 1; if (z.off <= req.off) serve = true; }
+        if (req.diversi && (z.chi[k] || 0) <= 1 && Object.keys(z.chi).length <= 2) serve = true;   // (l'unica azione di uno dei due giocatori d'attacco che si vedono)
+      }
+    });
+    return serve;
   }
   // la giornata intera troppo lunga: si tolgono occasioni ed entrate pulite prima del 75' (mai quelle di chi passa, mai l'ultima del vostro
   // portiere che prende gol, mai un'azione che serve a qualcuno per il minimo), poi si va un po' più svelti. Torna la velocità

@@ -10,7 +10,9 @@
 //     ne prende ognuno: per i giocatori che ne prendono di più, di più).
 // mz1 Senza telefoni: in 2, 8 e 12, giornata sola e 3 giornate (300 partite per tipo): nei dati ognuno ha almeno 3 azioni d'attacco nella
 //     giornata intera e almeno 1 nelle veloci; e anche dopo i tagli (giornata troppo lunga, scelta delle veloci) nessuno scende sotto;
-//     le azioni non stanno tutte alla fine (almeno il 20% nel primo tempo).
+//     le azioni non stanno tutte alla fine (almeno il 20% nel primo tempo). Dal 26 nov 2026 (il proprietario: «minimo due solo dell'attaccante o
+//     del centrocampista»): nella giornata intera almeno 2 azioni dei suoi attaccanti e centrocampisti, di due giocatori diversi; nelle veloci
+//     almeno 1 di un attaccante o di un centrocampista; nei dati e dopo i tagli.
 // sp3 Le scene dei falli, 300 semi: il «🔥 PRESSING ALTO» (giallo, rosso, e il pressing che finisce col tiro, gol o parata) e l'«😤 ENTRATA
 //     DURA» (giallo, rosso, pulita, e il recupero pulito in pressing, che dal 16 nov 2026 sera si mostra come un'entrata pulita) sono IDENTICI
 //     fino a quando il pallone cambia strada (tutti i giocatori, l'arbitro e la telecamera): l'esito si vede solo dopo il contatto.
@@ -23,7 +25,7 @@
     if (!await W.aspetta(function () { return w.SG_FANTA_CALCIATORI && w.SG_FANTA_SQUADRE && w.SG_FANTA_STATISTICHE && w.SG_FANTA_RUOLI; }, 20000)) no("i dati del fanta (con i ruoli) non arrivano");
     var src = await (await fetch("/js/games/asta.js?" + Date.now())).text(), F = {}, ag = "  function costruisciMazzoFanta(n) {";
     if (src.indexOf(ag) < 0) no("non trovo il mazzo del fanta nel file del gioco");
-    src = src.replace(ag, "FUORI.cl = classificaFanta; FUORI.rf = ruoloFine; FUORI.dif = difesaFallo; FUORI.lista = listaMomenti; FUORI.taglio = taglioGiornata; FUORI.veloce = sceltaVeloce; FUORI.azione = azioneDi; FUORI.scena = scena; FUORI.cart = cartelliniDi; FUORI.MIN = [MIN_AZIONI, MIN_VELOCE];" + ag);
+    src = src.replace(ag, "FUORI.cl = classificaFanta; FUORI.rf = ruoloFine; FUORI.dif = difesaFallo; FUORI.lista = listaMomenti; FUORI.taglio = taglioGiornata; FUORI.veloce = sceltaVeloce; FUORI.azione = azioneDi; FUORI.scena = scena; FUORI.cart = cartelliniDi; FUORI.MIN = [MIN_AZIONI, MIN_VELOCE, typeof MIN_OFF !== \"undefined\" ? MIN_OFF : 2];" + ag);
     new w.Function("SG", "FUORI", src)({ registra: function () {}, bot: w.SG && w.SG.bot }, F);
     F.w = w; return F;
   }
@@ -55,7 +57,7 @@
           var rf = F.rf(c), d = F.dif(P, e, rf);
           if (d) { dif[rf] = (dif[rf] || 0) + 1; totDif++; }
           var av = rf === "A" || rf === "W" || rf === "T";
-          if (av && e.t !== "rec" && !/^(pressing|proteste|simula|reazione)$/.test(e.come || "")) ko.push(key(c) + " (" + rf + ") " + e.t + " " + (e.come || "entrata"));
+          if (av && e.t !== "rec" && !/^(pressing|proteste|simula|reazione|spintoni|maglia|gomitata)$/.test(e.come || ""))   /* (26 nov 2026: dal 22 nov, gruppi 1 e 3, metà delle reazioni si vedono come «spintoni», il giallo dopo il gol come «maglia» e il duello aereo in area, «gomitata», è di difensori e punte: non sono scene da difensore) */ ko.push(key(c) + " (" + rf + ") " + e.t + " " + (e.come || "entrata"));
           if (av && e.t !== "rec" && d) ko.push(key(c) + " (" + rf + ") cartellino in difesa");
           if (e.come === "pressing") { if (e.t === "rec") presRec++; else presAmm++; }
           if (e.t === "amm") { var k = key(c); gPer[k] = gPer[k] || [0, 0, F.cart(c)[0]]; gPer[k][0]++; }
@@ -82,29 +84,36 @@
   } });
 
   COPIONE.aggiungi("mz1", { nome: "Mini Asta, il minimo di azioni: in 2, 8 e 12, giornata sola e 3 giornate, nessuno sotto il minimo (nei dati e dopo i tagli)", fai: async function () {
-    var F = await motore(), w = F.w, x = [], MIN = F.MIN[0], MINV = F.MIN[1];   // (azioni nel primo tempo: le azioni non stanno tutte alla fine; dal 75' ce ne sono tante anche prima, per la Zona Cesarini)
+    var F = await motore(), w = F.w, x = [], MIN = F.MIN[0], MINV = F.MIN[1], MOFF = F.MIN[2] || 2, OFF = { A: 1, C: 1 };   // (azioni nel primo tempo: le azioni non stanno tutte alla fine; dal 75' ce ne sono tante anche prima, per la Zona Cesarini)
     [[2, 1], [8, 1], [12, 1], [2, 3], [8, 3], [12, 3]].forEach(function (cfg) {
-      var n = cfg[0], gio = cfg[1], sotto = 0, sottoV = 0, tot = 0, primoT = 0, tutte = 0, minimo = 99;
+      var n = cfg[0], gio = cfg[1], sotto = 0, sottoV = 0, tot = 0, primoT = 0, tutte = 0, minimo = 99, offK = 0, offV = 0, uno = 0, unoV = 0;
       for (var i = 0; i < 300; i++) {
         var g = rose(w, n), SA = {}, r = F.cl(g, SA, gio, null), giornate = gio === 3 ? [SA.prima[0], SA.prima[1], SA] : [SA];
         giornate.forEach(function (A, gi) {
-          var veloce = gio === 3 && gi < 2, min = veloce ? MINV : MIN;
+          var veloce = gio === 3 && gi < 2, min = veloce ? MINV : MIN, minO = veloce ? MINV : MOFF;
           r.forEach(function (x) {
-            var mie = x.kit.map(key), c = 0;
-            A.partite.forEach(function (P) { P.ev.forEach(function (e) { if (mie.some(function (k) { return F.azione(e, k); })) { c++; tutte++; if (e.m < 45) primoT++; } }); });
+            var mie = x.kit.map(key), c = 0, o = 0, chi = {};
+            A.partite.forEach(function (P) { P.ev.forEach(function (e) {
+              var t = false, oo = false; x.kit.forEach(function (cc, i) { if (F.azione(e, mie[i])) { t = true; if (OFF[cc.ruolo]) { oo = true; chi[mie[i]] = 1; } } });
+              if (t) { c++; tutte++; if (e.m < 45) primoT++; } if (oo) o++;
+            }); });
             tot++; if (c < min) sotto++; if (!veloce && c < minimo) minimo = c;
+            if (o < minO) offK++; if (!veloce && Object.keys(chi).length < 2) uno++;
           });
           var lista = F.lista(A, r, function (x) { return veloce ? x.prima[gi] : x.gio; }, veloce);
           if (veloce) F.veloce(lista); else F.taglio(lista);
-          var cnt = {}; lista.forEach(function (y) { if (!y.focus || y.via || y.lampo || !y.e) return; var v = {}; (y.chi || []).forEach(function (q) { if (!v[q.r.id] && F.azione(y.e, key(q.c))) { v[q.r.id] = 1; cnt[q.r.id] = (cnt[q.r.id] || 0) + 1; } }); });
-          r.forEach(function (x) { if ((cnt[x.id] || 0) < min) sottoV++; });
+          var cnt = {}, cntO = {}, chiV = {}; lista.forEach(function (y) { if (!y.focus || y.via || y.lampo || !y.e) return; var v = {}; (y.chi || []).forEach(function (q) { var k = key(q.c), id = q.r.id; if (!F.azione(y.e, k)) return; if (!v[id]) { v[id] = 1; cnt[id] = (cnt[id] || 0) + 1; } if (OFF[q.c.ruolo]) { if (!v[id + "o"]) { v[id + "o"] = 1; cntO[id] = (cntO[id] || 0) + 1; } (chiV[id] = chiV[id] || {})[k] = 1; } }); });
+          r.forEach(function (x) { if ((cnt[x.id] || 0) < min) sottoV++; if ((cntO[x.id] || 0) < minO) offV++; if (!veloce && Object.keys(chiV[x.id] || {}).length < 2) unoV++; });
         });
       }
       var dove = n + " giocatori, " + (gio === 3 ? "3 giornate" : "giornata sola") + ": ";
       if (sotto) no(dove + sotto + " volte qualcuno sotto il minimo nei dati");
       if (sottoV) no(dove + sottoV + " volte qualcuno sotto il minimo dopo i tagli");
+      if (offK) no(dove + offK + " volte qualcuno sotto il minimo d'attacco nei dati");
+      if (offV) no(dove + offV + " volte qualcuno sotto il minimo d'attacco dopo i tagli");
+      if (uno || unoV) no(dove + (uno + unoV) + " volte le azioni d'attacco di un giocatore solo (" + uno + " nei dati, " + unoV + " dopo i tagli)");
       if (primoT / tutte < 0.2) no(dove + "poche azioni nel primo tempo (" + (primoT / tutte * 100).toFixed(0) + "%): stanno tutte alla fine");
-      x.push(dove + "minimo " + minimo + " nelle giornate intere, " + (primoT / tutte * 100).toFixed(0) + "% delle azioni nel primo tempo");
+      x.push(dove + "minimo " + minimo + " nelle giornate intere (d'attacco almeno " + MOFF + ", di due giocatori), " + (primoT / tutte * 100).toFixed(0) + "% delle azioni nel primo tempo");
     });
     return x.join(" · ");
   } });
