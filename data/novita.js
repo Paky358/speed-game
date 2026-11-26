@@ -9,6 +9,39 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 447,
+    data: "27 novembre 2026",
+    titolo: "Black Jack e Linea del tempo hanno la copertina nuova 🃏",
+    descrizione: [
+      "🃏 Black Jack: sul tavolo verde l'asso di picche e il re di cuori, la mano perfetta, con il «21» d'oro sopra.",
+      "⏳ Linea del tempo: le carte in fila con l'anno (1492, 1879, 1969) e il biplano «????» che scende al suo posto. Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
+    v: 446,
+    data: "27 novembre 2026",
+    titolo: "Scarabocchio ha la copertina nuova ✏️",
+    descrizione: [
+      "✏️ Nella prima schermata Scarabocchio ha un'immagine nuova: un gatto disegnato male sulla lavagna e la chat degli amici che provano a indovinare, «volpe», «cane»… «GATTO!». Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
+    v: 445,
+    data: "26 novembre 2026",
+    titolo: "L'Asta ha la copertina nuova 🔨",
+    descrizione: [
+      "🔨 Nella prima schermata L'Asta ha un'immagine nuova: il martelletto che batte e le carte del round delle armi contro gli zombie, dalla katana «AGGIUDICATO!» per 6 crediti fino alla ciabatta infradito. Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
+    v: 444,
+    data: "26 novembre 2026",
+    titolo: "Parola d'ordine ha la copertina nuova 🔵",
+    descrizione: [
+      "🔵 Nella prima schermata Parola d'ordine ha un'immagine nuova: le carte del gioco con le parole e l'indizio dei Blu, «MARE 2», che porta alle due parole girate, ONDA e PORTO. Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
     v: 443,
     data: "26 novembre 2026",
     titolo: "Calcio Biliardo a squadre: 2 contro 2 ⚽",
