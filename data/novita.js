@@ -9,12 +9,21 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 433,
+    v: 434,
     data: "26 novembre 2026",
     titolo: "Mini Asta: rilanci più lisci ⚡",
     descrizione: [
       "⏱️ Se entri da ospite, quando tocchi per rilanciare la barra del tempo riparte subito, come per chi tiene la partita. Prima ripartiva solo quando arrivava la conferma: scendeva ancora un attimo e poi saltava su.",
       "⚡ I rilanci vanno più lisci su tutti i telefoni: la barra del tempo riparte senza far ricalcolare tutta la pagina, e i campetti delle squadre non si risistemano più da capo a ogni offerta (in tanti, dove la pagina delle squadre cambia a quasi ogni rilancio, era il lavoro più pesante)."
+    ]
+  },
+  {
+    v: 433,
+    data: "26 novembre 2026",
+    titolo: "Pecora Nera: il doppio delle domande 🐑",
+    descrizione: [
+      "🐑 Pecora Nera ha 406 domande nuove: ora sono quasi 800, e non si ripetono finché non sono uscite tutte.",
+      "😏 Tra le nuove anche quelle per ridere: domande innocenti, ma qualcuno penserà subito a un'altra risposta…"
     ]
   },
   {
