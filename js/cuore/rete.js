@@ -945,7 +945,7 @@
     var rit = R.P.g.ritardatari, dal = rit === "turno" ? "tra poco" : (rit === "mano" ? "dalla prossima mano" : (rit === "subito" ? "già da adesso" : null));
     if (inSaletta) R.eraInSaletta = true;   // (ero in saletta quando è cominciata: i posti erano finiti, non sono arrivato tardi)
     var posti = +R.P.g.postiOnline || 0;
-    var txF = cuore.aDue(R.P.g) ? "👀 Giocano in due: tu guardi" : (dal ? "✋ Partita in corso: giochi " + dal : R.eraInSaletta && posti > 2 ? "👀 Giocano in " + posti + ": tu guardi questa partita" : "👀 Partita in corso: la guardi ed entri alla prossima");
+    var txF = cuore.aDue(R.P.g) && !(+R.P.g.aSquadre > 2) ? "👀 Giocano in due: tu guardi" : (dal ? "✋ Partita in corso: giochi " + dal : R.eraInSaletta && posti > 2 ? "👀 Giocano in " + posti + ": tu guardi questa partita" : "👀 Partita in corso: la guardi ed entri alla prossima");
     // (la pillola resta 5 secondi e poi sparisce: per tutta la partita copriva il titolo e il tasto ‹. 23 nov 2026: in tutti i giochi, prima solo in quelli a due, Scopa C1)
     var mostraP = fuori;
     if (fuori) { if (!R.pillDue) R.pillDue = Date.now(); else if (Date.now() - R.pillDue > (cuore.aDue(R.P.g) ? 4000 : 5000)) mostraP = false; }
