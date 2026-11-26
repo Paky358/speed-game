@@ -9,16 +9,44 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 433,
+    v: 436,
     data: "26 novembre 2026",
     titolo: "SPeeD GAME diventa Revel House 🏠",
     descrizione: [
-      "🏠 L'app ha un nome nuovo, Revel House, e una faccia nuova: la casetta blu notte con la porta accesa, dove dentro c'è la festa.",
+      "🏠 L'app ha un nome nuovo, Revel House, e una faccia nuova: la casa accesa nella notte, dove dentro c'è la festa.",
       "🌐 Abita su revelhouse.it. Se apri la vecchia app SPeeD GAME ti porta lì da sola, col tuo profilo e tutte le tue cose: non devi scrivere la password né rifare niente. I link di ieri sera (Sale, Compagnie, inviti) funzionano ancora.",
       "📲 Poi rimetti l'app sul telefono da revelhouse.it e togli quella vecchia. Su iPhone l'app nuova si apre vuota: tocca «📦 Ho un codice di trasloco» e scrivi il codice che ti ha dato Revel House.",
       "🔑 Nel profilo c'è «📲 Porta il profilo su un altro telefono»: un codice che vale 2 ore per entrare senza password su un altro telefono.",
-      "💬 Gli inviti su WhatsApp mostrano la casetta e «Revel House · giochi per le serate».",
+      "💬 Gli inviti su WhatsApp mostrano la casa accesa e «Revel House · giochi per le serate».",
       "🛠️ Gara di pesca e Battaglia Navale si prendono una pausa: tornano quando saranno sistemate per bene."
+    ]
+  },
+  {
+    v: 435,
+    data: "26 novembre 2026",
+    titolo: "Mini Asta: rilanci più lisci ⚡",
+    descrizione: [
+      "⏱️ Se entri da ospite, quando tocchi per rilanciare la barra del tempo riparte subito, come per chi tiene la partita. Prima ripartiva solo quando arrivava la conferma: scendeva ancora un attimo e poi saltava su.",
+      "⚡ I rilanci vanno più lisci su tutti i telefoni: la barra del tempo riparte senza far ricalcolare tutta la pagina, e i campetti delle squadre non si risistemano più da capo a ogni offerta (in tanti, dove la pagina delle squadre cambia a quasi ogni rilancio, era il lavoro più pesante)."
+    ]
+  },
+  {
+    v: 434,
+    data: "26 novembre 2026",
+    titolo: "Trofei: basta file di avvisi 🏆",
+    descrizione: [
+      "🏆 Quando prendete tanti trofei insieme (succede spesso con la Mini Asta) vedete solo i 3 più importanti, prima quelli di livello più alto.",
+      "➕ Poi un avviso solo, «Hai sbloccato altri trofei», col numero grande di quelli in più (per esempio +7). Toccandolo fuori dalle partite si apre la pagina dei trofei.",
+      "🎁 I premi in XP e Speed Coins arrivano lo stesso per tutti i trofei. Vale in tutti i giochi."
+    ]
+  },
+  {
+    v: 433,
+    data: "26 novembre 2026",
+    titolo: "Pecora Nera: il doppio delle domande 🐑",
+    descrizione: [
+      "🐑 Pecora Nera ha 406 domande nuove: ora sono quasi 800, e non si ripetono finché non sono uscite tutte.",
+      "😏 Tra le nuove anche quelle per ridere: domande innocenti, ma qualcuno penserà subito a un'altra risposta…"
     ]
   },
   {

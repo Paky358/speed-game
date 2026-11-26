@@ -26,7 +26,7 @@
   function visibile(e) { return !!e && e.getClientRects().length > 0; }
   function bott(w, sel, re) { return qa(w, sel).filter(function (b) { return re.test(b.textContent.replace(/\s+/g, " ")) && visibile(b); })[0] || null; }
   function prezzo(w) { var b = q(w, ".sa-prezzo b, .st-prezzo b"); return b ? parseInt(b.textContent, 10) : null; }
-  function chi(w) { var s = q(w, ".sa-prezzo span, .st-prezzo span"); return s ? s.textContent : ""; }
+  function chi(w) { var s = q(w, ".sa-prezzo > span, .st-prezzo > span"); return s ? s.textContent : ""; }   // (26 nov 2026: solo il figlio diretto: dentro il prezzo c'è il sacchetto 💰, dal 10 nov)
   function idDi(nome) { return nome === "Paky" ? "host" : A.mioId(nome); }
   function gioc(C, nome) { return (vm(C).giocatori || []).filter(function (g) { return g.nome === nome; })[0] || null; }
   function senzaErrori() { var e = W.erroriTel(); if (e.length) no("errori: " + e.slice(0, 3).join(" | ")); }
