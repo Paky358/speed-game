@@ -1,9 +1,9 @@
-/* La pagina della Mini Asta (scritta a parte: il titolo con «fantacalcio» lo sceglie il proprietario, vedi TITOLI_MINIASTA in fai-pagine.js) */
+/* La pagina della Mini Asta (scritta a parte: titolo B scelto dal proprietario il 27 nov 2026; la pagina resta in attesa dei nomi, IN_ATTESA in fai-pagine.js) */
 module.exports = {
   astafanta: {
-    titolo: "Asta del fanta online con gli amici",
+    titolo: "Mini Asta: l'asta del fanta con gli amici, poi la giornata",
     descr: "Un'asta veloce con gli amici: 20 crediti, 5 calciatori veri di Serie A a testa, poi si gioca la giornata e vince chi fa più fantapunti. Gratis dal telefono.",
-    h1: "Mini Asta Fantacalcio: l'asta con gli amici, poi la giornata",
+    h1: "Mini Asta: l'asta del fanta con gli amici, poi la giornata",
     intro: "Tutto il bello dell'asta di settembre, senza aspettare la domenica: vi sfidate a colpi di rilanci sui calciatori veri di Serie A, poi la giornata si gioca subito, davanti a voi, e i fantapunti arrivano in diretta.",
     sezioni: [
       { t: "Come funziona l'asta", p: ["Ognuno ha 20 crediti per comprare una rosa da 5: un portiere, un difensore, due centrocampisti e un attaccante. I calciatori escono a caso uno alla volta e partono da 1 credito; si rilancia di +1, +2 o +5 e, quando scade il tempo, chi ha offerto di più se lo prende. Accanto al nome vedi se è il rigorista della sua squadra o se batte punizioni e angoli.", "Chi è già in testa può rialzare da solo: è strategia, serve a lasciare gli altri senza crediti. E se preferite il brivido del segreto, c'è anche l'asta a buste chiuse, che si aprono una alla volta in ordine a caso."] },
