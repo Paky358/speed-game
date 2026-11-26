@@ -19,6 +19,15 @@ window.SG_NOVITA = [
     ]
   },
   {
+    v: 433,
+    data: "26 novembre 2026",
+    titolo: "Pecora Nera: il doppio delle domande 🐑",
+    descrizione: [
+      "🐑 Pecora Nera ha 406 domande nuove: ora sono quasi 800, e non si ripetono finché non sono uscite tutte.",
+      "😏 Tra le nuove anche quelle per ridere: domande innocenti, ma qualcuno penserà subito a un'altra risposta…"
+    ]
+  },
+  {
     v: 432,
     data: "26 novembre 2026",
     titolo: "Gioco nuovo: Pecora Nera 🐑",
