@@ -38,7 +38,7 @@
   }
 
   function schermataCaricamento() {
-    var s = schermata({ icona: "⚡", titolo: "SPeeD GAME", sotto: "Un attimo…" });
+    var s = schermata({ icona: "⚡", titolo: "Revel House", sotto: "Un attimo…" });
     s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Sto caricando il tuo profilo…" }));
     mostra(s);
   }
@@ -259,11 +259,11 @@
     b.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); fai(); } });
   }
 
-  // PRIMA VOLTA: "Benvenuto in SPeeD GAME!" → nome (col 🎲) + password → l'avatar → dove si doveva andare
+  // PRIMA VOLTA: "Benvenuto in Revel House!" → nome (col 🎲) + password → l'avatar → dove si doveva andare
   function schermataBenvenuto(dopo, o) {
     o = o || {};
     var s = schermataProfiloBase(), c = s._contenuto;
-    c.appendChild(testaProfilo("Benvenuto in SPeeD GAME!", "Crea il tuo profilo: scegli un nome, una password e poi il tuo avatar."));
+    c.appendChild(testaProfilo("Benvenuto in Revel House!", "Crea il tuo profilo: scegli un nome, una password e poi il tuo avatar."));
     if (o.invito) c.appendChild(el("div", { class: "bp-invito", text: o.invito }));
     var ant = el("div", { class: "sl-anteprima bp-anteprima", "aria-hidden": "true" });   // l'avatar che avrai (nasce dal nome: col 🎲 cambiano tutti e due)
     var nome = el("input", { class: "link-campo", type: "text", maxlength: "16", placeholder: "Come ti chiami?", autocomplete: "username", autocapitalize: "words", enterkeyhint: "next" });

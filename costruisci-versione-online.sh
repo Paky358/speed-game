@@ -117,15 +117,8 @@ HN=$(impronta data/novita.js); cp data/novita.js "dist/novita.$HN.js"
   echo '<meta charset="utf-8">'
   echo '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, interactive-widget=resizes-content">'
   echo '<meta name="theme-color" content="#0d1020">'
-  echo '<title>SPeeD GAME</title>'
-  # app installabile: icona sulla Home e niente barra dell'indirizzo
-  echo '<link rel="manifest" href="app/manifest.webmanifest?v=2">'
-  echo '<link rel="icon" type="image/png" href="app/icona-192.png">'
-  echo '<link rel="apple-touch-icon" href="app/icona-192.png">'
-  echo '<meta name="apple-mobile-web-app-capable" content="yes">'
-  echo '<meta name="mobile-web-app-capable" content="yes">'
-  echo '<meta name="apple-mobile-web-app-status-bar-style" content="black">'
-  echo '<meta name="apple-mobile-web-app-title" content="SPeeD GAME">'
+  # 🏠 Revel House (26 nov 2026): titolo, icone, anteprima dei link (WhatsApp…) e schermate di avvio dell iPhone stanno in app/testa.html (le stesse righe di index.html)
+  tr -d '\r' < app/testa.html
   echo '<script>if ("serviceWorker" in navigator) addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });</script>'
   echo "<link rel=\"stylesheet\" href=\"stile.$HS.css\">"
   echo '<div id="app"></div>'

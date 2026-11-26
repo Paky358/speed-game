@@ -27,7 +27,7 @@
   var BONUS = 200;            // 💯 tutti 😂
   var MAX_TESTO = 90;
   var MEM_USCITE = "sg-memata-uscite", MEM_ROTTE = "sg-memata-rotte", MEM_BOZZA = "sg-memata-bozza";
-  var SITO = "paky358.github.io/speed-game";
+  var SITO = "revelhouse.it";
   var FONT_A = "'Memata Anton', Impact, 'Arial Narrow', sans-serif";
   var FONT_B = "Arial, 'Helvetica Neue', Helvetica, sans-serif";
 
@@ -227,7 +227,7 @@
         x.fillStyle = "#f4f5fb"; x.font = "800 34px " + F; x.fillText("di " + nome, W / 2, 124);
         var X = (W - mw) / 2, Y = 160;
         disegnaMeme(x, img, m.rec, m.testi, X, Y, mw, mh);
-        x.textAlign = "center"; x.fillStyle = "rgba(255,255,255,.92)"; x.font = "900 34px " + F; x.fillText("😂 Memata · SPeeD GAME", W / 2, H - 92);
+        x.textAlign = "center"; x.fillStyle = "rgba(255,255,255,.92)"; x.font = "900 34px " + F; x.fillText("😂 Memata · Revel House", W / 2, H - 92);
         x.fillStyle = "rgba(166,172,200,.95)"; x.font = "700 24px " + F; x.fillText("Giocate con noi: " + SITO + " · modello da imgflip.com", W / 2, H - 50);
         if (window.__MEMATA) window.__MEMATA.foto = cv;   // (per le prove)
         condividi(cv, "memata.png", "Il meme della serata 😂");

@@ -2336,7 +2336,7 @@
       (fg.titoli || []).slice(0, 3).forEach(function (ti) { c.fillStyle = "#ffcf3f"; c.font = "800 32px system-ui, sans-serif"; c.fillText(ti, 360, y); y += 46; });
       if (fg.verdetto) y = testo("Per gli amici: «" + fg.verdetto + "»", y + 6, "italic 700 28px system-ui, sans-serif", "#ffffff");
       else if (fg.battuta) y = testo("«" + fg.battuta + "»", y + 6, "italic 700 28px system-ui, sans-serif", "#ffffff");
-      c.fillStyle = "#8fa0d8"; c.font = "700 24px system-ui, sans-serif"; c.fillText("Chi di Noi? · SPeeD GAME", 360, 1030);
+      c.fillStyle = "#8fa0d8"; c.font = "700 24px system-ui, sans-serif"; c.fillText("Chi di Noi? · Revel House", 360, 1030);
       mostraFig();
     }
     // il ritratto: quello trasformato dal finale (se c'è), se no il mio avatar

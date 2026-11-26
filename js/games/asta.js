@@ -3103,7 +3103,7 @@
       tondo(w * 0.05, w * 0.05, w * 0.9, h - w * 0.1, w * 0.05); cx.strokeStyle = "#ffc247"; cx.lineWidth = Math.max(1.5, w * 0.018); cx.stroke();
       cx.beginPath(); cx.arc(w / 2, h / 2, w * 0.24, 0, Math.PI * 2); cx.fillStyle = "#ffc247"; cx.fill(); cx.lineWidth = w * 0.02; cx.strokeStyle = "#fff4c4"; cx.stroke();
       cx.font = "900 " + Math.round(w * 0.3) + "px system-ui,sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillStyle = "#16161a"; cx.fillText("?", w / 2, h / 2 + w * 0.015);
-      cx.font = "900 " + Math.round(w * 0.08) + "px system-ui,sans-serif"; cx.fillStyle = "#ffc247"; cx.fillText("SPeeD", w / 2, h * 0.84);
+      cx.font = "900 " + Math.round(w * 0.08) + "px system-ui,sans-serif"; cx.fillStyle = "#ffc247"; cx.fillText("REVEL", w / 2, h * 0.84);
       DORSO = cv.toDataURL("image/png");
     } catch (e) { DORSO = ""; }
     return DORSO;
@@ -10346,7 +10346,7 @@
   //  Le maglie si disegnano a mano coi colori della squadra (niente immagini esterne: la foto si può sempre salvare).
   //  Sul telefono si apre la condivisione (WhatsApp…); se non c'è, l'immagine si scarica.
   // =========================================================
-  var SITO = "paky358.github.io/speed-game";
+  var SITO = "revelhouse.it";
   function tela(w, h) { var c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
   function rett(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
   function testoCorto(ctx, s, max) { s = String(s || ""); if (ctx.measureText(s).width <= max) return s; while (s.length > 1 && ctx.measureText(s + "…").width > max) s = s.slice(0, -1); return s + "…"; }
@@ -10360,7 +10360,7 @@
     ctx.restore();
   }
   function pieTela(ctx, W, H) {
-    ctx.textAlign = "center"; ctx.fillStyle = "rgba(255,255,255,.9)"; ctx.font = "900 34px " + FONT; ctx.fillText("🔨 L'Asta · SPeeD GAME", W / 2, H - 70);
+    ctx.textAlign = "center"; ctx.fillStyle = "rgba(255,255,255,.9)"; ctx.font = "900 34px " + FONT; ctx.fillText("🔨 L'Asta · Revel House", W / 2, H - 70);
     ctx.fillStyle = "rgba(255,255,255,.6)"; ctx.font = "700 26px " + FONT; ctx.fillText("Giocate con noi: " + SITO, W / 2, H - 32);
   }
   // un campetto con la rosa (x, y, w: la larghezza; l'altezza è w × 25/36)

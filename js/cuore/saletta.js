@@ -39,7 +39,7 @@
   function chiavePers(p, i) { return String(p.id != null ? p.id : (p.nome || i)); }
   function condividiLink(link, g, bottone) {
     var fatto = function () { if (!bottone) return; var t0 = bottone.innerHTML; bottone.innerHTML = "✅ Link copiato!"; setTimeout(function () { bottone.innerHTML = t0; }, 1800); };
-    var invito = g.id === "__sala" ? (g.nome === "Torneo" ? "Vieni al torneo!" : "Vieni a giocare con noi!") : "Giochiamo a " + g.nome + "!";
+    var invito = g.id === "__sala" ? (g.nome === "Torneo" ? "Vieni al torneo su Revel House!" : "Vieni a giocare con noi su Revel House!") : "Giochiamo a " + g.nome + " su Revel House!";   // (🏠 26 nov 2026: il nome dell app nell invito)
     // il codice nel messaggio: chi ha già l'app la apre e lo scrive in "🔑 Ho un codice" (il link a volte si apre nel browser, non nell'app)
     var m = /(?:stanza|sala|gruppo)=([A-Za-z0-9]+)/.exec(link || ""), codice = m ? m[1].toUpperCase() : "";
     var diSala = /[#&?]sala=/.test(link || "") && g.nome !== "Torneo" && cuore.salaSempre();

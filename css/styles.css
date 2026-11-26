@@ -3513,11 +3513,11 @@ html body.tema-oro::before{ display:none; }
 .oro .btn-primario{ box-shadow:inset 0 1px 0 rgba(255,255,255,.28), 0 10px 26px -8px rgba(229,36,95,.6); }
 .oro .btn-primario .emo{ --emo-tinta:currentColor; }
 
-/* ---- il nome: «SPeeD» bianco e «GAME» dal lampone all'arancio ---- */
+/* ---- il nome: «Revel» bianco e «House» lampone, con l'icona davanti (🏠 26 nov 2026, come il logo) ---- */
 .oro .home-titolo{ font-family:var(--o-tit); font-weight:800; font-size:2.3rem; letter-spacing:-.025em; line-height:1.05; margin-top:4px;
   color:var(--o-testo); -webkit-text-fill-color:var(--o-testo); }
-.oro .home-titolo b{ font-weight:800; background:linear-gradient(90deg,#ff4f86,#ff9a4a); -webkit-background-clip:text; background-clip:text;
-  -webkit-text-fill-color:transparent; color:transparent; }
+.oro .home-titolo b{ font-weight:800; background:none; color:#ff4f86; -webkit-text-fill-color:#ff4f86; }
+.home-titolo .home-icona{ display:inline-block; width:1.15em; height:1.15em; vertical-align:-.2em; margin-right:.32em; border-radius:.26em; box-shadow:0 4px 12px rgba(0,0,0,.35); }
 .oro .home-titolo::after{ font-family:var(--o-tit); font-size:.66rem; font-weight:600; letter-spacing:.34em; margin-top:5px; background:none;
   -webkit-text-fill-color:var(--o-tenue); color:var(--o-tenue); }
 .oro.home .contenuto{ gap:14px; justify-content:flex-start; }
