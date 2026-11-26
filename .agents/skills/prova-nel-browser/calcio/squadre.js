@@ -135,7 +135,7 @@
         ultimo = v.n; tiri.push((v.pass != null ? "⚡" : "") + p.nome);
         // su ogni telefono: può tirare solo chi tocca (aspetto che la foto arrivi a tutti)
         await W.dorme(250);
-        nomi.forEach(function (n) {
+        if (!W.__cqFoto) nomi.forEach(function (n) {
           var w = W.finestra(n); if (!w || !w.__CB || !w.__CB.ui) return;
           var mio = p.nome === n && !p.bot && !p.andato;
           if (!!w.__CB.ui.puoi !== mio && w.__CB.ui.fase === "mira") no(n + (mio ? " non può tirare ma tocca a lui" : " può tirare ma tocca a " + p.nome));
@@ -191,8 +191,8 @@
 
   // ---------- cq3: online in 4, uno guarda, due escono a metà ----------
   aggiungi("cq3", { nome: "Calcio a squadre online in 4: chi esce lascia i tiri al Bot, la squadra senza persone perde", fai: async function () {
-    var P = await tel("Paky", { x: 0 }), C = await apriStanza(P), chi = ["Giulia", "Luca", "Marco", "Bea"];
-    for (var i = 0; i < chi.length; i++) await tel(chi[i], { x: 120 * (i + 1), hash: "gioco=calciobiliardo&stanza=" + C });
+    var P = await tel("Paky", { x: 0, cqimp: { gol: 5 } }), C = await apriStanza(P), chi = ["Giulia", "Luca", "Marco", "Bea"];   // (a 5 gol: escono prima della fine)
+    for (var i = 0; i < chi.length; i++) await tel(chi[i], { x: 120 * (i + 1), hash: "gioco=calciobiliardo&stanza=" + C, cqimp: { gol: 5 } });
     if (!await W.aspetta(function () { return (vm(C).players || []).length === 4 && (vm(C).spett || []).length === 1; }, 10000)) no("in saletta: " + (vm(C).players || []).length + " giocano, " + (vm(C).spett || []).length + " guardano");
     var sq = (vm(C).sq || []).map(function (l) { return l.map(function (p) { return p.nome; }); });
     if (JSON.stringify(sq) !== JSON.stringify([["Paky", "Luca"], ["Giulia", "Marco"]])) no("squadre: " + JSON.stringify(sq));
@@ -266,7 +266,7 @@
     saletta: async function () {
       A.pulisci(); var P = await tel("Paky", { x: 0, cqimp: { gol: 2 } }); F.C = await apriStanza(P);
       var chi = ["Giulia", "Luca", "Marco"];
-      for (var i = 0; i < chi.length; i++) await tel(chi[i], { x: 150 * (i + 1), hash: "gioco=calciobiliardo&stanza=" + F.C, cqimp: { gol: 2 } });
+      for (var i = 0; i < chi.length; i++) await tel(chi[i], { x: 400 * (i + 1), hash: "gioco=calciobiliardo&stanza=" + F.C, cqimp: { gol: 2 } });
       await W.aspetta(function () { return (vm(F.C).players || []).length === 4; }, 10000);
       await W.dorme(1500);
       return [["Paky", "g2-saletta-chi-apre.png", 360, 740], ["Giulia", "g3-saletta-amica.png", 360, 740]];
@@ -281,7 +281,7 @@
     tiro: async function () {
       var v = vm(F.C), p = oraTira(v); if (!p || p.bot) return "tocca a un Bot";
       var w = W.finestra(p.nome), t = tiroDa(w, { x: v.st.x, y: v.st.y }, v.turno, v.solo); w.__CB.ui.cb.onTiro(t.i, t.vx, t.vy);
-      await W.dorme(250);
+      await W.aspetta(function () { return W.finestra("Paky").__CB.ui.anim; }, 4000);
       return [["Paky", "g5-tiro-col-nome.png", 360, 740]];
     },
     // (la scena del passaggio è ricostruita sul telefono di Paky: anello d'oro e scritta, come quando succede davvero)
@@ -293,6 +293,7 @@
       return [["Paky", "g6-passaggio.png", 360, 740]];
     },
     fine: async function () {
+      W.__cqFoto = true;   // (la scena del passaggio è finta: il telefono di Paky resta indietro di una foto)
       await gioca(F.C, ["Paky", "Giulia", "Luca", "Marco"]);
       await W.dorme(1500);
       return [["Paky", "g7-fine-chi-apre.png", 360, 740], ["Giulia", "g8-fine-amica.png", 360, 740]];

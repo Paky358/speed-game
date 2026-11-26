@@ -1944,7 +1944,7 @@
       aGol = chips("Si gioca fino a", [[1, "1 gol"], [3, "3 gol"], [5, "5 gol"]], "gol", 3);
       aTempo = chips("Quanto dura (se è pari, rigori)", [[2, "2 minuti"], [3, "3 minuti"], [5, "5 minuti"]], "minuti", 3);
       aTempo.hidden = true;
-      chips("⚡ Il passaggio (tiri ancora se la palla tocca un'altra tua pedina)", [[true, "Acceso"], [false, "Spento"]], "pass", true);
+      chips("⚡ Il passaggio (tiri ancora se la palla tocca un'altra tua pedina)", [[true, "⚡ Passaggio sì"], [false, "Passaggio no"]], "pass", true);
       var forme = NOMI_FORM.map(function (k) { return [k, nomeForm(k)]; });
       if (dove.modo === "telefono") {   // la prima squadra sta sotto (Lampone), la seconda in alto (Ciano)
         chips("Formazione dei Lampone", forme, "form", "classica", 3);
