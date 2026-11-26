@@ -13,7 +13,7 @@ window.SG_NOVITA = [
     data: "27 novembre 2026",
     titolo: "Scarabocchio ha la copertina nuova ✏️",
     descrizione: [
-      "✏️ Nella prima schermata Scarabocchio ha un'immagine nuova: un gatto disegnato male sulla lavagna e la chat degli amici che provano a indovinare, «volpe?», «cane?»… «GATTO!». Così si capisce subito a cosa si gioca."
+      "✏️ Nella prima schermata Scarabocchio ha un'immagine nuova: un gatto disegnato male sulla lavagna e la chat degli amici che provano a indovinare, «volpe», «cane»… «GATTO!». Così si capisce subito a cosa si gioca."
     ]
   },
   {
