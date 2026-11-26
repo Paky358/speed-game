@@ -9,15 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 445,
+    v: 446,
     data: "27 novembre 2026",
     titolo: "Scarabocchio ha la copertina nuova ✏️",
     descrizione: [
-      "✏️ Nella prima schermata Scarabocchio ha un'immagine nuova: un gatto disegnato male sulla lavagna e la chat degli amici che provano a indovinare, «una volpe?», «un cane?»… «GATTO!». Così si capisce subito a cosa si gioca."
+      "✏️ Nella prima schermata Scarabocchio ha un'immagine nuova: un gatto disegnato male sulla lavagna e la chat degli amici che provano a indovinare, «volpe?», «cane?»… «GATTO!». Così si capisce subito a cosa si gioca."
     ]
   },
   {
-    v: 444,
+    v: 445,
     data: "26 novembre 2026",
     titolo: "L'Asta ha la copertina nuova 🔨",
     descrizione: [
@@ -25,11 +25,25 @@ window.SG_NOVITA = [
     ]
   },
   {
-    v: 443,
+    v: 444,
     data: "26 novembre 2026",
     titolo: "Parola d'ordine ha la copertina nuova 🔵",
     descrizione: [
       "🔵 Nella prima schermata Parola d'ordine ha un'immagine nuova: le carte del gioco con le parole e l'indizio dei Blu, «MARE 2», che porta alle due parole girate, ONDA e PORTO. Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
+    v: 443,
+    data: "26 novembre 2026",
+    titolo: "Calcio Biliardo a squadre: 2 contro 2 ⚽",
+    descrizione: [
+      "👥 Adesso si gioca anche a squadre: 2 contro 2, 2 contro 1, e con i Bot come volete (anche due di voi contro due Bot). Si tira una squadra alla volta: tu, un avversario, il tuo compagno, l'altro avversario.",
+      "🎯 A squadre ognuno ha 6 pedine e tutti possono tirarle tutte. Sopra la pedina che parte compare piccolo il nome di chi ha tirato, e l'attaccante ha la faccia di chi tocca.",
+      "🔀 Le squadre si fanno in un attimo: nella saletta online ognuno cambia squadra con la freccia e chi apre la stanza mette o toglie i Bot; sullo stesso telefono si fa nelle regole, prima di cominciare. Nella Sala, se siete in 3 o 4, la prima scelta è «👥 A squadre».",
+      "⚡ Il passaggio: se dopo il tuo tiro la palla tocca per ultima un'altra pedina della tua squadra, tiri ancora tu, con quella pedina, entro 5 secondi (l'anello d'oro si svuota). Una volta sola per turno. Si spegne nelle regole.",
+      "🏟️ Il campo è uno stadio vero: tribune piene coi colori delle squadre, prato a strisce, aree e dischetto, porte con la rete e i pali bianchi, bandierine e cartelloni luminosi ai lati.",
+      "🎨 Le squadre sono Lampone (sotto) e Ciano (sopra).",
+      "🚪 Online, se uno esce a metà partita i suoi tiri li fa il Bot; se una squadra resta senza persone, vince l'altra."
     ]
   },
   {

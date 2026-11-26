@@ -1122,7 +1122,7 @@
   // l'etichetta di un gioco nell'elenco della Sala, dai suoi posti online e da quanti siamo: { t: testo, c: classe in più }
   function etichettaPosti(g, quanti) {
     var posti = postiDi(g), min = minDi(g, "online");
-    if (aDue(g)) return { t: "⚔️ In 2: gli altri guardano" };
+    if (aDue(g)) return { t: +g.aSquadre > 2 ? "⚔️ In 2, o a squadre fino a " + g.aSquadre : "⚔️ In 2: gli altri guardano" };   // (a squadre: Calcio Biliardo)
     if (min > quanti) return { t: "Servono almeno " + min, c: "pochi" };   // (si può sceglierlo lo stesso: gli amici possono arrivare)
     if (posti < quanti) return { t: "Max " + posti + ": gioca chi scegli", c: "posti" };
     return { t: "Fino a " + posti, c: "tutti" };

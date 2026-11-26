@@ -494,7 +494,7 @@
     // 🏛️ coi gettoni (15 nov 2026): in pochi il palco non resta vuoto, ci sono posti liberi col «+» fino a 4 (toccandoli si invita),
     // mai più di quanti ne può avere il gioco; solo dove c'è «Invita gli amici»
     if (gettoniSl() && U.link && !o.spettatore) {
-      var gO = U.gObj || {}, maxP = gO.postiOnline || gO.giocatoriMax || 99;
+      var gO = U.gObj || {}, maxP = Math.max(gO.postiOnline || gO.giocatoriMax || 99, +gO.aSquadre || 0);   // (a squadre: fino a 4)
       vuoti = Math.max(vuoti, Math.min(4, maxP) - n - attesi.length);
     }
     gio.forEach(function (p, i) {

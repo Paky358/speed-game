@@ -196,7 +196,7 @@
           if (v.turno === 1) W.reteDi("Luca").invia({ t: "tiro", i: sc.i, vx: vx, vy: vy });
           else {
             var cv = w.document.querySelector(".cb-scena canvas") || w.document.querySelector("canvas");
-            var sce = cv.parentNode, cw = sce.clientWidth, ch = sce.clientHeight, S = Math.min((cw - 20) / 1, (ch - 2 * 62) / (1.55 + 2 * 0.07));
+            var sce = cv.parentNode, cw = sce.clientWidth, ch = sce.clientHeight, S = Math.min((cw - 26) / 1.07, (ch - 2 * 62) / (1.55 + 2 * 0.07));   // (26 nov 2026: col prato e i cartelloni ai lati)
             var ox = (cw - S) / 2, oy = (ch - S * 1.55) / 2, r = cv.getBoundingClientRect();
             var x0 = ox + s.x[sc.i] * S, y0 = oy + s.y[sc.i] * S, fx = -Math.cos(sc.a), fy = -Math.sin(sc.a), posto = Infinity;
             if (fx > 0.01) posto = Math.min(posto, (cw - x0) / fx); else if (fx < -0.01) posto = Math.min(posto, x0 / -fx);

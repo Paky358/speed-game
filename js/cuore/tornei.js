@@ -658,7 +658,7 @@
       if (g.soloOnline) return;
       if ((g.giocatoriMax || 10) < n || (g.giocatoriMin || 1) > n) { tolti++; return; }
       // (i giochi a due, postiOnline: 2: nel torneo si fa una partita sola, es. il Tris "chi vince resta" vale solo fuori dal torneo)
-      if (g.postiOnline && g.postiOnline < n) { tolti++; return; }
+      if (g.postiOnline && Math.max(g.postiOnline, +g.aSquadre || 0) < n) { tolti++; return; }   // (a squadre: Calcio Biliardo fino a 4)
       var tess = tesseraGioco(g, function () { schermataPreGioco(g, { torneo: true }); }, true);
       tess.querySelector(".info").appendChild(rigaPuntiTorneo(g));
       griglia.appendChild(tess);
