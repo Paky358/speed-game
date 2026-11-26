@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 27 nov 2026 01:30 · 🖼️ Copertine · PUBBLICATO (il proprietario: «Sì, pubblica») · v447 copertine nuove di Black Jack (asso e re disegnati da noi sulle carte bianche di Gemini, «21» d'oro, luci viola) e Linea del tempo (anni 1492, 1879, 1969 e «????» sul biplano messi da noi); lavoro in D:/SG-copertine · lavori-in-corso e master
 - 27 nov 2026 00:40 · 🖼️ Copertine · PUBBLICATO (il proprietario: «pubblica tutte le immagini nuove») · v446 copertina nuova di Scarabocchio (carte/giochi/scarabocchio.jpg: lavagna col gatto storto e chat fatti con Gemini + «volpe», «cane», «GATTO!» messi da noi; lavoro e prompt in D:/SG-copertine/scarabocchio) · lavori-in-corso
 - 27 nov 2026 00:10 · 🖼️ Copertine · PUBBLICATO · v445 copertina nuova dell'Asta coi temi (carte/giochi/asta.jpg: martelletto e 4 armi del round zombie fatti con Gemini + timbro «AGGIUDICATO!» e prezzo 6 messi da noi; lavoro e prompt in D:/SG-copertine/asta) · lavori-in-corso
 - 26 nov 2026 23:40 · 🖼️ Copertine · PUBBLICATO · v444 copertina nuova di Parola d'ordine (carte/giochi/ordine.jpg: carte del gioco viste dall'alto fatte con Gemini + parole messe da noi, indizio dei Blu «MARE 2» → ONDA e PORTO girate azzurre; lavoro e prompt in D:/SG-copertine/ordine) · lavori-in-corso

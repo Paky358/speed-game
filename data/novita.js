@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 447,
+    data: "27 novembre 2026",
+    titolo: "Black Jack e Linea del tempo hanno la copertina nuova 🃏",
+    descrizione: [
+      "🃏 Black Jack: sul tavolo verde l'asso di picche e il re di cuori, la mano perfetta, con il «21» d'oro sopra.",
+      "⏳ Linea del tempo: le carte in fila con l'anno (1492, 1879, 1969) e il biplano «????» che scende al suo posto. Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
     v: 446,
     data: "27 novembre 2026",
     titolo: "Scarabocchio ha la copertina nuova ✏️",
