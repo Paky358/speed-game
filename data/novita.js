@@ -9,13 +9,33 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 437,
+    v: 439,
     data: "26 novembre 2026",
     titolo: "Privacy, regole e crediti 📜",
     descrizione: [
       "📜 In fondo alla home e nel Profilo c'è la riga «Privacy · Regole d'uso · Crediti»: tre pagine scritte semplici su cosa salviamo, come si gioca insieme e chi ha fatto foto, emoji, caratteri e suoni.",
       "🗑️ Nel Profilo c'è «Cancella il mio profilo»: chiede conferma e la password, poi cancella per sempre profilo, scheda pubblica e richieste di amicizia, e il telefono dimentica quello che ricordava.",
       "📸 Nei Crediti le oltre 3.000 foto dei giochi hanno autore e licenza, con la ricerca per trovarle."
+    ]
+  },
+  {
+    v: 438,
+    data: "26 novembre 2026",
+    titolo: "Mini Asta: la formazione in ordine nei campetti 🧩",
+    descrizione: [
+      "🧩 Nei campetti delle squadre all'asta la formazione è sempre in ordine, a rombo: attaccante, i due centrocampisti, il difensore e il portiere, tutti alla stessa distanza. Il difensore sta sempre al centro, davanti al portiere: niente più difensore tutto a destra o a sinistra, e niente più centrocampisti larghi come ali.",
+      "📸 La stessa formazione anche nel foglio «👕 Tutte» e nella foto delle rose da mandare su WhatsApp.",
+      "💰 Quanto hai pagato un calciatore ora si legge sulla spalla della maglia, così non copre il numero."
+    ]
+  },
+  {
+    v: 437,
+    data: "26 novembre 2026",
+    titolo: "Mini Asta: vedi sempre il tuo attacco ⚽",
+    descrizione: [
+      "⚽ Nella giornata vedi sempre almeno 2 azioni del tuo attaccante e dei tuoi centrocampisti, di due giocatori diversi: niente più giornate con solo le parate del portiere. Anche se l'azione va male, almeno ti gasi (o insulti il tuo giocatore).",
+      "⚡ Nelle giornate veloci delle «3 giornate», se manca, l'azione che vedi è di un attaccante o di un centrocampista.",
+      "⏱️ La giornata dura come prima, e punti e gol restano quelli di sempre."
     ]
   },
   {
