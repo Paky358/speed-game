@@ -492,5 +492,6 @@
       return db.collection("profili").doc(utente.uid).update(patch).catch(function () {});
     }
   };
-  init();
+  // 🏠📦 (26 nov 2026) col codice di un trasloco nel link, prima arrivano accesso e cose del telefono (js/trasloco.js), poi la pagina si riapre
+  if (window.SGTrasloco && SGTrasloco.prima) SGTrasloco.prima(init); else init();
 })();

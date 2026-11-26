@@ -9,6 +9,19 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 433,
+    data: "26 novembre 2026",
+    titolo: "SPeeD GAME diventa Revel House 🏠",
+    descrizione: [
+      "🏠 L'app ha un nome nuovo, Revel House, e una faccia nuova: la casetta blu notte con la porta accesa, dove dentro c'è la festa.",
+      "🌐 Abita su revelhouse.it. Se apri la vecchia app SPeeD GAME ti porta lì da sola, col tuo profilo e tutte le tue cose: non devi scrivere la password né rifare niente. I link di ieri sera (Sale, Compagnie, inviti) funzionano ancora.",
+      "📲 Poi rimetti l'app sul telefono da revelhouse.it e togli quella vecchia. Su iPhone l'app nuova si apre vuota: tocca «📦 Ho un codice di trasloco» e scrivi il codice che ti ha dato Revel House.",
+      "🔑 Nel profilo c'è «📲 Porta il profilo su un altro telefono»: un codice che vale 2 ore per entrare senza password su un altro telefono.",
+      "💬 Gli inviti su WhatsApp mostrano la casetta e «Revel House · giochi per le serate».",
+      "🛠️ Gara di pesca e Battaglia Navale si prendono una pausa: tornano quando saranno sistemate per bene."
+    ]
+  },
+  {
     v: 432,
     data: "26 novembre 2026",
     titolo: "Gioco nuovo: Pecora Nera 🐑",

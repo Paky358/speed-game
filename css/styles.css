@@ -1882,6 +1882,7 @@ input, textarea, [contenteditable="true"]{ -webkit-user-select:text; user-select
 .benvenuto-profilo > .contenuto{ display:flex; flex-direction:column; justify-content:center; min-height:0; }
 .benvenuto-profilo > .piede{ flex:0 0 auto; gap:4px; margin-top:10px; }
 .bp-testa{ flex:0 0 auto; text-align:center; }
+.bp-logo img{ display:block; width:64px; height:64px; margin:0 auto; border-radius:15px; }   /* 🏠 l icona di Revel House (26 nov 2026, prima ⚡) */
 .bp-logo{ font-size:2.3rem; line-height:1; filter:drop-shadow(0 0 10px rgba(255,165,40,.75)); animation:bpLogo .6s cubic-bezier(.3,1.5,.5,1); }
 @keyframes bpLogo{ from{ opacity:0; transform:scale(.4) rotate(-20deg); } }
 .bp-testa h1{ margin:6px 0 0; font-size:1.5rem; font-weight:900; letter-spacing:-.02em; line-height:1.15; }
@@ -4536,3 +4537,10 @@ html.tastiera .gt-cerca-riga{ margin-top:0; }
 /* il podio della Linea del tempo: il gettone ha già il suo bordo, al primo solo una luce d'oro morbida (niente cerchione giallo) */
 html.gettoni .oro.tl-fine .tl-gradino .fac, html.gettoni .oro.tl-fine .tl-riga .fac, .gettoni .tl-gradino .fac, .gettoni .tl-riga .fac, .gettoni .tl-lobby .fac, .gettoni .tl-pl .av, .gettoni .tl-gv .av{ background:none; overflow:visible; }
 html.gettoni .tl-gradino.p1 .fac, html.gettoni .oro.tl-fine .tl-gradino.p1 .fac{ box-shadow:0 0 30px -4px rgba(255,212,59,.55); border-radius:50%; }
+
+/* ---- 🏠📦 IL TRASLOCO SU REVEL HOUSE (26 nov 2026, js/trasloco.js): il benvenuto e il codice ---- */
+.trasloco-box .conferma-nota{ text-align:left; color:var(--o-testo, #f4f5fb); -webkit-text-fill-color:currentColor; font-weight:500; }
+.trasloco-box .conferma-nota.trasloco-codice{ font-weight:700; color:var(--o-oro-testo, #ffc247); }
+.trasloco-codice.grande{ text-align:center !important; font:800 2rem/1.1 ui-monospace, Menlo, Consolas, monospace; letter-spacing:.12em; padding:6px 0; }
+.bp-codice{ text-align:center; font:800 1.5rem ui-monospace, Menlo, Consolas, monospace; letter-spacing:.14em; text-transform:uppercase; }
+.benvenuto-profilo.stretta .bp-trasloco{ display:none; }   /* (con la tastiera aperta resta lo spazio per scrivere: il tasto torna quando si chiude) */

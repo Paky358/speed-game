@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0d1020">
+<title>Revel House · SPeeD GAME ha traslocato</title>
+<meta name="robots" content="noindex">
+<meta property="og:title" content="Revel House · giochi per le serate">
+<meta property="og:description" content="SPeeD GAME ora si chiama Revel House: revelhouse.it">
+<meta property="og:image" content="https://revelhouse.it/app/anteprima.png">
+<link rel="icon" type="image/svg+xml" href="app/icona.svg">
+<link rel="apple-touch-icon" href="app/icona-piena-180.png">
+<link rel="manifest" href="app/manifest.webmanifest">
+<!-- 🏠📦 LA PORTA DI TRASLOCO (26 nov 2026): il vecchio indirizzo paky358.github.io/speed-game/ (anche l'app installata)
+     porta tutti su Revel House col profilo e le cose del telefono, senza password. Si costruisce con costruisci-porta.sh. -->
+<style>
+  html,body{margin:0;height:100%;background:#0d1020;color:#f4f5fb;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+  body{display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(520px 380px at 20% 0%,rgba(224,34,90,.32),transparent 70%),radial-gradient(420px 360px at 100% 100%,rgba(79,216,255,.14),transparent 70%),#0d1020}
+  .p{box-sizing:border-box;width:100%;max-width:420px;padding:28px 24px;display:flex;flex-direction:column;align-items:center;gap:16px;text-align:center}
+  .p img{width:104px;height:104px;border-radius:24px;filter:drop-shadow(0 12px 22px rgba(0,0,0,.45))}
+  h1{margin:0;font-size:2rem;font-weight:800;letter-spacing:-.02em} h1 b{color:#ff4f86}
+  .s{margin:0;color:#a6acc8;font-size:1.02rem;line-height:1.45}
+  .st{min-height:1.5em;font-weight:700;font-size:1.08rem}
+  .cod{font:800 1.9rem/1 ui-monospace,Menlo,Consolas,monospace;letter-spacing:.12em;color:#ffc247;display:none}
+  button{font:700 1.05rem system-ui,sans-serif;border:0;border-radius:16px;padding:15px 22px;width:100%;cursor:pointer}
+  .v{background:#e0225a;color:#fff} .f{background:rgba(255,255,255,.08);color:#f4f5fb;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14)}
+  .t{display:none;flex-direction:column;gap:10px;width:100%}
+</style>
+</head>
+<body>
+<div class="p">
+  <img src="app/icona.svg" alt="">
+  <h1>Revel <b>House</b></h1>
+  <p class="s">SPeeD GAME ora si chiama <b>Revel House</b> e abita su <b>revelhouse.it</b>.<br>Ti porto lì col tuo profilo e tutte le tue cose: non devi rifare niente.</p>
+  <div class="st" id="st">📦 Preparo le tue cose…</div>
+  <div class="cod" id="cod"></div>
+  <div class="t" id="t">
+    <button class="v" id="vai">Vai su Revel House ▶</button>
+    <button class="f" id="riprova">↻ Riprova a portare le mie cose</button>
+  </div>
+</div>
+<script>window.SG_PORTA_A = "https://revelhouse.it/";</script>
+<script src="trasloco.js"></script>
+<script src="porta.js"></script>
+</body>
+</html>

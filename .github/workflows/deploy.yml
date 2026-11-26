@@ -17,6 +17,16 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+# 🏠📦 IL TRASLOCO SU REVEL HOUSE (26 nov 2026): L'INTERRUTTORE è FASE (vedi docs/revel-house-trasloco.md).
+#   spento = come sempre: l'app su https://paky358.github.io/speed-game/ e basta.
+#   anche  = l'app ANCHE su https://revelhouse.it (repo Paky358/revelhouse, ramo gh-pages, con la chiave CHIAVE_REVELHOUSE);
+#            il vecchio indirizzo resta l'app di sempre (per provare revelhouse.it dal telefono).
+#   porta  = l'app su https://revelhouse.it; il vecchio indirizzo diventa la PORTA DI TRASLOCO (costruisci-porta.sh):
+#            chi lo apre (anche dall'app installata) arriva su revelhouse.it col profilo e le sue cose.
+# Un push su master pubblica sempre tutto quello che la FASE dice: per chi pubblica (anche la chat di Mario) non cambia niente.
+env:
+  FASE: spento
+
 jobs:
   # 24 nov 2026: due passaggi (prima il pacchetto, poi "Metti online"), come l esempio ufficiale di GitHub.
   # In un passaggio solo "Metti online" a volte non trovava il pacchetto ("No artifacts named github-pages").
@@ -32,10 +42,30 @@ jobs:
       - name: Prepara la cartella da pubblicare
         run: touch dist/.nojekyll
 
+      - name: Metti l'app su revelhouse.it
+        if: env.FASE != 'spento'
+        env:
+          CHIAVE: ${{ secrets.CHIAVE_REVELHOUSE }}
+        run: |
+          set -e
+          [ -n "$CHIAVE" ] || { echo "Manca il segreto CHIAVE_REVELHOUSE (Settings > Secrets and variables > Actions)"; exit 1; }
+          mkdir -p ~/.ssh && printf '%s\n' "$CHIAVE" > ~/.ssh/revel && chmod 600 ~/.ssh/revel
+          ssh-keyscan -t ed25519,rsa github.com >> ~/.ssh/known_hosts 2>/dev/null
+          rm -rf /tmp/revel && cp -r dist /tmp/revel && cd /tmp/revel
+          echo "revelhouse.it" > CNAME
+          git init -q -b gh-pages && git add -A
+          git -c user.name="Pubblica il sito" -c user.email="actions@github.com" commit -qm "Revel House da speed-game ${GITHUB_SHA::7}"
+          GIT_SSH_COMMAND="ssh -i ~/.ssh/revel -o IdentitiesOnly=yes" git push -f git@github.com:Paky358/revelhouse.git gh-pages
+          rm -f ~/.ssh/revel
+
+      - name: Costruisci la porta di trasloco (dist-porta/)
+        if: env.FASE == 'porta'
+        run: bash costruisci-porta.sh
+
       - name: Impacchetta per Pages
         uses: actions/upload-pages-artifact@v5
         with:
-          path: dist
+          path: ${{ env.FASE == 'porta' && 'dist-porta' || 'dist' }}
           include-hidden-files: true   # (la v5 li lascerebbe fuori: serve .nojekyll)
 
   pubblica:

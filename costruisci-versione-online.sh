@@ -65,6 +65,8 @@ aggiungi() { inPezzo "$1" || { cat "$1"; echo ''; }; }   # un file nel cuore, se
 # ---- il cuore: tutto quello che serve all'apertura ----
 CUORE="$TMP/cuore.js"
 {
+  cat js/trasloco.js   # 🏠📦 il trasloco (prima di nube.js: col codice nel link prima arriva l accesso)
+  echo ''
   cat js/nube.js
   echo ''
   cat js/livelli.js   # livelli, XP, Speed Coins e Prestigio

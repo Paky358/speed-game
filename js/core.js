@@ -2433,6 +2433,7 @@
     // prendi(n, { livello, escludi: [nomi o id], caso }) = n bot diversi (stessi nello stesso ordine, se no a sorte con caso: true)
     bot: { tutti: function () { return cuore.botTutti().map(cuore.copiaBot); }, prendi: function (n, o) { return cuore.botPrendi(n, o); }, daId: function (id) { return cuore.botDaId(id); }, livelli: BOT_LIVELLI.slice() },
     avviaApp: function () {
+      if (window.SGTrasloco && SGTrasloco.inCorso()) return;   // 🏠📦 arrivano le cose del trasloco: la pagina si riapre da sola
       ordineAttivo = ordineSalvato(); ordinaGiochi();   // 🧩 l'ordine dei giochi visto l'ultima volta (subito: la home non salta)
       // 🙈 i giochi nascosti dipendono da chi è entrato (IL PAPPONE li può vedere): quando arriva o cambia il profilo si rifà la lista,
       // e se cambiano i giochi (non solo l'ordine) la home aperta si ridisegna

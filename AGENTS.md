@@ -31,6 +31,16 @@ Una web app di party game da telefono (tanti giochi, uno per file), in JavaScrip
 ## Pubblicare = mettere su `master`
 - `bash costruisci-versione-online.sh` crea `dist/` (`index.html` piccolo, il cuore, lo stile, le novità e un file per ogni pezzo dei giochi, tutti con l'impronta nel nome). Ogni push su `master` fa partire la pubblicazione su GitHub Pages: https://paky358.github.io/speed-game/
 - Quindi **mettere qualcosa su `master` vuol dire metterlo online per tutti**: fallo solo quando il proprietario lo chiede ("pubblica").
+- **🏠 REVEL HOUSE** (26 nov 2026, chat «🏠 Revel House»; tutto in `docs/revel-house-trasloco.md`).
+  - **Il nome.** L'app si chiama **Revel House** (prima SPeeD GAME) e va su **https://revelhouse.it** (dominio del proprietario su Aruba). Nei testi per chi gioca si scrive «Revel House»; il codice interno (`SG`, `sg-*`, nomi dei file) NON si rinomina. Le «Speed Coins» restano così (il proprietario, 26 nov).
+  - **Icone e anteprima.** Icone, anteprima dei link (WhatsApp) e schermate di avvio dell'iPhone sono in `app/`. La testa della pagina è in `app/testa.html`: la usa la versione online e va tenuta uguale a quella di `index.html`.
+  - **Come si pubblica.** Un push su `master` pubblica come dice l'interruttore `FASE` in `.github/workflows/deploy.yml`:
+    - `spento` = come prima;
+    - `anche` = l'app anche su revelhouse.it (repo `Paky358/revelhouse`, ramo gh-pages, segreto `CHIAVE_REVELHOUSE`);
+    - `porta` = sul vecchio indirizzo la **porta di trasloco** (`porta/`, `costruisci-porta.sh`).
+    Si cambia `FASE` SOLO quando il proprietario lo dice.
+  - **Il trasloco.** `js/trasloco.js` porta accesso e cose del telefono senza password: il pacco va chiuso a chiave in Firestore `traslochi/`, col codice nel link o scritto a mano («📦 Ho un codice di trasloco», «📲 Porta il profilo su un altro telefono»). `nube.js` aspetta `SGTrasloco.prima`. Prove tr1-tr6 in `prova-nel-browser/revel/trasloco.js`.
+  - **I giochi nascosti.** `GIOCHI_NASCOSTI` in core.js (oggi Gara di pesca e Battaglia Navale) non hanno la tessera in home e non compaiono in Sala, torneo, voto e trofei. Il codice c'è, i link vecchi ci portano lo stesso, IL PAPPONE li vede (`NASCOSTI_AL_PROPRIETARIO`). La lista degli altri la manda il proprietario. Prove rh1, rh2 in `prova-nel-browser/revel/prove.js`.
 - **Lanterne è di Mario** (il gioco di Mario De Viva, amico del proprietario, che ha l'accesso al progetto su GitHub). Dal 5 nov 2026 (il proprietario: «non dobbiamo pubblicare ed unire più noi i file di Lanterne di Mario») i suoi file li unisce e li pubblica SOLO la chat di Mario, da sola. Le nostre chat NON toccano, NON uniscono a mano e NON pubblicano i file di Lanterne (`js/games/lanterne.js`, `carte/lanterne/`, `carte/giochi/lanterne.jpg`, `dist/carte/lanterne/`) e non li mettono nei propri salvataggi: file di Lanterne non salvati trovati nella cartella si lasciano lì. Chi pubblica prima unisce comunque `origin/master` nel suo ramo (git non lascia sovrascrivere: se il push viene rifiutato, si unisce e si riprova): i cambi che Mario ha già pubblicato entrano così, e si tengono come sono.
 - Ogni novità visibile va scritta in cima a `data/novita.js` (numero `v` +1), con parole per chi gioca.
 - Messaggi di commit in italiano, dicendo cosa cambia per chi gioca.
