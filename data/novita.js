@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 448,
+    data: "27 novembre 2026",
+    titolo: "Calcio Biliardo: la palla più viva, con la scia ☄️",
+    descrizione: [
+      "🏓 La palla rimbalza molto di più su sponde, pali e pedine e scivola più lontano sull'erba: le azioni sono più movimentate e i gol arrivano più spesso.",
+      "☄️ Quando corre, la palla lascia una scia luminosa che segue la sua strada, rimbalzi compresi: più va forte, più si accende.",
+      "💥 Dove la palla rimbalza si accende un piccolo lampo."
+    ]
+  },
+  {
     v: 447,
     data: "27 novembre 2026",
     titolo: "Black Jack e Linea del tempo hanno la copertina nuova 🃏",
