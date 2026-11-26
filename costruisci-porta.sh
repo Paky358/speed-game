@@ -10,6 +10,6 @@ sed -e "s#window.SG_PORTA_A = \"https://revelhouse.it/\"#window.SG_PORTA_A = \"$
 cp dist-porta/index.html dist-porta/404.html   # (anche gli indirizzi che non ci sono più)
 cp porta/porta.js porta/sw.js js/trasloco.js dist-porta/
 cp porta/manifest.webmanifest dist-porta/app/manifest.webmanifest
-cp app/icona.svg app/icona-192.png app/icona-512.png app/icona-maschera-512.png app/icona-piena-180.png dist-porta/app/
+cp app/icona.svg app/icona-piccola.svg app/icona-192.png app/icona-512.png app/icona-maschera-512.png app/icona-piena-180.png dist-porta/app/
 touch dist-porta/.nojekyll
 echo "Creata la porta di trasloco in dist-porta/ (porta a $A)"

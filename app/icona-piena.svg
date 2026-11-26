@@ -1,39 +1,67 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Revel House - «La casa accesa», versione rifinita (26 nov 2026) -->
   <defs>
-    <linearGradient id="c1bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#ff4f86"/><stop offset=".55" stop-color="#e0225a"/><stop offset="1" stop-color="#8a1766"/>
+    <linearGradient id="rhBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff5c90"/><stop offset=".5" stop-color="#e0225a"/><stop offset="1" stop-color="#951670"/>
     </linearGradient>
-    <linearGradient id="c1casa" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#283070"/><stop offset="1" stop-color="#10143a"/>
-    </linearGradient>
-    <radialGradient id="c1porta" cx=".5" cy=".75" r=".75">
-      <stop offset="0" stop-color="#fff4d6"/><stop offset=".45" stop-color="#ffd27a"/><stop offset="1" stop-color="#ff9a4a"/>
+    <radialGradient id="rhAura" cx="256" cy="300" r="250" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff9cbb" stop-opacity=".45"/><stop offset="1" stop-color="#ff9cbb" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="c1alone" cx="256" cy="370" r="120" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#ffc247" stop-opacity=".45"/><stop offset="1" stop-color="#ffc247" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="c1fascio" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#ffd27a" stop-opacity=".85"/><stop offset="1" stop-color="#ffd27a" stop-opacity="0"/>
+    <linearGradient id="rhFacciata" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#262e70"/><stop offset="1" stop-color="#0f1338"/>
     </linearGradient>
-    <clipPath id="c1clip"><path d="M256 116 L414 252 H372 V396 H140 V252 H98 Z"/></clipPath>
-    <clipPath id="tondo1"><rect width="512" height="512" rx="114"/></clipPath>
+    <linearGradient id="rhTetto" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3d47a8"/><stop offset="1" stop-color="#28307a"/>
+    </linearGradient>
+    <linearGradient id="rhLato" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity=".09"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="rhBordo" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#b3bbff"/><stop offset=".5" stop-color="#7c86ee"/><stop offset="1" stop-color="#4650a8"/>
+    </linearGradient>
+    <radialGradient id="rhPorta" cx=".5" cy=".85" r=".95">
+      <stop offset="0" stop-color="#fffbe9"/><stop offset=".42" stop-color="#ffd978"/><stop offset="1" stop-color="#ff9a4a"/>
+    </radialGradient>
+    <radialGradient id="rhLuce" cx="256" cy="372" r="150" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffc247" stop-opacity=".5"/><stop offset="1" stop-color="#ffc247" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="rhPozza">
+      <stop offset="0" stop-color="#ffe3a0" stop-opacity=".9"/><stop offset=".55" stop-color="#ffc247" stop-opacity=".35"/><stop offset="1" stop-color="#ffc247" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="rhOmbra">
+      <stop offset="0" stop-color="#4a0a2e" stop-opacity=".45"/><stop offset="1" stop-color="#4a0a2e" stop-opacity="0"/>
+    </radialGradient>
+    <clipPath id="rhFac"><rect x="113" y="235" width="286" height="182" rx="13"/></clipPath>
+    <clipPath id="rhTondo"><rect width="512" height="512"/></clipPath>
   </defs>
-  <g>
-  <rect width="512" height="512" fill="url(#c1bg)"/>
-  <ellipse cx="150" cy="90" rx="220" ry="130" fill="#fff" opacity=".10"/>
-  <!-- camino -->
-  <rect x="318" y="140" width="40" height="80" rx="6" fill="#20265a"/>
-  <!-- casa -->
-  <path d="M256 116 L414 252 H372 V396 H140 V252 H98 Z" fill="url(#c1casa)" stroke="#242b62" stroke-width="22" stroke-linejoin="round"/>
-  <path d="M104 250 L256 120 L408 250" fill="none" stroke="#444ea6" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" opacity=".9"/>
-  <g clip-path="url(#c1clip)"><circle cx="256" cy="370" r="130" fill="url(#c1alone)"/></g>
-  <!-- fascio di luce a terra -->
-  <path d="M220 396 H292 L352 456 H160 Z" fill="url(#c1fascio)"/>
-  <!-- porta accesa -->
-  <path d="M220 396 V330 A36 36 0 0 1 292 330 V396 Z" fill="url(#c1porta)"/>
-  <!-- coriandoli -->
-  <rect x="296" y="262" width="30" height="15" rx="4" fill="#4fd8ff" transform="rotate(-28 311 269)"/>
-  <rect x="186" y="270" width="28" height="15" rx="4" fill="#ffc247" transform="rotate(32 200 277)"/>
-  <circle cx="252" cy="250" r="10" fill="#ff6d97"/>
-</g>
+  <g clip-path="url(#rhTondo)">
+    <rect width="512" height="512" fill="url(#rhBg)"/>
+    <circle cx="256" cy="300" r="250" fill="url(#rhAura)"/>
+    <ellipse cx="140" cy="70" rx="230" ry="120" fill="#fff" opacity=".12"/>
+    <!-- ombra della casa e luce a terra -->
+    <ellipse cx="256" cy="424" rx="200" ry="34" fill="url(#rhOmbra)"/>
+    <ellipse cx="256" cy="420" rx="150" ry="28" fill="url(#rhPozza)"/>
+    <!-- camino -->
+    <rect x="328" y="138" width="44" height="90" rx="8" fill="#1d235c"/>
+    <rect x="320" y="128" width="60" height="20" rx="7" fill="#3d47a8"/>
+    <rect x="324" y="130" width="52" height="5" rx="2.5" fill="#8a93ff" opacity=".7"/>
+    <!-- facciata -->
+    <rect x="126" y="236" width="260" height="168" fill="url(#rhFacciata)" stroke="url(#rhFacciata)" stroke-width="26" stroke-linejoin="round"/>
+    <g clip-path="url(#rhFac)">
+      <rect x="113" y="235" width="286" height="182" fill="url(#rhLato)"/>
+      <circle cx="256" cy="372" r="150" fill="url(#rhLuce)"/>
+      <rect x="113" y="248" width="286" height="16" fill="#05071a" opacity=".35"/>
+    </g>
+    <!-- tetto -->
+    <path d="M256 104 L426 248 H86 Z" fill="url(#rhTetto)" stroke="url(#rhTetto)" stroke-width="26" stroke-linejoin="round"/>
+    <path d="M90 240 L256 100 L422 240" fill="none" stroke="url(#rhBordo)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- porta accesa -->
+    <path d="M206 404 V338 A50 50 0 0 1 306 338 V404 Z" fill="#ffc247" opacity=".35"/>
+    <path d="M212 404 V340 A44 44 0 0 1 300 340 V404 Z" fill="url(#rhPorta)"/>
+    <!-- coriandoli che escono dalla porta -->
+    <rect x="160" y="276" width="36" height="17" rx="5" fill="#ffc247" transform="rotate(32 178 284)"/>
+    <rect x="316" y="268" width="36" height="17" rx="5" fill="#4fd8ff" transform="rotate(-30 334 276)"/>
+    <circle cx="256" cy="200" r="13" fill="#ff6d97"/>
+    <rect x="300" y="196" width="26" height="14" rx="4" fill="#b39bff" transform="rotate(24 313 203)"/>
+  </g>
 </svg>
