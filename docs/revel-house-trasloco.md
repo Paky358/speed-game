@@ -25,8 +25,8 @@ Regola del proprietario: **nessuno deve perdere i dati**.
 
 ## Le tre tappe (interruttore `FASE` in `.github/workflows/deploy.yml`)
 1. **spento**: tutto come prima.
-2. **anche** (dal 26 nov 2026 sera, oggi): dopo le impostazioni qui sotto, l'app va ANCHE su revelhouse.it. Il proprietario la prova dal suo telefono, e il vecchio indirizzo resta l'app normale.
-3. **porta**: quando il proprietario dice «pubblica il trasloco», il vecchio indirizzo diventa la porta.
+2. **anche** (26 nov 2026 sera, poche ore): dopo le impostazioni qui sotto, l'app va ANCHE su revelhouse.it. Il proprietario la prova dal suo telefono, e il vecchio indirizzo resta l'app normale.
+3. **porta** (ACCESA dal 26 nov 2026 sera, oggi): quando il proprietario dice «pubblica il trasloco», il vecchio indirizzo diventa la porta.
 
 ## Cosa fa il proprietario (circa 20 minuti; le password le scrive solo lui)
 ### A. GitHub
