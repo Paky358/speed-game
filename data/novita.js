@@ -9,7 +9,7 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 437,
+    v: 438,
     data: "26 novembre 2026",
     titolo: "Mini Asta: la formazione in ordine nei campetti 🧩",
     descrizione: [
@@ -19,13 +19,26 @@ window.SG_NOVITA = [
     ]
   },
   {
-    v: 436,
+    v: 437,
     data: "26 novembre 2026",
     titolo: "Mini Asta: vedi sempre il tuo attacco ⚽",
     descrizione: [
       "⚽ Nella giornata vedi sempre almeno 2 azioni del tuo attaccante e dei tuoi centrocampisti, di due giocatori diversi: niente più giornate con solo le parate del portiere. Anche se l'azione va male, almeno ti gasi (o insulti il tuo giocatore).",
       "⚡ Nelle giornate veloci delle «3 giornate», se manca, l'azione che vedi è di un attaccante o di un centrocampista.",
       "⏱️ La giornata dura come prima, e punti e gol restano quelli di sempre."
+    ]
+  },
+  {
+    v: 436,
+    data: "26 novembre 2026",
+    titolo: "SPeeD GAME diventa Revel House 🏠",
+    descrizione: [
+      "🏠 L'app ha un nome nuovo, Revel House, e una faccia nuova: la casa accesa nella notte, dove dentro c'è la festa.",
+      "🌐 Abita su revelhouse.it. Se apri la vecchia app SPeeD GAME ti porta lì da sola, col tuo profilo e tutte le tue cose: non devi scrivere la password né rifare niente. I link di ieri sera (Sale, Compagnie, inviti) funzionano ancora.",
+      "📲 Poi rimetti l'app sul telefono da revelhouse.it e togli quella vecchia. Su iPhone l'app nuova si apre vuota: tocca «📦 Ho un codice di trasloco» e scrivi il codice che ti ha dato Revel House.",
+      "🔑 Nel profilo c'è «📲 Porta il profilo su un altro telefono»: un codice che vale 2 ore per entrare senza password su un altro telefono.",
+      "💬 Gli inviti su WhatsApp mostrano la casa accesa e «Revel House · giochi per le serate».",
+      "🛠️ Gara di pesca e Battaglia Navale si prendono una pausa: tornano quando saranno sistemate per bene."
     ]
   },
   {

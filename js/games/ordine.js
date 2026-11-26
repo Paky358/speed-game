@@ -3015,7 +3015,7 @@
   //  un'immagine (niente immagini esterne: si può sempre salvare). Sul telefono si apre la condivisione (WhatsApp…); se non
   //  c'è, l'immagine si scarica.
   // =========================================================
-  var SITO = "paky358.github.io/speed-game", FONT_F = "system-ui,-apple-system,'Segoe UI',Roboto,sans-serif";
+  var SITO = "revelhouse.it", FONT_F = "system-ui,-apple-system,'Segoe UI',Roboto,sans-serif";
   function rettF(x, X, Y, w, h, r) { x.beginPath(); x.moveTo(X + r, Y); x.arcTo(X + w, Y, X + w, Y + h, r); x.arcTo(X + w, Y + h, X, Y + h, r); x.arcTo(X, Y + h, X, Y, r); x.arcTo(X, Y, X + w, Y, r); x.closePath(); }
   function cortoF(x, s, max) { s = String(s || ""); if (x.measureText(s).width <= max) return s; while (s.length > 1 && x.measureText(s + "…").width > max) s = s.slice(0, -1); return s + "…"; }
   function righeF(x, s, max, n) {   // il testo a capo in al massimo n righe (l'ultima coi puntini)
@@ -3104,7 +3104,7 @@
         });
       }
       // il nome dell'app
-      x.textAlign = "center"; x.fillStyle = "rgba(255,255,255,.92)"; x.font = "900 34px " + F; x.fillText("🕵️ Parola d'ordine · SPeeD GAME", W / 2, H - 66);
+      x.textAlign = "center"; x.fillStyle = "rgba(255,255,255,.92)"; x.font = "900 34px " + F; x.fillText("🕵️ Parola d'ordine · Revel House", W / 2, H - 66);
       x.fillStyle = "rgba(255,255,255,.62)"; x.font = "700 26px " + F; x.fillText("Giocate con noi: " + SITO, W / 2, H - 28);
       if (window.__ORDINE) window.__ORDINE.foto = cv;   // (per le prove)
       condividiFoto(cv, "parola-d-ordine.png", "La nostra partita a Parola d'ordine 🕵️");

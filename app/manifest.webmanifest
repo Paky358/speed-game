@@ -1,18 +1,20 @@
 {
   "id": "../",
-  "name": "SPeeD GAME",
-  "short_name": "SPeeD GAME",
-  "description": "Party game da giocare insieme, dal telefono.",
+  "name": "Revel House",
+  "short_name": "Revel House",
+  "description": "Giochi per le serate con gli amici, dal telefono.",
   "lang": "it",
   "start_url": "../",
   "scope": "../",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0c1636",
-  "theme_color": "#0c1636",
+  "background_color": "#0d1020",
+  "theme_color": "#0d1020",
   "icons": [
     { "src": "icona-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icona-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icona-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "icona.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icona-maschera-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icona-maschera-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }

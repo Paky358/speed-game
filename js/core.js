@@ -772,7 +772,7 @@
     }
     s._contenuto.appendChild(el("div", { class: "home-hero" }, [
       el("div", { class: "home-logo", html: '<svg viewBox="0 0 200 118" width="156" height="92" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><linearGradient id="sgBolt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff6bf"/><stop offset=".42" stop-color="#ffd23b"/><stop offset=".72" stop-color="#f6a70c"/><stop offset="1" stop-color="#c06a08"/></linearGradient><linearGradient id="sgBoltHi" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fffdf0" stop-opacity=".95"/><stop offset=".5" stop-color="#ffffff" stop-opacity="0"/></linearGradient><filter id="sgGlow" x="-70%" y="-70%" width="240%" height="240%"><feDropShadow dx="0" dy="0" stdDeviation="7" flood-color="#ff9d2e" flood-opacity=".75"/><feDropShadow dx="0" dy="0" stdDeviation="16" flood-color="#ff7b16" flood-opacity=".4"/></filter><path id="sgB" d="M13 0 L2 20 L10 20 L7 36 L22 12 L13 12 L17 0 Z"/></defs><g filter="url(#sgGlow)" stroke="#8a5209" stroke-width="1.3" stroke-linejoin="round"><use href="#sgB" transform="translate(18,34) scale(1.5)" fill="url(#sgBolt)"/><use href="#sgB" transform="translate(78,14) scale(1.95)" fill="url(#sgBolt)"/><use href="#sgB" transform="translate(150,34) scale(1.5)" fill="url(#sgBolt)"/></g><g stroke="none"><use href="#sgB" transform="translate(18,34) scale(1.5)" fill="url(#sgBoltHi)"/><use href="#sgB" transform="translate(78,14) scale(1.95)" fill="url(#sgBoltHi)"/><use href="#sgB" transform="translate(150,34) scale(1.5)" fill="url(#sgBoltHi)"/></g></svg>' }),
-      el("h1", { class: "home-titolo", html: "SPeeD <b>GAME</b>" }),   // (🌙 «GAME» col lampone)
+      el("h1", { class: "home-titolo", html: "<img class=\"home-icona\" src=\"app/icona.svg\" alt=\"\">Revel <b>House</b>" }),   // (🏠 26 nov 2026: Revel House, l icona e «House» col lampone, come il logo)
       HOME_MENU_SOTTO ? testaCorta : rigaProfilo
     ]));
     // stavi giocando da ospite e la pagina si è ricaricata (o hai riaperto l'app)? Si rientra al proprio posto
@@ -1037,10 +1037,18 @@
   }
   function ordineSalvato() { try { var l = pulisciOrdine(JSON.parse(localStorage.getItem(ORDINE_K) || "null")); return l.length ? l : null; } catch (e) { return null; } }
   // rimette in fila la lista dei giochi (sul posto: tutto il core usa la stessa)
+  // 🙈 I GIOCHI NASCOSTI (26 nov 2026, il proprietario per il lancio di Revel House: «togliamo tutti i giochi non ottimizzati»).
+  //   L'INTERRUTTORE è questa lista: un gioco qui dentro non ha la tessera in home, non è nella scelta della Sala, del torneo e di
+  //   «Scegliamo insieme», né nelle pagine dei trofei. Il codice NON è cancellato: per riaccenderlo basta togliere il suo nome da qui.
+  //   Chi apre un link vecchio di una sua stanza, o segue la Sala di qualcuno che lo fa partire, ci entra lo stesso (giocoDa li trova tutti).
+  //   NASCOSTI_AL_PROPRIETARIO = false: IL PAPPONE li vede ancora (per provarli); true = nascosti anche a lui.
+  var GIOCHI_NASCOSTI = { garapesca: 1, navale: 1 };
+  var NASCOSTI_AL_PROPRIETARIO = false;
+  function giocoNascosto(id) { return !!GIOCHI_NASCOSTI[id] && (NASCOSTI_AL_PROPRIETARIO || !eProprietario()); }
   function ordinaGiochi() {
     var pos = {}, n = ordineAttivo ? ordineAttivo.length : 0;
     (ordineAttivo || []).forEach(function (id, i) { pos[id] = i; });
-    var l = giochiReg.map(function (g, i) { return { g: g, k: Object.prototype.hasOwnProperty.call(pos, g.id) ? pos[g.id] : n + i, i: i }; });
+    var l = giochiReg.map(function (g, i) { return { g: g, k: Object.prototype.hasOwnProperty.call(pos, g.id) ? pos[g.id] : n + i, i: i }; }).filter(function (x) { return !giocoNascosto(x.g.id); });
     l.sort(function (a, b) { return a.k - b.k || a.i - b.i; });
     giochi.length = 0;
     l.forEach(function (x) { giochi.push(x.g); });
@@ -1591,7 +1599,7 @@
   // ---- ⚔️ I TORNEI (a eliminazione coi gironi, il torneino nella Sala, il torneo a punti sullo stesso telefono): in js/cuore/tornei.js. Qui restano GIOCHI_ELIMINAZIONE, MAX_ELIM e giocoDa ----
   var GIOCHI_ELIMINAZIONE = { tris: 1, trisgigante: 1, drop4: 1, navale: 1, scopa: 1, calciobiliardo: 1 };
   var MAX_ELIM = 10;   // giocano i primi 10 entrati in sala; gli altri guardano
-  function giocoDa(id) { return giochi.filter(function (g) { return g.id === id; })[0] || null; }
+  function giocoDa(id) { return giochi.filter(function (g) { return g.id === id; })[0] || giochiReg.filter(function (g) { return g.id === id; })[0] || null; }   // (🙈 anche i nascosti: un link vecchio o la Sala di un amico ci portano lo stesso)
 
   function errore(dopo, txt) {
     var s = schermata({ icona: "⚠️", titolo: "Ops" });
@@ -2425,7 +2433,14 @@
     // prendi(n, { livello, escludi: [nomi o id], caso }) = n bot diversi (stessi nello stesso ordine, se no a sorte con caso: true)
     bot: { tutti: function () { return cuore.botTutti().map(cuore.copiaBot); }, prendi: function (n, o) { return cuore.botPrendi(n, o); }, daId: function (id) { return cuore.botDaId(id); }, livelli: BOT_LIVELLI.slice() },
     avviaApp: function () {
+      if (window.SGTrasloco && SGTrasloco.inCorso()) return;   // 🏠📦 arrivano le cose del trasloco: la pagina si riapre da sola
       ordineAttivo = ordineSalvato(); ordinaGiochi();   // 🧩 l'ordine dei giochi visto l'ultima volta (subito: la home non salta)
+      // 🙈 i giochi nascosti dipendono da chi è entrato (IL PAPPONE li può vedere): quando arriva o cambia il profilo si rifà la lista,
+      // e se cambiano i giochi (non solo l'ordine) la home aperta si ridisegna
+      if (window.SGNube && SGNube.onCambio) SGNube.onCambio(function () {
+        var prima = idGiochi(giochi).slice().sort().join("|"); ordinaGiochi();
+        if (prima !== idGiochi(giochi).slice().sort().join("|") && app && app.querySelector(".home")) try { schermataHome(); } catch (e) {}
+      });
       cuore.agganciaRete();   // lo strato comune della rete (stanze ricordate, nomi doppi, XP, host che torna…)
       // niente menu della pressione lunga (copia, salva immagine…) fuori dai campi dove si scrive
       document.addEventListener("contextmenu", function (e) { if (!(e.target && e.target.closest && e.target.closest("input, textarea, [contenteditable='true']"))) e.preventDefault(); });

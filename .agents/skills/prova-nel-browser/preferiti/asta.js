@@ -80,7 +80,7 @@
   async function fotoFatta(w, cosa) {
     if (!await W.aspetta(function () { return w.__foto; }, 3000)) no("la foto " + cosa + " non parte");
     if (!(w.__foto.byte > 20000) || !/\.png$/.test(w.__foto.nome || "")) no("la foto " + cosa + " è strana: " + JSON.stringify(w.__foto));
-    if (!/paky358\.github\.io\/speed-game/.test(w.__foto.testo || "")) no("nella condivisione non c'è il sito: «" + w.__foto.testo + "»");
+    if (!/revelhouse\.it/.test(w.__foto.testo || "")) no("nella condivisione non c'è il sito: «" + w.__foto.testo + "»");
     var r = cosa + " " + Math.round(w.__foto.byte / 1024) + " KB"; w.__foto = null; return r;
   }
   function dentroSchermo(w, sels) {

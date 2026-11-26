@@ -1355,7 +1355,7 @@
     //     Tutto in uno schermo (anche con la tastiera aperta); ricaricando si entra da soli
     90: { nome: "Primo avvio: benvenuto → profilo → avatar → home", fai: async function () {
       var N = await W.apriTel("Nina", { x: 0, profilo: false, prima: spiaProfilo });
-      if (!await W.aspetta(function () { return /Benvenuto in SPeeD GAME/.test(T(N)); }, 4000)) no("niente benvenuto all'avvio («" + T(N).slice(0, 60) + "»)");
+      if (!await W.aspetta(function () { return /Benvenuto in Revel House/.test(T(N)); }, 4000)) no("niente benvenuto all'avvio («" + T(N).slice(0, 60) + "»)");
       if (home(N)) no("la home si vede senza profilo");
       var mis = await misureProfilo(N, "Nina", true);
       var campi = N.document.querySelectorAll(".benvenuto-profilo input.link-campo");
@@ -1495,7 +1495,7 @@
       W.clicca(X, /Riprova/); await W.dorme(300);
       if (!/Serve internet/.test(T(X))) no("Riprova senza rete: è sparito l'avviso");
       X.__offline = false; W.clicca(X, /Riprova/);
-      if (!await W.aspetta(function () { return /Benvenuto in SPeeD GAME/.test(T(X)); }, 3000)) no("tornata la rete, Riprova non apre il benvenuto");
+      if (!await W.aspetta(function () { return /Benvenuto in Revel House/.test(T(X)); }, 3000)) no("tornata la rete, Riprova non apre il benvenuto");
       X.__reteGiu = true;
       var campi = X.document.querySelectorAll(".benvenuto-profilo input.link-campo");
       campi[0].value = "Pino"; campi[1].value = "segreto1"; W.clicca(X, /^Avanti/);

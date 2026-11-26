@@ -38,7 +38,7 @@
   }
 
   function schermataCaricamento() {
-    var s = schermata({ icona: "⚡", titolo: "SPeeD GAME", sotto: "Un attimo…" });
+    var s = schermata({ icona: "⚡", titolo: "Revel House", sotto: "Un attimo…" });
     s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center", text: "Sto caricando il tuo profilo…" }));
     mostra(s);
   }
@@ -133,6 +133,12 @@
       sp._contenuto.appendChild(el("button", { class: "st-tasto", onclick: function () { cuore.schermataStatistiche(function () { schermataAccessoCloud(dopo); }); } }, [
         el("span", { class: "st-tasto-ico", text: "📊" }),
         el("span", { class: "st-tasto-testo" }, [ el("b", { text: "Le tue statistiche" }), el("small", { text: tot.p ? cifre(tot.p) + (tot.p === 1 ? " partita" : " partite") + " · " + cuore.tempoGiocato(tot.t) + " giocati" : "Vittorie, sconfitte e tempo di ogni gioco" }) ]),
+        el("span", { class: "st-tasto-va", text: "›" })
+      ]));
+      // 🏠📦 (26 nov 2026) il profilo su un altro telefono senza password (o nell'app reinstallata su iPhone)
+      if (window.SGTrasloco && SGTrasloco.acceso()) sp._contenuto.appendChild(el("button", { class: "st-tasto st-trasloco", onclick: function () { portaSuAltroTelefono(this); } }, [
+        el("span", { class: "st-tasto-ico", text: "📲" }),
+        el("span", { class: "st-tasto-testo" }, [ el("b", { text: "Porta il profilo su un altro telefono" }), el("small", { text: "Un codice per entrare senza password" }) ]),
         el("span", { class: "st-tasto-va", text: "›" })
       ]));
       // solo il proprietario: come sono fatti i bot di tutti i giochi
@@ -251,7 +257,7 @@
     return s;
   }
   function testaProfilo(titolo, sotto) {
-    return el("div", { class: "bp-testa" }, [ el("div", { class: "bp-logo", "aria-hidden": "true", text: "⚡" }), el("h1", { text: titolo }), sotto ? el("p", { class: "bp-sotto", text: sotto }) : null ]);
+    return el("div", { class: "bp-testa" }, [ el("div", { class: "bp-logo", "aria-hidden": "true", html: "<img src=\"app/icona.svg\" alt=\"\">" }), el("h1", { text: titolo }), sotto ? el("p", { class: "bp-sotto", text: sotto }) : null ]);
   }
   // Invio nel primo campo porta al secondo, nel secondo preme il tasto
   function invioCampi(a, b, fai) {
@@ -259,11 +265,11 @@
     b.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); fai(); } });
   }
 
-  // PRIMA VOLTA: "Benvenuto in SPeeD GAME!" → nome (col 🎲) + password → l'avatar → dove si doveva andare
+  // PRIMA VOLTA: "Benvenuto in Revel House!" → nome (col 🎲) + password → l'avatar → dove si doveva andare
   function schermataBenvenuto(dopo, o) {
     o = o || {};
     var s = schermataProfiloBase(), c = s._contenuto;
-    c.appendChild(testaProfilo("Benvenuto in SPeeD GAME!", "Crea il tuo profilo: scegli un nome, una password e poi il tuo avatar."));
+    c.appendChild(testaProfilo("Benvenuto in Revel House!", "Crea il tuo profilo: scegli un nome, una password e poi il tuo avatar."));
     if (o.invito) c.appendChild(el("div", { class: "bp-invito", text: o.invito }));
     var ant = el("div", { class: "sl-anteprima bp-anteprima", "aria-hidden": "true" });   // l'avatar che avrai (nasce dal nome: col 🎲 cambiano tutti e due)
     var nome = el("input", { class: "link-campo", type: "text", maxlength: "16", placeholder: "Come ti chiami?", autocomplete: "username", autocapitalize: "words", enterkeyhint: "next" });
@@ -302,7 +308,57 @@
     s._piede.appendChild(el("button", { class: "btn btn-fantasma bp-gia", text: "Hai già un profilo? Entra", onclick: function () {
       schermataEntraProfilo(dopo, Object.assign({}, o, { nome: (nome.value || "").trim() }));
     } }));
+    if (window.SGTrasloco && SGTrasloco.acceso()) s._piede.appendChild(tastoCodiceTrasloco(dopo, o));
     mostra(s);
+  }
+  // 🏠📦 (26 nov 2026, Revel House) «Ho un codice di trasloco»: il profilo arriva da un altro telefono (o dalla vecchia app SPeeD GAME)
+  // senza password. Il codice lo dà la vecchia app (porta di trasloco) o «📲 Porta il profilo su un altro telefono» nel profilo.
+  function tastoCodiceTrasloco(dopo, o) {
+    return el("button", { class: "btn btn-fantasma bp-gia bp-trasloco", text: "📦 Ho un codice di trasloco", onclick: function () { schermataCodiceTrasloco(dopo, o); } });
+  }
+  function schermataCodiceTrasloco(dopo, o) {
+    var s = schermataProfiloBase("bp-trasloco"), c = s._contenuto;
+    c.appendChild(testaProfilo("Ho un codice di trasloco", "Scrivi il codice di 8 lettere che ti ha dato la vecchia app SPeeD GAME (o il tuo altro telefono): entri col tuo profilo, senza password."));
+    var campo = el("input", { class: "link-campo bp-codice", type: "text", maxlength: "9", placeholder: "ABCD-EFGH", autocomplete: "off", autocapitalize: "characters", spellcheck: "false", enterkeyhint: "go" });
+    var avviso = el("div", { class: "link-avviso bp-avviso", "aria-live": "polite" });
+    c.appendChild(campo); c.appendChild(avviso);
+    campo.addEventListener("input", function () {
+      var v = campo.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+      campo.value = v.length > 4 ? v.slice(0, 4) + "-" + v.slice(4) : v;
+    });
+    var bVai = el("button", { class: "btn btn-primario", text: "Entra ▶", onclick: vai });
+    function vai() {
+      if (bVai.disabled) return;
+      var cod = campo.value;
+      if (!SGTrasloco.codiceValido(cod)) { avviso.textContent = "Il codice ha 8 lettere e numeri, come ABCD-EFGH."; campo.focus(); return; }
+      bVai.disabled = true; avviso.textContent = "📦 Arrivano le tue cose…";
+      SGTrasloco.ricevi(cod).then(function (r) { SGTrasloco.segnaArrivo(cod, r); location.reload(); })
+        .catch(function (e) {
+          bVai.disabled = false;
+          avviso.textContent = /non c'è/.test(e && e.message) ? "Questo codice non c'è o è scaduto (vale 2 ore). Riapri la vecchia app per averne uno nuovo."
+            : "Non riesco a prendere le tue cose: controlla la rete e riprova.";
+        });
+    }
+    campo.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); vai(); } });
+    s._piede.appendChild(bVai);
+    s._piede.appendChild(el("button", { class: "btn btn-fantasma bp-gia", text: "‹ Indietro", onclick: function () { schermataBenvenuto(dopo, o); } }));
+    mostra(s);
+    setTimeout(function () { try { campo.focus(); } catch (e) {} }, 300);
+  }
+  // 📲 dal profilo: il codice per portare questo profilo su un altro telefono (vale 2 ore)
+  function portaSuAltroTelefono(bottone) {
+    if (bottone) bottone.disabled = true;
+    SGTrasloco.prepara({ altroTelefono: true }).then(function (r) {
+      if (bottone) bottone.disabled = false;
+      SGTrasloco.riquadro("📲 Il tuo codice di trasloco", [
+        { t: r.codice, cls: "trasloco-codice grande" },
+        "Sull'altro telefono apri revelhouse.it (o l'app Revel House), tocca «📦 Ho un codice di trasloco» e scrivilo: entri col tuo profilo, senza password.",
+        "Vale fino alle " + SGTrasloco.ora(r.scade) + ". Non mandarlo a nessuno: è come la tua password."
+      ], "Fatto 👍");
+    }).catch(function () {
+      if (bottone) bottone.disabled = false;
+      pillola("trasloco", "📶 Non riesco a preparare il codice: controlla la rete e riprova.", "rosso", 3500);
+    });
   }
 
   // "Hai già un profilo? Entra" (per chi cambia telefono): nome + password, poi dritto dove doveva andare
@@ -328,6 +384,7 @@
     }
     invioCampi(nome, pwd, entra);
     s._piede.appendChild(bEntra);
+    if (window.SGTrasloco && SGTrasloco.acceso()) s._piede.appendChild(tastoCodiceTrasloco(dopo, o));   // 🏠📦 (password dimenticata, o l'app reinstallata su iPhone)
     s._piede.appendChild(el("button", { class: "btn btn-fantasma bp-gia", text: "‹ Non ho un profilo: lo creo", onclick: function () { schermataBenvenuto(dopo, o); } }));
     mostra(s);
   }
