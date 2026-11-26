@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 434,
+    data: "26 novembre 2026",
+    titolo: "Trofei: basta file di avvisi 🏆",
+    descrizione: [
+      "🏆 Quando prendete tanti trofei insieme (succede spesso con la Mini Asta) vedete solo i 3 più importanti, prima quelli di livello più alto.",
+      "➕ Poi un avviso solo, «Hai sbloccato altri trofei», col numero grande di quelli in più (per esempio +7). Toccandolo fuori dalle partite si apre la pagina dei trofei.",
+      "🎁 I premi in XP e Speed Coins arrivano lo stesso per tutti i trofei. Vale in tutti i giochi."
+    ]
+  },
+  {
     v: 432,
     data: "26 novembre 2026",
     titolo: "Gioco nuovo: Pecora Nera 🐑",
