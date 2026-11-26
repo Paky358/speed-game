@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 437,
+    data: "26 novembre 2026",
+    titolo: "Privacy, regole e crediti 📜",
+    descrizione: [
+      "📜 In fondo alla home e nel Profilo c'è la riga «Privacy · Regole d'uso · Crediti»: tre pagine scritte semplici su cosa salviamo, come si gioca insieme e chi ha fatto foto, emoji, caratteri e suoni.",
+      "🗑️ Nel Profilo c'è «Cancella il mio profilo»: chiede conferma e la password, poi cancella per sempre profilo, scheda pubblica e richieste di amicizia, e il telefono dimentica quello che ricordava.",
+      "📸 Nei Crediti le oltre 3.000 foto dei giochi hanno autore e licenza, con la ricerca per trovarle."
+    ]
+  },
+  {
     v: 436,
     data: "26 novembre 2026",
     titolo: "SPeeD GAME diventa Revel House 🏠",

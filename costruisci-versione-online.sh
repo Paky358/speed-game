@@ -152,6 +152,10 @@ if [ -d app ]; then rm -rf dist/app && cp -r app dist/app; fi
 if [ -d parole ]; then rm -rf dist/parole && cp -r parole dist/parole; fi
 # Suoni registrati (es. lo stadio di Calcio Biliardo): file a parte, scaricati solo quando servono
 if [ -d suoni ]; then rm -rf dist/suoni && cp -r suoni dist/suoni; fi
+# 📜 (26 nov 2026) le pagine del sito: privacy, regole d'uso e crediti (pagine web vere, si leggono senza aprire l'app;
+# stile, carattere e l'elenco delle foto in pagine/, MAI in data/: lì finirebbe nel cuore)
+for f in privacy.html regole.html crediti.html; do [ -e "$f" ] && cp "$f" "dist/$f"; done
+if [ -d pagine ]; then rm -rf dist/pagine && cp -r pagine dist/pagine; fi
 
 if [ "$CITTA" = si ]; then echo "Creato $EXTRA ($VER)"; fi
 echo "Creato $OUT (cuore.$HC.js, stile.$HS.css, novita.$HN.js, $(ls dist/giochi | wc -l) pezzi dei giochi in dist/giochi)"

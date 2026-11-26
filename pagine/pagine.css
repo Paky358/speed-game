@@ -1,0 +1,95 @@
+/* 📜 Le pagine del sito di Revel House (privacy.html, regole.html, crediti.html): pagine web vere, si leggono senza aprire l'app.
+   Il vestito «🌙 Notte vivace» dell'app (stessi colori di css/styles.css, sezione NOTTE VIVACE), senza lo sfondo animato.
+   Il carattere è lo stesso dell'app (Plus Jakarta Sans, licenza SIL OFL), preso da sg-testo.woff2. Le pagine si scorrono. */
+@font-face{ font-family:"SG Testo"; font-style:normal; font-weight:200 800; font-display:swap; src:url(sg-testo.woff2) format("woff2"); }
+:root{
+  --fondo:#0d1020; --carta:rgba(30,36,62,.58); --carta-piena:#151a2e; --filo:rgba(255,255,255,.09);
+  --testo:#f4f5fb; --tenue:#a6acc8; --lampone:#e0225a; --lampone-testo:#ff6d97; --ambra:#ffb547; --rosso-testo:#ff6b78; --verde:#34d17a;
+  color-scheme:dark;
+}
+*{ box-sizing:border-box; }
+html{ background:var(--fondo); -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+body{
+  margin:0; min-height:100vh; color:var(--testo); font-family:"SG Testo", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;
+  font-size:16px; line-height:1.55;
+  background:
+    radial-gradient(70vmax 50vmax at 0% 0%, rgba(224,34,90,.20), transparent 60%),
+    radial-gradient(60vmax 45vmax at 100% 18%, rgba(120,90,230,.17), transparent 62%),
+    radial-gradient(70vmax 55vmax at 50% 100%, rgba(40,180,230,.10), transparent 65%),
+    var(--fondo);
+  background-attachment:fixed;
+}
+a{ color:var(--lampone-testo); text-underline-offset:2px; }
+a:hover{ color:#ff9ab8; }
+.pg{ max-width:720px; margin:0 auto; padding:18px 16px calc(40px + env(safe-area-inset-bottom)); }
+
+/* la testata: il marchio e il ritorno all'app */
+.pg-testa{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:22px; }
+.pg-marchio{ display:flex; align-items:center; gap:10px; color:var(--testo); text-decoration:none; font-weight:800; font-size:1.12rem; letter-spacing:-.01em; }
+.pg-marchio img{ width:36px; height:36px; border-radius:10px; box-shadow:0 6px 16px -6px rgba(224,34,90,.7); }
+.pg-marchio b{ color:var(--lampone-testo); font-weight:800; }
+.pg-torna{ flex:none; display:inline-flex; align-items:center; gap:6px; padding:9px 14px; border-radius:999px; background:var(--lampone);
+  background:linear-gradient(180deg,#e0225a,#c8174f); color:#fff; text-decoration:none; font-weight:700; font-size:.9rem; box-shadow:0 8px 18px -8px rgba(224,34,90,.8); }
+.pg-torna:hover{ color:#fff; filter:brightness(1.08); }
+
+h1{ margin:0 0 4px; font-size:1.85rem; line-height:1.15; font-weight:800; letter-spacing:-.02em; }
+.pg-data{ margin:0 0 18px; color:var(--tenue); font-size:.88rem; }
+.pg-intro{ margin:0 0 18px; font-size:1.05rem; }
+
+/* i riquadri di vetro, come nell'app */
+.pg section, .pg .riquadro{ background:var(--carta); border:1px solid var(--filo); border-radius:18px; padding:16px 16px 6px; margin:0 0 14px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.05), 0 10px 26px -12px rgba(0,0,0,.75); }
+h2{ margin:0 0 10px; font-size:1.14rem; line-height:1.3; font-weight:800; }
+h3{ margin:14px 0 6px; font-size:1rem; font-weight:700; }
+p, ul, ol{ margin:0 0 12px; }
+ul, ol{ padding-left:22px; }
+li{ margin:0 0 6px; }
+li::marker{ color:var(--lampone-testo); }
+strong{ font-weight:700; }
+.tenue{ color:var(--tenue); }
+.piccolo{ font-size:.86rem; }
+
+/* i segnaposto da riempire (il titolare e il contatto): si devono vedere bene */
+.segnaposto{ display:inline; padding:1px 6px; border-radius:6px; background:rgba(255,181,71,.18); border:1px dashed var(--ambra); color:var(--ambra); font-weight:700; white-space:nowrap; }
+
+/* le tabelle piccole (dove stanno i dati, chi li vede) */
+.tab{ width:100%; border-collapse:collapse; margin:0 0 12px; font-size:.92rem; }
+.tab th, .tab td{ text-align:left; vertical-align:top; padding:8px 6px; border-top:1px solid var(--filo); }
+.tab th{ color:var(--tenue); font-weight:700; font-size:.8rem; text-transform:uppercase; letter-spacing:.04em; border-top:0; }
+
+.pg-indice{ display:flex; flex-wrap:wrap; gap:6px; margin:0 0 16px; padding:0; list-style:none; }
+.pg-indice li{ margin:0; }
+.pg-indice a{ display:inline-block; padding:6px 11px; border-radius:999px; background:var(--carta); border:1px solid var(--filo); color:var(--testo); text-decoration:none; font-size:.86rem; }
+
+.pg-piede{ margin-top:26px; text-align:center; color:var(--tenue); font-size:.84rem; }
+.pg-piede nav{ display:flex; justify-content:center; flex-wrap:wrap; gap:4px 12px; margin-bottom:8px; }
+.pg-piede nav a{ color:var(--tenue); text-decoration:none; padding:4px 2px; }
+.pg-piede nav a[aria-current]{ color:var(--testo); font-weight:700; }
+
+/* i crediti delle foto */
+.cr-cerca{ position:sticky; top:0; z-index:2; padding:10px 0; margin:0 0 6px; background:linear-gradient(var(--fondo) 75%, rgba(13,16,32,0)); }
+.cr-cerca input{ width:100%; padding:12px 14px; border-radius:14px; border:1px solid rgba(255,255,255,.16); background:var(--carta-piena); color:var(--testo);
+  font:inherit; font-size:1rem; outline:none; }
+.cr-cerca input:focus{ border-color:var(--lampone-testo); }
+.cr-conta{ margin:6px 2px 0; color:var(--tenue); font-size:.82rem; }
+details.cr-gruppo{ background:var(--carta); border:1px solid var(--filo); border-radius:18px; margin:0 0 10px; overflow:hidden; }
+details.cr-gruppo > summary{ cursor:pointer; list-style:none; padding:14px 16px; font-weight:800; display:flex; align-items:center; gap:10px; }
+details.cr-gruppo > summary::-webkit-details-marker{ display:none; }
+details.cr-gruppo > summary::after{ content:"›"; margin-left:auto; color:var(--tenue); font-size:1.3rem; transition:transform .2s; }
+details.cr-gruppo[open] > summary::after{ transform:rotate(90deg); }
+.cr-gruppo summary small{ color:var(--tenue); font-weight:600; }
+.cr-lista{ list-style:none; margin:0; padding:0 16px 10px; }
+.cr-lista li{ padding:9px 0; margin:0; border-top:1px solid var(--filo); font-size:.88rem; line-height:1.4; overflow-wrap:anywhere; }
+.cr-lista .cosa{ display:block; font-weight:700; color:var(--testo); }
+.cr-lista .chi{ color:var(--tenue); }
+.cr-altri{ padding:4px 16px 14px; color:var(--tenue); font-size:.84rem; }
+.licenza-testo{ white-space:pre-wrap; font-size:.76rem; line-height:1.4; color:var(--tenue); background:rgba(0,0,0,.25); border-radius:10px; padding:10px; margin:0 0 12px; }
+details.mini{ margin:0 0 12px; }
+details.mini > summary{ cursor:pointer; color:var(--lampone-testo); font-size:.88rem; font-weight:600; }
+
+@media (max-width:380px){
+  body{ font-size:15px; }
+  h1{ font-size:1.6rem; }
+  .pg-marchio span{ font-size:1rem; }
+  .pg-torna{ padding:8px 11px; font-size:.84rem; }
+}

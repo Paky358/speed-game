@@ -143,6 +143,15 @@
   function svuota(n){ while (n.firstChild) n.removeChild(n.firstChild); }
   // finestra di conferma al centro dello schermo; il tasto "sì" si attiva
   // dopo un attimo, così i tocchi ripetuti non confermano per sbaglio
+  // 📜 (26 nov 2026) la riga piccola con le pagine del sito: privacy, regole d'uso e crediti (pagine web a parte, mai dentro le partite)
+  function lineaLegale(cls) {
+    var r = el("div", { class: "linea-legale" + (cls ? " " + cls : "") });
+    [["privacy.html", "Privacy"], ["regole.html", "Regole d'uso"], ["crediti.html", "Crediti"]].forEach(function (x, i) {
+      if (i) r.appendChild(el("span", { class: "ll-punto", "aria-hidden": "true", text: "·" }));
+      r.appendChild(el("a", { href: x[0], target: "_blank", rel: "noopener", text: x[1] }));
+    });
+    return r;
+  }
   function chiediConferma(domanda, nota, siTesto, siFn) {
     if (document.querySelector(".conferma-sfondo")) return;   // già aperta
     var chiudi = function () { if (sfondo.parentNode) sfondo.parentNode.removeChild(sfondo); };
@@ -863,6 +872,7 @@
     if (conSala) azioni.appendChild(el("button", { class: "azione", text: (cuore.torneo || (cuore.sala && cuore.sala.torneo)) ? "🏆 Riprendi la serata a punti" : "🏆 Serata a punti", onclick: cuore.apriTorneo }));
     if (!giaApp && !tInstalla && !HOME_MENU_SOTTO) azioni.appendChild(el("button", { class: "azione", text: "📲 Installa l'app", onclick: installa }));
     s._piede.appendChild(azioni);
+    s._piede.appendChild(lineaLegale("home-legale"));   // 📜 privacy, regole e crediti
     if (rec) recInHome(rec, barra);
     if (conSala) return mostra(s);
 
@@ -2558,7 +2568,7 @@
   cuore.HOME_MENU_SOTTO = HOME_MENU_SOTTO; cuore.K_ATTIVO = K_ATTIVO; cuore.K_PROFILI = K_PROFILI; cuore.MAX_ELIM = MAX_ELIM;
   cuore.PILLOLE = PILLOLE; cuore.PROPRIETARIO = PROPRIETARIO; cuore.amiciStato = amiciStato; cuore.apriInvitaAmici = apriInvitaAmici;
   cuore.apriOnlineSala = apriOnlineSala; cuore.audioCtx = audioCtx; cuore.avatarNuoviSpenti = avatarNuoviSpenti; cuore.avviaPartita = avviaPartita;
-  cuore.caricaExtra = caricaExtra; cuore.catDi = catDi; cuore.chiDa = chiDa; cuore.chiediConferma = chiediConferma;
+  cuore.caricaExtra = caricaExtra; cuore.catDi = catDi; cuore.chiDa = chiDa; cuore.chiediConferma = chiediConferma; cuore.lineaLegale = lineaLegale;
   cuore.chiediScelta = chiediScelta; cuore.cifre = cifre; cuore.classificaFitta = classificaFitta; cuore.conCodice = conCodice;
   cuore.GETTONI = GETTONI;
   cuore.contoAvanti = contoAvanti; cuore.eProprietario = eProprietario; cuore.el = el; cuore.entraConCodice = entraConCodice; cuore.errore = errore;

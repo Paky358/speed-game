@@ -146,6 +146,30 @@
       return auth.signInWithEmailAndPassword(emailDa(nome), pwd);
     },
     esci: function () { return auth ? auth.signOut() : Promise.resolve(); },
+    // 🗑️ (26 nov 2026) cancella il profilo per sempre (diritto alla cancellazione, vedi privacy.html).
+    // Per sicurezza Firebase vuole un accesso fresco: si chiede la password e si rientra (reauthenticate), poi
+    // 1) le richieste di amicizia mandate e ricevute, 2) la scheda pubblica, 3) il profilo, 4) l'account.
+    // Se il profilo non si cancella si ferma lì (l'account resta, così si può riprovare). → Promise
+    cancella: function (pwd) {
+      if (!auth || !utente) return Promise.reject(new Error("offline"));
+      var u = auth.currentUser || utente, uid = u.uid, R = db.collection("richieste");
+      var email = u.email || emailDa(profilo && profilo.nome);
+      var cred = firebase.auth.EmailAuthProvider.credential(email, String(pwd || ""));
+      function via(q) { return Promise.all(q.docs.map(function (d) { return d.ref.delete().catch(function () {}); })); }
+      return u.reauthenticateWithCredential(cred).then(function () {
+        return Promise.all([R.where("a", "==", uid).get().then(via), R.where("da", "==", uid).get().then(via)]).catch(function () {});
+      }).then(function () {
+        // la scheda pubblica (nome, gettone, trofei): se le regole non lasciassero cancellare, la si svuota
+        return db.collection("pubblici").doc(uid).delete().catch(function () {
+          return db.collection("pubblici").doc(uid).set({ cancellato: true }).catch(function () {});
+        });
+      }).then(function () {
+        return db.collection("profili").doc(uid).delete().catch(function (e) { ultimaScheda = null; throw e; });   // (resta: la scheda si ripubblica)
+      }).then(function () {
+        profilo = null; ultimaScheda = null;
+        return u.delete();
+      });
+    },
 
     // ---- il portafoglio: Speed Coins (al Casinò si vedono come fiches) ----
     monete: monete,                 // solo da leggere/mostrare
@@ -377,7 +401,7 @@
     cercaNome: function (nome) {
       if (!auth || !utente) return Promise.reject(new Error("offline"));
       return db.collection("pubblici").where("chiave", "==", SGNube.chiaveNome(nome)).limit(1).get()
-        .then(function (q) { return q.empty ? null : conGettone(q.docs[0].data()); });
+        .then(function (q) { var d = !q.empty && q.docs[0].data(); return d && !d.cancellato ? conGettone(d) : null; });
     },
     // aggiunge/toglie un uid dalla MIA lista amici (solo il mio profilo)
     mettiAmico: function (uid) {
@@ -395,7 +419,7 @@
     schede: function (uids) {
       if (!auth || !utente) return Promise.reject(new Error("offline"));
       return Promise.all((uids || []).map(function (u) {
-        return db.collection("pubblici").doc(u).get().then(function (d) { return d.exists ? conGettone(d.data()) : null; });
+        return db.collection("pubblici").doc(u).get().then(function (d) { return d.exists && !d.data().cancellato ? conGettone(d.data()) : null; });
       })).then(function (l) { return l.filter(Boolean); });
     },
     // classifica di TUTTI: chi ha più trofei (i primi n)

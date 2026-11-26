@@ -180,6 +180,13 @@
           el("small", { text: avatarNuoviSpenti() ? "Tocca per vedere il disegno nuovo («Mii rifinito»). Lo vedi solo tu" : "Il disegno nuovo («Mii rifinito»): lo vedi solo tu. Tocca per tornare a quello di oggi" }) ]),
         el("span", { class: "st-tasto-va", text: "›" })
       ]));
+      // 📜 (26 nov 2026) privacy, regole e crediti (pagine del sito, si aprono a parte) e la cancellazione del profilo
+      sp._contenuto.appendChild(cuore.lineaLegale ? cuore.lineaLegale("pf-legale") : el("div"));
+      if (SGNube.cancella) sp._contenuto.appendChild(el("button", { class: "pf-cancella", text: "🗑️ Cancella il mio profilo", onclick: function () {
+        chiediConferma("Cancellare il profilo per sempre?", "Spariscono nome, gettone, livello, Speed Coins, trofei, statistiche e amici. Non si può tornare indietro.", "🗑️ Continua", function () {
+          schermataCancellaProfilo(p, function () { schermataAccessoCloud(dopo); });
+        });
+      } }));
       sp._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🚪 Esci dal profilo", onclick: function () {
         chiediConferma("Sei sicuro di voler uscire dal profilo?", "Se non ricordi la password non potrai più accedere.", "🚪 Esci", function () {
           dimenticaProfilo();   // uscito apposta: questo telefono non lo ripropone
@@ -192,6 +199,49 @@
     var ric = ricordoProfilo();
     if (ric) return schermataBentornato(dopo || schermataHome, ric, { indietro: dopo || schermataHome });
     schermataBenvenuto(dopo || schermataHome);
+  }
+
+  // 🗑️ (26 nov 2026) la cancellazione del profilo: per sicurezza si riscrive la password, poi Firebase (SGNube.cancella) e il telefono
+  function svuotaTelefono() {
+    try {
+      var via = [];
+      for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (/^sg-/.test(k)) via.push(k); }
+      via.forEach(function (k) { localStorage.removeItem(k); });
+    } catch (e) {}
+    try { sessionStorage.clear(); } catch (e) {}
+  }
+  function schermataCancellaProfilo(p, indietro) {
+    var s = schermataProfiloBase("bp-cancella", indietro), c = s._contenuto;
+    c.appendChild(testaProfilo("Cancella il profilo", "Per sicurezza scrivi la password di «" + p.nome + "». Dopo, il profilo non c'è più: né qui né su nessun altro telefono."));
+    var nome = el("input", { type: "text", autocomplete: "username", value: p.nome, hidden: "hidden", "aria-hidden": "true" });
+    var pwd = el("input", { class: "link-campo bp-pwd", type: "password", maxlength: "40", placeholder: "La tua password", autocomplete: "current-password", enterkeyhint: "go" });
+    var avviso = el("div", { class: "link-avviso bp-avviso", "aria-live": "polite" });
+    c.appendChild(nome); c.appendChild(pwd); c.appendChild(avviso);
+    c.appendChild(el("p", { class: "bp-nota", text: "Non ricordi la password? Scrivi a chi gestisce Revel House (il contatto è nella privacy): cancelliamo noi il profilo." }));
+    var bVia = el("button", { class: "btn btn-rosso", text: "🗑️ Cancella per sempre", onclick: vai });
+    function vai() {
+      if (bVia.disabled) return;
+      var pw = pwd.value || "";
+      if (!pw) { avviso.textContent = "Scrivi la tua password."; pwd.focus(); return; }
+      bVia.disabled = true; avviso.textContent = "Cancello il profilo…";
+      SGNube.cancella(pw).then(function () {
+        try { if (window.SGAmiciOnline) SGAmiciOnline.ferma(); } catch (e) {}
+        svuotaTelefono();
+        var f = schermataProfiloBase("bp-cancellato");
+        f._contenuto.appendChild(testaProfilo("Profilo cancellato", "Abbiamo cancellato il profilo e quello che questo telefono ricordava. Grazie di aver giocato con noi!"));
+        f._piede.appendChild(el("button", { class: "btn btn-primario", text: "Ricomincia ▶", onclick: function () { svuotaTelefono(); location.replace(location.pathname); } }));
+        mostra(f);
+      }).catch(function (e) {
+        bVia.disabled = false;
+        var cod = (e && e.code) || "";
+        avviso.textContent = /wrong-password|invalid-credential|invalid-login/.test(cod) ? "Password sbagliata." : erroreProfilo(e, p.nome);
+      });
+    }
+    pwd.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); vai(); } });
+    s._piede.appendChild(bVia);
+    s._piede.appendChild(el("button", { class: "btn btn-fantasma bp-gia", text: "‹ No, tengo il profilo", onclick: indietro }));
+    mostra(s);
+    setTimeout(function () { try { pwd.focus(); } catch (e) {} }, 300);
   }
 
   function attendiProfilo(cb) {
