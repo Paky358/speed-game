@@ -281,8 +281,10 @@
   function avvia() { setTimeout(dopoArrivo, 1200); }   // (dopo che la prima schermata si è disegnata)
   if (!codiceDalLink()) { if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", avvia); else avvia(); }
 
+  // i tasti del trasloco («📦 Ho un codice di trasloco», «📲 Porta il profilo…») solo dove il deposito è pronto: su revelhouse.it e sul computer di prova
+  function acceso() { return /(^|\.)revelhouse\.it$|^(localhost|127\.0\.0\.1)$/.test(location.hostname); }
   window.SGTrasloco = {
-    prima: prima, inCorso: function () { return inCorso; },
+    acceso: acceso, prima: prima, inCorso: function () { return inCorso; },
     prepara: prepara, ricevi: ricevi, segnaArrivo: segnaArrivo, codiceValido: codiceValido, bello: bello, ora: ora,
     leggiAccesso: leggiAccesso, cose: cose, riquadro: riquadro, comeInstallare: comeInstallare
   };

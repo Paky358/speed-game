@@ -136,7 +136,7 @@
         el("span", { class: "st-tasto-va", text: "›" })
       ]));
       // 🏠📦 (26 nov 2026) il profilo su un altro telefono senza password (o nell'app reinstallata su iPhone)
-      if (window.SGTrasloco) sp._contenuto.appendChild(el("button", { class: "st-tasto st-trasloco", onclick: function () { portaSuAltroTelefono(this); } }, [
+      if (window.SGTrasloco && SGTrasloco.acceso()) sp._contenuto.appendChild(el("button", { class: "st-tasto st-trasloco", onclick: function () { portaSuAltroTelefono(this); } }, [
         el("span", { class: "st-tasto-ico", text: "📲" }),
         el("span", { class: "st-tasto-testo" }, [ el("b", { text: "Porta il profilo su un altro telefono" }), el("small", { text: "Un codice per entrare senza password" }) ]),
         el("span", { class: "st-tasto-va", text: "›" })
@@ -308,7 +308,7 @@
     s._piede.appendChild(el("button", { class: "btn btn-fantasma bp-gia", text: "Hai già un profilo? Entra", onclick: function () {
       schermataEntraProfilo(dopo, Object.assign({}, o, { nome: (nome.value || "").trim() }));
     } }));
-    if (window.SGTrasloco) s._piede.appendChild(tastoCodiceTrasloco(dopo, o));
+    if (window.SGTrasloco && SGTrasloco.acceso()) s._piede.appendChild(tastoCodiceTrasloco(dopo, o));
     mostra(s);
   }
   // 🏠📦 (26 nov 2026, Revel House) «Ho un codice di trasloco»: il profilo arriva da un altro telefono (o dalla vecchia app SPeeD GAME)
@@ -384,7 +384,7 @@
     }
     invioCampi(nome, pwd, entra);
     s._piede.appendChild(bEntra);
-    if (window.SGTrasloco) s._piede.appendChild(tastoCodiceTrasloco(dopo, o));   // 🏠📦 (password dimenticata, o l'app reinstallata su iPhone)
+    if (window.SGTrasloco && SGTrasloco.acceso()) s._piede.appendChild(tastoCodiceTrasloco(dopo, o));   // 🏠📦 (password dimenticata, o l'app reinstallata su iPhone)
     s._piede.appendChild(el("button", { class: "btn btn-fantasma bp-gia", text: "‹ Non ho un profilo: lo creo", onclick: function () { schermataBenvenuto(dopo, o); } }));
     mostra(s);
   }
