@@ -107,4 +107,47 @@
     if (err.length) no(err.join("; "));
     return fatti.join(" · ");
   } });
+
+  // lg5: «💡 Proposte» e «🐞 Bug» per email con Web3Forms: la richiesta giusta (chiave, oggetto, testo, contesto del bug),
+  // «Grazie!» se Web3Forms dice sì, l'avviso con l'email se dice no. fetch FINTO: non parte nessuna email.
+  COPIONE.aggiungi("lg5", { nome: "Proposte e Bug: arrivano per email con Web3Forms (rete finta)", fai: async function () {
+    var P = await home("Sara"), fatti = [];
+    var mandati = [], risposta = { success: true }, veraFetch = P.fetch;
+    P.fetch = function (url, o) {
+      if (String(url).indexOf("web3forms") < 0) return veraFetch.apply(this, arguments);
+      mandati.push({ url: String(url), corpo: JSON.parse(o.body) });
+      var r = risposta; return Promise.resolve({ ok: !!r.success, json: function () { return Promise.resolve(r); } });
+    };
+    async function manda(apri, testo, nome) {
+      P.SGCuore[apri]();
+      var t = await W.aspetta(function () { return P.document.querySelector(".modulo-testo"); }, 3000);
+      if (!t) no(apri + ": non si apre");
+      var campo = P.document.querySelector(".link-campo");
+      if (nome) await scrivi(P, campo, nome);
+      await scrivi(P, t, testo);
+      [].find.call(P.document.querySelectorAll(".btn-primario"), function (b) { return /Invia/.test(b.textContent); }).click();
+      await W.aspetta(function () { return P.document.querySelector(".passa .grande") || /Non sono riuscito/.test((P.document.querySelector(".link-avviso") || {}).textContent || ""); }, 3000);
+    }
+    await manda("schermataProposte", "Una carta nuova per la Linea del tempo", "Sara");
+    var m = mandati[0];
+    if (!m) {
+      if (!/revelhouse\.app@gmail\.com/.test(P.document.querySelector(".link-avviso").textContent)) no("senza chiave l'avviso non dà l'email");
+      return "⚠️ manca ancora la chiave di Web3Forms: l'avviso dice di scrivere a revelhouse.app@gmail.com";
+    }
+    if (m.url !== "https://api.web3forms.com/submit") no("indirizzo sbagliato: " + m.url);
+    if (!/^[0-9a-f-]{30,}$/i.test(m.corpo.access_key)) no("chiave strana: «" + m.corpo.access_key + "»");
+    if (!/Proposta/.test(m.corpo.subject) || m.corpo.messaggio !== "Una carta nuova per la Linea del tempo" || m.corpo.nome !== "Sara") no("proposta sbagliata: " + JSON.stringify(m.corpo));
+    if (!P.document.querySelector(".passa .grande")) no("dopo l'invio niente «Grazie!»");
+    fatti.push("proposta: " + m.corpo.subject);
+    await manda("schermataBug", "Il tasto non va");
+    m = mandati[1];
+    if (!m || !/Problema/.test(m.corpo.subject) || m.corpo.nome !== "Anonimo" || !/versione \d+ · schermo/.test(m.corpo.contesto || "")) no("bug sbagliato: " + JSON.stringify(m && m.corpo));
+    fatti.push("bug: " + m.corpo.subject + " (" + m.corpo.contesto.split(" · ").slice(0, 2).join(", ") + ")");
+    risposta = { success: false, message: "x" };
+    await manda("schermataBug", "Ancora il tasto");
+    if (P.document.querySelector(".passa .grande")) no("Web3Forms dice no ma l'app dice «Grazie!»");
+    if (!/revelhouse\.app@gmail\.com/.test(P.document.querySelector(".link-avviso").textContent)) no("se non arriva l'avviso non dà l'email");
+    fatti.push("se non arriva: avviso con l'email");
+    return fatti.join(" · ");
+  } });
 })();

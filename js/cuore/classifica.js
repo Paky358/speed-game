@@ -301,16 +301,22 @@
   }
 
   // ---- Proposte e segnalazioni ----
-  // I messaggi vengono spediti al sito (moduli di Netlify) e finiscono
-  // nell'area riservata del proprietario: li può leggere solo lui.
+  // I messaggi arrivano per email a chi gestisce Revel House (revelhouse.app@gmail.com) passando da Web3Forms
+  // (26 nov 2026: prima andavano ai moduli di Netlify, che su GitHub Pages non ci sono). La chiave NON è una password:
+  // dice solo a Web3Forms a quale email spedire, e sta nel codice apposta (si crea su web3forms.com con l'email).
+  var WEB3FORMS_CHIAVE = "";
+  var OGGETTO_MODULO = { proposte: "💡 Proposta da Revel House", bug: "🐞 Problema su Revel House" };
   function inviaModulo(nomeModulo, dati) {
-    var pezzi = ["form-name=" + encodeURIComponent(nomeModulo)];
-    for (var k in dati) pezzi.push(encodeURIComponent(k) + "=" + encodeURIComponent(dati[k] == null ? "" : dati[k]));
-    return fetch("/", {
+    if (!WEB3FORMS_CHIAVE) return Promise.reject(new Error("manca la chiave"));
+    var corpo = { access_key: WEB3FORMS_CHIAVE, subject: OGGETTO_MODULO[nomeModulo] || "Revel House", from_name: "Revel House", botcheck: "" };
+    for (var k in dati) corpo[k] = dati[k] == null ? "" : dati[k];
+    return fetch("https://api.web3forms.com/submit", {
       method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: pezzi.join("&")
-    }).then(function (r) { if (!r.ok) throw new Error("invio non riuscito"); return true; });
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(corpo)
+    }).then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) {
+      if (!r.ok || !j.success) throw new Error("invio non riuscito"); return true;
+    }); });
   }
 
   function schermataModulo(opts) {
@@ -331,7 +337,7 @@
       inviaModulo(opts.modulo, dati).then(function () { grazie(opts.grazie); })
         .catch(function () {
           invia.disabled = false;
-          avviso.textContent = "Non sono riuscito a inviare (succede se il gioco non è aperto dal sito pubblicato). Copia il testo e mandalo a chi gestisce il gioco.";
+          avviso.textContent = "Non sono riuscito a inviare: controlla la rete e riprova, oppure copia il testo e scrivilo a revelhouse.app@gmail.com.";
           testo.focus(); testo.select();
         });
     }});

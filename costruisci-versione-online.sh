@@ -129,9 +129,6 @@ HN=$(impronta data/novita.js); cp data/novita.js "dist/novita.$HN.js"
   echo "<script>window.SG_FOTO = {$(for f in carte/giochi/*.jpg; do [ -e "$f" ] && printf '"%s":1,' "$(basename "$f" .jpg)"; done)};</script>"
   # 📦 dove sta online ogni pezzo dei giochi (js/cuore/scarica.js lo scarica quando serve)
   echo "<script>window.SG_PEZZI_URL = {${PEZZI_URL%,}};</script>"
-  # caselle di posta del sito (Netlify le riconosce alla pubblicazione)
-  echo '<form name="proposte" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea></form>'
-  echo '<form name="bug" data-netlify="true" netlify-honeypot="bot-field" hidden><input type="text" name="bot-field" /><input type="text" name="nome" /><textarea name="messaggio"></textarea><input type="text" name="contesto" /></form>'
   echo '<script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>'
   echo '<script src="https://cdn.ably.com/lib/ably.min-2.js"></script>'
   echo '<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>'
