@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 452,
+    data: "27 novembre 2026",
+    titolo: "Ogni gioco ha la sua pagina 🔎",
+    descrizione: [
+      "🔎 Revel House si fa trovare su Google: ogni gioco ha una sua pagina, con la spiegazione, la copertina e il tasto «▶ Gioca ora» che apre subito quel gioco.",
+      "📲 Le trovi tutte su revelhouse.it/giochi: comode da mandare a chi non conosce ancora un gioco, così lo legge prima della serata.",
+      "🎮 Per chi gioca non cambia niente: revelhouse.it apre l'app come sempre."
+    ]
+  },
+  {
     v: 451,
     data: "27 novembre 2026",
     titolo: "«Come giocate?» si legge meglio 🎮",
