@@ -11,9 +11,9 @@ window.SG_NOVITA = [
   {
     v: 442,
     data: "26 novembre 2026",
-    titolo: "Palla a Pendolo si riposa un po' 🎯",
+    titolo: "Palla a Pendolo, Battaglia Navale e Taboo si riposano un po' 🎯",
     descrizione: [
-      "🎯 Palla a Pendolo non è più tra i giochi della prima schermata, della Sala e dei tornei: la stiamo sistemando per renderla migliore. Chi apre un link vecchio di una sua partita ci entra lo stesso."
+      "🎯 Palla a Pendolo, 🚢 Battaglia Navale e 🤐 Taboo non sono più tra i giochi della prima schermata, della Sala e dei tornei: li stiamo sistemando per renderli migliori. Chi apre un link vecchio di una loro partita ci entra lo stesso."
     ]
   },
   {

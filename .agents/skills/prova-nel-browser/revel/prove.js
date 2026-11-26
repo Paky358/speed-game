@@ -1,11 +1,11 @@
 // 🏠 REVEL HOUSE (26 nov 2026): il nome nuovo e i giochi nascosti. Si carica dopo copione-prova.js.
-// rh1: un amico qualunque: in home niente Gara di pesca, Battaglia Navale e Palla a Pendolo (né in «Chi gioca?» della Sala, né nel torneo),
+// rh1: un amico qualunque: in home niente Gara di pesca, Battaglia Navale, Palla a Pendolo e Taboo (né in «Chi gioca?» della Sala, né nel torneo),
 //      ma un link vecchio li trova (giocoDa); il titolo dice «Revel House» con l'icona.
 // rh2: IL PAPPONE li vede ancora (NASCOSTI_AL_PROPRIETARIO = false).
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no;
-  var NASCOSTI = ["garapesca", "navale", "pendolo"];
+  var NASCOSTI = ["garapesca", "navale", "pendolo", "taboo"];
   function tessere(w) { return [].map.call(w.document.querySelectorAll(".home [data-gioco]"), function (n) { return n.getAttribute("data-gioco"); }); }
   async function home(nome) {
     var P = await W.apriTel(nome, { x: 0 });
@@ -13,7 +13,7 @@
     await W.aspetta(function () { return false; }, 800);
     return P;
   }
-  COPIONE.aggiungi("rh1", { nome: "Revel House: titolo nuovo; Gara di pesca, Battaglia Navale e Palla a Pendolo nascoste (ma i link vecchi le trovano)", fai: async function () {
+  COPIONE.aggiungi("rh1", { nome: "Revel House: titolo nuovo; Gara di pesca, Battaglia Navale, Palla a Pendolo e Taboo nascoste (ma i link vecchi le trovano)", fai: async function () {
     var P = await home("Luca"), t = tessere(P), err = [];
     NASCOSTI.forEach(function (id) { if (t.indexOf(id) >= 0) err.push("c'è la tessera " + id); });
     if (t.indexOf("tris") < 0) err.push("manca la tessera del Tris (" + t.join(",") + ")");
