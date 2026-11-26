@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 27 nov 2026 00:10 · 🖼️ Copertine · salvato · v444 copertina nuova dell'Asta coi temi (carte/giochi/asta.jpg: martelletto e 4 armi del round zombie fatti con Gemini + timbro «AGGIUDICATO!» e prezzo 6 messi da noi; lavoro e prompt in D:/SG-copertine/asta) · lavori-in-corso
 - 26 nov 2026 23:40 · 🖼️ Copertine · salvato · v443 copertina nuova di Parola d'ordine (carte/giochi/ordine.jpg: carte del gioco viste dall'alto fatte con Gemini + parole messe da noi, indizio dei Blu «MARE 2» → ONDA e PORTO girate azzurre; lavoro e prompt in D:/SG-copertine/ordine) · lavori-in-corso
 - 26 nov 2026 23:00 · 🖼️ Copertine · PUBBLICATO (il proprietario: «pubblica») · v442 copertina nuova del Prezzo è Giusto (carte/giochi/prezzo.jpg: studio TV e scooter sportivo fatti con Gemini + display «?.450 €» con le cifre messe da noi; lavoro e prompt in D:/SG-copertine/prezzo) · lavori-in-corso e master
 - 26 nov 2026 22:00 · 🖼️ Copertine · PUBBLICATO (il proprietario: «Sì, pubblica») · v441 copertina nuova della Ruota della Fortuna (carte/giochi/ruota.jpg: ruota dello studio fatta con Gemini + tabellone «R_V_L HOUS_» con le E accese, lettere messe da noi; lavoro e prompt in D:/SG-copertine/ruota) · lavori-in-corso

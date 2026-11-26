@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 444,
+    data: "26 novembre 2026",
+    titolo: "L'Asta ha la copertina nuova 🔨",
+    descrizione: [
+      "🔨 Nella prima schermata L'Asta ha un'immagine nuova: il martelletto che batte e le carte del round delle armi contro gli zombie, dalla katana «AGGIUDICATO!» per 6 crediti fino alla ciabatta infradito. Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
     v: 443,
     data: "26 novembre 2026",
     titolo: "Parola d'ordine ha la copertina nuova 🔵",
