@@ -13,6 +13,9 @@ L'app si disegna con JavaScript: Google ne legge pochissimo. Per farci trovare d
   l'app apre «Come giocate?» di quel gioco, dopo il profilo se serve), 370-500 parole, sei altri giochi, note sui marchi.
 - `revelhouse.it/giochi/`: tutti i giochi, per categoria. `sitemap.xml` e `robots.txt` alla radice.
 - Stile: `pagine/pagine.css` (quello di privacy e regole) + `pagine/giochi.css`.
+- 🕓 **In attesa** (`IN_ATTESA` in fai-pagine.js, il Cervello 27 nov 2026): Mini Asta, Ruota e Prezzo portano nomi di altri e NON vanno online
+  finché il proprietario non decide i nomi: le pagine si preparano in `sito-in-attesa/giochi/` (mini-asta, ruota, prezzo: indirizzi neutri,
+  restano anche se il nome cambia), fuori dalla mappa, dagli elenchi e dai link. Per pubblicarne una si toglie da `IN_ATTESA` e si rifà tutto.
 - La cartella `dist/giochi/` contiene anche i pezzi dei giochi (`<pezzo>.<impronta>.js`): le pagine sono cartelle, non si toccano.
 
 ## Come si rifà

@@ -1,7 +1,7 @@
 /* La pagina della Mini Asta (scritta a parte: il titolo con «fantacalcio» lo sceglie il proprietario, vedi TITOLI_MINIASTA in fai-pagine.js) */
 module.exports = {
   astafanta: {
-    titolo: "Asta del fantacalcio online con gli amici",
+    titolo: "Asta del fanta online con gli amici",
     descr: "Un'asta veloce con gli amici: 20 crediti, 5 calciatori veri di Serie A a testa, poi si gioca la giornata e vince chi fa più fantapunti. Gratis dal telefono.",
     h1: "Mini Asta Fantacalcio: l'asta con gli amici, poi la giornata",
     intro: "Tutto il bello dell'asta di settembre, senza aspettare la domenica: vi sfidate a colpi di rilanci sui calciatori veri di Serie A, poi la giornata si gioca subito, davanti a voi, e i fantapunti arrivano in diretta.",

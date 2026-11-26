@@ -10,7 +10,7 @@ var fs = require("fs"), path = require("path"), http = require("http");
 var { chromium } = require("C:/Users/joetr/sg-strumenti/node_modules/playwright-core");
 var R = path.resolve(__dirname, "../../.."), DIST = path.join(R, "dist");
 var FOTO = process.argv[2] || "D:/SG-google-prove/foto";
-var SCELTE = (process.argv[3] || "mini-asta-fantacalcio,impostore,pecora-nera,ruota-della-fortuna,giochi").split(",");
+var SCELTE = (process.argv[3] || "impostore,pecora-nera,linea-del-tempo,blackjack,giochi").split(",");
 fs.mkdirSync(FOTO, { recursive: true });
 var TIPI = { ".html": "text/html; charset=utf-8", ".css": "text/css", ".js": "text/javascript", ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg",
   ".webp": "image/webp", ".woff2": "font/woff2", ".xml": "application/xml", ".txt": "text/plain", ".json": "application/json", ".webmanifest": "application/manifest+json" };

@@ -8,7 +8,7 @@ module.exports = {
   // la pagina d'ingresso: <title> e descrizione (stanno in app/testa.html e in index.html: le scrive fai-pagine.js)
   ingresso: {
     titolo: "Revel House · giochi da fare con gli amici, online e dal telefono",
-    descr: "Giochi per le serate con gli amici, gratis dal telefono: ognuno dal suo o passandovelo. L'Impostore, Pecora Nera, la Mini Asta del fantacalcio, Scarabocchio e tanti altri.",
+    descr: "Giochi per le serate con gli amici, gratis dal telefono: ognuno dal suo o passandovelo. L'Impostore, Pecora Nera, Scarabocchio, la Linea del tempo e tanti altri.",
     h1: "Revel House: giochi da fare con gli amici, dal telefono",
     p: [
       "Revel House è una raccolta di giochi per le serate con gli amici. Si gioca dal telefono, gratis e senza pubblicità: ognuno dal suo, anche da città diverse, oppure tutti intorno a un telefono solo che passa di mano in mano.",

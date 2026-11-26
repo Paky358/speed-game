@@ -20,12 +20,16 @@ function scrivi(f, s) { var p = path.join(R, f); fs.mkdirSync(path.dirname(p), {
 var T = require("./sito-testi.js"), SITO = T.sito;
 // i giochi SENZA pagina oltre ai nascosti: Lanterne è di Mario (non si tocca); Palla a Pendolo e Taboo stanno per essere nascosti
 var NO_PAGINA = { lanterne: 1, pendolo: 1, taboo: 1 };
+// 🕓 le pagine IN ATTESA (il Cervello, 27 nov 2026): portano un nome di altri (Fantacalcio, Ruota della Fortuna, Il Prezzo è Giusto) e non
+// vanno online finché il proprietario non decide i nomi. Si preparano in sito-in-attesa/ (la costruzione NON la copia), fuori dalla mappa,
+// dagli elenchi e dai link. Per pubblicarne una: via da qui, rifai le pagine e la costruzione.
+var IN_ATTESA = { astafanta: 1, ruota: 1, prezzo: 1 };
 // l'ordine delle pagine (i più forti prima) e l'indirizzo di ognuna: revelhouse.it/giochi/<indirizzo>/ (NON cambiarli: Google li ricorda)
 var PAGINE = [
-  ["astafanta", "mini-asta-fantacalcio"], ["pecoranera", "pecora-nera"], ["impostore", "impostore"], ["timeline", "linea-del-tempo"],
+  ["astafanta", "mini-asta"], ["pecoranera", "pecora-nera"], ["impostore", "impostore"], ["timeline", "linea-del-tempo"],
   ["ordine", "parola-d-ordine"], ["scarabocchio", "scarabocchio"], ["lunghezza", "stessa-lunghezza-d-onda"], ["balla", "balla-colossale"],
   ["memata", "memata"], ["sipero", "si-pero"], ["chidinoi", "chi-di-noi"], ["nomicose", "nomi-cose-citta"], ["unaparola", "una-parola-sola"],
-  ["patata", "patata-bollente"], ["dadoveviene", "da-dove-viene"], ["muro", "il-muro"], ["prezzo", "prezzo-giusto"], ["ruota", "ruota-della-fortuna"],
+  ["patata", "patata-bollente"], ["dadoveviene", "da-dove-viene"], ["muro", "il-muro"], ["prezzo", "prezzo"], ["ruota", "ruota"],
   ["asta", "asta"], ["scalinata", "scalinata"], ["horto", "horto-muso"], ["pallamatta", "palla-matta"], ["calciobiliardo", "calcio-biliardo"],
   ["scopa", "scopa"], ["scopa2v2", "scopa-a-coppie"], ["scopone", "scopone"], ["blackjack", "blackjack"], ["poker", "poker"],
   ["tris", "tris"], ["trisgigante", "tris-gigante"], ["drop4", "drop-4"], ["hockey", "glow-hockey"]
@@ -62,6 +66,7 @@ var giochi = PAGINE.filter(function (p) { return visibili.indexOf(p[0]) >= 0; })
   return { id: id, url: "/giochi/" + p[1] + "/", s: s, t: t, nome: s.nome, icona: s.icona, cat: CAT[id] || "festa", online: online, telefono: telefono, bot: bot,
     soloOnline: !!s.soloOnline, min: min, max: max, gioc: GIOCATORI[id] || (min === max ? "In " + min : "Da " + min + " a " + max) + " giocatori", foto: foto };
 });
+var pubblici = giochi.filter(function (g) { return !IN_ATTESA[g.id]; });   // quelli che vanno online (gli altri: sito-in-attesa/)
 visibili.forEach(function (id) { if (!giochi.some(function (g) { return g.id === id; })) throw new Error("Il gioco " + id + " è visibile ma non ha il suo posto in PAGINE (fai-pagine.js)"); });
 
 // ---- aiuti per l'HTML ----
@@ -109,9 +114,10 @@ function fatti(g) {
 function gioca(g, testo) { return '<a class="gc-gioca" href="/#gioco=' + g.id + '">' + h(testo || "▶ Gioca ora") + "</a>"; }
 
 // ---- la pagina di ogni gioco ----
+["sito/giochi", "sito-in-attesa"].forEach(function (d) { fs.rmSync(path.join(R, d), { recursive: true, force: true }); });   // (via le pagine vecchie)
 giochi.forEach(function (g, i) {
   var t = g.t, url = SITO + g.url;
-  var altri = giochi.filter(function (x) { return x !== g && x.cat === g.cat; }).concat(giochi.filter(function (x) { return x !== g && x.cat !== g.cat; })).slice(0, 6);
+  var altri = pubblici.filter(function (x) { return x !== g && x.cat === g.cat; }).concat(pubblici.filter(function (x) { return x !== g && x.cat !== g.cat; })).slice(0, 6);
   var dati = [
     { "@context": "https://schema.org", "@type": "Game", name: g.nome, description: t.descr, url: url, inLanguage: "it",
       image: SITO + (g.foto || "/app/anteprima.png"), numberOfPlayers: { "@type": "QuantitativeValue", minValue: g.min, maxValue: g.max },
@@ -135,15 +141,15 @@ giochi.forEach(function (g, i) {
     '  <section class="gc-altri">\n    <h2>Altri giochi da fare con gli amici</h2>\n    <div class="gc-griglia">' + altri.map(function (x) { return scheda(x); }).join("") + "</div>\n" +
     '    <p class="gc-tutti"><a href="/giochi/">Tutti i giochi ›</a></p>\n  </section>\n' +
     piede(T.marchi[g.id]) + "</main>\n</body>\n</html>\n";
-  scrivi("sito" + g.url + "index.html", html);
+  scrivi((IN_ATTESA[g.id] ? "sito-in-attesa" : "sito") + g.url + "index.html", html);
 });
 
 // ---- la pagina di tutti i giochi ----
 (function () {
   var t = T.tutti, url = "/giochi/";
-  var dati = { "@context": "https://schema.org", "@type": "ItemList", name: t.h1, itemListElement: giochi.map(function (g, i) { return { "@type": "ListItem", position: i + 1, name: g.nome, url: SITO + g.url }; }) };
+  var dati = { "@context": "https://schema.org", "@type": "ItemList", name: t.h1, itemListElement: pubblici.map(function (g, i) { return { "@type": "ListItem", position: i + 1, name: g.nome, url: SITO + g.url }; }) };
   var gruppi = T.categorie.map(function (c) {
-    var l = giochi.filter(function (g) { return g.cat === c.id; }); if (!l.length) return "";
+    var l = pubblici.filter(function (g) { return g.cat === c.id; }); if (!l.length) return "";
     return '  <section class="gc-cat">\n    <h2>' + h(c.nome) + '</h2>\n    <p class="tenue">' + h(c.sotto) + '</p>\n    <div class="gc-griglia">' + l.map(function (g) { return scheda(g, false); }).join("") + "</div>\n  </section>\n";
   }).join("");
   var html = testa({ titolo: t.titolo + " · Revel House", descr: t.descr, url: url, extra: ld(dati) + "\n" }) +
@@ -159,14 +165,14 @@ giochi.forEach(function (g, i) {
   var dati = [
     { "@context": "https://schema.org", "@type": "WebSite", name: "Revel House", alternateName: ["Revel House giochi", "SPeeD GAME"], url: SITO + "/", inLanguage: "it", description: I.descr },
     { "@context": "https://schema.org", "@type": "Organization", name: "Revel House", url: SITO + "/", logo: SITO + "/app/icona-512.png", email: "revelhouse.app@gmail.com" },
-    { "@context": "https://schema.org", "@type": "ItemList", name: "I giochi di Revel House", itemListElement: giochi.map(function (g, i) { return { "@type": "ListItem", position: i + 1, name: g.nome, url: SITO + g.url }; }) }
+    { "@context": "https://schema.org", "@type": "ItemList", name: "I giochi di Revel House", itemListElement: pubblici.map(function (g, i) { return { "@type": "ListItem", position: i + 1, name: g.nome, url: SITO + g.url }; }) }
   ];
   var s = "<!-- 🔎 Il testo per Google (fatto da .agents/skills/pagine-google/fai-pagine.js: non toccarlo a mano).\n" +
     "     Chi apre l'app non lo vede mai: la riga qui sotto lo nasconde prima che arrivi. Si legge solo senza JavaScript. -->\n" +
     '<script>document.documentElement.classList.add("sg-js")</script>\n' +
     "<style>.sg-js #sito{display:none!important}#sito{max-width:720px;margin:0 auto;padding:24px 16px 40px;color:#f4f5fb;background:#0d1020;font:16px/1.55 system-ui,sans-serif}#sito a{color:#ff6d97}#sito h1{font-size:1.7rem;line-height:1.2}#sito li{margin:0 0 8px}</style>\n" +
     '<div id="sito">\n  <h1>' + h(I.h1) + "</h1>\n" + I.p.map(function (p) { return "  <p>" + h(p) + "</p>\n"; }).join("") +
-    "  <h2>I giochi</h2>\n  <ul>\n" + giochi.map(function (g) { return '    <li><a href="' + g.url + '">' + h(g.nome) + "</a> · " + h(g.t.intro.split(/(?<=[.!?])\s/)[0]) + "</li>\n"; }).join("") +
+    "  <h2>I giochi</h2>\n  <ul>\n" + pubblici.map(function (g) { return '    <li><a href="' + g.url + '">' + h(g.nome) + "</a> · " + h(g.t.intro.split(/(?<=[.!?])\s/)[0]) + "</li>\n"; }).join("") +
     '  </ul>\n  <p><a href="/giochi/">Tutti i giochi</a> · <a href="/privacy.html">Privacy</a> · <a href="/regole.html">Regole d\'uso</a> · <a href="/crediti.html">Crediti</a></p>\n</div>\n' +
     ld(dati) + "\n";
   scrivi("app/ingresso.html", s);
@@ -181,10 +187,10 @@ giochi.forEach(function (g, i) {
 
 // ---- la mappa del sito e robots.txt ----
 (function () {
-  var l = ["/", "/giochi/"].concat(giochi.map(function (g) { return g.url; }), ["/privacy.html", "/regole.html", "/crediti.html"]);
+  var l = ["/", "/giochi/"].concat(pubblici.map(function (g) { return g.url; }), ["/privacy.html", "/regole.html", "/crediti.html"]);
   scrivi("sito/sitemap.xml", '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
     l.map(function (u) { return "  <url><loc>" + SITO + u + "</loc><lastmod>" + OGGI + "</lastmod></url>\n"; }).join("") + "</urlset>\n");
   scrivi("sito/robots.txt", "# Revel House: tutto si può leggere, tranne i pezzi di pagina che l'app usa per costruirsi\nUser-agent: *\nDisallow: /app/testa.html\nDisallow: /app/ingresso.html\n\nSitemap: " + SITO + "/sitemap.xml\n");
 })();
 
-console.log("Fatte " + giochi.length + " pagine dei giochi, la pagina di tutti i giochi, sitemap.xml (" + (giochi.length + 5) + " indirizzi), robots.txt e app/ingresso.html");
+console.log("Fatte " + pubblici.length + " pagine dei giochi (più " + (giochi.length - pubblici.length) + " in attesa in sito-in-attesa/), la pagina di tutti i giochi, sitemap.xml (" + (pubblici.length + 5) + " indirizzi), robots.txt e app/ingresso.html");
