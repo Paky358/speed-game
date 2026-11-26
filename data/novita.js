@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 441,
+    data: "26 novembre 2026",
+    titolo: "La Ruota della Fortuna ha la copertina nuova 🎡",
+    descrizione: [
+      "🎡 Nella prima schermata la Ruota ha un'immagine nuova: la ruota dello studio TV e il tabellone con la frase da indovinare, «R_V_L HOUS_», con le E che si accendono. Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
     v: 440,
     data: "26 novembre 2026",
     titolo: "Proposte e Bug arrivano davvero 💌",
