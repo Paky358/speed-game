@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 442,
+    data: "26 novembre 2026",
+    titolo: "Palla a Pendolo si riposa un po' 🎯",
+    descrizione: [
+      "🎯 Palla a Pendolo non è più tra i giochi della prima schermata, della Sala e dei tornei: la stiamo sistemando per renderla migliore. Chi apre un link vecchio di una sua partita ci entra lo stesso."
+    ]
+  },
+  {
     v: 441,
     data: "26 novembre 2026",
     titolo: "La Ruota della Fortuna ha la copertina nuova 🎡",

@@ -1052,7 +1052,7 @@
   //   «Scegliamo insieme», né nelle pagine dei trofei. Il codice NON è cancellato: per riaccenderlo basta togliere il suo nome da qui.
   //   Chi apre un link vecchio di una sua stanza, o segue la Sala di qualcuno che lo fa partire, ci entra lo stesso (giocoDa li trova tutti).
   //   NASCOSTI_AL_PROPRIETARIO = false: IL PAPPONE li vede ancora (per provarli); true = nascosti anche a lui.
-  var GIOCHI_NASCOSTI = { garapesca: 1, navale: 1 };
+  var GIOCHI_NASCOSTI = { garapesca: 1, navale: 1, pendolo: 1 };
   var NASCOSTI_AL_PROPRIETARIO = false;
   function giocoNascosto(id) { return !!GIOCHI_NASCOSTI[id] && (NASCOSTI_AL_PROPRIETARIO || !eProprietario()); }
   function ordinaGiochi() {
