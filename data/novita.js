@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 448,
+    data: "27 novembre 2026",
+    titolo: "«Sì... però» ha la copertina nuova 🤨",
+    descrizione: [
+      "🤨 Nella prima schermata «Sì... però» ha un'immagine nuova: la carta verde «SÌ… Sai volare» e sopra, sbattuta, la carta rossa «PERÒ… solo in mutande». Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
     v: 447,
     data: "27 novembre 2026",
     titolo: "Black Jack e Linea del tempo hanno la copertina nuova 🃏",
