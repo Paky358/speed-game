@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 440,
+    data: "26 novembre 2026",
+    titolo: "Proposte e Bug arrivano davvero 💌",
+    descrizione: [
+      "💡 «Proposte» e «🐞 Bug» in fondo alla home adesso arrivano per email a chi gestisce Revel House: scrivi la tua idea o il problema e tocca «Invia».",
+      "📶 Se l'invio non riesce, l'app te lo dice e ti dà l'indirizzo a cui scrivere."
+    ]
+  },
+  {
     v: 439,
     data: "26 novembre 2026",
     titolo: "Privacy, regole e crediti 📜",

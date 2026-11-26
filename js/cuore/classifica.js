@@ -304,7 +304,7 @@
   // I messaggi arrivano per email a chi gestisce Revel House (revelhouse.app@gmail.com) passando da Web3Forms
   // (26 nov 2026: prima andavano ai moduli di Netlify, che su GitHub Pages non ci sono). La chiave NON è una password:
   // dice solo a Web3Forms a quale email spedire, e sta nel codice apposta (si crea su web3forms.com con l'email).
-  var WEB3FORMS_CHIAVE = "";
+  var WEB3FORMS_CHIAVE = "5db615ee-c166-4a3e-97de-a02f343c1091";
   var OGGETTO_MODULO = { proposte: "💡 Proposta da Revel House", bug: "🐞 Problema su Revel House" };
   function inviaModulo(nomeModulo, dati) {
     if (!WEB3FORMS_CHIAVE) return Promise.reject(new Error("manca la chiave"));
