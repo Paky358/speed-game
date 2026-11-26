@@ -4,7 +4,11 @@
 // Con Edge invisibile: prova.js --porta 8995 --carica preferiti/asta.js,preferiti/asta-campetto.js --prova cm1
 //
 // cm1 Online in 2, 4 e 6, su 360x640, 360x740 e 412x915: nei campetti delle squadre all'asta la riga bianca di metà campo DISEGNATA a metà
-//     (cercata nei pixel del disegno) e nessun posto (vuoto o pieno: maglia e nome) sopra la riga, sul cerchio o con la maglia fuori dal campetto.
+//     (cercata nei pixel del disegno) e nessun posto (vuoto o pieno: maglia e nome) sopra la riga o con la maglia fuori dal campetto.
+//     Dal 26 nov 2026 (il proprietario: «il difensore tutto a sinistra o a destra non va bene… la stessa distanza tra tutti i ruoli»): la
+//     formazione a 4 file ALLA STESSA DISTANZA (attaccante, centrocampisti, difensore, portiere), attaccante, difensore e portiere al centro,
+//     i centrocampisti uguali ai due lati, nessun posto addosso a un altro, l'attaccante mai sopra la linea di fondo degli altri. Il cerchio
+//     di centrocampo non è più un guaio (dove le maglie sono grandi il difensore lo tocca): si conta e basta.
 // cm0 (solo misure) Le misure dei campetti delle squadre all'asta: in 2, 3, 4 e 6, su 360x640, 360x740 e 412x915.
 // Foto: D:/SG-asta-prove/campo (foto-campetti.js, foto-tutte.js, foto-whatsapp.js; con «prima» il gioco di prima).
 (function () {
@@ -46,6 +50,17 @@
   function guardaPosti(w, c, dove) {
     var ko = [], r = c.getBoundingClientRect(), rap = Math.round(c.clientWidth / c.clientHeight * 20) / 20, G = w.SGAstaArte.campoGeo(rap);
     var midY = r.top + r.height / 2, cx = r.left + r.width / 2, rx = (9.15 + 0.5) * G.sx / 300 * r.width, ry = (9.15 + 0.5) * G.sy / 300 * r.height;
+    var fondo = r.top + (150 - 52.5 * G.sy) / 300 * r.height, scat = [], ctr = [], ruoli = ["ATT", "CEN sx", "CEN dx", "DIF", "POR"];
+    [].forEach.call(c.querySelectorAll(".st-slot"), function (s, i) { var b = s.getBoundingClientRect(); ctr[i] = [b.left + b.width / 2, b.top + b.height / 2]; });
+    if (ctr.length === 5) {
+      var gA = ctr[1][1] - ctr[0][1], gC = ctr[3][1] - ctr[1][1], gD = ctr[4][1] - ctr[3][1];
+      if (Math.abs(ctr[1][1] - ctr[2][1]) > 1) ko.push(dove + ": i due centrocampisti non sono alla stessa altezza");
+      if (Math.max(gA, gC, gD) - Math.min(gA, gC, gD) > 1.5) ko.push(dove + ": le file non sono alla stessa distanza (" + [gA, gC, gD].map(Math.round).join(", ") + " px)");
+      if (!(gA > 0 && gC > 0 && gD > 0)) ko.push(dove + ": le file non sono in ordine (attaccante, centrocampisti, difensore, portiere)");
+      [0, 3, 4].forEach(function (i) { if (Math.abs(ctr[i][0] - cx) > 1) ko.push(dove + ": " + ruoli[i] + " non è al centro (" + Math.round(ctr[i][0] - cx) + " px)"); });
+      if (Math.abs((ctr[1][0] + ctr[2][0]) / 2 - cx) > 1) ko.push(dove + ": i centrocampisti non sono uguali ai due lati");
+    }
+    W.__cerchio = (W.__cerchio || 0);
     [].forEach.call(c.querySelectorAll(".st-slot"), function (s, i) {
       var pezzi = [s.querySelector(".st-slot-vuoto"), s.querySelector(".st-slot-fig"), s.querySelector("span")].filter(function (e) { return e && e.getClientRects().length && w.getComputedStyle(e).visibility !== "hidden" && w.getComputedStyle(e).display !== "none"; });
       var nome = ["ATT", "CEN sx", "CEN dx", "DIF", "POR"][i] + (s.classList.contains("vuoto") ? " (vuoto)" : " (" + (s.querySelector("span") || {}).textContent + ")");
@@ -54,8 +69,11 @@
         var cosa = e.tagName === "SPAN" ? "il nome" : "la maglia";
         if (b.top < midY - 0.5 && b.bottom > midY + 0.5) ko.push(dove + ": " + nome + ", " + cosa + " sopra la riga di metà campo");
         var nx = Math.max(b.left, Math.min(cx, b.right)) - cx, ny = Math.max(b.top, Math.min(midY, b.bottom)) - midY;
-        if (nx * nx / (rx * rx) + ny * ny / (ry * ry) < 1) ko.push(dove + ": " + nome + ", " + cosa + " sul cerchio di centrocampo");
+        if (nx * nx / (rx * rx) + ny * ny / (ry * ry) < 1) W.__cerchio++;   // (sul cerchio: si conta)
         if (cosa === "la maglia" && (b.top < r.top - 1 || b.bottom > r.bottom + 1 || b.left < r.left - 1 || b.right > r.right + 1)) ko.push(dove + ": " + nome + ", la maglia esce dal campetto");
+        if (cosa === "la maglia" && i === 0 && b.top < fondo - 3) ko.push(dove + ": l'attaccante sale oltre la linea di fondo degli altri (" + Math.round(fondo - b.top) + " px)");
+        scat.forEach(function (x) { if (x.i !== i && b.left < x.b.right - 0.5 && x.b.left < b.right - 0.5 && b.top < x.b.bottom - 0.5 && x.b.top < b.bottom - 0.5) ko.push(dove + ": " + nome + " addosso a " + ruoli[x.i]); });
+        scat.push({ i: i, b: b });
       });
     });
     return ko;
@@ -71,8 +89,8 @@
   // cm1 Online in 2, 4 e 6 (Paky tiene la partita), su 360x640, 360x740 e 412x915, i campetti delle squadre all'asta: la riga bianca di
   //     metà campo DISEGNATA a metà dell'altezza (cercata nei pixel), e nessun posto (vuoto o con la maglia e il nome) sopra la riga, sul
   //     cerchio o fuori dal campetto. Più il campo grande della fine (quando non c'è la giornata) e il foglio «👕 Tutte» (formazioni).
-  COPIONE.aggiungi("cm1", { nome: "Mini Asta: nei campetti la riga di metà campo è a metà e nessun calciatore sta sulla riga o sul cerchio", fai: async function () {
-    var ko = [], fatti = [];
+  COPIONE.aggiungi("cm1", { nome: "Mini Asta: nei campetti la riga di metà campo è a metà, nessuno sulla riga, 4 file alla stessa distanza e il difensore al centro", fai: async function () {
+    var ko = [], fatti = []; W.__cerchio = 0;
     for (var n of [2, 4, 6]) {
       pulisci();
       var o = await partita(n);
@@ -93,7 +111,7 @@
     var visti = {}; ko = ko.filter(function (k) { if (visti[k]) return false; visti[k] = 1; return true; });
     W.__campetto = ko;
     if (ko.length) no(ko.length + " cose: " + ko.slice(0, 10).join(" | "));
-    return fatti.join(" · ");
+    return fatti.join(" · ") + " · pezzi sul cerchio di centrocampo (si contano e basta): " + (W.__cerchio || 0);
   } });
   W.campettoProva = { partita: partita, misura: misura, pulisci: pulisci, riempi: riempi };   // (per le foto)
   COPIONE.aggiungi("cm0", { nome: "Mini Asta: le misure dei campetti delle squadre (solo misure)", fai: async function () {
