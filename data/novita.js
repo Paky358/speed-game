@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 448,
+    data: "26 novembre 2026",
+    titolo: "«Come giocate?» si legge meglio 🎮",
+    descrizione: [
+      "🔎 Nella schermata dove si sceglie come giocare i riquadri sono più alti e le scritte un po' più grandi: niente più occhi strizzati.",
+      "📏 I riquadri sono della stessa misura in tutti i giochi: mai più minuscoli in un gioco e giganti in un altro. Quando sono pochi stanno al centro dello schermo.",
+      "🧹 Sotto i riquadri non c'è più il gettone: non serviva."
+    ]
+  },
+  {
     v: 447,
     data: "27 novembre 2026",
     titolo: "Black Jack e Linea del tempo hanno la copertina nuova 🃏",

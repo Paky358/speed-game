@@ -4561,3 +4561,17 @@ html.gettoni .tl-gradino.p1 .fac, html.gettoni .oro.tl-fine .tl-gradino.p1 .fac{
 .trasloco-codice.grande{ text-align:center !important; font:800 2rem/1.1 ui-monospace, Menlo, Consolas, monospace; letter-spacing:.12em; padding:6px 0; }
 .bp-codice{ text-align:center; font:800 1.5rem ui-monospace, Menlo, Consolas, monospace; letter-spacing:.14em; text-transform:uppercase; }
 .benvenuto-profilo.stretta .bp-trasloco{ display:none; }   /* (con la tastiera aperta resta lo spazio per scrivere: il tasto torna quando si chiude) */
+
+/* ---- 🎮 «COME GIOCATE?» A MISURA FISSA (26 nov 2026, il proprietario: «i rettangoli sono un po' piccoli, devo strizzare gli occhi.
+   Non le voglio giganti… togliamo l'avatar»). I riquadri sono UGUALI in tutti i giochi, quanti che siano: un terzo più alti di
+   quelli piccoli di prima (66 → 88 px), titolo, frase e icona un po' più grandi, mai giganti; non si allungano per riempire lo
+   schermo. Il blocco sta al centro dello spazio (margini automatici); se non ci sta parte dall'alto e scorre solo il centro
+   (.prima-fissa: «Come si gioca» resta a vista). js/core.js schermataModo ---- */
+.schermata.modo-fissa > .contenuto{ display:flex; flex-direction:column; }
+.schermata.modo-fissa .modo-scelta{ margin:auto 0; padding:10px 0 6px; gap:12px; }
+.schermata.modo-fissa .modo-grande{ flex:0 0 auto; min-height:88px; padding:12px 14px 12px 12px; gap:12px; border-radius:20px; }
+.schermata.modo-fissa .mg-ico{ font-size:2.3rem; width:50px; flex:0 0 auto; }
+.schermata.modo-fissa .mg-testo{ min-width:0; }
+.schermata.modo-fissa .mg-tit{ font-size:1.2rem; line-height:1.12; }
+.schermata.modo-fissa .mg-sotto{ font-size:.94rem; line-height:1.25; margin-top:3px; }
+.schermata.modo-fissa .mg-freccia{ font-size:1.9rem; flex:0 0 auto; }
