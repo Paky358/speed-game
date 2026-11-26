@@ -116,6 +116,7 @@ HN=$(impronta data/novita.js); cp data/novita.js "dist/novita.$HN.js"
 
 {
   echo '<!doctype html>'
+  echo '<html lang="it">'
   echo '<meta charset="utf-8">'
   echo '<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, interactive-widget=resizes-content">'
   echo '<meta name="theme-color" content="#0d1020">'
@@ -124,6 +125,8 @@ HN=$(impronta data/novita.js); cp data/novita.js "dist/novita.$HN.js"
   echo '<script>if ("serviceWorker" in navigator) addEventListener("load", function () { navigator.serviceWorker.register("sw.js").catch(function () {}); });</script>'
   echo "<link rel=\"stylesheet\" href=\"stile.$HS.css\">"
   echo '<div id="app"></div>'
+  # 🔎 (26 nov 2026) il testo per Google: chi apre l'app non lo vede (si nasconde prima di arrivare). Lo fa .agents/skills/pagine-google/fai-pagine.js
+  if [ -e app/ingresso.html ]; then tr -d '\r' < app/ingresso.html; fi
   [ "$CITTA" = si ] && echo "<script>window.SG_EXTRA = 'extra.js?v=$VER';</script>"
   # le foto dei giochi che ci sono davvero (carte/giochi/<id>.jpg): la home chiede solo quelle
   echo "<script>window.SG_FOTO = {$(for f in carte/giochi/*.jpg; do [ -e "$f" ] && printf '"%s":1,' "$(basename "$f" .jpg)"; done)};</script>"
@@ -153,6 +156,9 @@ if [ -d suoni ]; then rm -rf dist/suoni && cp -r suoni dist/suoni; fi
 # stile, carattere e l'elenco delle foto in pagine/, MAI in data/: lì finirebbe nel cuore)
 for f in privacy.html regole.html crediti.html; do [ -e "$f" ] && cp "$f" "dist/$f"; done
 if [ -d pagine ]; then rm -rf dist/pagine && cp -r pagine dist/pagine; fi
+# 🔎 (26 nov 2026) le pagine per Google: una per gioco (giochi/<nome>/), tutti i giochi (giochi/), sitemap.xml e robots.txt.
+# Le fa .agents/skills/pagine-google/fai-pagine.js (si rifà quando cambia un testo o un gioco): qui si copiano e basta
+if [ -d sito ]; then cp -r sito/. dist/; fi
 
 if [ "$CITTA" = si ]; then echo "Creato $EXTRA ($VER)"; fi
-echo "Creato $OUT (cuore.$HC.js, stile.$HS.css, novita.$HN.js, $(ls dist/giochi | wc -l) pezzi dei giochi in dist/giochi)"
+echo "Creato $OUT (cuore.$HC.js, stile.$HS.css, novita.$HN.js, $(ls dist/giochi/*.js | wc -l) pezzi dei giochi in dist/giochi)"

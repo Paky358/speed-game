@@ -1,0 +1,44 @@
+/* 🔎 Le pagine dei giochi per Google (revelhouse.it/giochi/…): sopra pagine.css, stesso vestito «🌙 Notte vivace».
+   Le pagine le fa .agents/skills/pagine-google/fai-pagine.js. */
+.gc h1{ margin:4px 0 14px; font-size:1.85rem; line-height:1.15; letter-spacing:-.02em; font-weight:800; }
+.gc-briciole{ font-size:.82rem; color:var(--tenue); margin:-8px 0 10px; }
+.gc-briciole a{ color:var(--tenue); text-decoration:none; }
+.gc-briciole span{ color:var(--testo); }
+
+.gc-foto{ margin:0 0 14px; border-radius:20px; overflow:hidden; aspect-ratio:16/10; background:var(--carta-piena);
+  box-shadow:0 16px 34px -16px rgba(0,0,0,.85), 0 0 0 1px var(--filo); }
+.gc-foto img{ display:block; width:100%; height:100%; object-fit:cover; }
+.gc-foto-senza, .gc-senza{ display:flex; align-items:center; justify-content:center;
+  background:radial-gradient(80% 90% at 30% 20%, rgba(150,60,220,.55), transparent 70%), radial-gradient(70% 80% at 85% 90%, rgba(224,34,90,.5), transparent 70%), #151a2e; }
+.gc-foto-senza span{ font-size:5.5rem; filter:drop-shadow(0 10px 18px rgba(0,0,0,.5)); }
+
+.gc-fatti{ list-style:none; padding:0; margin:0 0 16px; display:flex; flex-wrap:wrap; gap:7px; }
+.gc-fatti li{ margin:0; padding:5px 10px; border-radius:999px; background:var(--carta); border:1px solid var(--filo); font-size:.8rem; font-weight:600; }
+
+.gc-gioca{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:58px; padding:14px 20px; margin:0 0 6px;
+  border-radius:18px; background:linear-gradient(180deg,#e0225a,#c8174f); color:#fff; text-decoration:none; font-weight:800; font-size:1.18rem;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25), 0 14px 28px -12px rgba(224,34,90,.85); }
+.gc-gioca:hover{ color:#fff; filter:brightness(1.07); }
+.gc-sotto{ text-align:center; color:var(--tenue); font-size:.84rem; margin:0 0 18px; }
+.gc > .gc-gioca:last-of-type{ margin:6px 0 22px; }
+
+.gc-griglia{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 0 6px; }
+.gc-tessera{ display:flex; flex-direction:column; border-radius:16px; overflow:hidden; background:var(--carta-piena); border:1px solid var(--filo);
+  color:var(--testo); text-decoration:none; box-shadow:0 10px 22px -14px rgba(0,0,0,.8); }
+.gc-tessera img, .gc-tessera .gc-senza{ display:block; flex:none; width:100%; height:auto; aspect-ratio:16/10; object-fit:cover; }
+.gc-tessera .gc-senza{ display:flex; font-size:2.6rem; }
+.gc-tessera b{ padding:8px 10px 0; font-size:.95rem; line-height:1.25; }
+.gc-tessera small{ padding:2px 10px 10px; color:var(--tenue); font-size:.76rem; }
+.gc-tessera:hover{ border-color:rgba(255,109,151,.5); color:var(--testo); }
+.gc-altri, .gc-cat{ padding-bottom:12px; }
+.gc-cat .tenue{ margin:-4px 0 12px; font-size:.9rem; }
+.gc-tutti{ text-align:right; margin:8px 0 4px; font-weight:700; }
+.gc-tutti a{ text-decoration:none; }
+.gc-marchi{ max-width:560px; margin:8px auto 0; font-size:.76rem; line-height:1.45; }
+
+@media (min-width:640px){
+  .gc h1{ font-size:2.3rem; }
+  .gc-griglia{ grid-template-columns:repeat(3, 1fr); }
+  .gc-gioca{ width:auto; max-width:360px; margin-left:auto; margin-right:auto; }
+}
+@media (max-width:380px){ .gc h1{ font-size:1.6rem; } }
