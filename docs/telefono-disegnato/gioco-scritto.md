@@ -24,26 +24,19 @@ Ogni foto è fatta su due telefoni: basso (360x640) e alto (412x915). Quando si 
 - **Chi arriva tardi** guarda ed entra alla partita dopo.
 - **Se chi tiene la partita sparisce**, un amico la porta avanti e gli altri gli rimandano i disegni.
 - **Fine del libretto**: «era partita così… ed è arrivata così», ⭐ al disegno più bello e 📸 la foto per WhatsApp.
-- **A fine partita i premi**: 🎨 Picasso, 😂 il libretto più bello, 🔨 il Sabotatore, 🔍 il Detective, 🐢 Con calma. Poi «📖 Rivedi i libretti».
+- **A fine partita i premi**: 🎨 Picasso, 😂 il libretto più bello, 🔨 il Sabotatore, 🔍 il Detective. Poi «📖 Rivedi i libretti».
 
-## Le scelte per il proprietario
-- **A · La copertina in home.** Oggi c'è solo l'emoji 📞. Va fatta come le altre (linea viola, chat delle copertine).
-- **B · Come cresce il libretto nella rivelazione.** Oggi le pagine si impilano dal basso: le vecchie salgono e sfumano. All'inizio di ogni libretto c'è quindi tanto vuoto in alto (foto `n10/14-r1-pagina-1-frase-360.png`).
-  - L'alternativa è una pagina sola a tutto schermo alla volta: più grande, ma non si vede da dove arriva.
-- **C · Quanto dura la rivelazione.** Una frase circa 4 secondi, un disegno circa 6, la fine del libretto 9.
-  - In 4 sono circa 2 minuti, in 10 circa 7.
-  - Chi tiene la partita può sempre andare avanti prima. Si può accorciare.
-- **D · Il premio «🐢 Con calma»** (l'ultimo a finire più volte). Fa ridere, ma a qualcuno può dare fastidio: tenerlo o toglierlo?
-- **E · La reazione 💩.** Tenerla o toglierla? Le altre sono 😂 😮 👏 ❤️.
-- **F · La classifica della serata.** Il gioco non ha punti, quindi tutti arrivano primi a pari merito.
-  - L'alternativa è mettere primo chi ha vinto più premi.
-- **G · La tastiera aperta sul telefono basso.** Spariscono il titolo e «🎲 Dammi un'idea»; restano la frase e «Fatto» (foto `n4/04-p1-frase-tastiera.png`).
-- **H · Cose non fatte**, ognuna un lavoro a parte:
-  - la pagina per Google;
-  - i trofei;
-  - il modo sullo stesso telefono;
-  - unire la lavagna con quella di Disegna e Indovina (oggi è copiata dentro il gioco).
-- **I · In 4 e in 6 il libretto finisce con un disegno** (da quando nessuno fa due pagine dello stesso libretto). L'alternativa è un libretto di una pagina in meno (in 4 sono 3: frase, disegno, frase) che finisce con una frase: più corto ma con la frase finale da ridere.
+## Le scelte (fatte il 28 nov 2026)
+Il proprietario: «fai tutte le scelte che reputi migliori». Deciso così:
+- **A · Copertina in home**: la fa la chat delle copertine (linea viola); per ora c'è l'emoji 📞.
+- **B · Il libretto nella rivelazione**: resta com'è, le pagine si impilano dal basso e le vecchie salgono e sfumano. Si vede da dove arriva ogni pagina.
+- **C · Quanto dura la rivelazione**: un po' più svelta (una frase 3 secondi, un disegno 5, la fine del libretto 8): in 4 circa 2 minuti, in 10 circa 6. Chi tiene la partita può sempre andare avanti prima.
+- **D · Il premio «🐢 Con calma»**: tolto. I premi fanno festa, non prendono in giro chi è lento.
+- **E · La reazione 💩**: tolta, al suo posto 🔥. Le reazioni sono 😂 😮 👏 ❤️ 🔥.
+- **F · Classifica della serata**: restano tutti primi a pari merito (è un gioco per ridere, senza punti).
+- **G · La tastiera aperta sul telefono basso**: resta com'è (si vedono la frase e «Fatto»).
+- **H · Cose non fatte**, ognuna un lavoro a parte: la pagina per Google, i trofei, il modo sullo stesso telefono, unire la lavagna con quella di Disegna e Indovina.
+- **I · In 4 e in 6 il libretto finisce con un disegno**: resta così. Con una pagina in meno (3 in 4) sarebbe troppo corto e la frase cambierebbe poco.
 
 ## Le prove
 `.agents/skills/prova-nel-browser/preferiti/telefono.js` contiene td0-td6:

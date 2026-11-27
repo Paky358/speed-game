@@ -12,8 +12,8 @@
    - Alla fine si sfogliano i libretti uno alla volta (va avanti chi tiene la partita, col conto che va avanti da solo):
      ogni disegno si ridisegna tratto per tratto, volano le reazioni di tutti, alla fine di ogni libretto «era partita
      così… ed è arrivata così» e la ⭐ al disegno più bello. Chi ha disegnato si scopre solo nella rivelazione.
-   - Niente punti: a fine partita i premi (🎨 Picasso, 😂 il libretto più bello, 🔨 il Sabotatore, 🔍 il Detective,
-     🐢 Con calma), calcolati dalle ⭐, dalle reazioni e da quanto le frasi somigliano a quelle di prima.
+   - Niente punti: a fine partita i premi (🎨 Picasso, 😂 il libretto più bello, 🔨 il Sabotatore, 🔍 il Detective;
+     il premio a chi finisce per ultimo non c'è), calcolati dalle ⭐, dalle reazioni e da quanto le frasi somigliano a quelle di prima.
    - Solo online. Le pagine (frasi e disegni) NON passano mai nella foto prima della rivelazione: ognuno riceve solo la
      pagina che deve guardare, col messaggio per lui solo. I disegni viaggiano interi, come lista di tratti, quando si
      tocca «Fatto» (o allo scadere): così nella rivelazione si possono ridisegnare.
@@ -31,13 +31,13 @@
   var GRAZIA = 1500;                        // ms in più dopo la fine del tempo: la pagina dell'ultimo istante arriva in tempo
   var ANTICIPO = 900;                       // il telefono manda da solo quello che c'è un attimo prima della fine
   var LUNGO = 70;                           // lettere massime di una frase
-  var REAZ = ["😂", "😮", "👏", "❤️", "💩"];
+  var REAZ = ["😂", "😮", "👏", "❤️", "🔥"];   // (28 nov 2026: 🔥 al posto di 💩)
   var LW = 1000, LH = 1200;                 // la lavagna "logica" (come Disegna e Indovina)
   var PUNTI_MAX = 2600;                     // punti al massimo in un disegno (si semplifica prima di partire)
   var MEM_IDEE = "sg-telefono-idee";        // le idee già date su questo telefono
 
   // i tempi della rivelazione (secondi): una frase, un disegno (si ridisegna in RIDISEGNO), la fine del libretto
-  var RIV = { s: 3.6, d: 5.6, f: 9 }, RIDISEGNO = 2600;
+  var RIV = { s: 3, d: 5, f: 8 }, RIDISEGNO = 2400;   // (28 nov 2026: un po' più svelta; in 10 circa 6 minuti)
   if (PROVA.riv) Object.keys(PROVA.riv).forEach(function (k) { RIV[k] = PROVA.riv[k]; });
   if (PROVA.ridisegno != null) RIDISEGNO = PROVA.ridisegno;
 
@@ -166,7 +166,7 @@
   }
 
   // ---- i premi di fine partita (li calcola chi tiene la partita) ----
-  // libri: [{ a, pag: [{ t, chi, x, s, auto, pk }] }]; rea: { pk: [😂, 😮, 👏, ❤️, 💩] }; stelle: { b: { chi vota: j } };
+  // libri: [{ a, pag: [{ t, chi, x, s, auto, pk }] }]; rea: { pk: [😂, 😮, 👏, ❤️, 🔥] }; stelle: { b: { chi vota: j } };
   // lenti: { id: volte ultimo }; nomi: { id: nome }
   function calcolaPremi(libri, rea, stelle, lenti, nomi) {
     var premi = [];
@@ -213,9 +213,8 @@
     ind.forEach(function (x) { tot[x.chi] = (tot[x.chi] || 0) + 1; if (x.sim >= 0.5) det[x.chi] = (det[x.chi] || 0) + 1; });
     var dk = Object.keys(det).sort(function (a, b) { return det[b] - det[a] || tot[a] - tot[b]; })[0];
     if (dk && det[dk] > 0) premi.push({ ic: "🔍", tit: "Il Detective", id: dk, tx: "ha capito " + (det[dk] === 1 ? "un disegno" : det[dk] + " disegni") + " su " + tot[dk] });
-    // 🐢 Con calma: l'ultimo a finire più volte (almeno 2)
-    var lk = Object.keys(lenti || {}).sort(function (a, b) { return lenti[b] - lenti[a]; })[0];
-    if (lk && lenti[lk] >= 2) premi.push({ ic: "🐢", tit: "Con calma", id: lk, tx: "l'ultimo a finire " + lenti[lk] + " volte" });
+    // (il premio «🐢 Con calma», l'ultimo a finire, NON c'è: deciso il 28 nov 2026, i premi fanno festa e non prendono in giro.
+    //  I conti di chi finisce per ultimo, lenti, restano: non si danno a nessuno)
     premi.forEach(function (p) { p.nome = (nomi || {})[p.id] || "?"; });
     return premi;
   }

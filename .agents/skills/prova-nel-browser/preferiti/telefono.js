@@ -141,7 +141,7 @@
     if (per["Il Sabotatore"] !== "Luca") no("il Sabotatore è " + per["Il Sabotatore"] + " (doveva essere Luca: l'orso al posto del gatto)");
     if (per["Il Detective"] !== "Marta") no("il Detective è " + per["Il Detective"]);
     if (per["Il libretto più bello"] !== "Paky") no("il libretto più bello è di " + per["Il libretto più bello"]);
-    if (per["Con calma"] !== "Marta") no("«Con calma» è " + per["Con calma"]);
+    if (per["Con calma"]) no("c'è ancora il premio «Con calma» (tolto il 28 nov 2026)");
     if (!(P.SG_TELEFONO_IDEE || []).length) no("le idee non ci sono");
     return "pagine " + pagine.join(", ") + "; disegni uguali; premi " + JSON.stringify(per) + "; idee " + P.SG_TELEFONO_IDEE.length;
   } });
