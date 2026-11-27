@@ -26,7 +26,7 @@
     if (!h || !/Revel\s*House/.test(h.textContent)) err.push("titolo: «" + (h && h.textContent) + "»");
     if (!h || !h.querySelector("img.home-icona")) err.push("niente icona nel titolo");
     else { var r = h.querySelector("img.home-icona").getBoundingClientRect(); if (r.width < 12 || r.height < 12) err.push("icona di " + r.width + "x" + r.height); }
-    if (P.document.title !== "Revel House") err.push("titolo della pagina: «" + P.document.title + "»");
+    if (!/^Revel House( · |$)/.test(P.document.title)) err.push("titolo della pagina: «" + P.document.title + "»");   // (27 nov 2026: il titolo per Google è «Revel House · giochi da fare con gli amici…»)
     if (err.length) no(err.join("; "));
     return t.length + " tessere, titolo «" + h.textContent.trim() + "»";
   } });

@@ -1,0 +1,6 @@
+# Revel House: tutto si può leggere, tranne i pezzi di pagina che l'app usa per costruirsi
+User-agent: *
+Disallow: /app/testa.html
+Disallow: /app/ingresso.html
+
+Sitemap: https://revelhouse.it/sitemap.xml
