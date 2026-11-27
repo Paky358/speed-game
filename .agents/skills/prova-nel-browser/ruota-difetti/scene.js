@@ -37,7 +37,7 @@
   var RDF = W.RDF = { visti: {}, log: [], misura: [360, 640] };
   // un telefono nuovo, alla misura delle foto (così la foto non lo ridimensiona mai)
   async function apriTel(nome, opz) {
-    var w = await W.apriTel(nome, opz), f = document.getElementById("tel-" + nome);
+    var w = await W.apriTel(nome, Object.assign({ spiega: true }, opz)), f = document.getElementById("tel-" + nome);   // (le foto: anche le finestre che spiegano)
     if (f) { f.style.width = RDF.misura[0] + "px"; f.style.height = RDF.misura[1] + "px"; w.dispatchEvent(new w.Event("resize")); }
     return w;
   }
@@ -72,6 +72,11 @@
         }
         await W.dorme(250); continue;
       }
+      if (f === "spiega" && P.spg) {   // 📖 la finestra che spiega: la si legge un attimo (la foto), poi «⏩ Ho capito» su tutti i telefoni
+        if (RDF.capito !== P.spg.n) { RDF.capito = P.spg.n; RDF.capitoDa = Date.now(); }
+        if (Date.now() - RDF.capitoDa > (opz.leggi || 2600)) for (var tid in tel) { var hb = tel[tid].document.querySelector(".ru-spg.on .ru-btn.gira"); if (hb && !hb.disabled) tocca(tel[tid], hb); }
+        await W.dorme(200); continue;
+      }
       var w = att && tel[att], k = [f, P.manche, P.giroN, att, Object.keys(P.chiamate).length, L ? L.n + ":" + L.prove : ""].join("|");
       if (k === k0 && Date.now() - fermo < 1100) { await W.dorme(120); continue; }
       k0 = k; fermo = Date.now();
@@ -88,7 +93,7 @@
             var v = P.frase.split("").map(base).filter(function (ch) { return VOC.indexOf(ch) >= 0 && !P.chiamate[ch]; })[0];
             if (v && lettera(w, v)) { vocale[P.manche] = 1; tocca(w, lettera(w, v)); await W.dorme(700); var bc = tasto(w, /Compro/) || lettera(w, v); tocca(w, bc); }
             else if (v) { vocale[P.manche] = 1; }
-          } else if (nc < 4 + (P.manche % 3) && P.consonantiNascoste() > 1 && tasto(w, /🎡 Gira/)) { giri[gk] = (giri[gk] || 0) + 1; tocca(w, tasto(w, /🎡 Gira/)); }
+          } else if (nc < 4 + (P.manche % 3) && P.consonantiNascoste() > 1 && w.document.querySelector(".ru-alto.tocca .ru-piatto-alto")) { giri[gk] = (giri[gk] || 0) + 1; await W.spingiRuota(w, 0.3 + 0.6 * ((P.giroN * 7) % 10) / 10); }
           else { var br = tasto(w, /💡 Risolvi/); if (br) tocca(w, br); }
         }
         else if (f === "consonante" || f === "express" || f === "vlettera") {
@@ -118,6 +123,7 @@
     if (f === "lampo" || f === "lampofine") return f + ":" + (L && L.tipo || "classica") + (L && L.chi ? ":chi" : "");
     if (f === "ftempo" && P.fin) return f + ":" + P.fin.b;
     if (f === "girando") return f + (P.veloce ? ":veloce" : "");
+    if (f === "spiega" && P.spg) return f + ":" + P.spg.t;
     return f;
   }
   function attoreDi(P) {

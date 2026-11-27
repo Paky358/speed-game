@@ -120,10 +120,10 @@
         else if (f === "gira") {
           var M = opz.mistero;
           if (M && P.manche === M.manche && P.mist === "on" && !misteri[P.manche] && P.consonantiNascoste() > 0) {
-            if (!tasto(w, /🎡 Gira/)) { k0 = ""; await W.dorme(250); continue; }   // (la sigla non è ancora finita: i tasti non ci sono)
+            if (!w.document.querySelector(".ru-alto.tocca .ru-piatto-alto")) { k0 = ""; await W.dorme(250); continue; }   // (la sigla non è ancora finita: i tasti non ci sono)
             misteri[P.manche] = 1; P.sorteMistero = function () { return !!M.sorte; };
             forzato = { g: P.giroN, r: H.Math.random }; H.Math.random = function () { return 22.5 / 24; };
-            tocca(w, tasto(w, /🎡 Gira/));
+            await W.spingiRuota(w, 0.6);   // (27 nov 2026: niente tasto «Gira»)
           } else { var br = tasto(w, /💡 Risolvi/); if (br) tocca(w, br); }
         }
         else if (f === "consonante") {

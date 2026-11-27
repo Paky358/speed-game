@@ -9,6 +9,23 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 458,
+    data: "27 novembre 2026",
+    titolo: "La Ruota della Fortuna rifatta 🎡",
+    descrizione: [
+      "🔔 Si comincia con UNA frase lampo: chi la indovina prende 1.000 punti e gira per primo la ruota. Tra una manche e l'altra c'è ancora un gioco veloce (frase lampo, GiraMondo o CruciRuota).",
+      "📖 Prima di ogni manche e di ogni gioco veloce una finestra grande spiega cosa succede adesso, uguale per tutti: «⏩ Ho capito» per andare avanti prima.",
+      "🎡 Niente più tasto «Gira»: quando tocca a te la ruota si illumina e dondola, e la giri spingendola col dito. Un tocco non basta: più forte spingi, più gira (al massimo un giro e tre quarti), e rallenta piano piano come in TV, con lo zoom sulla lancetta che arriva prima. Niente più manina quando gira un altro.",
+      "✨ La ruota senza lampadine intorno, i numeri scritti dritti (mai più «008»), sempre intera sullo schermo; dietro, le luci dello studio che si muovono piano.",
+      "🔤 Il tabellone come in TV: le tessere si accendono una alla volta, ognuna col suo «ding».",
+      "🔢 Nei punteggi il nome intero (niente faccina) e due numeri chiari: «Manche» e «Totale». A fine manche i soldi volano nel totale. Il nome intero al posto della faccina anche nei punteggi degli altri giochi.",
+      "⌨️ La tastiera sta in basso, vicino al pollice, con una scritta sola sopra; «Risolvi» e «La so!» più piccoli, così la ruota è più grande. Niente più scritte ripetute due o tre volte.",
+      "❌ Le lettere che non ci sono si leggono intere, con una piccola ✕: niente più T che sembra un'altra lettera.",
+      "🔒 «La so!» si può usare solo se hai almeno i punti che perderesti sbagliando, e prima di bloccare ti chiede «Sei sicuro?».",
+      "⏳ La Ruota del tempo ora è una categoria delle manche: «ANNO 79», cosa è successo quell'anno? Si gira e si chiamano le lettere come sempre."
+    ]
+  },
+  {
     v: 456,
     data: "27 novembre 2026",
     titolo: "«📖 Come si gioca» si trova subito 📖",

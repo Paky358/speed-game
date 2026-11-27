@@ -200,11 +200,11 @@
     var idL = await W.aspetta(function () { return A.mioId("Luca"); }, 3000), idG = A.mioId("Giulia");
     var telM = {}; telM[idL] = L; telM.host = P; telM[idG] = G;   // (Luca prima: prenota per primo e comincia lui)
     // fino a quando Luca, nel Mistero, ha la ruota
-    var P0 = await pilotaR(P, telM, function (x) { return x.mist === "on" && x.fase === "gira" && x.giocatori[x.turno].id === idL && x.consonantiNascoste() > 0 && !!tastoR(L, /🎡 Gira/); }, 200000);
+    var P0 = await pilotaR(P, telM, function (x) { return x.mist === "on" && x.fase === "gira" && x.giocatori[x.turno].id === idL && x.consonantiNascoste() > 0 && !!L.document.querySelector(".ru-alto.tocca .ru-piatto-alto"); }, 200000);
     if (P0.fase === "fine") no("la partita è finita senza che Luca girasse nel Mistero");
     note.push("manche " + P0.manche + ": Luca gira nel Mistero");
     var r0 = P.Math.random, g0 = P0.giroN; P.Math.random = function () { return 22.5 / 24; };
-    tocca(L, tastoR(L, /🎡 Gira/));
+    await W.spingiRuota(L, 0.6);   // (27 nov 2026: niente tasto «Gira»)
     if (!await W.aspetta(function () { return P0.giroN !== g0 || P0.fase === "girando"; }, 4000)) no("la ruota di Luca non gira");
     await W.aspetta(function () { return P0.fase !== "girando"; }, 9000);
     P.Math.random = r0;

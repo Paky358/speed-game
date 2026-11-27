@@ -68,15 +68,17 @@
       if (d === 1 && giro <= 0) no("in avanti l'angolo scende (" + giro + ")");
       if (sotto(P.angolo) !== P.spicchio) no("lo spicchio " + P.spicchio + " non è quello sotto la lancetta (" + sotto(P.angolo) + ", angolo " + P.angolo + ")");
       var fr = ((((-P.angolo) % 360) + 360) % 360) / 15 % 1; if (fr < 0.1 || fr > 0.9) confine++;
-      if (P.giroMs < 5200 || P.giroMs > 8000) no("durata del giro " + P.giroMs + " ms");
+      if (P.giroMs < 4600 || P.giroMs > 8200) no("durata del giro " + P.giroMs + " ms");   // (27 nov 2026: pochi giri e frenata lunga)
+      if (Math.abs(giro) > 650) no("la ruota fa più di un giro e tre quarti: " + Math.round(Math.abs(giro)) + " gradi");
       if (P.vista().giroMs !== P.giroMs || P.vista().giroDir !== d) no("nella foto mancano durata e verso del giro");
       if (f === 0.1) piano.push(Math.abs(giro)); else if (f === 1) forte.push(Math.abs(giro));
       durate.push(P.giroMs); visti[P.spicchio] = 1; n++;
     }
     function media(a) { return a.reduce(function (s, x) { return s + x; }, 0) / a.length; }
     var mp = media(piano), mf = media(forte), qc = confine / n;
-    if (!(mp < 1000)) no("piano gira troppo: " + Math.round(mp) + " gradi");
-    if (!(mf > 1900)) no("forte gira troppo poco: " + Math.round(mf) + " gradi");
+    // (27 nov 2026, il proprietario: «come in TV… al massimo un giro e mezzo, uno e tre quarti»; la spinta leggera fa poco, la forte di più)
+    if (!(mp < 300)) no("piano gira troppo: " + Math.round(mp) + " gradi");
+    if (!(mf > 560 && mf <= 640)) no("forte: " + Math.round(mf) + " gradi (deve stare tra 560 e 640)");
     if (qc < 0.25 || qc > 0.55) no("a un soffio dal confine " + Math.round(qc * 100) + "% delle volte");
     if (Object.keys(visti).length !== 24) no("escono solo " + Object.keys(visti).length + " spicchi su 24");
     L.push(n + " giri · piano " + Math.round(mp) + "° in media, forte " + Math.round(mf) + "° · vicino al confine " + Math.round(qc * 100) + "% · durata " + Math.min.apply(null, durate) + "-" + Math.max.apply(null, durate) + " ms · 24 spicchi");
@@ -99,9 +101,10 @@
     await W.dorme(400);
     if (!await W.aspetta(function () { return W.clicca(P, /Comincia/); }, 5000)) no("l'host non ha «Comincia»");
     // la sigla: il tabellone scrive il nome del gioco
-    var nome = await W.aspetta(function () { var t = [].map.call(P.document.querySelectorAll(".ru-cella"), function (c) { return c.textContent; }).join(""); return /LARUOTADELLAFORTUNA/.test(t) ? t : null; }, 8000);
-    if (!nome) no("durante la sigla il tabellone non scrive «LA RUOTA DELLA FORTUNA»");
-    L.push("sigla: il nome sul tabellone");
+    // (27 nov 2026, il proprietario: «i nomi accavallati sul tabellone») senza studio il tabellone durante la presentazione resta vuoto
+    await W.dorme(1500);
+    if (/LARUOTADELLAFORTUNA/.test([].map.call(P.document.querySelectorAll(".ru-cella"), function (c) { return c.textContent; }).join(""))) no("durante la presentazione il tabellone scrive ancora il nome sotto i nomi");
+    L.push("sigla: il tabellone resta vuoto sotto la presentazione");
     var v = await finche(C, function (x) { return x.fase === "gira" && !x.sigla; }, null, 60000, "la manche non comincia");
     function idDi(n) { return (vm(C).giocatori || []).filter(function (g) { return g.nome === n; })[0].id; }
     var ID = { Paky: "host", Luca: idDi("Luca"), Giulia: idDi("Giulia") };
@@ -124,7 +127,7 @@
       // sugli altri telefoni la mano spinge un piolo; le lampadine corrono; la lancetta batte
       await W.dorme(250);
       var mani = altri.filter(function (n) { var m = F[n].document.querySelector(".ru-mano"); return m && m.getAnimations && m.getAnimations().length; });
-      if (mani.length !== 2) no("la mano di " + chi + " si vede solo su " + mani.join(", "));
+      if (mani.length) no("si vede ancora la mano di " + chi + " su " + mani.join(", "));   // (27 nov 2026, il proprietario: «non voglio nessuna manina»)
       var mia = F[chi].document.querySelector(".ru-mano"); if (mia.getAnimations && mia.getAnimations().length) no("su " + chi + " (che l'ha lanciata col dito) c'è anche la mano");
       await W.dorme(900);
       var lan = 0, t1 = Date.now(), corre = 0;
@@ -141,7 +144,7 @@
     var chi = nomeDi(v.turno);
     // il giro sul 1.000 (spicchio 10) col caso fermo? No: qui la forza vera. Poi, se c'è da scegliere una consonante, la ruota torna sul pavimento
     var r1 = await unGiro(chi, 70, 110, 1);
-    L.push(chi + " la lancia col dito: " + Math.round(r1.v.angolo - (r1.v.angolo % 1)) + "°, spicchio " + r1.v.spicchio + " (" + r1.v.giroMs + " ms), mano sugli altri due, lancetta e lampadine, stesso angolo dappertutto");
+    L.push(chi + " la lancia col dito: " + Math.round(r1.v.angolo - (r1.v.angolo % 1)) + "°, spicchio " + r1.v.spicchio + " (" + r1.v.giroMs + " ms), niente manina, lancetta, stesso angolo dappertutto");
     if (r1.dopo.fase === "consonante") {
       await W.dorme(1400);
       if (P.SGStudio && P.SGStudio.piatto) {   // 📺 senza studio (11 nov 2026): la ruota resta, piccola sopra la tastiera (o nascosta se non ci sta), e compare la tastiera
@@ -211,8 +214,8 @@
     }
     if (lanciata) L.push("Paky la lancia col dito contro i Bot");
     if (!giaBot) no("in 90 secondi nessun Bot gira la ruota");
-    if (!mano) no("il Bot gira ma la sua mano non si vede");
-    L.push("il Bot lancia la ruota con la sua mano");
+    if (mano) no("il Bot gira con la manina");   // (27 nov 2026, il proprietario: «non voglio nessuna manina»)
+    L.push("il Bot lancia la ruota, niente manina");
     var err = W.erroriTel(); if (err.length) no("errori: " + err.slice(0, 3).join(" / "));
     return L.join(" · ");
   } });

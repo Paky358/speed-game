@@ -34,8 +34,8 @@
       var v = vm(C);
       (v.giocatori || []).forEach(function (g) { nomeDi[g.id] = g.nome; });
       var w = F[nomeDi[v.turno]];
-      if (v.fase === "gira" && w && tasto(w, /🎡 Gira/)) {
-        var g0 = v.giroN; tocca(w, tasto(w, /🎡 Gira/));
+      if (v.fase === "gira" && w && w.document.querySelector(".ru-alto.tocca .ru-piatto-alto")) {   // (27 nov 2026: niente tasto «Gira», si spinge la ruota col dito)
+        var g0 = v.giroN; await W.spingiRuota(w, 0.6);
         if (!await W.aspetta(function () { return vm(C).giroN !== g0; }, 4000)) continue;
         await W.aspetta(function () { return vm(C).fase !== "girando"; }, 12000);
         var dopoF = vm(C).fase; await W.dorme(2500); giri++;
@@ -83,7 +83,7 @@
     var storia = [];
     for (var k = 0; k < 60 && !on; k++) {
       var Q = R.ultima; var sk = Q.fase + ":" + Q.turno; if (storia[storia.length - 1] !== sk) storia.push(sk);
-      if (Q.fase === "gira") { var bg = [].find.call(P.document.querySelectorAll(".ru-azioni button"), function (b) { return /🎡 Gira/.test(b.textContent) && !b.disabled; }); if (bg) tocca(P, bg); }
+      if (Q.fase === "gira" && P.document.querySelector(".ru-alto.tocca .ru-piatto-alto")) await W.spingiRuota(P, 0.6);
       if (Q.fase === "consonante") { var L = "BCDFGHLMNPRSTVZ".split("").filter(function (x) { return Q.frase.indexOf(x) < 0 && !Q.chiamate[x]; })[0] || "Q"; var b = lettera(P, L); if (b) { tocca(P, b); await W.dorme(300); b = lettera(P, L); if (b) tocca(P, b); } }
       await W.dorme(900);
     }

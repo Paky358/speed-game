@@ -106,7 +106,7 @@
     L.push("si gira: ruota grande, niente tastiera");
     // chi gira la trascina: col tasto «🎡 Gira» (va bene anche così)
     var chi = nomeDi(v.turno), g0 = v.giroN;
-    var bg = F[chi].document.querySelector(".ru-btn.gira"); if (!bg || bg.disabled) no(chi + " non ha «Gira»"); bg.click();
+    if (!await W.spingiRuota(F[chi], 0.7)) no(chi + " non può girare la ruota col dito");   // (27 nov 2026: niente tasto «Gira»)
     var t1 = Date.now() + 15000, dopo = null;
     while (Date.now() < t1) { var x = vm(C); if (x.giroN > g0 && x.fase !== "girando") { dopo = x; break; } await W.dorme(200); }
     if (!dopo) no("la ruota non si ferma");

@@ -46,7 +46,8 @@
     L.push(tutte + " frasi, " + w.SG_RUOTA_TEMPO.length + " anni, " + w.SG_RUOTA_MONDO.length + " parole, " + w.SG_RUOTA_CRUCI.length + " cruciverba");
     var gg = [{ id: "a", nome: "Paky" }, { id: "b", nome: "Luca" }, { id: "c", nome: "Bea" }];
     var P = R.creaPartita(gg, 4, { prenota: true, express: false, veloce: true, finale: true, mistero: false });
-    if (P.scaletta.length !== 5) no("la scaletta ha " + P.scaletta.length + " giochi: " + P.scaletta.join(","));
+    // (27 nov 2026, il proprietario: all'inizio UN solo gioco veloce, la frase lampo; niente Triplete né Ruota del tempo)
+    if (P.scaletta[0] !== "classica" || P.scaletta.indexOf("triplete") >= 0 || P.scaletta.indexOf("tempo") >= 0) no("la scaletta: " + P.scaletta.join(","));
     // 🧩 CruciRuota
     P.scaletta = ["cruci", "triplete", "tempo", "mondo"]; P.nuovaManche();
     var Lp = P.lampo, righe = Lp.frase.split("|");
@@ -68,6 +69,8 @@
     // 🔒 La so!
     if (P.puoSegreta("b")) no("chi è di turno può bloccare la soluzione");
     var vAtteso = R.valoreSeg(R.quotaTab(P.vista().tab));
+    if (P.puoSegreta("a")) no("«La so!» con 0 punti");   // (27 nov 2026: servono almeno i punti che si perderebbero sbagliando)
+    P.trova("a").totale += 1000;
     if (!P.puoSegreta("a") || !P.segreta("a", P.frase) || P.segreta("a", P.frase)) no("«La so!» non va (o va due volte)");
     if (P.segrete.a.v !== vAtteso) no("«La so!»: l'host dà " + P.segrete.a.v + ", il tasto diceva " + vAtteso);
     P.trova("c").totale += 1000;
@@ -436,7 +439,7 @@
     if (v.fase !== "fbusta" || v.busta.id !== win.id) no("la busta non va a chi ha vinto (" + win.nome + ")");
     var WW = F[win.nome] || W.finestra(win.nome);
     if (!await W.aspetta(function () { return tasto(WW, /✉️ 3/); }, 6000)) no(win.nome + " non ha le buste («" + azioni(WW).slice(0, 80) + "»)");
-    Object.keys(F).filter(function (n) { return n !== win.nome; }).forEach(function (n) { if (!/sceglie una busta/.test(azioni(W.finestra(n)))) no(n + " non legge «✉️ " + win.nome + " sceglie una busta…» («" + azioni(W.finestra(n)).slice(0, 80) + "»)"); });
+    Object.keys(F).filter(function (n) { return n !== win.nome; }).forEach(function (n) { if (!/sceglie una busta/.test(azioni(W.finestra(n)) + " " + ((W.finestra(n).document.querySelector(".ru-buste-sch") || {}).textContent || ""))) no(n + " non legge «✉️ " + win.nome + " sceglie una busta…» («" + azioni(W.finestra(n)).slice(0, 80) + "»)"); });
     tocca(WW, tasto(WW, /✉️ 3/));
     v = await finche(C, function (x) { return x.fase === "fesito" || x.fase === "fine"; }, null, 6000, "la busta non si apre");
     var gid = v.gameId, premio = v.busta.premio;
@@ -689,7 +692,7 @@
     if (!bL) no("sulla tastiera di Giulia la " + Lc + " chiamata non è segnata");
     L.push("doppio tocco: la " + Lc + " è chiamata (" + fmt(v.giocatori.filter(function (x) { return x.id === ID.Luca; })[0].soldi) + " a Luca)");
     // la fila dei soldi: manche grande, totale piccolo
-    var cl = await W.aspetta(function () { var c = chip(F.Giulia, "Luca"); return c && (/tot 0/.test(c.querySelector("small").textContent) && c.querySelector("b").textContent !== "0" || /in gioco [1-9]/.test(c.querySelector("small").textContent)) ? c : null; }, 4000);
+    var cl = await W.aspetta(function () { var c = chip(F.Giulia, "Luca"); var m = c && c.querySelector(".r.m b"), t = c && c.querySelector(".r.t b"); return m && t && m.textContent !== "0" && t.textContent === "0" ? c : null; /* (27 nov 2026: due righe con l'etichetta, Manche e Totale) */ }, 4000);
     if (!cl) no("nella fila dei soldi di Giulia Luca non ha manche e totale separati: " + ((chip(F.Giulia, "Luca") || {}).textContent));
     // ora tocca a Paky, che risolve scrivendo sulla tastiera
     await passaA("host");
@@ -711,7 +714,7 @@
     if (v.scr) no("la soluzione dal vivo resta nella foto a fine manche");
     var pk = v.giocatori.filter(function (x) { return x.id === "host"; })[0], vi = v.vince.vincita;
     if (pk.totale !== vi) no("il totale di Paky non è la vincita (" + pk.totale + " invece di " + vi + ")");
-    var cP = await W.aspetta(function () { var c = chip(F.Giulia, "Paky"); return c && (c.querySelector("b").textContent === "+" + fmt(vi) && c.querySelector("small").textContent === "tot " + fmt(pk.totale) || c.querySelector("b").textContent === fmt(pk.totale) && c.querySelector("small").textContent === "+" + fmt(vi)) ? c : null; }, 4000);
+    var cP = await W.aspetta(function () { var c = chip(F.Giulia, "Paky"); return c && c.classList.contains("incassa") && c.querySelector(".r.t b").textContent === fmt(pk.totale) && c.querySelector(".ru-vola").textContent === "+" + fmt(vi) ? c : null; }, 4000);   // (27 nov 2026: il «+…» vola da Manche a Totale)
     if (!cP) no("a fine manche Giulia non vede Paky incassare: " + ((chip(F.Giulia, "Paky") || {}).textContent));
     var cL2 = chip(F.Giulia, "Luca");
     if (!cL2 || cL2.querySelector("b").textContent !== "0") no("a fine manche Luca non torna a 0: " + (cL2 || {}).textContent);

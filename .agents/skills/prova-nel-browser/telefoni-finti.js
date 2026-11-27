@@ -319,6 +319,8 @@ window.apriTel = async function (nome, opz) {
   if (ent) w.SGNet.entra = function (cod, cb, o) { const h = ent.apply(this, arguments); if (h) { h.__sala = !!(o && o.tieni); (w.__reti = w.__reti || []).push(h); } return h; };
   // la rete del telefono come la vede l'app (navigator.onLine): giù con w.__offline o w.__reteGiu
   try { Object.defineProperty(w.navigator, "onLine", { configurable: true, get: () => !w.__offline && !w.__reteGiu }); } catch (e) {}
+  // 🎡 la Ruota della Fortuna (27 nov 2026): le finestre che spiegano (la partita aspetta 5-9 s) solo con opz.spiega; le prove scritte prima non le aspettano
+  if (!opz.spiega) w.__RUOTA_SPIEGA = false;
   if (opz.prima) opz.prima(w);   // (per le prove: es. un gioco finto registrato prima che parta l'app)
   w.__permesso = true; w.SG.avviaApp();
   await dorme(300);
@@ -329,6 +331,22 @@ window.reteDi = nome => { const w = finestra(nome); return ((w && w.__reti) || [
 window.vmDi = cod => { const s = statoStanza(cod); return s && (s.vm || s); };
 window.finestra = nome => { const f = document.getElementById("tel-" + nome); return f && f.contentWindow; };
 window.dorme = ms => new Promise(r => setTimeout(r, ms));
+window.__RUOTA_SPIEGA = false;   // (la Ruota caricata in questa pagina, per le prove del motore: senza le finestre che spiegano)
+// 🎡 la Ruota della Fortuna (dal 27 nov 2026 senza il tasto «Gira»): una spinta vera col dito sul bordo della ruota.
+// forza 0-1 (più forte = dito più veloce). Restituisce false se la ruota non si può girare (non «si è svegliata»).
+window.spingiRuota = async function (w, forza) {
+  const sel = ".ru-alto.tocca .ru-piatto-alto";
+  if (!w || !(await aspetta(() => w.document.querySelector(sel), 3000))) return false;
+  await dorme(500);   // (la ruota appena sveglia non accetta tocchi per 0,45 s)
+  const p = w.document.querySelector(sel); if (!p) return false;
+  const r = p.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2, R = r.width * 0.42, f = forza == null ? 0.6 : forza;
+  const Ev = w.PointerEvent || w.MouseEvent, ev = (t, a) => p.dispatchEvent(new Ev(t, { bubbles: true, cancelable: true, pointerId: 7, pointerType: "touch", isPrimary: true, clientX: cx + R * Math.cos(a), clientY: cy + R * Math.sin(a) }));
+  const a0 = -0.5, a1 = 0.75, n = 6, dt = Math.round(70 - 55 * f);
+  ev("pointerdown", a0);
+  for (let k = 1; k <= n; k++) { await dorme(dt); ev("pointermove", a0 + (a1 - a0) * k / n); }
+  ev("pointerup", a1);
+  return true;
+};
 // aspetta che cond() sia vera (ogni 100 ms, al massimo ms); restituisce il valore o null
 window.aspetta = async function (cond, ms, passo) {
   const fine = Date.now() + (ms || 5000);

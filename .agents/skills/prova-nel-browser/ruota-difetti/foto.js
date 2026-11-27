@@ -32,7 +32,7 @@ async function turno() {
     const page = await ctx.newPage();
     page.on("pageerror", e => scriviD("❗ errore pagina: " + e.message));
     page.on("console", m => { if (m.type() === "error" && !/vibrate|favicon|404|i\.imgflip/.test(m.text())) scriviD("❗ console: " + m.text().slice(0, 200)); });
-    const quale = arg.copione || "online", N = +(arg.n || 4), MIS = arg.solo === "412" ? [412, 915] : [360, 640];
+    const quale = arg.copione || "online", N = +(arg.n || 4), MIS = arg.mis ? arg.mis.split("x").map(Number) : arg.solo === "412" ? [412, 915] : [360, 640];
     const PRE = arg.pre || quale + (quale === "online" ? N : "") + "-";
     let nf = 0;
     async function scatta(nome, file, L, H) {

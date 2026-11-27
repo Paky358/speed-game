@@ -394,7 +394,13 @@
       ".st-nascosto{display:none!important}",
       ".stp-palco{position:absolute;inset:0;z-index:23;display:flex;flex-direction:column;padding:calc(20px + env(safe-area-inset-top)) 16px 20px;background:rgba(11,13,28,.95);opacity:0;pointer-events:none;transition:opacity .3s}",
       ".stp-palco.on{opacity:1;pointer-events:auto}",
-      "@media (prefers-reduced-motion:reduce){.stp-uno,.stp-vince *{animation:none!important;opacity:1!important;transform:none!important}}"
+      "@media (prefers-reduced-motion:reduce){.stp-uno,.stp-vince *{animation:none!important;opacity:1!important;transform:none!important}}",
+      // 🔤 (27 nov 2026, il proprietario: «priorità al nome e non all'emoticon… nel gioco non ha senso») nei punteggi in partita niente faccina:
+      // il NOME intero (si rimpicciolisce prima di tagliarsi, vedi nomiInteri) e i punti; il colore di chi è resta in una lineetta a sinistra
+      ".stp-chip canvas,.stp-punti.due .stp-chip canvas,.stp-punti.grandi .stp-chip canvas{display:none}",
+      ".stp-chip{padding-left:9px;gap:0}.stp-chip:before{content:'';position:absolute;left:0;top:7px;bottom:7px;width:3px;border-radius:0 3px 3px 0;background:var(--col)}",
+      ".stp-chip .n{font-size:12.5px;font-weight:800;color:var(--o-testo,#f4f5fb);text-overflow:clip}.stp-punti.due .stp-chip .n{font-size:11.5px}.stp-punti.grandi .stp-chip .n{font-size:15px}",
+      ".stp-punti.grandi .stp-chip{padding-left:12px}.stp-punti.riga .stp-chip .n{max-width:none}.stp-punti.riga .stp-chip{min-width:72px}"
     ].join("");
     document.head.appendChild(st);
   }
@@ -489,7 +495,17 @@
     immagine(avatarDi(g, X.faccia), function (img) { if (X.versione === v) disegnaFaccia(X.cv, img, true, X.grigio); });
   }
   // le misure (per i giochi che mettono qualcosa sopra un giocatore): S.posti in coordinate della vista
+  // 🔤 (27 nov 2026) il nome intero: se non ci sta si rimpicciolisce (fino a 9 px) prima di tagliarsi
+  function nomiInteri(S) {
+    (S.L || []).forEach(function (X) {
+      var e = X.nomeEl; if (!e || !e.isConnected) return;
+      e.style.fontSize = ""; if (e.scrollWidth <= e.clientWidth + 1) return;
+      var f = parseFloat(getComputedStyle(e).fontSize) || 12;
+      while (f > 9 && e.scrollWidth > e.clientWidth + 1) { f -= 0.5; e.style.fontSize = f + "px"; }
+    });
+  }
   function layoutStudio(S) {
+    nomiInteri(S);
     var VW = S.vista.clientWidth || 360, VH = S.vista.clientHeight || 640, vr = S.vista.getBoundingClientRect();
     S.VW = VW; S.VH = VH; S.W = VW; S.H = VH;
     var ph = S.puntiEl.classList.contains("via") ? 0 : S.puntiEl.offsetHeight;
