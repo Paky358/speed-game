@@ -9,7 +9,7 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 459,
+    v: 460,
     data: "27 novembre 2026",
     titolo: "I giochi hanno nomi nuovi ✨",
     descrizione: [
@@ -27,6 +27,16 @@ window.SG_NOVITA = [
       "🏷️ Il Prezzo è Giusto → Indovina il prezzo",
       "⚽ Mini Asta Fantacalcio → Mini Asta del Fanta (L'Asta coi temi resta «L'Asta»)",
       "🏒 Glow Hockey → Air Hockey"
+    ]
+  },
+  {
+    v: 459,
+    data: "27 novembre 2026",
+    titolo: "Ogni gioco ha la sua pagina 🔎",
+    descrizione: [
+      "🔎 Revel House si fa trovare su Google: ogni gioco ha una sua pagina, con la spiegazione, la copertina e il tasto «▶ Gioca ora» che apre subito quel gioco.",
+      "📲 Le trovi tutte su revelhouse.it/giochi: comode da mandare a chi non conosce ancora un gioco, così lo legge prima della serata.",
+      "🎮 Per chi gioca non cambia niente: revelhouse.it apre l'app come sempre."
     ]
   },
   {
