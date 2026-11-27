@@ -55,7 +55,7 @@
     var hC = q(G, ".mc-campo").getBoundingClientRect().height;
     if (hC < 103.5) no("nel mercato in 12 le rose sono più piccole del minimo (" + Math.round(hC) + " px)");
     x.push("mercato: 12 rose" + (q(G, ".mc-rose.scorre") ? " (si scorre)" : "") + ", campi alti " + Math.round(hC) + " px");
-    W.clicca(P, /Inizia la giornata|Si gioca!/); await W.dorme(400); W.clicca(P, /Iniziamo/);
+    W.clicca(P, /Inizia la giornata|Si gioca/); await W.dorme(400); W.clicca(P, /Iniziamo/);
     // la giornata: 7 quadretti + «Gli altri», il mio sempre in vista
     if (!await W.aspetta(function () { return q(G, ".st-gio-altri") && visibile(q(G, ".st-gio-altri")); }, 50000)) no("nella giornata non c'è il quadretto «Gli altri»");   // (15 nov 2026: prima la classifica delle rose a figurine, in 12 circa 22 secondi)
     await W.dorme(1500);

@@ -9,6 +9,29 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 454,
+    data: "27 novembre 2026",
+    titolo: "Mini Asta: le azioni sempre alla stessa velocità ⏱️",
+    descrizione: [
+      "⏱️ Nella giornata le azioni corrono sempre alla stessa velocità: niente più azioni svelte nel finale o quando si è in tanti, e poi lente all'improvviso.",
+      "🎥 Il rallentatore c'è su ogni tiro, ed è sempre lungo uguale: un po' più corto di prima, così la giornata non si allunga.",
+      "👥 Quando si è in tanti, per non allungare la giornata si accorciano un po' annunci e pause, mai l'azione.",
+      "🔁 Anche il rigore da ripetere va alla stessa velocità del primo."
+    ]
+  },
+  {
+    v: 453,
+    data: "27 novembre 2026",
+    titolo: "Mini Asta: negli scambi si vede chi è pronto e tutte le proposte ✅",
+    descrizione: [
+      "✅ Negli scambi a fine asta c'è il tasto «⚽ Si gioca»: quando hai finito di scambiare lo tocchi, e se ci ripensi lo ritocchi.",
+      "👀 In fondo tutti vedono quanti sono pronti («✅ 3 su 4 pronti») e chi; sulla rosa di chi è pronto c'è il ✅. Così si capisce subito chi vuole ancora scambiare. Chi propone uno scambio non è più pronto.",
+      "⚽ Chi tiene la partita ha «Inizia la giornata»: quando sono pronti tutti si accende e dice «✅ Tutti pronti: ⚽ Si gioca!». Decide sempre lui: la giornata non parte da sola (solo allo scadere del tempo, come prima).",
+      "📋 Scorrendo verso destra, o col tasto «📋 Proposte ▶», c'è la pagina con tutte le proposte della partita: chi a chi, cosa dà, cosa chiede e com'è andata (in corso, accettata, rifiutata, ritirata, non più valida).",
+      "🧹 In alto c'è solo «⏱ +1 minuto», per chi tiene la partita: non finisce più sopra l'orologio."
+    ]
+  },
+  {
     v: 451,
     data: "27 novembre 2026",
     titolo: "«Come giocate?» si legge meglio 🎮",

@@ -868,6 +868,21 @@
     // (la barra: in basso una riga sola; quando si scelgono i calciatori sale sopra le partite col «📨 Proponi», così le rose non si spostano mai)
     ".mc-barra{display:flex;flex-direction:column;justify-content:center;gap:6px;width:100%;height:100%;}.mc-barra.su{position:absolute;left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));bottom:calc(8px + env(safe-area-inset-bottom));z-index:20;width:auto;height:auto;padding:10px;border-radius:18px;background:#151a2e;box-shadow:0 0 0 1.5px rgba(52,209,122,.6),0 -12px 30px rgba(0,0,0,.6);animation:mcSu .2s ease-out;}@keyframes mcSu{from{opacity:0}to{opacity:1}}",
     ".mc-att{display:flex;align-items:center;gap:8px;}.mc-scelta{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;}.mc-scelta .mc-mini{min-height:36px;display:inline-flex;align-items:center;gap:4px;}.mc-scelta i{width:7px;height:7px;border-radius:50%;}.mc-scelta small{color:#ffe066;}.mc-scelta .mc-mini.on{background:#25a95d;box-shadow:0 0 0 2px #34d17a;}.mc-att .mc-riass{flex:1;min-width:0;text-align:left;font-size:.78rem;line-height:1.25;}.mc-att .mc-mini{flex:none;}",
+    ".mc-barra:empty{display:none;}.mc-barra.su.att{bottom:calc(8px + 44px + env(safe-area-inset-bottom));padding:8px 10px;}",   // ✅ (27 nov 2026) la proposta in attesa sta sopra la riga dei pronti (la scelta col «📨 Proponi» resta dov'era: sopra le partite, mai sulle rose)
+    ".mc-pronti{display:flex;align-items:center;gap:8px;height:100%;}.mc-pr-sx{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px;}.mc-pr-r{display:flex;align-items:center;gap:6px;min-width:0;}",
+    ".mc-pr-n{flex:none;font-size:.84rem;font-weight:900;white-space:nowrap;line-height:1.1;}.mc-pronti.tutti .mc-pr-n{color:#69db7c;}.mc-pr-f{display:flex;align-items:center;min-width:0;overflow:hidden;}.mc-pr-av{flex:none;width:18px;height:18px;border-radius:50%;margin-left:-4px;box-shadow:0 0 0 1.5px #0d1020;}.mc-pr-av:first-child{margin-left:0;}.mc-pr-piu{flex:none;margin-left:3px;font-size:.66rem;font-weight:800;color:#a6acc8;}",
+    ".mc-pr-h{display:block;font-size:.7rem;line-height:1.15;color:#a6acc8;white-space:nowrap;overflow:hidden;}.mc-si{flex:none;border:0;border-radius:12px;min-height:36px;padding:4px 14px;background:#25a95d;color:#fff;font:inherit;font-size:.92rem;font-weight:900;white-space:nowrap;box-shadow:0 2px 0 rgba(0,0,0,.25);}.mc-si.on{background:rgba(52,209,122,.15);color:#b2f2bb;box-shadow:inset 0 0 0 2px #34d17a;}.mc-si[hidden]{display:none;}",
+    ".mc-pr-b{display:none;flex:none;font-size:.82em;}.mc-rosa.pronto .mc-pr-b{display:inline;}.mc-rosa.pronto .mc-cr{display:none;}",
+    ".mc-si.mc-via{background:rgba(255,255,255,.1);color:#fff;}.mc-si.mc-via.tutti{background:#25a95d;box-shadow:0 0 0 2px #34d17a,0 0 18px rgba(52,209,122,.55);animation:mcAcceso 1.2s ease-in-out infinite alternate;}.mc-pronti.tutti .mc-pr-sx{display:none;}.mc-pronti.tutti .mc-si{flex:1;}@keyframes mcAcceso{to{box-shadow:0 0 0 2px #34d17a,0 0 26px rgba(52,209,122,.85);}}",
+    // 📋 (27 nov 2026) le due pagine: le rose con le partite e «Le proposte», che si scorrono col dito (una alla volta)
+    ".mc-pagine{flex:1 1 0;min-height:0;align-self:stretch;width:100%;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;}.mc-pagine::-webkit-scrollbar{display:none;}",
+    ".mc-pg{flex:0 0 100%;min-width:0;min-height:0;display:flex;flex-direction:column;align-items:stretch;gap:7px;scroll-snap-align:start;scroll-snap-stop:always;}",
+    ".mc-part-t .mc-dx{margin-left:auto;display:flex;align-items:center;gap:6px;flex:none;}.mc-vai{display:inline-flex;align-items:center;gap:3px;white-space:nowrap;min-height:26px;padding:2px 9px;}.mc-np{font-style:normal;min-width:16px;padding:0 4px;border-radius:8px;background:rgba(255,255,255,.16);font-size:.72rem;text-align:center;}.mc-np:empty{display:none;}.mc-np.vivo{background:#4fd8ff;color:#0d1020;}",
+    ".mc-dots{display:inline-flex;gap:4px;flex:none;}.mc-dots i{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.28);}.mc-dots i.on{background:#e0225a;}",
+    ".mc-prop-t{flex:none;display:flex;align-items:center;gap:8px;min-height:30px;}.mc-prop-t b{flex:1;min-width:0;font-size:1rem;font-weight:900;}.mc-prop-l{flex:1 1 0;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:flex;flex-direction:column;gap:6px;padding-bottom:6px;}",
+    ".mc-prop-vuota{margin:18px 8px;text-align:center;color:#a6acc8;font-size:.86rem;line-height:1.35;}.mc-pr-it{flex:none;border-radius:12px;background:#151a2e;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);padding:7px 10px;font-size:.84rem;}.mc-pr-it.mio{background:#1b2140;}.mc-pr-it.in{box-shadow:inset 0 0 0 1.5px #4fd8ff;}",
+    ".mc-pr-it .ri{display:flex;align-items:baseline;justify-content:space-between;gap:8px;}.mc-pr-it .ri b{min-width:0;font-weight:900;}.mc-pr-it .st{flex:none;font-size:.74rem;font-weight:800;}.mc-pr-it.in .st{color:#4fd8ff;}.mc-pr-it.ok .st{color:#69db7c;}.mc-pr-it.no .st{color:#ff8787;}.mc-pr-it.rit .st,.mc-pr-it.via .st{color:#a6acc8;}.mc-pr-it.rit,.mc-pr-it.via{opacity:.8;}",
+    ".mc-pr-it .cc{display:flex;flex-wrap:wrap;align-items:center;gap:3px 8px;margin-top:3px;line-height:1.3;}.mc-pr-it .cc>small{width:44px;color:#a6acc8;font-size:.72rem;}.mc-pc{display:inline-flex;align-items:center;gap:4px;font-weight:800;}.mc-pc i{width:15px;height:15px;border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:.6rem;font-weight:900;color:#0d1020;}",
     ".mc-riass{margin:0;text-align:center;font-size:.84rem;line-height:1.3;}.mc-riass.no{color:#ffe066;font-weight:800;}.mc-riass.invito{font-size:.8rem;line-height:1.25;}.mc-riass.attesa{color:#a5d8ff;}.mc-riga{display:flex;gap:8px;}.mc-riga .sc-ok{flex:1;}.mc-annulla{flex:none;width:52px;min-height:52px;}",
     ".mc-pop{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(5,8,20,.62);}.mc-pop-in{width:100%;max-width:380px;display:flex;flex-direction:column;gap:6px;padding:16px;border-radius:18px;background:#151a2e;color:#fff;box-shadow:0 0 0 2px #34d17a,0 18px 40px rgba(0,0,0,.6);animation:mcPop .35s cubic-bezier(.2,1.3,.4,1);}@keyframes mcPop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}",
     ".mc-pop-t{display:flex;align-items:center;gap:8px;font-size:1.05rem;}.mc-pop-et{margin-top:4px;font-size:.7rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;opacity:.7;}.mc-pop-c{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:8px;align-items:center;padding:6px 10px;border-radius:12px;background:rgba(255,255,255,.07);}",
@@ -4823,6 +4838,12 @@
   // la faccina di chi li ha comprati) di TUTTI i vostri calciatori delle due squadre, e nessun altro nome: se due di voi hanno
   // il Napoli, fino al tiro non si sa chi segna. Sotto la classifica dal vivo: tutti partono da 6 in pagella, poi bonus e
   // malus; a fine primo tempo le pagelle di tutti, al fischio finale le pagelle vere, da chi ha fatto meno a chi ha fatto di più
+  // ⏱️ (27 nov 2026, il proprietario: «dà fastidio che le azioni vanno veloci, poi lente, poi velocissime: scegliamo una singola velocità») UNA
+  // velocità sola: l'azione (TEMPI_AZ[…][2]) corre SEMPRE allo stesso passo, mai più svelta nel finale, in tanti o nelle giornate veloci (quando
+  // la giornata è lunga si accorciano annunci, pause ed esiti, non l'azione); e il rallentatore su OGNI tiro (prima un tiro su tre prima del 75'),
+  // sempre lungo uguale: RALL_W dell'azione da 4,2 s (RALL_MS0) a velocità RALL_V, che finisce poco dopo l'arrivo del pallone (lentoFino)
+  var VEL_MIN = 0.5;   // ⏱️ (la giornata lunga: annunci, pause ed esiti al massimo a metà, mai l'azione)
+  var RALL_W = 0.16, RALL_V = 0.5, RALL_DOPO = 0.06, RALL_MS0 = 4200, RALL_PIU = RALL_MS0 * (RALL_W + 0.05) * (1 / RALL_V - 1);   // (RALL_PIU: quanti ms in più, circa, per le stime della giornata)
   var TEMPI_AZ = {   // [annuncio, pausa, azione, esito] in millisecondi
     gol: [1800, 300, 4200, 900], ann: [1800, 300, 4200, 1500], occ: [1800, 300, 4200, 1400], aut: [1800, 300, 4200, 900], spz: [1800, 300, 4200, 900], rig: [2000, 300, 4000, 1300],
     amm: [1500, 300, 2900, 800], esp: [1500, 300, 2900, 900], rec: [1500, 300, 2900, 800], inv: [1100, 200, 1700, 700] };   // (l'esito si vede già durante l'esultanza: dopo resta poco)
@@ -5058,7 +5079,13 @@
       var os = lista.filter(function (x) { return x.focus && x.m < 75 && (x.e.t === "occ" || (x.e.t === "rec" && !x.e.nv)) && !serveAlMinimo(x, nv, MIN_AZIONI) && !(x.chi || []).some(function (q) { var kp = chiaveCalc(q.c); return (q.c.ruolo === "P" && subP[kp] && (contaP[kp] || 0) <= 1) || (x.e.t === "occ" && kp === x.e.ass); }); }); if (!os.length) break;
       lista.splice(lista.indexOf(os[Math.floor(os.length / 2)]), 1);
     }
-    return Math.max(0.72, Math.min(1, DURATA_GIORNATA / Math.max(1, durata())));
+    // ⏱️ (27 nov 2026) la velocità della giornata: prima accorciava tutto, anche l'azione (in 8 correva quasi una volta e mezza più svelta: «veloci,
+    // poi lente, poi velocissime»); ora l'azione va sempre allo stesso passo e si accorciano solo annunci, pause ed esiti, quanto serve perché la
+    // giornata duri come prima (mai sotto VEL_MIN: le scritte si leggono sempre)
+    var d = durata(), v0 = Math.max(0.72, Math.min(1, DURATA_GIORNATA / Math.max(1, d))), az = 0;
+    if (v0 >= 1) return 1;
+    lista.forEach(function (x) { if (!x.sp && x.focus && !x.lampo) az += tempiEv(x.e)[2]; });
+    return Math.max(VEL_MIN, Math.min(1, (d * v0 - az) / Math.max(1, d - az)));
   }
   function sceltaVeloce(lista) {
     var vel = 0.8;
@@ -5074,9 +5101,10 @@
     function dur(x) {
       if (!x.focus || x.via) return 0;
       if (x.lampo) return x.ms || LAMPO_MS;
-      var T = tempiEv(x.e), z = x.e.m >= 75 && x.cat !== "rig", lento = x.cat === "rig" || x.e.m >= 75 || semeRnd(semeDi(x) + 11)() < 0.33;   // (come in momentoSerieA: col rallentatore l'azione dura circa una volta e mezza)
-      if (z) T = [T[0] * 0.6, T[1] * 0.5, T[2] * 0.9, T[3]];
-      return (T[0] + T[1] + T[2] * (lento ? 1.55 : 1) * (x.e.v === "assedio" || x.e.v === "ultimo" ? 1.3 : 1) + T[3] + (x.e.t === "ann" ? 3500 : x.e.varOk ? 4600 : 0) + (x.e.come === "var" ? 2600 : 0) + (/^rig[PFN]?$/.test(x.e.t) ? T_FALLO_RIG * 1.32 : 0) + (x.e.rip ? T[2] * 0.8 + 2800 : 0)) * vel + (x.e.m >= 75 ? 200 : 450);
+      var T = tempiEv(x.e), z = x.e.m >= 75 && x.cat !== "rig";   // (come in momentoSerieA: ⏱️ l'azione allo stesso passo e col rallentatore su ogni tiro; vel accorcia solo il resto)
+      if (z) T = [T[0] * 0.6, T[1] * 0.5, T[2], T[3]];
+      var azione = T[2] * (x.e.v === "assedio" || x.e.v === "ultimo" ? 1.3 : 1) + RALL_PIU + (/^rig[PFN]?$/.test(x.e.t) ? T_FALLO_RIG + RALL_PIU : 0) + (x.e.rip ? T[2] + RALL_PIU : 0);
+      return azione + (T[0] + T[1] + T[3] + (x.e.t === "ann" ? 3500 : x.e.varOk ? 4600 : 0) + (x.e.come === "var" ? 2600 : 0) + (x.e.rip ? 2800 : 0)) * vel + (x.e.m >= 75 ? 200 : 450);
     }
     function totale() { var d = 2400; lista.forEach(function (x) { d += dur(x); }); return d; }
     function togli(cat) {   // un'occasione in meno (quella di mezzo), ma ne resta almeno una ogni tre gol (e mai una che serve a qualcuno per il minimo)
@@ -5087,7 +5115,7 @@
     }
     while (totale() > DURATA_VELOCE && (togli("altro") || togli("passa") || togli("tiro"))) {}
     if (totale() > DURATA_VELOCE) lista.forEach(function (x) { if (x.focus && !x.via && !x.lampo && (x.cat === "altro" || x.cat === "passa") && !serveAlMinimo(x, azioniViste(lista), MIN_VELOCE)) { if (x.gol) x.lampo = true; else x.via = true; } });   // (ancora troppo: i gol dove i vostri passano o difendono si vedono di colpo, tranne le azioni che servono per il minimo)
-    while (vel > 0.6 && totale() > DURATA_VELOCE) vel = Math.round((vel - 0.05) * 100) / 100;
+    while (vel > VEL_MIN && totale() > DURATA_VELOCE) vel = Math.round((vel - 0.05) * 100) / 100;   // (⏱️ vel accorcia solo annunci, pause ed esiti)
     if (totale() > DURATA_VELOCE) lista.forEach(function (x) { if (x.lampo) x.ms = 1300; });   // (tanti giocatori: i momenti «di colpo» restano un po' meno)
     for (var k = lista.length - 1; k >= 0; k--) if (lista[k].via) lista.splice(k, 1);
     return vel;
@@ -5361,10 +5389,11 @@
   function momentoSerieA(R, x, n, poi) {
     var e = x.e, P = x.P, nega = e.t === "rigN", t = e.t === "rigP" || e.t === "rigF" || nega ? "rig" : e.t === "ribP" ? "occ" : e.t, T = tempiEv(e), vv = R.gioVel, seme = semeDi(x);   // (vv: uguale su tutti i telefoni; nega: 📺 il rigore che il VAR non dà)
     // ⏳ nella Zona Cesarini il ritmo è serrato, ma UGUALE fino al tiro per tutto quello che si annuncia allo stesso modo (gol, gol annullato,
-    // autogol, occasione; i cartellini tra loro): la durata non deve dire come finisce. Cambia solo quanto resta l'esito. I rigori no
+    // autogol, occasione; i cartellini tra loro): la durata non deve dire come finisce. Cambia solo quanto resta l'esito. I rigori no.
+    // ⏱️ (27 nov 2026) serrati annunci e pause, MAI l'azione: corre allo stesso passo di tutta la giornata (prima ×0,9: «veloci, poi lente, poi velocissime»)
     var zona = e.m >= 75, pausa = zona ? 200 : 450;
     if (zona) R.minBat = Math.max(R.minBat || 75, e.m);   // (💓 il minuto del battito: un passo del piano, uguale anche per chi recupera)
-    if (zona && t !== "rig" && t !== "inv") T = [T[0] * 0.6, T[1] * 0.5, T[2] * 0.9, t === "gol" || t === "ann" || t === "aut" || t === "spz" ? T[3] : T[3] * 0.7];
+    if (zona && t !== "rig" && t !== "inv") T = [T[0] * 0.6, T[1] * 0.5, T[2], t === "gol" || t === "ann" || t === "aut" || t === "spz" ? T[3] : T[3] * 0.7];
     var lato = e.s || (x.chi[0] && x.chi[0].c.squadra === P.f ? "f" : "c"), sqA = lato === "c" ? P.c : P.f, sqB = lato === "c" ? P.f : P.c;   // sqA: la squadra del momento
     var K = {}; K[P.c] = kitDi(P.c, false); K[P.f] = kitDi(P.f, coloriVicini(K[P.c].a, (coloriSquadra(P.f) || ["#adb5bd"])[0]));   // (maglie simili: chi è in trasferta gioca in bianco)
     // i vostri calciatori di queste due squadre (chi è stato espulso prima non c'è più)
@@ -5447,10 +5476,10 @@
       for (var i = 0; i < l.length; i++) { z -= PESO[l[i].ruolo] * ((l[i].q || 1) + 2); if (z < 0) return l[i].k; }
       return l[l.length - 1].k;
     }
-    // il rallentatore prima del tiro: deciso dal minuto e dal seme, MAI da come finisce (prima partiva solo sui non-gol: era uno spoiler).
-    // Sempre sui rigori e dal 75', prima un tiro su tre
+    // il rallentatore prima del tiro: MAI deciso da come finisce (prima partiva solo sui non-gol: era uno spoiler). ⏱️ (27 nov 2026) su OGNI tiro
+    // e sempre lungo uguale (prima sui rigori, dal 75' e un tiro su tre: «veloci, poi lente»)
     if (e.v === "assedio" || e.v === "ultimo") T = [T[0], T[1], T[2] * 1.3, T[3]];
-    var op = { verso: versoDi(P, R.gk, sqAtt, e.m), lato: seme % 2 ? 1 : -1, seme: seme, rib: e.rib, ribGol: e.ribGol, come: comeV, noAng: e.noAng, difesa: difesa, lento: t === "rig" || zona || semeRnd(seme + 11)() < 0.33 };   // (⚽ la porta che si attacca: la squadra e il tempo, versoDi)
+    var op = { verso: versoDi(P, R.gk, sqAtt, e.m), lato: seme % 2 ? 1 : -1, seme: seme, rib: e.rib, ribGol: e.ribGol, come: comeV, noAng: e.noAng, difesa: difesa, lento: true };   // (⚽ la porta che si attacca: la squadra e il tempo, versoDi)
     var lD = e.ass && SC_LATO[v] ? latoDifK(e.ass) : null;   // 🏃 (il terzino destro arriva dalla destra di chi attacca, il sinistro dalla sinistra)
     if (lD === "d" || lD === "s") op.lato = (lD === "d" ? 1 : -1) * (op.verso || 1) * SC_LATO[v];
     if ((t === "ann" && e.perche === "fuorigioco") || (t === "gol" && e.varOk === "fuorigioco")) { op.bandiera = true; op.fgOltre = t === "ann"; }   // 🚩 (gol annullato o convalidato: uguali fino alla decisione)
@@ -5503,7 +5532,7 @@
     passi.push({ avviso: ann, mg: maglia(mg), sq: (t === "amm" || t === "esp" || t === "rec" || t === "inv") && comeV !== "pressing" ? null : mg, ms: T[0], fermo: sc, gufoApri: zona ? 150 : 400 });   // (l'azione: di chi è, in grande)
     passi.push({ ms: T[1] });
     if (t === "rig" && e.rip) {   // il portiere si era mosso prima: si tira di nuovo
-      passi.push({ sc: prepara(scena("rig", null, "parata", null, et, { verso: op.verso, lato: op.lato, seme: seme + 5 })), dur: T[2] * 0.8 });
+      passi.push({ sc: prepara(scena("rig", null, "parata", null, et, { verso: op.verso, lato: op.lato, seme: seme + 5, lento: true })), dur: T[2] });   // (⏱️ allo stesso passo: prima ×0,8, più svelto)
       passi.push({ avviso: ["🔁 SI RIPETE!", "il portiere si era mosso prima"], ms: 2400, fermo: sc, gufoApri: 300 });   // (🦉 si può gufare di nuovo)
       passi.push({ ms: 400 });
     }
@@ -5524,7 +5553,7 @@
       if (i >= passi.length) { viaAvviso(R); segnaInCampo(R, []); if (gufo) gufoVia(R); R.dopo(pausa, poi); return; }
       var q = passi[i];
       if (q.sc) {
-        var dq = Math.round(q.dur * vv);
+        var dq = Math.round(q.dur);   // ⏱️ (27 nov 2026) l'azione mai più svelta: la velocità della giornata (vv) accorcia annunci, pause ed esiti, non l'azione
         if (gufo) {   // 🦉 il tasto si chiude quando parte il tiro; la scritta arriva poco dopo l'esito (col gol annullato: dopo il VAR)
           if (q.sc.calcio != null) R.dopo(R.az.fino(q.sc, dq, q.sc.calcio), function () { gufoChiudi(R, gufo); });
           if (q.dunque && t !== "ann" && !varOk) R.dopo(R.az.fino(q.sc, dq, q.sc.dunque) + 700 * vv, function () { gufoEsito(R, gufo); });
@@ -5540,7 +5569,7 @@
       R.dopo(q.ms * vv, function () { if (!vivoRivela(R)) return; if (q.avviso && !q.resta) viaAvviso(R); esegui(i + 1); });
     }
     // ⏱️ quanto dura tutto il momento: se chi recupera è già oltre la sua fine, contano solo punti e risultati (niente scene né suoni)
-    var lungo = pausa; passi.forEach(function (q) { lungo += q.sc ? R.az.durata(q.sc, Math.round(q.dur * vv)) : q.ms * vv; });
+    var lungo = pausa; passi.forEach(function (q) { lungo += q.sc ? R.az.durata(q.sc, Math.round(q.dur)) : q.ms * vv; });
     R.provaM = "momento " + n;
     if (R.g() > R.pt + lungo + 250) { dunqueSerieA(R, x, t, esito, sqA, pos, seme, true); segnaInCampo(R, []); return R.dopo(lungo, poi); }
     provaPiano(R, "m" + n);
@@ -5870,7 +5899,7 @@
     for (var k in x.sc) sc[k] = x.sc[k];
     // (13 nov 2026, il proprietario: «se il gol viene fatto nella metà campo di sopra, il replay viene mostrato nella metà campo sotto… non deve
     // succedere mai») il replay resta nella metà campo del gol vero (sc.verso come nell'azione); la rete in primo piano sta dalla parte della porta
-    sc.replay = true; sc.dietro = true; sc.abb = null; sc.zoomFine = Math.max(sc.zoomFine || 0, 0.7); sc.tz = Math.min(sc.tz || 0.55, 0.4); sc.lento = sc.lento || [Math.max(0, sc.dunque - 0.2), Math.min(1, sc.dunque + 0.12), 0.42];   // (🎬 da dietro la porta: la porta in basso, davanti a chi guarda)
+    sc.replay = true; sc.dietro = true; sc.abb = null; sc.zoomFine = Math.max(sc.zoomFine || 0, 0.7); sc.tz = Math.min(sc.tz || 0.55, 0.4); sc.lento = [Math.max(0, sc.dunque - 0.2), Math.min(1, sc.dunque + 0.12), 0.42];   /* ⏱️ (27 nov 2026) il replay ha sempre il suo rallentatore, più lento di quello dei tiri */   // (🎬 da dietro la porta: la porta in basso, davanti a chi guarda)
     barraPartita(R, x); orologio(R, e.m, true); if (R.barSc && e.r) R.barSc.textContent = e.r[0] + " - " + e.r[1];
     var lungo = 1400 + R.az.durata(sc, 4200) + 2200 + 400;
     if (R.g() > R.pt + lungo + 250) return R.dopo(lungo, poi);   // (chi recupera: il replay è già passato)
@@ -6154,7 +6183,10 @@
     }
     var por = att("pD", et.para, [[0, 0.5, 0.935]]);
     // il rallentatore (e la telecamera un po' più vicina) da poco prima del tiro a poco dopo: parate, pali, salvataggi si capiscono
-    function rallenta(t0, t1) { sc.lento = [Math.max(0, t0 - 0.04), Math.min(1, t1), 0.36]; sc.zoomFine = Math.max(sc.zoomFine || 0, 0.35); sc.tz = Math.max(0.15, t0 - 0.16); }
+    // ⏱️ (27 nov 2026) sempre lungo uguale: finisce poco dopo l'arrivo del pallone (t1, come prima, meno RALL_DOPO) e dura RALL_W (in tempo vero sempre
+    // lo stesso: tempi() lo misura sulla durata dell'azione). Deciso solo da t1, che è uguale in ogni esito: il rallentatore non dice come finisce
+    function lentoFino(b) { b = Math.min(1, b); sc.lento = [Math.max(0, b - RALL_W), b, RALL_V, 1]; }
+    function rallenta(t0, t1) { lentoFino(t1 - RALL_DOPO); sc.zoomFine = Math.max(sc.zoomFine || 0, 0.35); sc.tz = Math.max(0.15, t0 - 0.16); }
     // il tiro: dal punto da (alto z0) al momento t0 verso la porta; come finisce lo dicono esito e fin; torna quando arriva
     function tiro(t0, da, z0, q) {
       q = q || {}; var PK = PARATE_K;
@@ -6321,7 +6353,7 @@
         } else if (v === "rovesciata") {   // la rovesciata: il pallone arriva alto alle spalle, lui si gira in aria a testa in giù
           tira = att("A", et.tira, [[0, 0.42, 0.62], [0.44, 0.49, 0.78], [0.55, 0.5, 0.8]], [[0.44, {}], [0.5, { salto: 0.6, capriola: 0.35 }], [0.56, { salto: 0.9, capriola: 0.8 }], [0.66, { salto: 0.2, capriola: 0.62 }], [0.71, { capriola: 0.6 }], [0.78, { capriola: 0.6 }]]);   // (atterra sulla schiena)
           palla([[0.55, 0.5, 0.8, 2.3]]); tg = tiro(0.56, [0.5, 0.8], 2.3, { quota: 1.9, dur: 0.12 });
-          sc.zoomFine = 0.55; sc.tz = 0.38; sc.lento = [0.42, 0.72, 0.38];
+          sc.zoomFine = 0.55; sc.tz = 0.38; lentoFino(0.76);   // (⏱️ come ogni tiro: fino a poco dopo l'arrivo)
         } else {
           tira = att("A", et.tira, [[0, 0.38, 0.6], [0.42, 0.47, 0.74], [0.53, 0.51, 0.815]], [[0.43, {}], [0.48, { salto: 0.5, inclina: -1 }], [0.53, { salto: 0.55, inclina: 1 }], [0.6, { salto: 0.1, inclina: 0.3 }], [0.66, {}]]);   // (carica indietro e colpisce di testa)
           palla([[0.53, 0.52, 0.82, 1.9]]); tg = tiro(0.53, [0.52, 0.82], 1.9, { dur: 0.1 });
@@ -6341,7 +6373,7 @@
         if (v === "olimpico") {   // direttamente dal calcio d'angolo: il pallone gira e si infila sul primo palo
           palla([[0.38, 0.72, 0.92, 2.8], [0.47, 0.578, GL, 1.6], [0.51, 0.56, NET, 0.7], [1, 0.56, NET, 0]]);
           muovi(por, 0.4, 0.51, 0.935); posa(por, 0.42, {}); posa(por, 0.47, { salto: 0.5, braccia: 1 }); posa(por, 0.56, {});
-          sc.rete = 0.47; scritta(0.47, "GOL!"); tg = sc.dunque = 0.47; sc.zoomFine = 0.5; sc.tz = 0.3; sc.lento = [0.34, 0.55, 0.4]; tira = batte;
+          sc.rete = 0.47; scritta(0.47, "GOL!"); tg = sc.dunque = 0.47; sc.zoomFine = 0.5; sc.tz = 0.3; lentoFino(0.55); tira = batte;
         } else {
           if (v === "angolo" && kv === "primopalo") {   // 🎬 (22 nov 2026, n. 3) sul primo palo: lo anticipa tutti di testa e la gira verso il secondo palo (chi batte resta l'ultimo a toccarla)
             tira = att("A", et.tira, [[0, 0.64, 0.78], [0.46, 0.6, 0.86]], [[0.41, {}], [0.45, { salto: 0.5, inclina: -1 }], [0.47, { salto: 0.55, inclina: 1 }], [0.55, {}]]);
@@ -6356,7 +6388,7 @@
             tira = att(v === "portiere" ? "pA" : "A", et.tira, [[0, 0.62, 0.76], [0.47, 0.53, 0.84]], [[0.42, {}], [0.46, { salto: 0.5, inclina: -1 }], [0.48, { salto: 0.55, inclina: 1 }], [0.56, {}]]);
             palla(corto ? [[0.48, 0.53, 0.84, 2.0]] : [[0.38, 0.76, 0.87, 4.6], [0.48, 0.53, 0.84, 2.0]]); tg = tiro(0.48, [0.53, 0.84], 2.0, { dur: 0.08 });
           }
-          if (v === "portiere") { sc.zoomFine = 0.45; sc.tz = 0.4; sc.lento = [0.4, 0.62, 0.45]; }
+          if (v === "portiere") { sc.zoomFine = 0.45; sc.tz = 0.4; lentoFino(0.6); }
         }
       } else if (v === "unodue" && kv === "fascia") {   // 🎬 (22 nov 2026, n. 39) l'uno-due sulla fascia, poi dentro al campo e il tiro incrociato
         tira = att("A", et.tira, [[0, 0.7, 0.42], [0.2, 0.74, 0.52], [0.46, 0.72, 0.72]]);
@@ -6982,7 +7014,7 @@
         muovi(por, 0.2, 0.5, 0.82); muovi(por, 0.68, 0.5, 0.92); posa(por, 0.6, {}); posa(por, 0.69, { salto: 0.5, braccia: 1 }); posa(por, 0.78, { cade: 1 });
         att("D", null, [[0, 0.45, 0.08], [0.22, 0.48, 0.06]]);
         tg = tiro(0.58, [0.5, 0.79], 5, { dur: 0.12, quota: 1.6, fermo: true, senzaLento: true });   // (2 nov 2026: anche nelle occasioni, e allora parata, traversa, fuori…)
-        sc.zoomFine = 0.35; sc.tz = 0.6; sc.lento = [0.55, 0.75, 0.45];
+        sc.zoomFine = 0.35; sc.tz = 0.6; lentoFino(0.78);   // (⏱️ come ogni tiro: fino a poco dopo l'arrivo)
       } else {   // fuori: il tiro da fuori area (anche un missile all'incrocio)
         calcia(att("A", null, [[0, 0.2, 0.45], [0.2, 0.24, 0.47]]), 0.2);
         tira = att("A", et.tira, [[0, 0.52, 0.44], [0.3, 0.47, 0.49], [0.42, 0.48, 0.53]]);
@@ -7066,7 +7098,7 @@
       tg = tiro(0.43, [0.5, 0.75], 0, { dur: 0.09, quota: qR, lato: op.ribGol || op.rib ? -1 : lR }); sc.calcio = 0.43;
       if (esito === "parata" && (op.ribGol || op.rib)) { sc.palla.splice(sc.palla.length - 2, 2); palla([[0.62, 0.43, 0.84, 0], [1, 0.43, 0.84, 0]]); }   // (il pallone resta in area: c'è la ribattuta)
       if (esito === "gol" || esito === "cucchiaio") { festa(tira, tg + 0.05); sc.gol = true; }
-      if (esito === "cucchiaio") { sc.zoomFine = 0.4; sc.tz = 0.35; sc.lento = [0.42, 0.72, 0.4]; }
+      if (esito === "cucchiaio") { sc.zoomFine = 0.4; sc.tz = 0.35; }   // (⏱️ il rallentatore come ogni rigore: prima partiva prima e diceva «cucchiaio»)
     } else if (tipo === "aut" || tipo === "spz") {   // l'autogol: un difensore (D) la devia nella sua porta; 🙈 (22 nov 2026) o la spazza via (spz): uguale fino al tocco
       if (op.lento) rallenta(v === "fuori" ? 0.45 : v === "angolo" ? 0.48 : 0.53, v === "fuori" ? 0.74 : v === "angolo" ? 0.7 : 0.77);   // (come le occasioni con la stessa scena)
       if (v === "fuori") {
@@ -9573,22 +9605,23 @@
     A.vel = 1;   // (⏩ Veloce: 2)
     // gioca un'azione: dur ms (più lunga se c'è il rallentatore); alDunque() quando arriva al momento clou; poi() alla fine
     // il tempo dell'azione col rallentatore che entra ed esce piano: T.tab[k] = quanto tempo vero (in «dur») per arrivare a k/N
-    function tempi(sc) {
+    function tempi(sc, dur) {
       var lw = sc.lento, N = 80, tab = [0], k;
+      if (lw && lw[3] && dur > 0) lw = [Math.max(0, lw[1] - (lw[1] - lw[0]) * RALL_MS0 / dur), lw[1], lw[2]];   // (⏱️ il rallentatore di ogni tiro: in tempo vero sempre lungo uguale, qualunque sia la durata dell'azione)
       function velo(p) { if (!lw) return 1; var s = liscio((p - lw[0] + 0.05) / 0.05) * liscio((lw[1] + 0.05 - p) / 0.05); return 1 - (1 - lw[2]) * s; }
       for (k = 1; k <= N; k++) tab.push(tab[k - 1] + 1 / N / velo((k - 0.5) / N));
       return { tab: tab, N: N, tot: tab[N] };
     }
     function pDiT(T, x) { var i = 0; while (i < T.N - 1 && T.tab[i + 1] < x) i++; return Math.max(0, Math.min(1, (i + (x - T.tab[i]) / (T.tab[i + 1] - T.tab[i])) / T.N)); }
-    A.durata = function (sc, dur) { return Math.max(0, dur * (tempi(sc).tot - (sc.parti || 0))); };   // (quanto dura l'azione, col rallentatore)
+    A.durata = function (sc, dur) { return Math.max(0, dur * (tempi(sc, dur).tot - (sc.parti || 0))); };   // (quanto dura l'azione, col rallentatore)
     A.fino = function (sc, dur, p) {   // quanti ms dall'inizio dell'azione per arrivare al punto p (0-1), col rallentatore (come giocaPiano)
-      var T = tempi(sc), k = Math.max(0, Math.min(1, p)) * T.N, i = Math.min(T.N - 1, Math.floor(k));
+      var T = tempi(sc, dur), k = Math.max(0, Math.min(1, p)) * T.N, i = Math.min(T.N - 1, Math.floor(k));
       return Math.max(0, dur * (T.tab[i] + (k - i) * (T.tab[i + 1] - T.tab[i]) - (sc.parti || 0)));
     };
     // l'azione col piano della giornata: ogni fotogramma si calcola dal tempo di gioco (uguale su tutti i telefoni) e la fine ha la sua ora
     A.giocaPiano = function (sc, dur, R, alDunque, poi) {
       A.ferma(); A.sc = sc; if (!sc.folla) sc.folla = comparse(sc);
-      var T = tempi(sc), g0 = R.pt, inizio = (sc.parti || 0) * dur, lungo = A.durata(sc, dur), fatto = false, finita = false, suoni = suoniDi(sc), sentiti = 0;
+      var T = tempi(sc, dur), g0 = R.pt, inizio = (sc.parti || 0) * dur, lungo = A.durata(sc, dur), fatto = false, finita = false, suoni = suoniDi(sc), sentiti = 0;
       while (sentiti < suoni.length && suoni[sentiti].t < (sc.parti || 0)) sentiti++;
       function dunque() { if (fatto) return; fatto = true; var pt = R.pt; R.pt = Math.min(R.g(), g0 + lungo); alDunque(); R.pt = pt; }   // (puntuale: niente «ritardo»)
       function passo() {
@@ -9605,7 +9638,7 @@
     A.gioca = function (sc, dur, alDunque, poi) {
       A.ferma(); A.sc = sc;
       if (!sc.folla) sc.folla = comparse(sc);
-      var T = tempi(sc), tab = T.tab, N = T.N, prima = 0, passato = (sc.parti || 0) * dur, fatto = false, suoni = suoniDi(sc), sentiti = 0;
+      var T = tempi(sc, dur), tab = T.tab, N = T.N, prima = 0, passato = (sc.parti || 0) * dur, fatto = false, suoni = suoniDi(sc), sentiti = 0;
       var tot = T.tot;
       while (sentiti < suoni.length && suoni[sentiti].t < (sc.parti || 0)) sentiti++;
       function pDi(r) { return pDiT(T, r * tot); }   // (dal tempo vero al tempo dell'azione: nel rallentatore scorre più piano)
@@ -11203,7 +11236,7 @@
       onVoto: function (x) { manda({ t: "voto", per: x.per, v: x.v, s: S.vm && S.vm.sessione }); },
       onMal: function (x) { manda({ t: "mal", n: x.n, a: x.a, prezzo: x.prezzo, g: x.g }); },
       onGufo: function (x) { manda({ t: "gufo", k: x.k, n: x.n, tipo: x.tipo }); },   // 🦉 / 🍀 (fanta: quante volte ho toccato in questo momento)
-      onScambio: function (x) { manda({ t: "sc", a: x.a, n: x.n, con: x.con, dai: x.dai, vuoi: x.vuoi }); },   // 🔄 (fanta) una mossa negli scambi
+      onScambio: function (x) { manda({ t: "sc", a: x.a, n: x.n, con: x.con, dai: x.dai, vuoi: x.vuoi, si: x.si }); },   // 🔄 (fanta) una mossa negli scambi
       onEsci: function () { cb._uscito = true; fermaTutto(); if (S.rete) S.rete.chiudi(); t.esci(); }
     };
     function disegna() {
@@ -12226,7 +12259,7 @@
   //  Il mercato ha un tempo (SCAMBI_MS) con il conto in vista; chi tiene la partita lo chiude («⏹ Fine scambi») o lo allunga («＋1 minuto»).
   //  Regola del ⚙️ «🔄 Scambi a fine asta», accesa di partenza (imp.scambi). La giornata NON cambia: cambiano solo le rose prima di giocarla.
   // =========================================================
-  var SCAMBI_MS = 180000, SCAMBI_PIU = 60000;
+  var SCAMBI_MS = 180000, SCAMBI_PIU = 60000, STORIA_MAX = 40;   // 📋 (27 nov 2026) le proposte nella pagina «Le proposte»: le ultime 40
   function chiaveKit(c) { return c.nome + "|" + c.squadra; }
   function scambiOn(im) { return !(im && im.scambi === false); }
   // lo scambio lascia le rose giuste? (da: chi dà A, db: chi dà B, come chiavi) → { ok, msg }
@@ -12360,7 +12393,7 @@
     });
     return el("div", { class: "mc-rosa st-" + stileMerc() + (opz.mia ? " mia" : ""), style: "--pc:" + pc }, [
       el("div", { class: "mc-rosa-t" }, [ imgAv(el, "sc-faccia", cfgDi(g.nome, g.omino)), el("b", { text: opz.mia ? "La tua rosa" : g.nome }), opz.nota ? el("small", { class: "mc-nota", text: opz.nota }) : null,
-        el("small", { class: "mc-cr", text: (g.crediti != null ? g.crediti : 0) + " 💰" }) ]), lista ]);
+        el("small", { class: "mc-pr-b sg-dal-gioco", text: "✅" }), el("small", { class: "mc-cr", text: (g.crediti != null ? g.crediti : 0) + " 💰" }) ]), lista ]);   // (✅ il bollino al posto dei crediti: si vede solo se è pronto)
   }
   function campettoMerc(el, g, opz) {   // una rosa in formazione: le 5 targhette al loro posto (il ruolo lo dice il posto)
     var posti = slotRosa(g.kit || []), campo = el("div", { class: "mc-campo" }), Fi = MC_FILE[opz.file] || MC_FILE.larga;
@@ -12384,19 +12417,32 @@
       M.s._contenuto.appendChild(el("div", { class: "sc-testa" }, [ el("b", { text: "🔄 Scambi" }), M.capo, M.tempo ]));
       M.rose = el("div", { class: "mc-rose" }); M.mia = el("div"); M.partite = el("div", { class: "mc-partite" });
       M.rose.addEventListener("scroll", function () { mcGiu(M); }, { passive: true });
-      M.s._contenuto.appendChild(M.rose); M.s._contenuto.appendChild(M.partite);
+      // 📋 (27 nov 2026, il proprietario: «switchando verso destra si vedano tutti gli scambi proposti, quelli in corso, i rifiutati e quelli
+      // accettati») due pagine che si scorrono col dito: le rose con le partite, e accanto «Le proposte» (si passa anche col tasto «📋 Proposte ▶»)
+      M.p2 = el("div", { class: "mc-pg mc-prop sg-dal-gioco" });
+      M.pagine = el("div", { class: "mc-pagine" }, [ el("div", { class: "mc-pg" }, [ M.rose, M.partite ]), M.p2 ]);
+      M.pagine.addEventListener("scroll", function () { var p = M.pagine.clientWidth ? Math.round(M.pagine.scrollLeft / M.pagine.clientWidth) : 0; if (p !== M.pagina) { M.pagina = p; puntiniMerc(M); } }, { passive: true });
+      M.s._contenuto.appendChild(M.pagine); M.pagina = 0;
       M.barra = el("div", { class: "mc-barra" }); M.s._piede.appendChild(M.barra);
+      // ✅ (27 nov 2026) la riga dei pronti, sempre in fondo: quanti sono pronti (e chi); il tasto «⚽ Si gioca» per gli altri (di nuovo = ci ripenso),
+      // «⚽ Inizia la giornata» per chi tiene la partita (si accende quando sono pronti tutti)
+      M.prN = el("b", { class: "mc-pr-n" }); M.prH = el("small", { class: "mc-pr-h" });
+      M.prB = el("button", { class: "mc-si", onclick: function () { toccaPronto(M); } });
+      M.pronti = el("div", { class: "mc-pronti sg-dal-gioco" }, [ el("div", { class: "mc-pr-sx" }, [ M.prN, M.prH ]), M.prB ]);
+      M.s._piede.appendChild(M.pronti);
       t.mostra(M.s);
       if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (MERC === M) adattaMerc(M); });   // (col carattere vero le misure cambiano)
       M.iv = setInterval(function () {
         if (!document.body.contains(M.s)) return clearInterval(M.iv);
-        var r = Math.max(0, Math.ceil((M.fine - Date.now()) / 1000)); M.tempo.textContent = "⏱ " + Math.floor(r / 60) + ":" + ("0" + r % 60).slice(-2); M.tempo.classList.toggle("poco", r <= 20);
+        tempoMerc(M);
+        var T0 = M.capo.parentNode; if (M.capo.firstChild && T0 && T0.clientWidth && T0.clientWidth + "|" + M.tempo.textContent.length !== M.testaK) testaMerc(M);   // (la testata si misura quando si vede davvero, e di nuovo se cambia)
       }, 250);
     }
-    M.vm = vm; M.cb = cb; M.t = t; M.fine = Date.now() + (S.resta || 0);
+    M.vm = vm; M.cb = cb; M.t = t; M.fine = Date.now() + (S.resta || 0); tempoMerc(M);   // (l'orologio scritto subito: il tasto in alto si misura con lui)
     var nuovi = (S.esiti || []).filter(function (f) { return f.n > M.nf; }); M.nf = Math.max(M.nf, S.nf || 0);
     var k = JSON.stringify([S.prop, (vm.giocatori || []).map(function (g) { return [g.id, g.via ? 1 : 0, (g.kit || []).map(chiaveKit)]; }), !!t.guarda, io, !!cb.sonoHost, S.coppie ? 1 : 0]);
     if (k !== M.ultima) { M.ultima = k; disegnaMercato(M, nuovi); }
+    prontiMerc(M); proposteMerc(M);   // ✅ 📋 (solo la riga dei pronti, i bollini sulle rose e la pagina delle proposte: niente lampeggio)
     nuovi.forEach(function (f) {
       if (f.ok) annunciaScambio(M, f, io != null && (io === f.da || io === f.a));
       else if (io != null && io === f.da && !f.perso) avvisoMerc(M, "😅 " + f.nb + " ha rifiutato lo scambio");
@@ -12413,9 +12459,10 @@
     else { sel.loro = sel.loro.filter(function (k) { return con.kit.some(function (c) { return chiaveKit(c) === k; }); }); sel.miei = me ? sel.miei.filter(function (k) { return me.kit.some(function (c) { return chiaveKit(c) === k; }); }) : []; if (!sel.loro.length) { sel.con = null; sel.miei = []; } }
     svuotaNodo(M.capo);
     if (cb.sonoHost) {
-      // (15 nov 2026, il proprietario: «il +1 non si capisce») per intero; se non ci stanno, «⏱ +1 minuto» e «⚽ Si gioca!» (e, se serve, senza il titolo)
+      // (15 nov 2026, il proprietario: «il +1 non si capisce») per intero; se non ci sta, «⏱ +1 minuto» (e, se serve, senza il titolo). ✅ (27 nov 2026,
+      // il proprietario: «"si gioca" e "aggiungere tempo" sono sovrapposti, è brutto da vedere»; «il tempo aggiuntivo solo per l'host») in alto solo
+      // il tempo in più: «⚽ Si gioca» è in fondo, per tutti; chi tiene la partita lo usa anche per far partire subito la giornata
       M.capo.appendChild(el("button", { class: "mc-mini mc-piu", text: "⏱ Prolunga di 1 minuto", onclick: function () { cb.onScambio({ a: "piu" }); } }));
-      M.capo.appendChild(el("button", { class: "mc-mini mc-via", text: "⚽ Inizia la giornata", onclick: function () { M.t.conferma("Iniziare la giornata per tutti?", "Gli scambi si chiudono e si gioca.", "✅ Iniziamo", function () { cb.onScambio({ a: "fine" }); }); } }));
       testaMerc(M);
     }
     M.mioPrimo = !!me; M.ordine = (me ? [me] : []).concat((vm.giocatori || []).filter(function (g) { return g.id !== io; }));   // (la mia rosa per prima)
@@ -12444,7 +12491,7 @@
     });
     M.rose.appendChild(griglia);
     M.giu = L.scorre ? el("div", { class: "mc-giu", text: "⬇ altre rose" }) : null; if (M.giu) M.rose.appendChild(M.giu);
-    mcMisure(M); barraSu(M); M.rose.scrollTop = su; mcGiu(M); segnaSel(M);   // (ridisegnando non si torna su: si resta dove si era)
+    mcMisure(M); barraSu(M); M.rose.scrollTop = su; mcGiu(M); segnaSel(M); prontiMerc(M);   // (ridisegnando non si torna su: si resta dove si era)
   }
   function mcGiu(M) { if (M.giu) M.giu.classList.toggle("via", M.rose.scrollTop + M.rose.clientHeight >= M.rose.scrollHeight - 8); }   // (in fondo la scritta sparisce)
   function mcMisure(M) {   // le misure di M.lay sulla schermata (colonne, altezza dei campi, scritte)
@@ -12455,11 +12502,14 @@
   }
   function disegnaPartite(M) {   // ⚽ le partite della giornata (con 3 giornate una alla volta), così si sa contro chi gioca chi si vuole prendere
     var el = M.t.el, cp = (M.vm.scambi || {}).coppie || M.vm.coppie || null;
-    svuotaNodo(M.partite); if (!cp || !cp.length) return;
+    svuotaNodo(M.partite);
+    M.vaiP = el("button", { class: "mc-mini mc-vai", onclick: function () { pagMerc(M, 1); } }, [ "📋 Proposte", M.nP = el("i", { class: "mc-np" }), " ▶" ]);   // 📋 (la pagina accanto)
+    var testa = el("div", { class: "mc-part-t" }, [ el("b", { text: !cp || !cp.length ? "" : cp.length > 1 ? "⚽ Le partite" : "⚽ Le partite della giornata" }) ]);
+    if (cp && cp.length > 1) { if (M.gio >= cp.length) M.gio = 0; cp.forEach(function (x, i) { testa.appendChild(el("button", { class: "mc-mini" + (i === M.gio ? " on" : ""), text: (i + 1) + "ª", onclick: function () { M.gio = i; disegnaPartite(M); } })); }); }
+    testa.appendChild(el("span", { class: "mc-dx" }, [ puntini(el, 0), M.vaiP ]));
+    M.partite.appendChild(testa); proposteMerc(M, true);
+    if (!cp || !cp.length) return;
     if (M.gio >= cp.length) M.gio = 0;
-    var testa = el("div", { class: "mc-part-t" }, [ el("b", { text: cp.length > 1 ? "⚽ Le partite" : "⚽ Le partite della giornata" }) ]);
-    if (cp.length > 1) cp.forEach(function (x, i) { testa.appendChild(el("button", { class: "mc-mini" + (i === M.gio ? " on" : ""), text: (i + 1) + "ª", onclick: function () { M.gio = i; disegnaPartite(M); } })); });
-    M.partite.appendChild(testa);
     M.partite.appendChild(el("div", { class: "st-ris mc-ris" }, cp[M.gio].map(function (p) { return el("div", { class: "st-ris-p" }, [ el("span", { text: sigla(p[0]) + " - " + sigla(p[1]) }) ]); })));
   }
   // i tocchi: un calciatore di un altro (si propone a lui solo) e, se serve scegliere, i miei dello stesso ruolo
@@ -12516,8 +12566,8 @@
   }
   function barraMerc(M) {
     var el = M.t.el, cb = M.cb, vm = M.vm, S = vm.scambi || {}, io = cb.myId, me = trova(vm.giocatori, io), sel = M.sel, b = M.barra;
-    svuotaNodo(b); b.classList.remove("su"); if (M.rose) M.rose.style.paddingBottom = "";
-    if (M.t.guarda || !me) { b.appendChild(el("p", { class: "mc-riass invito", text: "👀 Si scambiano i calciatori: poi si scoprono le rose" })); return; }
+    svuotaNodo(b); b.classList.remove("su", "att"); if (M.rose) M.rose.style.paddingBottom = "";
+    if (M.t.guarda || !me) return;   // (✅ chi guarda: lo dice la riga dei pronti)
     var mia = (S.prop || []).filter(function (p) { return p.da === io; })[0];
     var g = sel.con && trova(vm.giocatori, sel.con);
     function nomi(gg, keys) { return elencoNomi(keys.map(function (kk) { var c = gg.kit.filter(function (x) { return chiaveKit(x) === kk; })[0]; return c ? nomeCampo(c.nome) : "?"; })); }
@@ -12540,10 +12590,9 @@
     if (mia) {
       var ga = trova(vm.giocatori, mia.a);
       b.appendChild(el("div", { class: "mc-att" }, [ el("p", { class: "mc-riass attesa" }, [ "⏳ Hai proposto a ", el("b", { text: ga ? ga.nome : "…" }), ": ", el("b", { text: nomi(me, mia.dai) }), " per ", el("b", { text: ga ? nomi(ga, mia.vuoi) : "…" }) ]),
-        el("button", { class: "mc-mini sc-chiudi", text: "✕ Ritira", "aria-label": "Ritira la proposta", onclick: function () { cb.onScambio({ a: "ritira", n: mia.n }); } }) ]));   // (una riga sola: le partite restano in vista)
-      return;
+        el("button", { class: "mc-mini sc-chiudi", text: "✕ Ritira", "aria-label": "Ritira la proposta", onclick: function () { cb.onScambio({ a: "ritira", n: mia.n }); } }) ]));
+      b.classList.add("su", "att"); return barraSu(M);   // ✅ (27 nov 2026: sopra la riga dei pronti, che resta in fondo)
     }
-    b.appendChild(el("p", { class: "mc-riass invito" }, [ "Vuoi un calciatore di un altro? ", el("b", { text: "Toccalo nella sua rosa" }) ]));
   }
   function popupMerc(M) {   // la proposta che mi arriva: «Accetta / Rifiuta» (una alla volta, la più vecchia)
     var vm = M.vm, cb = M.cb, el = M.t.el, io = cb.myId, me = trova(vm.giocatori, io), S = vm.scambi || {};
@@ -12559,12 +12608,91 @@
     M.s.appendChild(nodo); M.pop = { n: p.n, nodo: nodo };
     if (!M.visti[p.n]) { M.visti[p.n] = 1; vibra(60); }
   }
-  function testaMerc(M) {   // i tasti in alto per intero; se non ci stanno, corti; se ancora non ci stanno, senza il titolo
-    var T = M.capo && M.capo.parentNode, p = M.capo && M.capo.querySelector(".mc-piu"), v = M.capo && M.capo.querySelector(".mc-via"); if (!T || !p || !v) return;
-    T.classList.remove("senza-tit"); p.textContent = "⏱ Prolunga di 1 minuto"; v.textContent = "⚽ Inizia la giornata";
-    if (T.scrollWidth <= T.clientWidth + 1) return;
-    p.textContent = "⏱ +1 minuto"; v.textContent = "⚽ Si gioca!";
-    if (T.scrollWidth > T.clientWidth + 1) T.classList.add("senza-tit");
+  function tempoMerc(M) { var r = Math.max(0, Math.ceil((M.fine - Date.now()) / 1000)); M.tempo.textContent = "⏱ " + Math.floor(r / 60) + ":" + ("0" + r % 60).slice(-2); M.tempo.classList.toggle("poco", r <= 20); }
+  function testaMerc(M) {   // il tasto in alto per intero; se non ci sta, corto; se ancora non ci sta, senza il titolo
+    var T = M.capo && M.capo.parentNode, p = M.capo && M.capo.querySelector(".mc-piu"); if (!T || !p) return;
+    if (!T.clientWidth) { M.testaK = null; return; }   // (non ancora sullo schermo: lo rimisura l'orologio, appena si vede)
+    M.testaK = T.clientWidth + "|" + M.tempo.textContent.length;
+    // ✅ (27 nov 2026) si guarda davvero se qualcosa si tocca o esce (prima si guardava la larghezza della riga, e col tasto stretto
+    // dentro la sua scatola il «⚽ Si gioca!» finiva sopra l'orologio senza che nessuno se ne accorgesse)
+    function sta() {
+      var tb = T.getBoundingClientRect(), l = [].slice.call(T.querySelectorAll(":scope>b,.mc-capo>*,.sc-tempo")).filter(function (e) { return e.getClientRects().length; }).map(function (e) { return e.getBoundingClientRect(); });
+      return l.every(function (a, i) { return a.left >= tb.left - 1 && a.right <= tb.right + 1 && l.slice(i + 1).every(function (b) { return a.right <= b.left - 3 || b.right <= a.left - 3; }); });
+    }
+    if (!M.testaRi) { M.testaRi = 1; [350, 1200].forEach(function (ms) { setTimeout(function () { if (MERC === M && document.body.contains(M.s)) testaMerc(M); }, ms); }); }   // (col carattere e i simboli veri le misure cambiano: si rimisura)
+    T.classList.remove("senza-tit"); p.textContent = "⏱ Prolunga di 1 minuto";
+    if (sta()) return;
+    p.textContent = "⏱ +1 minuto";
+    if (!sta()) T.classList.add("senza-tit");
+  }
+  // ✅ (27 nov 2026) la riga dei pronti: «✅ 3 su 5 pronti» con le faccine di chi lo è, sotto cosa si può fare; il bollino «✅ pronto» sulla sua
+  // rosa; il tasto «⚽ Si gioca» (di nuovo = ci ripenso). Tutti pronti (e nessuna proposta in attesa): «si gioca tra 3…»
+  function mioPronto(M) {
+    var S = M.vm.scambi || {}, io = M.cb.myId, vero = (S.pronti || []).indexOf(io) >= 0, L = M.prLoc;
+    if (L && (L.si === vero || Date.now() - L.t > 4000)) L = M.prLoc = null;   // (il mio tocco arrivato, o perso per strada)
+    return L ? L.si : vero;
+  }
+  function prontiDi(M) {   // chi conta (quelli che ci sono, tranne chi tiene la partita), chi di loro è pronto, se lo sono tutti
+    var vm = M.vm, S = vm.scambi || {}, io = M.cb.myId, me = trova(vm.giocatori, io), guarda = !!M.t.guarda || !me, capo = M.cb.sonoHost ? io : S.h;
+    var ci = (vm.giocatori || []).filter(function (g) { return !g.via && g.id !== capo; }), io1 = !guarda && !M.cb.sonoHost && mioPronto(M);
+    var pr = ci.filter(function (g) { return g.id === io && !guarda ? io1 : (S.pronti || []).indexOf(g.id) >= 0; });
+    return { ci: ci, pr: pr, io1: io1, guarda: guarda, tutti: ci.length > 0 && pr.length === ci.length && !(S.prop || []).length };
+  }
+  function prontiMerc(M) {
+    var X = prontiDi(M), capo = !!M.cb.sonoHost && !X.guarda; if (!M.pronti) return;
+    M.prN.textContent = "✅ " + X.pr.length + " su " + X.ci.length + " pront" + (X.ci.length === 1 ? "o" : "i");
+    M.prB.hidden = X.guarda;
+    if (capo) { M.prB.textContent = X.tutti ? "✅ Tutti pronti: ⚽ Si gioca!" : "⚽ Inizia la giornata"; M.prB.classList.remove("on"); M.prB.classList.add("mc-via"); M.prB.classList.toggle("tutti", X.tutti); }
+    else { M.prB.textContent = X.io1 ? "✅ Pronto" : "⚽ Si gioca"; M.prB.classList.toggle("on", X.io1); M.prB.classList.remove("mc-via", "tutti"); }
+    M.pronti.classList.toggle("tutti", capo && X.tutti);   // (chi tiene la partita, tutti pronti: il tasto acceso su tutta la riga)
+    // sotto: i nomi di chi è pronto; se nessuno, cosa si può fare (la scritta più lunga che ci sta: mai tagliata)
+    var nomi = X.pr.map(function (g) { return g.id === M.cb.myId ? "tu" : g.nome; }), testi;
+    if (nomi.length) { testi = []; for (var j = Math.min(nomi.length, 4); j >= 1; j--) testi.push((j === nomi.length ? elencoNomi(nomi) : nomi.slice(0, j).join(", ") + " e altri " + (nomi.length - j))); testi.push(nomi.length + (nomi.length === 1 ? " pronto" : " pronti")); }
+    else testi = X.guarda ? ["👀 Si scambiano i calciatori: poi si scoprono le rose", "👀 Si scambiano i calciatori"]
+      : ["Vuoi un calciatore di un altro? Toccalo nella sua rosa", "Vuoi un calciatore? Toccalo nella sua rosa", "👆 Tocca chi vuoi nelle altre rose"];
+    var kH = testi.join("|") + "|" + M.prH.clientWidth;
+    if (kH !== M.prKH) { M.prKH = kH; for (var i = 0; i < testi.length; i++) { M.prH.textContent = testi[i]; if (M.prH.scrollWidth <= M.prH.clientWidth + 1) break; } }
+    [].forEach.call(M.s.querySelectorAll(".mc-rosa[data-g]"), function (r) { var gid = r.getAttribute("data-g"); r.classList.toggle("pronto", X.pr.some(function (g) { return String(g.id) === gid; })); });
+  }
+  function toccaPronto(M) {
+    var cb = M.cb;
+    if (cb.sonoHost) {   // chi tiene la partita: «⚽ Inizia la giornata» per tutti (tutti pronti: subito; se no la domanda, come prima)
+      var X = prontiDi(M), S = M.vm.scambi || {}, manca = X.ci.filter(function (g) { return X.pr.indexOf(g) < 0; });
+      if (X.tutti) { vibra(15); return cb.onScambio({ a: "fine" }); }
+      return M.t.conferma("Iniziare la giornata per tutti?", (manca.length ? (manca.length === 1 ? "Non è ancora pronto " : "Non sono ancora pronti ") + elencoNomi(manca.map(function (g) { return g.nome; })) + ". " : "") + ((S.prop || []).length ? "C'è uno scambio in attesa. " : "") + "Gli scambi si chiudono e si gioca.", "⚽ Iniziamo", function () { cb.onScambio({ a: "fine" }); });
+    }
+    var si = !mioPronto(M);
+    M.prLoc = { si: si, t: Date.now() }; prontiMerc(M); vibra(15);
+    cb.onScambio({ a: "pronto", si: si });
+  }
+  // 📋 LE PROPOSTE (27 nov 2026): la pagina accanto alle rose, scorrendo verso destra. Tutte le proposte della partita, di tutti, le più
+  // recenti in alto: chi a chi, cosa dà e cosa chiede, e com'è andata (in corso, accettata, rifiutata, ritirata, non più valida)
+  var STATI_PROP = { "in": ["⏳ In corso", "in"], ok: ["✅ Accettato", "ok"], no: ["❌ Rifiutato", "no"], rit: ["↩️ Ritirato", "rit"], via: ["🚫 Non più valido", "via"] };
+  function puntini(el, i) { return el("span", { class: "mc-dots", "aria-hidden": "true" }, [ el("i", { class: i === 0 ? "on" : "" }), el("i", { class: i === 1 ? "on" : "" }) ]); }
+  function puntiniMerc(M) { [].forEach.call(M.s.querySelectorAll(".mc-dots"), function (d) { [].forEach.call(d.children, function (x, j) { x.classList.toggle("on", j === (M.pagina || 0)); }); }); }
+  function pagMerc(M, p) { if (!M.pagine) return; M.pagine.scrollTo({ left: p * M.pagine.clientWidth, behavior: "smooth" }); vibra(10); }
+  function proposteMerc(M, soloConto) {
+    var vm = M.vm, S = vm.scambi || {}, l = S.storia || [], el = M.t.el, io = M.cb.myId, inC = l.filter(function (x) { return x.s === "in"; }).length;
+    if (M.nP) { M.nP.textContent = l.length ? String(l.length) : ""; M.nP.classList.toggle("vivo", inC > 0); }
+    if (soloConto || !M.p2) return;
+    var k = JSON.stringify([l, io, (vm.giocatori || []).map(function (g) { return g.id + ":" + g.nome; })]); if (k === M.ultimeP) return; M.ultimeP = k;
+    var su = M.lista ? M.lista.scrollTop : 0;
+    svuotaNodo(M.p2);
+    M.p2.appendChild(el("div", { class: "mc-prop-t" }, [ el("button", { class: "mc-mini mc-vai", text: "◀ Rose", onclick: function () { pagMerc(M, 0); } }), el("b", { text: "📋 Le proposte" }), puntini(el, M.pagina || 0) ]));
+    M.lista = el("div", { class: "mc-prop-l" }); M.p2.appendChild(M.lista);
+    if (!l.length) { M.lista.appendChild(el("p", { class: "mc-prop-vuota", text: "Ancora nessuna proposta. Qui si vedono tutte: chi propone a chi, cosa dà, cosa chiede e com'è andata." })); return; }
+    function nomeDi(id, sog) { var g = trova(vm.giocatori, id); return id === io ? (sog ? "Tu" : "te") : g ? g.nome : "?"; }
+    function chi(keys) {   // i calciatori, col ruolo se si trova in una rosa
+      return keys.map(function (kk) { var c = null; (vm.giocatori || []).forEach(function (g) { (g.kit || []).forEach(function (x) { if (chiaveKit(x) === kk) c = x; }); });
+        var nm = nomeCampo(String(kk).split("|")[0]); return el("span", { class: "mc-pc" }, [ c ? el("i", { class: "as-rb-" + c.ruolo, text: c.ruolo }) : null, nm ]); });
+    }
+    l.forEach(function (x) {
+      var st = STATI_PROP[x.s] || STATI_PROP.via;
+      M.lista.appendChild(el("div", { class: "mc-pr-it " + st[1] + (x.da === io || x.a === io ? " mio" : "") }, [
+        el("div", { class: "ri" }, [ el("b", { text: nomeDi(x.da, true) + " ➜ " + nomeDi(x.a) }), el("small", { class: "st", text: st[0] }) ]),
+        el("div", { class: "cc" }, [ el("small", { text: "dà" }) ].concat(chi(x.dai))), el("div", { class: "cc" }, [ el("small", { text: "chiede" }) ].concat(chi(x.vuoi))) ]));
+    });
+    M.lista.scrollTop = su;
   }
   // 📋 LE ROSE FINALI (proposta): tutte le rose dopo gli scambi, gli scambiati segnati; chi tiene la partita ha «Avanti ▶» col conto, gli altri aspettano
   function roseFinali(t, vm, cb, secondi) {
@@ -12678,7 +12806,7 @@
         g.via = true;
         if (st.fase === "asta" && verifica()) return;
         if (st.fase === "busta" && bustaFPiena()) return chiudiBustaF();   // ✉️ (chi se n'è andato non scrive: se mancava solo lui si aprono)
-        if (st.fase === "scambi" && st.scambi) st.scambi.prop = st.scambi.prop.filter(function (x) { return x.da !== id && x.a !== id; });   // 🔄 (le sue proposte si chiudono)
+        if (st.fase === "scambi" && st.scambi) st.scambi.prop = st.scambi.prop.filter(function (x) { if (x.da !== id && x.a !== id) return true; statoProp(x.n, "via"); return false; });   // 🔄 (le sue proposte si chiudono: 📋 «non più valide»; ✅ chi esce non conta tra i pronti)
         bd();
       },
       onMsg: function (id, m) {
@@ -12725,7 +12853,7 @@
       st.scadenza = null;
       if (f === "esito") { bd(); return TM.dopo(prossima, ms); }
       if (f === "scambi" && st.scambi) {   // 🔄 il mercato riprende (almeno 30 secondi), con le proposte di prima
-        var rs = Math.max(30000, ms); st.scambi.fine = Date.now() + rs; TM.dopo(fineScambi, rs); return bd();
+        var rs = Math.max(30000, ms); st.scambi.fine = Date.now() + rs; st.scambi.h = IO; st.scambi.pronti = (st.scambi.pronti || []).filter(function (x) { return x !== IO; }); TM.dopo(fineScambi, rs); return bd();   // (✅ i pronti e 📋 le proposte restano)
       }
       if ((f === "busta" || f === "apri" || f === "ruota") && st.mazzo.length) {   // ✉️ la busta si riapre da capo (le offerte segrete non si ricordano)
         var cB = st.mazzo[0]; st.bustaF = st.apri = st.ruota = st.esito = null;
@@ -12897,10 +13025,15 @@
     function apriScambi() {
       stopTo(); st.asta = null; st.esito = null; st.scadenza = null;
       if (st.giornata && !st.coppie) st.coppie = coppieGiornate(st.giornate);   // ⚽ (le partite si vedono già nel mercato: sono quelle che si giocheranno)
-      st.scambi = { fine: Date.now() + SCAMBI_MS, durata: SCAMBI_MS, prop: [], esiti: [], n: 0, nf: 0 };
+      st.scambi = { fine: Date.now() + SCAMBI_MS, durata: SCAMBI_MS, prop: [], esiti: [], n: 0, nf: 0, pronti: [], storia: [], h: IO };   // (h: chi tiene la partita, che non conta tra i pronti)
       st.fase = "scambi"; TM.dopo(fineScambi, SCAMBI_MS); bd();
     }
-    function fineScambi() { if (st.fase !== "scambi" || !st.scambi) return; stopTo(); st.scambi.prop = []; st.scambi.chiuso = true; fine(); }
+    function fineScambi() { if (st.fase !== "scambi" || !st.scambi) return; stopTo(); st.scambi.prop = []; st.scambi.chiuso = true; st.scambi.storia = null; fine(); }   // (📋 le proposte non servono più: la copia per il vice resta leggera)
+    // ✅ (27 nov 2026, il proprietario: «un contatore di quante persone premono "si gioca", così si capisce chi non vuole più scambiare»; poi: «chi
+    // tiene la partita NON ha il tasto pronto… niente partenza automatica, decide l'host») chi è pronto (S.pronti, per id): tutti tranne chi tiene la
+    // partita, che ha «⚽ Inizia la giornata». Chi propone uno scambio non è più pronto (vuole ancora scambiare). 📋 S.storia: tutte le proposte della
+    // partita ({ n, da, a, dai, vuoi, s }; s = "in" in corso, "ok" accettata, "no" rifiutata, "rit" ritirata, "via" non più valida), per la pagina «Le proposte»
+    function statoProp(n, stato) { (st.scambi.storia || []).forEach(function (x) { if (x.n === n && x.s === "in") x.s = stato; }); }
     // una mossa (m.a): proponi (con, dai, vuoi), ritira (n), accetta (n), rifiuta (n); chi tiene la partita: fine, piu
     function scambioO(id, m) {
       var S = st.scambi, g = perId(st, id); if (st.fase !== "scambi" || !S || !m || !g) return;
@@ -12916,18 +13049,22 @@
         var gc = perId(st, m.con); if (!gc || gc.via || m.con === id) return bd();
         var dai = chiavi(g, m.dai), vuoi = chiavi(gc, m.vuoi);
         if (!vuoi.length || dai.length !== (m.dai || []).length || vuoi.length !== (m.vuoi || []).length || !scambioValido(g, gc, dai, vuoi).ok) return bd();
-        S.prop = S.prop.filter(function (p) { return p.da !== id; });   // (una proposta a testa: la nuova prende il posto di quella di prima)
+        S.prop = S.prop.filter(function (p) { if (p.da === id) { statoProp(p.n, "rit"); return false; } return true; });   // (una proposta a testa: la nuova prende il posto di quella di prima, che risulta ritirata)
         S.prop.push({ n: ++S.n, da: id, a: m.con, dai: dai, vuoi: vuoi });
+        if (!S.storia) S.storia = [];
+        S.storia.push({ n: S.n, da: id, a: m.con, dai: dai, vuoi: vuoi, s: "in" }); if (S.storia.length > STORIA_MAX) S.storia.shift();   // 📋
+        S.pronti = (S.pronti || []).filter(function (x) { return x !== id; });   // ✅ (vuole ancora scambiare: non è più pronto)
       }
-      else if (a === "ritira") S.prop = S.prop.filter(function (p) { return !(p.n === m.n && p.da === id); });
-      else if (a === "rifiuta") { var pr = S.prop.filter(function (p) { return p.n === m.n && p.a === id; })[0]; if (!pr) return bd(); S.prop = S.prop.filter(function (p) { return p !== pr; }); esito(pr, false); }
+      else if (a === "pronto") { if (id === IO) return; S.pronti = (S.pronti || []).filter(function (x) { return x !== id; }); if (m.si) S.pronti.push(id); }   // ✅ «⚽ Si gioca» (di nuovo = ci ripenso; chi tiene la partita non ce l'ha)
+      else if (a === "ritira") S.prop = S.prop.filter(function (p) { if (p.n === m.n && p.da === id) { statoProp(p.n, "rit"); return false; } return true; });
+      else if (a === "rifiuta") { var pr = S.prop.filter(function (p) { return p.n === m.n && p.a === id; })[0]; if (!pr) return bd(); S.prop = S.prop.filter(function (p) { return p !== pr; }); statoProp(pr.n, "no"); esito(pr, false); }
       else if (a === "accetta") {
         var pa = S.prop.filter(function (p) { return p.n === m.n && p.a === id; })[0]; if (!pa) return bd();
         var gd = perId(st, pa.da); S.prop = S.prop.filter(function (p) { return p !== pa; });
-        if (!gd || gd.via || chiavi(gd, pa.dai).length !== pa.dai.length || chiavi(g, pa.vuoi).length !== pa.vuoi.length || !scambioValido(gd, g, pa.dai, pa.vuoi).ok) { esito(pa, false, true); return bd(); }
-        var r = faiScambio(gd, g, pa.dai, pa.vuoi); esito(pa, true, false, r);
+        if (!gd || gd.via || chiavi(gd, pa.dai).length !== pa.dai.length || chiavi(g, pa.vuoi).length !== pa.vuoi.length || !scambioValido(gd, g, pa.dai, pa.vuoi).ok) { statoProp(pa.n, "via"); esito(pa, false, true); return bd(); }
+        var r = faiScambio(gd, g, pa.dai, pa.vuoi); statoProp(pa.n, "ok"); esito(pa, true, false, r);
         var via = {}; pa.dai.concat(pa.vuoi).forEach(function (k) { via[k] = 1; });   // (le altre proposte con quei calciatori non valgono più)
-        S.prop = S.prop.filter(function (p) { if (p.dai.concat(p.vuoi).some(function (k) { return via[k]; })) { esito(p, false, true); return false; } return true; });
+        S.prop = S.prop.filter(function (p) { if (p.dai.concat(p.vuoi).some(function (k) { return via[k]; })) { statoProp(p.n, "via"); esito(p, false, true); return false; } return true; });
       }
       else if (a === "fine") { if (id === IO) return fineScambi(); return; }
       else if (a === "piu") { if (id !== IO) return; S.fine = Math.max(S.fine, Date.now()) + SCAMBI_PIU; TM.dopo(fineScambi, S.fine - Date.now()); }
@@ -13024,7 +13161,7 @@
       ruota: st.fase === "ruota" && st.ruota ? { n: st.ruota.n, carta: st.ruota.carta, nCarta: st.ruota.nCarta, ids: st.ruota.ids, nomi: st.ruota.nomi, vince: st.ruota.vince, piano: st.ruota.piano, parte: st.ruota.parte, dur: RUOTA_MS, resta: Math.max(0, st.ruota.fine - Date.now()), massimo: st.ruota.massimo || 0 } : null,
       restano: st.mazzo ? st.mazzo.length : 0, presi: postiPresi(st.giocatori),
       coppie: st.vs && st.giornata && st.coppie ? st.coppie : null,   // 🆚 le partite già sorteggiate (solo con l'opzione accesa)
-      scambi: st.fase === "scambi" && st.scambi ? { resta: Math.max(0, st.scambi.fine - Date.now()), durata: st.scambi.durata, prop: st.scambi.prop, esiti: st.scambi.esiti, nf: st.scambi.nf, coppie: st.coppie || null } : null,   // 🔄 (i millisecondi che mancano, non l'ora; le partite della giornata)
+      scambi: st.fase === "scambi" && st.scambi ? { resta: Math.max(0, st.scambi.fine - Date.now()), durata: st.scambi.durata, prop: st.scambi.prop, esiti: st.scambi.esiti, nf: st.scambi.nf, coppie: st.coppie || null, pronti: st.scambi.pronti || [], h: st.scambi.h, storia: (st.scambi.storia || []).slice(-STORIA_MAX).reverse() } : null,   // (✅ h: chi tiene la partita, che non conta tra i pronti; 📋 le proposte, le più recenti per prime)   // 🔄 (i millisecondi che mancano, non l'ora; le partite della giornata)
       nomiChi: st.nomiChi ? 1 : 0,   // 🏷️
       ban: st.ban === false ? 0 : 1,   // 🎙️
       ovrAsta: st.ovrAsta ? 1 : 0,   // ⭐
