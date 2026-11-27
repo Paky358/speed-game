@@ -32,6 +32,17 @@ window.SG_NOVITA = [
     ]
   },
   {
+    v: 452,
+    data: "27 novembre 2026",
+    titolo: "Quattro copertine nuove 🎨",
+    descrizione: [
+      "📡 Stessa Lunghezza d'Onda: il quadrante col bersaglio, la scala «FREDDO» e «CALDO» e l'indizio «Tè».",
+      "🤥 La Balla Colossale: la notizia «Il sangue del polpo è…» e le risposte, due balle col naso di Pinocchio e quella vera.",
+      "✏️ Nomi, Cose e Città: la lettera «M» e il foglio con Marco, Martello, Milano e Mucca.",
+      "⚽ Calcio Biliardo: lo stadio di notte, i dischi Lampone e Ciano e il pallone che entra in porta."
+    ]
+  },
+  {
     v: 451,
     data: "27 novembre 2026",
     titolo: "«Come giocate?» si legge meglio 🎮",
