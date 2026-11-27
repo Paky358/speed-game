@@ -13,7 +13,7 @@ TMview non è un parere legale: prima del lancio il nome scelto va fatto vedere 
 - «gartic phone» → «… ita», «… online ita», «… come si gioca», «… gioco da tavolo».
 - «gioco disegni a catena»: nessun suggerimento.
 
-La gente lo chiama «il telefono senza fili coi disegni». Questa frase va messa nella descrizione e nella pagina per Google, anche se il nome è un altro.
+La gente lo chiama «il telefono senza fili coi disegni», ma «Il Telefono senza Fili» è un marchio depositato da un altro: quella frase NON va mai scritta nel gioco, nella descrizione né nella pagina per Google (deciso il 27 nov 2026).
 
 ## Marchi
 | Nome | Marchio | Note |

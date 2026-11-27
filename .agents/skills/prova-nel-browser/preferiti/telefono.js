@@ -389,3 +389,64 @@
     return "5 dalla Sala, fine «" + tP + "» / «" + tG + "», rivincita ok";
   } });
 })();
+
+// td7 i nomi giusti su ogni pagina (in 4: chi scrive la frase la disegna anche; in 5: mai): ogni telefono si annota le
+//     pagine che ha fatto (__TD_FATTE), e nella foto della partita, nel feed di Giulia e nella foto per WhatsApp ogni
+//     pagina deve avere il nome di chi l'ha fatta davvero; nessuno due volte nello stesso libretto (tranne la frase e il
+//     primo disegno in 4)
+(function () {
+  "use strict";
+  var W = window, A = COPIONE.aiuti, vm = A.vm, no = A.no, T = A.T, TD = W.TD;
+  async function nomiGiusti(n) {
+    var tutti = ["Paky", "Giulia", "Luca", "Marco", "Bea"].slice(0, n);
+    var Z = await TD.stanza(tutti.slice(1)), C = Z.C;
+    await TD.finoAllaRivelazione(C, tutti);
+    var fatte = {}, nomeDi = {}, err = [];
+    (vm(C).players || []).forEach(function (p) { nomeDi[p.id] = p.nome; });
+    tutti.forEach(function (n) { (W.finestra(n).__TD_FATTE || []).forEach(function (x) { fatte[x.pk] = x.id; }); });
+    var attese = vm(C).L * n;
+    if (Object.keys(fatte).length !== attese) err.push("pagine annotate " + Object.keys(fatte).length + " (dovevano essere " + attese + ")");
+    var visti = {};
+    await TD.sfoglia(C, "Paky", function (v) {
+      var rv = v.riv, chi = {};
+      rv.pag.forEach(function (pg, j) {
+        if (fatte[pg.pk] !== pg.chi) err.push("libretto di " + nomeDi[rv.a] + " pagina " + (j + 1) + ": la foto dice " + nomeDi[pg.chi] + ", l'ha fatta " + nomeDi[fatte[pg.pk]]);
+        if (j === 0 && pg.chi !== rv.a) err.push("il libretto di " + nomeDi[rv.a] + " comincia con la frase di " + nomeDi[pg.chi]);
+        var doppia = chi[pg.chi] != null && !(n % 2 === 0 && j === 1 && chi[pg.chi] === 0);
+        if (doppia) err.push("nel libretto di " + nomeDi[rv.a] + " " + nomeDi[pg.chi] + " fa due pagine (" + (chi[pg.chi] + 1) + " e " + (j + 1) + ")");
+        chi[pg.chi] = j;
+      });
+      // il feed di Giulia: ogni voce col nome giusto («Tu» per lei)
+      if (!rv.fin && !visti[rv.i + "|" + rv.p]) {
+        visti[rv.i + "|" + rv.p] = 1;
+        var G = W.finestra("Giulia"), voci = G.document.querySelectorAll(".td-feed .td-voce");
+        rv.pag.forEach(function (pg, j) {
+          var tx = voci[j] && (voci[j].querySelector(".td-chi") || {}).textContent || "", atteso = nomeDi[pg.chi] === "Giulia" ? "Tu" : nomeDi[pg.chi];
+          if (voci[j] && tx.indexOf(atteso + " ") !== 0 && tx.indexOf("🎲 " + atteso + " ") !== 0) err.push("feed di Giulia, libretto di " + nomeDi[rv.a] + " pagina " + (j + 1) + ": «" + tx + "» (doveva essere " + atteso + ")");
+        });
+      }
+    });
+    if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 5000)) no("non si arriva ai premi");
+    // la foto per WhatsApp di ogni libretto (dalla galleria di Giulia)
+    var G = W.finestra("Giulia");
+    try { Object.defineProperty(G.navigator, "canShare", { configurable: true, value: function () { return false; } }); } catch (e) {}
+    G.HTMLAnchorElement.prototype.click = function () {};
+    W.clicca(G, /Rivedi i libretti/);
+    if (!await W.aspetta(function () { return G.document.querySelectorAll(".td-gal-lib").length === n; }, 4000)) no("nella galleria non ci sono " + n + " libretti");
+    for (var k = 0; k < n; k++) {
+      G.document.querySelectorAll(".td-gal-lib")[k].click(); await W.dorme(200);
+      G.__TD_WA = null; W.clicca(G, /Manda su WhatsApp/); await W.dorme(300);
+      (G.__TD_WA || []).forEach(function (x) { if (nomeDi[fatte[x.pk]] !== x.nome) err.push("foto per WhatsApp, pagina " + x.pk + ": " + x.nome + " (l'ha fatta " + nomeDi[fatte[x.pk]] + ")"); });
+      if (!G.__TD_WA) err.push("la foto per WhatsApp del libretto " + (k + 1) + " non parte");
+      G.document.querySelector(".td-gal .td-esci").click(); await W.dorme(150);
+    }
+    if (err.length) no(err.slice(0, 4).join(" / "));
+    return "in " + n + ": " + attese + " pagine, tutte col nome giusto (foto, feed, WhatsApp)";
+  }
+  COPIONE.aggiungi("td7", { nome: "Telefono Disegnato: ogni pagina col nome di chi l'ha fatta (in 4)", fai: async function () {
+    var a = await nomiGiusti(4);
+    W.chiudiTutti && W.chiudiTutti();
+    return a;
+  } });
+  COPIONE.aggiungi("td7b", { nome: "Telefono Disegnato: ogni pagina col nome di chi l'ha fatta (in 5)", fai: async function () { return nomiGiusti(5); } });
+})();

@@ -1,5 +1,5 @@
 /* =========================================================
-   📞✏️ TELEFONO DISEGNATO — il telefono senza fili coi disegni (27 nov 2026, chat «📞✏️ Telefono Disegnato»).
+   📞✏️ TELEFONO DISEGNATO — la catena di frasi e disegni (27 nov 2026, chat «📞✏️ Telefono Disegnato»).
    Fatto dal modello dei giochi online. Il proprietario ha scelto la proposta A «Per ridere» con i premi della C
    (studio, foto e scelte in D:/SG-telefono-prove).
    - Ognuno scrive una frase strana; il telefono dopo la DISEGNA; quello dopo vede solo il disegno e scrive cosa ci
@@ -1187,6 +1187,7 @@
       } else { m.x = pulisci(campo.value); comp.tuo = { x: m.x }; }
       if (!auto) { FX.invio(); vibra(15); }
       mandato = true; ui.ritocco = false;
+      if (window.__TD_PROVA) (window.__TD_FATTE = window.__TD_FATTE || []).push({ id: cb.myId, pk: comp.pk, d: disegno ? 1 : 0 });   // (solo nelle prove: chi ha fatto quale pagina)
       cb.onPagina(m);
     }
     var campo = null, piede = el("div", { class: "td-piede" }), fatto = el("button", { class: "td-tasto", text: "✓ Fatto", onclick: function () { invia(false); } });
@@ -1458,6 +1459,7 @@
       if (cur) r.push(cur); return r;
     }
     var pezzi = [], y = 0;
+    if (window.__TD_PROVA) window.__TD_WA = lb.pag.filter(function (pg) { return !pg.s; }).map(function (pg, j) { return { pk: pg.pk, nome: nomeP(pg.chi) }; });
     lb.pag.forEach(function (pg, j) {
       if (pg.s) return;
       if (pg.t === "s") { var rr = righe(pg.x, W - pad * 2 - 40, "800 34px " + font); pezzi.push({ pg: pg, j: j, h: 44 + rr.length * 44 + 36, rr: rr }); }
@@ -1489,7 +1491,7 @@
       }
     });
     c.fillStyle = "#a6acc8"; c.font = "700 22px " + font; c.textAlign = "center";
-    c.fillText(SITO + " · il telefono senza fili disegnato", W / 2, H - 50);
+    c.fillText(SITO + " · Telefono Disegnato", W / 2, H - 50);
     condividi(cv.toDataURL("image/png"), "libretto-" + nomeP(lb.a).replace(/[^A-Za-z0-9]+/g, "-").toLowerCase() + ".png", "📖 Il libretto di " + nomeP(lb.a) + " · Telefono Disegnato");
   }
   function tondo(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
@@ -1743,7 +1745,7 @@
 
   SG.registra({
     id: ID, nome: "Telefono Disegnato", icona: "📞", tema: "oro",
-    descrizione: "Il telefono senza fili coi disegni: scrivi una frase strana, il prossimo la disegna, quello dopo indovina cosa vede… e alla fine si ride di com'è arrivata.",
+    descrizione: "Scrivi una frase strana, il prossimo la disegna, quello dopo indovina cosa vede… e alla fine si ride di com'è arrivata.",
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 1,
     modi: [], soloOnline: true,
     postiOnline: MAX,

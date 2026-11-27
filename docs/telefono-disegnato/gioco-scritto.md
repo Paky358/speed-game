@@ -6,7 +6,9 @@ Il proprietario ha scelto la **proposta A «Per ridere» con i premi della C**. 
 Partite online vere con i telefoni finti: frasi scritte, disegni fatti col dito finto, frasi indovinate. Al passo 2 arriva Tom in ritardo e Dina guarda col link.
 Ogni foto è fatta su due telefoni: basso (360x640) e alto (412x915). Quando si scrive c'è anche una foto con la tastiera aperta (360x340).
 - `n4/`, `n6/`, `n10/`: le foto una per una, il diario (`diario-N.txt`) e la foto per WhatsApp di un libretto (`whatsapp-N.png`).
-- `n4/foglio-*.png` e `n10/foglio-360-*.png`: le foto piccole su un foglio solo, da guardare in un colpo.
+- `nN/foglio-360-a.png`, `-b`, `-c` in ogni cartella: le foto del telefono basso, piccole su un foglio solo, da guardare in un colpo.
+- **I nomi sulle pagine** (controllati dalla prova td7, in 4 e in 5: ogni pagina col nome di chi l'ha fatta davvero, nella rivelazione, nel feed e nella foto per WhatsApp). In 4 e in 6 chi scrive la frase la **disegna anche lui** (come in Telestrations), così ogni libretto finisce con una frase scritta: per questo nel libretto di Paky c'è «Paky ha scritto» e poi «Paky ha disegnato». In 5, 7 e da 8 in su il primo disegno lo fa quello dopo.
+- **«Telefono senza fili» non compare da nessuna parte** (è un marchio depositato da un altro): la foto per WhatsApp finisce con «revelhouse.it · Telefono Disegnato».
 - Controlli fatti in tutte e tre le partite:
   - niente esce dallo schermo e niente scorre;
   - nessuna frase o disegno passa nella foto della partita mentre si gioca;
@@ -50,6 +52,7 @@ Ogni foto è fatta su due telefoni: basso (360x640) e alto (412x915). Quando si 
 - td3: chi tiene la partita ricarica;
 - td4: chi tiene la partita sparisce e la porta avanti la vice;
 - td5: le misure in 10;
-- td6: dalla Sala, con la Rivincita.
+- td6: dalla Sala, con la Rivincita;
+- td7 e td7b: ogni pagina col nome di chi l'ha fatta (in 4 e in 5).
 
 Le foto si rifanno con `telefono-foto/foto.js --n 4|6|10`.
