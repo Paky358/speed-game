@@ -1,4 +1,4 @@
-// IL MURO — le domande (692), divise per argomento. Scritto da .agents/skills/prova-nel-browser/muro/domande/costruisci.js:
+// IL MURO — le domande (691), divise per argomento. Scritto da .agents/skills/prova-nel-browser/muro/domande/costruisci.js:
 // NON modificarlo a mano (si rifà dai file controllati). Ogni domanda: [difficoltà 1-3, domanda, GIUSTA, sbagliata, sbagliata?];
 // il gioco mescola le risposte. Scritte da aiutanti e ricontrollate da altri (10 nov 2026).
 window.SG_MURO_ARG = [{"id":"calcio","nome":"Calcio","icona":"⚽"},{"id":"sport","nome":"Altri sport","icona":"🏅"},{"id":"storia","nome":"Storia","icona":"🏛️"},{"id":"geografia","nome":"Geografia","icona":"🌍"},{"id":"cinema","nome":"Cinema e TV","icona":"🎬"},{"id":"musica","nome":"Musica","icona":"🎵"},{"id":"scienza","nome":"Scienza e corpo umano","icona":"🔬"},{"id":"natura","nome":"Animali e natura","icona":"🐾"},{"id":"cucina","nome":"Cucina","icona":"🍝"},{"id":"italia","nome":"Italia e tradizioni","icona":"🇮🇹"},{"id":"tecnologia","nome":"Tecnologia e invenzioni","icona":"📱"},{"id":"cultura","nome":"Arte, libri e parole","icona":"🎨"}];
@@ -88,7 +88,6 @@ window.SG_MURO_DOM = {
     [2,"Quanti secondi ha una squadra per tirare nel basket?","24","30"],
     [3,"Quanti titoli mondiali in totale (tutte le classi) ha vinto Valentino Rossi?","9","7"],
     [3,"Quale tempo fece Pietro Mennea nel suo record del mondo dei 200 metri nel 1979?","19\"72","19\"92"],
-    [3,"Chi ha vinto il primo Mondiale di Formula 1, nel 1950?","Giuseppe Farina","Juan Manuel Fangio","Alberto Ascari"],
     [2,"Quale pilota ha vinto il Mondiale di F1 con la Ferrari nel 2007?","Kimi Räikkönen","Felipe Massa","Fernando Alonso"],
     [2,"Quanti titoli mondiali di F1 ha vinto Ayrton Senna?","3","4","5"],
     [1,"Cosa significa la bandiera rossa in una gara di Formula 1?","Gara interrotta","Ultimo giro","Divieto di sorpasso"],
