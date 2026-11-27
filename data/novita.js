@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 462,
+    data: "27 novembre 2026",
+    titolo: "Mini Asta: l'album delle figurine 📒",
+    descrizione: [
+      "📒 Ogni calciatore che finisce nella tua rosa attacca la sua figurina nell'album: un album per ogni stagione, una pagina per ogni squadra.",
+      "🔎 Tocca una figurina e vedi i suoi numeri con te: media voto e fantamedia (con le partite accanto), gol, assist, cartellini, le giornate vinte con lui e la partita migliore.",
+      "💰 Anche quanto l'hai pagato: la media, il prezzo più basso e il più alto. Quelli arrivati d'ufficio sono scritti a parte.",
+      "🏆 L'album sta nei Trofei, accanto ai trofei, e nella prima schermata della Mini Asta. Le figurine nuove arrivano sul podio, mai prima."
+    ]
+  },
+  {
     v: 461,
     data: "27 novembre 2026",
     titolo: "Otto copertine nuove 🖼️",

@@ -1697,6 +1697,7 @@
     // (27 nov 2026, il proprietario: «serve "Come si gioca" con un libro… appena sotto le tessere») una scritta da toccare, col
     // libro, subito SOTTO l'ultima tessera (non in fondo allo schermo): sta al centro insieme alle tessere e, se si scorre, le segue
     s._contenuto.appendChild(el("button", { class: "mg-come", text: "📖 Come si gioca", onclick: function () { schermataRegole(g, function () { schermataModo(g); }); } }));
+    var album = cuore.rigaAlbum && cuore.rigaAlbum(g); if (album) s._contenuto.appendChild(album);   // 📒 (27 nov 2026) l'album delle figurine della Mini Asta (js/cuore/trofei.js)
     mostra(s);
     segnaAltroSotto(s);   // (se scorre: la sfumatura in fondo, come nelle impostazioni)
   }

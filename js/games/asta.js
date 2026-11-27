@@ -253,7 +253,9 @@
       extra = extra || {};
       var c = contaTrofeiFanta(righe, A, me, { stat: st, stagione: STAG_ATT, oggi: dataOggi(), tr: extra.tr || (extra.trDi ? extra.trDi(me) : null), gufi: extra.gufi || null, mioId: online ? meId : null });
       if (window.SG_PROVA_TROFEI) window.SG_PROVA_TROFEI(c, me);   // (solo per le prove)
-      SGNube.salvaProgressi(null, "astafanta", c.incr, c.rec, c.set.concat([["ultimaPartitaTrofei", sessione]]));
+      var al = albumDati(me, A, st);   // 📒 (27 nov 2026) l'album delle figurine: i numeri «con te» di ogni calciatore della rosa, per stagione
+      SGNube.salvaProgressi(null, "astafanta", c.incr, c.rec, c.set.concat(al.set).concat([["ultimaPartitaTrofei", sessione]]));
+      avvisoAlbum(al.nuove);
     } catch (e) { if (window.console) console.warn("trofei Mini Asta", e); }
   }
 
@@ -3868,7 +3870,7 @@
   // giornate: 3 = 🏆 tre giornate di fila (30 ott 2026): le prime due (veloci) in serieA.prima e r.prima, la terza (intera) dove sta
   // la giornata sola di sempre (serieA.partite, r.gio); r.tot = i fantapunti sommati, che decidono la classifica
   function puntiFin(r) { return r.tot != null ? r.tot : r.gio.punti; }
-  function kitClassifica(g) { return ordinaRosa(g.kit || []).map(function (c) { return { nome: c.nome, squadra: c.squadra, ruolo: c.ruolo, valore: valoreCalc(c), ovr: valoreMostrato(c), prezzo: c.prezzo || 0 }; }); }   // (la rosa nella classifica: si rifà uguale dai giocatori)
+  function kitClassifica(g) { return ordinaRosa(g.kit || []).map(function (c) { var o = { nome: c.nome, squadra: c.squadra, ruolo: c.ruolo, valore: valoreCalc(c), ovr: valoreMostrato(c), prezzo: c.prezzo || 0 }; if (c.uff) o.uff = 1; if (c.sc) o.sc = 1; return o; }); }   // (📒 uff = d'ufficio, sc = arrivato con uno scambio: per l'album)   // (la rosa nella classifica: si rifà uguale dai giocatori)
   function classificaFanta(giocatori, serieA, giornate, coppie) {
     var righe = giocatori.map(function (g, i) {
       var kit = kitClassifica(g), tot = 0;
@@ -12022,8 +12024,9 @@
     return mischia(tutti);
   }
 
-  function assegnaFanta(g, carta, prezzo) {
-    g.crediti -= prezzo; g.kit.push({ nome: carta.nome, squadra: carta.squadra, ruolo: carta.ruolo, tier: carta.tier, prezzo: prezzo }); g.conta[carta.ruolo] = (g.conta[carta.ruolo] || 0) + 1;
+  function assegnaFanta(g, carta, prezzo, uff) {   // (uff: arrivato d'ufficio, senza asta: 📒 l'album lo tiene fuori dalla media del prezzo)
+    var cK = { nome: carta.nome, squadra: carta.squadra, ruolo: carta.ruolo, tier: carta.tier, prezzo: prezzo }; if (uff) cK.uff = 1;
+    g.crediti -= prezzo; g.kit.push(cK); g.conta[carta.ruolo] = (g.conta[carta.ruolo] || 0) + 1;
   }
 
   // ---------- SINGOLO TELEFONO ----------
@@ -12080,7 +12083,7 @@
     if (!elegg.length) { st.mazzo.shift(); return prossimaFanta(t, st); }        // carta di troppo: la salto
     st.nCarta = (st.nCarta || 0) + 1;
     if ((elegg.length === 1 && st.giocatori.length > 1) || rifiutatiTutti(st.mazzo, carta.ruolo)) {   // uno solo ne ha bisogno, o tutti quelli del ruolo rifiutati 2 volte: d'ufficio a 1 (da solo, per provare, si fa l'asta lo stesso)
-      var i = elegg[Math.floor(Math.random() * elegg.length)]; st.mazzo.shift(); assegnaFanta(st.giocatori[i], carta, 1); trDi(st.giocatori[i]).ufficio++;   // 🦅
+      var i = elegg[Math.floor(Math.random() * elegg.length)]; st.mazzo.shift(); assegnaFanta(st.giocatori[i], carta, 1, true); trDi(st.giocatori[i]).ufficio++;   // 🦅
       st.giriVuoti = 0; FX.aggiudicato();
       return esitoFanta(t, st, i, carta, 1, "forzata", elegg.length === 1 ? "unico" : "ufficio");
     }
@@ -12276,6 +12279,7 @@
   function faiScambio(ga, gb, da, db) {   // i calciatori passano di rosa (col prezzo pagato); i ruoli restano giusti, i crediti non si toccano
     var va = ga.kit.filter(function (c) { return da.indexOf(chiaveKit(c)) >= 0; }), vb = gb.kit.filter(function (c) { return db.indexOf(chiaveKit(c)) >= 0; });
     [[ga, gb, va, vb], [gb, ga, vb, va]].forEach(function (x) { var t = trDi(x[0]); t.scambi++; t.con.push(x[1].id != null ? x[1].id : "nome:" + x[1].nome); t.dati.push(x[2].map(chiaveCalc)); t.presi.push(x[3].map(chiaveCalc)); });   // 🤝 (i trofei degli scambi: chi, con chi, chi è andato e chi è arrivato)
+    va.concat(vb).forEach(function (c) { c.sc = 1; delete c.uff; });   // 📒 (per l'album: arrivato con uno scambio, il prezzo l'ha pagato l'altro)
     ga.kit = ga.kit.filter(function (c) { return da.indexOf(chiaveKit(c)) < 0; }).concat(vb);
     gb.kit = gb.kit.filter(function (c) { return db.indexOf(chiaveKit(c)) < 0; }).concat(va);
     return { va: va, vb: vb };
@@ -12891,7 +12895,7 @@
       st.nCarta++;
       // uno solo ne ha bisogno, o tutti i rimasti del ruolo sono stati rifiutati 2 volte: d'ufficio a 1 (a caso tra chi ne ha bisogno)
       if (elegg.length === 1 || rifiutatiTutti(st.mazzo, carta.ruolo)) {
-        var g = elegg[Math.floor(Math.random() * elegg.length)]; st.mazzo.shift(); assegnaFanta(g, carta, 1); st.giriVuoti = 0; trDi(g).ufficio++;   // 🦅
+        var g = elegg[Math.floor(Math.random() * elegg.length)]; st.mazzo.shift(); assegnaFanta(g, carta, 1, true); st.giriVuoti = 0; trDi(g).ufficio++;   // 🦅
         FX.aggiudicato(); return esito({ chiId: g.id, chiNome: g.nome, carta: carta, prezzo: 1, tipo: "forzata", motivo: elegg.length === 1 ? "unico" : "ufficio" });
       }
       if (aBusta(st.compra, carta)) return apriBustaF(elegg.map(function (g) { return g.id; }), 0);   // ✉️ a busta chiusa
@@ -13219,6 +13223,263 @@
     }
     stadioVM(t, vm, cb);   // asta ed esito: lo stadio
   }
+
+  // =========================================================
+  //  📒 L'ALBUM DELLE FIGURINE DELLA MINI ASTA (27 nov 2026, il proprietario: «un album di figurine collezionabili dei calciatori della mini
+  //  asta e magari mettiamo anche la media voto che hai con quel giocatore»; scelte sulle foto: D:/SG-album-prove/LEGGIMI.md).
+  //  Un album per stagione (oggi e le stagioni passate), una pagina per squadra con le squadre vere di quell'anno. La figurina si attacca
+  //  quando quel calciatore finisce nella tua rosa (all'asta, d'ufficio o con uno scambio) e si salva SUL PODIO insieme ai trofei
+  //  (salvaTrofeiFanta: regola anti-spoiler; chi guarda e la prova non salvano; sullo stesso telefono solo chi ha il profilo).
+  //  I numeri «con te» stanno nel profilo, per stagione: stat.astafanta.al_<stagione>.<calciatore> = la voce qui sotto. Il calciatore è il
+  //  suo numero di Fantacalcio.it (personaDi), uguale in tutte le stagioni: serve al riquadro «In tutte le stagioni» della scheda.
+  //  Si apre dalla pagina dei Trofei («🏆 Trofei · 📒 Album», js/cuore/trofei.js) e dalla prima schermata della Mini Asta; dopo il podio
+  //  l'avviso «📒 Figurine nuove». Le figurine si disegnano solo quando si vedono, una per fotogramma.
+  // =========================================================
+  // la voce di una figurina: [0 comprata all'asta (volte), 1 crediti pagati in tutto, 2 prezzo più basso, 3 più alto, 4 d'ufficio (volte),
+  // 5 arrivata con uno scambio (volte), 6 partite, 7 somma dei voti ×10, 8 somma dei fantavoti ×10, 9 gol, 10 assist, 11 gialli, 12 rossi,
+  // 13 vinte con lui, 14 fantavoto migliore ×10, 15 "giorno|avversario|gol" della partita migliore]
+  // Il prezzo (il proprietario tramite il Cervello): comprato a 1 all'asta = nella media; d'ufficio e scambio = fuori, scritti a parte.
+  function chiaveAlbum(stag) { return "al_" + chiaveStag(stag); }
+  function idAlbum(c) { return personaDi(chiaveCalc(c)) || ("k" + chiaveSq(chiaveCalc(c))); }
+  function albumDati(me, A, st) {
+    var sk = chiaveAlbum(STAG_ATT), vecchie = (st && st[sk]) || {}, set = [], nuove = [], oggi = dataOggi(), visti = {};
+    var giorni = !me.gio ? [] : me.prima ? [[A && A.prima ? A.prima[0] : null, me.prima[0]], [A && A.prima ? A.prima[1] : null, me.prima[1]], [A, me.gio]] : [[A, me.gio]];
+    (me.kit || []).forEach(function (c, k) {
+      var id = idAlbum(c); if (visti[id]) return; visti[id] = 1;
+      var v = vecchie[id], x = v && v.length >= 16 ? v.slice() : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ""];
+      if (!v) nuove.push(c);
+      if (c.uff) x[4]++; else if (c.sc) x[5]++;
+      else { var p = c.prezzo || 0; x[2] = x[0] ? Math.min(x[2], p) : p; x[3] = x[0] ? Math.max(x[3], p) : p; x[0]++; x[1] += p; }
+      var giocate = 0;
+      giorni.forEach(function (gg) {
+        var Aq = gg[0], G = gg[1], y = G && G.cal && G.cal[k]; if (!y) return;
+        var vt = y.v != null ? y.v : 6, fv = y.fv != null ? y.fv : vt, gol = 0;
+        giocate++; x[6]++; x[7] += Math.round(vt * 10); x[8] += Math.round(fv * 10);
+        (y.ev || []).forEach(function (q) { if (q.t === "gol") { x[9]++; gol++; } else if (q.t === "ass") x[10]++; else if (q.t === "amm") x[11]++; else if (q.t === "esp") x[12]++; });
+        if (!x[15] || Math.round(fv * 10) > x[14]) {
+          var P = Aq && Aq.partite ? Aq.partite.filter(function (q) { return q.c === c.squadra || q.f === c.squadra; })[0] : null;
+          x[14] = Math.round(fv * 10); x[15] = oggi + "|" + (P ? (P.c === c.squadra ? P.f : P.c) : "") + "|" + gol;
+        }
+      });
+      if (giocate && me.pos === 1) x[13]++;
+      set.push([sk + "." + id, x]);
+    });
+    return { set: set, nuove: nuove };
+  }
+  // dopo il podio: «📒 2 figurine nuove» (come gli avvisi di XP: non conta tra i 3 dei trofei; a partita in corso il tocco chiude e basta)
+  function avvisoAlbum(nuove) {
+    var C = window.SGCuore; if (!nuove || !nuove.length || !C || !C.codaTrofei) return;
+    var n = nuove.length, nomi = nuove.slice(0, 2).map(function (c) { return c.nome; });
+    C.codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "📒", su: "Nell'album", nome: n === 1 ? "1 figurina nuova" : n + " figurine nuove", sotto: nomi.join(" e ") + (n > 2 ? " e altre " + (n - 2) : "") });
+    if (C.prossimoAvviso) C.prossimoAvviso();
+  }
+
+  // ---- l'album sullo schermo ----
+  var ALB = { stag: null, opz: null, coda: [], raf: 0, oss: null };
+  var ALB_RUOLI = ["P", "D", "C", "A"], ALB_RUOLO = { P: "Portiere", D: "Difensore", C: "Centrocampista", A: "Attaccante" }, ALB_SIGLA = { P: "POR", D: "DIF", C: "CEN", A: "ATT" };
+  var ALB_MESI = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"];
+  var ALB_COP = [["#e0225a", "#5a1030"], ["#2c5f8a", "#0e2340"], ["#3a7d44", "#10301a"], ["#8a5cff", "#2a1660"], ["#c77a1d", "#4a2a08"], ["#1d8a8a", "#0a3333"]];
+  function albStat() { return (window.SGNube && SGNube.statGioco) ? (SGNube.statGioco("astafanta") || {}) : {}; }
+  function albMiei(stag) { return albStat()[chiaveAlbum(stag)] || {}; }
+  function albNome(stag) { return stag ? nomeStagione(stag) : "Serie A di oggi"; }
+  function virgolaA(x) { return (Math.round(x * 10) / 10).toFixed(1).replace(".", ","); }
+  function conStag(stag, fn) {   // i dati di quella stagione solo per il tempo che serve (l'album non cambia la stagione del gioco)
+    var prima = STAG_ATT; if (stag !== prima) usaStagione(stag);
+    try { return fn(); } finally { if (STAG_ATT !== prima) usaStagione(prima); }
+  }
+  // le figurine di una stagione: i calciatori all'asta (gruppi A, B, C), per squadra, poi ruolo, poi quotazione; il numero dell'album
+  function albLista(stag) {
+    return conStag(stag, function () {
+      var D = window.SG_FANTA_CALCIATORI || {}, per = {}, tutte = [], miei = albMiei(stag);
+      ALB_RUOLI.forEach(function (r) { ["A", "B", "C"].forEach(function (f) { ((D[r] || {})[f] || []).forEach(function (k) {
+        var m = /^(.*) \((.*)\)$/.exec(k); if (!m) return; (per[m[2]] = per[m[2]] || []).push({ nome: m[1], squadra: m[2], ruolo: r });
+      }); }); });
+      var squadre = Object.keys(per).sort(function (a, b) { return a.localeCompare(b, "it"); }), n = 0;
+      squadre.forEach(function (s) {
+        per[s].sort(function (a, b) { return ALB_RUOLI.indexOf(a.ruolo) - ALB_RUOLI.indexOf(b.ruolo) || valoreCalc(b) - valoreCalc(a) || a.nome.localeCompare(b.nome); });
+        per[s].forEach(function (c) { c.num = ++n; c.met = fasciaDi(c); c.id = idAlbum(c); c.x = miei[c.id] || null; c.stag = stag; tutte.push(c); });
+      });
+      return { squadre: squadre, per: per, tutte: tutte, colori: squadre.reduce(function (o, s) { o[s] = coloriSquadra(s) || ["#334", "#889"]; return o; }, {}) };
+    });
+  }
+  function albConta(l) { var o = { n: l.length, p: 0, oro: [0, 0], argento: [0, 0], bronzo: [0, 0] }; l.forEach(function (c) { if (c.x) o.p++; var y = o[c.met]; if (y) { y[1]++; if (c.x) y[0]++; } }); return o; }
+  function albStile() {
+    if (document.getElementById("alb-stile")) return;
+    var s = document.createElement("style"); s.id = "alb-stile";
+    s.textContent = [
+      ".alb .contenuto{padding-bottom:84px}",
+
+
+      ".alb-stag{display:flex;align-items:center;gap:8px;width:100%;font:inherit;font-weight:800;padding:10px 12px;margin:0 0 10px;border-radius:14px;border:1px solid var(--o-filo-oro);background:var(--o-carta);color:var(--o-testo);text-align:left}.alb-stag span{margin-left:auto;color:var(--o-tenue);font-size:.85rem}",
+      ".alb-testa{display:flex;flex-direction:column;gap:6px;margin:0 0 12px}",
+      ".alb-tot{display:flex;align-items:baseline;gap:8px;font-family:var(--o-tit);font-weight:800}.alb-tot b{font-size:2rem;line-height:1;color:var(--o-testo);white-space:nowrap}.alb-tot span{color:var(--o-tenue);font-size:1rem}",
+      ".alb-barra{height:8px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden}.alb-barra i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#e0225a,#ff9a4a)}",
+      ".alb-met{display:flex;gap:6px;flex-wrap:wrap}.alb-met span{font-size:.8rem;font-weight:800;padding:3px 9px;border-radius:99px;border:1px solid}",
+      ".alb-met .oro{color:#ffd84a;border-color:rgba(242,194,48,.55);background:rgba(92,74,12,.45)}.alb-met .argento{color:#e6ebf2;border-color:rgba(185,194,207,.5);background:rgba(58,66,80,.45)}.alb-met .bronzo{color:#f3a577;border-color:rgba(212,128,79,.55);background:rgba(90,50,32,.45)}",
+      ".alb-sq{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}",
+      ".alb-tess{display:flex;align-items:center;gap:10px;padding:10px;border-radius:14px;background:var(--o-carta);border:1px solid var(--o-filo);color:var(--o-testo);font:inherit;text-align:left;min-width:0}",
+      ".alb-tess .tx{min-width:0;flex:1}.alb-tess .tx b{display:block;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.alb-tess .tx span{font-size:.8rem;color:var(--o-tenue)}",
+      ".alb-tess .mini{height:4px;border-radius:99px;background:rgba(255,255,255,.08);margin-top:5px;overflow:hidden}.alb-tess .mini i{display:block;height:100%;background:#ff4f86}.alb-tess.piena{border-color:rgba(242,194,48,.6)}.alb-tess.piena .tx span{color:#ffd84a}",
+      ".alb-stemma{flex:0 0 auto;width:30px;height:36px;border-radius:6px 6px 15px 15px;box-shadow:inset 0 0 0 2px rgba(255,255,255,.25)}",
+      ".alb-pag{border-radius:18px;padding:12px 10px 14px;border:1px solid var(--o-filo);background:var(--o-carta)}",
+      ".alb-pag-t{display:flex;align-items:center;gap:10px;margin:0 2px 10px}.alb-pag-t b{font-family:var(--o-tit);font-size:1.35rem;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}",
+      ".alb-pag-t span{margin-left:auto;font-weight:800;color:var(--o-testo);background:rgba(0,0,0,.35);padding:3px 10px;border-radius:99px;font-size:.9rem}",
+      ".alb-gr{display:grid;grid-template-columns:repeat(var(--col,3),1fr);gap:8px}",
+      ".alb-slot{position:relative;display:block;width:100%;aspect-ratio:1/1.36;border-radius:7%/5%;font:inherit;padding:0;border:0;background:none;color:inherit}",
+      ".alb-slot canvas{position:absolute;inset:0;width:100%;height:100%}",
+      ".alb-vuota{position:absolute;inset:0;border-radius:inherit;border:1.5px dashed rgba(255,255,255,.22);background:radial-gradient(120% 90% at 50% 30%,rgba(255,255,255,.07),rgba(0,0,0,.25));display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}",
+      ".alb-vuota svg{width:46%;opacity:.28}.alb-vuota .num{font-family:var(--o-tit);font-weight:800;font-size:1.25rem;color:rgba(255,255,255,.55);line-height:1}",
+      ".alb-vuota .nm{font-size:.66rem;font-weight:800;color:rgba(255,255,255,.55);text-align:center;padding:0 4px;margin-top:3px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.alb-vuota .ru{font-size:.6rem;font-weight:800;letter-spacing:.06em;color:rgba(255,255,255,.4)}",
+      ".alb-attesa{position:absolute;inset:0;border-radius:inherit;background:rgba(255,255,255,.05)}",
+      ".alb-scaff{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}",
+      ".alb-cop{aspect-ratio:3/4;border-radius:10px 14px 14px 10px;padding:10px 8px;display:flex;flex-direction:column;justify-content:space-between;color:#fff;font:inherit;border:0;text-align:left;background:linear-gradient(160deg,var(--c1),var(--c2));box-shadow:inset 6px 0 0 rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.25),0 10px 20px -10px #000}",
+      ".alb-cop b{font-family:var(--o-tit);font-size:1.05rem;line-height:1.05}.alb-cop small{font-size:.72rem;opacity:.85;font-weight:700}.alb-cop .pc{font-weight:900;font-size:.85rem;background:rgba(0,0,0,.35);border-radius:99px;padding:2px 8px;align-self:flex-start}",
+      ".alb-cop.chiuso{filter:grayscale(.85) brightness(.6)}.alb-cop.ora{outline:2px solid #fff;outline-offset:2px}",
+      ".alb-velo{position:fixed;inset:0;z-index:50;background:rgba(5,7,16,.72);display:flex;align-items:flex-end;justify-content:center}",
+      ".alb-foglio{width:100%;max-width:520px;max-height:calc(var(--alt,100vh) - 24px);overflow:auto;background:var(--o-carta-piena);border-radius:22px 22px 0 0;border-top:1px solid var(--o-filo-oro);padding:14px 14px calc(16px + env(safe-area-inset-bottom));box-shadow:var(--o-ombra-alta);color:var(--o-testo)}",
+      ".alb-foglio .chiudi{float:right;font:inherit;width:34px;height:34px;border-radius:50%;border:1px solid var(--o-filo);background:var(--o-carta);color:var(--o-testo);font-weight:900}",
+      ".alb-sk{display:flex;flex-direction:column;align-items:center;gap:10px}.alb-sk .fig{width:46%;max-width:190px}.alb-sk .fig canvas{width:100%;height:auto;display:block}",
+      ".alb-sk-tit{font-family:var(--o-tit);font-weight:800;font-size:1.3rem;line-height:1.1;text-align:center}.alb-sk-sot{color:var(--o-tenue);font-size:.86rem;text-align:center}",
+      ".alb-ruolo{font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--o-tenue);align-self:flex-start;margin:2px 2px 0}",
+      ".alb-num{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%}.alb-num div{background:var(--o-carta);border:1px solid var(--o-filo);border-radius:12px;padding:8px 6px;text-align:center}",
+      ".alb-num b{display:block;font-family:var(--o-tit);font-size:1.25rem;font-weight:800;line-height:1.1}.alb-num span{font-size:.7rem;color:var(--o-tenue);font-weight:700}",
+      ".alb-righe{width:100%;display:flex;flex-direction:column}.alb-righe div{display:flex;justify-content:space-between;gap:10px;padding:6px 2px;border-bottom:1px solid var(--o-filo);font-size:.9rem}.alb-righe div span{color:var(--o-tenue);white-space:nowrap}.alb-righe div b{text-align:right}",
+      ".alb-best{width:100%;background:var(--o-crema);border:1px solid rgba(255,79,134,.35);border-radius:14px;padding:9px 11px;font-size:.88rem}.alb-best b{color:#ff9fbc}",
+      ".alb-tutte{width:100%;background:var(--o-carta);border:1px solid var(--o-filo-oro);border-radius:14px;padding:9px 11px}",
+      ".alb-mai{color:var(--o-tenue);font-size:.9rem;text-align:center;padding:10px}"
+    ].join("\n");
+    document.head.appendChild(s);
+  }
+  var ALB_OMBRA = '<svg viewBox="0 0 100 115"><circle cx="50" cy="30" r="22" fill="#fff"/><path d="M8 115c2-34 18-50 42-50s40 16 42 50z" fill="#fff"/></svg>';
+  function albSchermata(sotto, indietro) {
+    var C = window.SGCuore, o = ALB.opz || {};
+    var s = C.schermata({ icona: "📒", titolo: "Album", sotto: sotto, indietro: indietro || o.indietro || C.tornaHome });
+    s.classList.add("alb"); if (o.menu) s._menu = o.menu; if (o.tabs) o.tabs(s);
+    return s;
+  }
+  function albStemma(col) { return window.SGCuore.el("div", { class: "alb-stemma", style: "background:linear-gradient(90deg," + col[0] + " 50%," + (col[1] || col[0]) + " 50%)" }); }
+  function albTestata(l) {
+    var el = window.SGCuore.el, o = albConta(l), pc = Math.round(o.p * 100 / Math.max(1, o.n));
+    return el("div", { class: "alb-testa" }, [
+      el("div", { class: "alb-tot" }, [ el("b", { text: o.p + " / " + o.n }), el("span", { text: "figurine" }) ]),
+      el("div", { class: "alb-barra" }, [ el("i", { style: "width:" + pc + "%" }) ]),
+      el("div", { class: "alb-met" }, ["oro", "argento", "bronzo"].map(function (m) { return el("span", { class: m, text: { oro: "🥇", argento: "🥈", bronzo: "🥉" }[m] + " " + o[m][0] + "/" + o[m][1] }); }))
+    ]);
+  }
+  function apriAlbum(opz) { ALB.opz = opz || ALB.opz || {}; albStile(); albIndice(ALB.stag); }
+  // ⏳ una stagione passata che il telefono non ha ancora: si scarica (come quando si gioca)
+  function albPronta(stag, fn) {
+    if (stagionePronta(stag)) return fn();
+    var C = window.SGCuore, s = albSchermata(albNome(stag)), riga = C.el("p", { class: "as-attesa-stag", text: "⏳ Arriva la " + nomeStagione(stag) + "…" });
+    s._contenuto.appendChild(riga); C.mostra(s);
+    caricaStagione(stag, function (ok) {
+      if (!s.isConnected) return;
+      if (ok) return fn();
+      riga.textContent = "📶 La " + nomeStagione(stag) + " non arriva: controlla la rete";
+      s._piede.appendChild(C.el("button", { class: "btn btn-primario", text: "↻ Riprova", onclick: function () { albPronta(stag, fn); } }));
+    });
+  }
+  // l'album di una stagione: le squadre (si tocca una squadra per aprire la sua pagina)
+  function albIndice(stag) {
+    albPronta(stag, function () {
+      ALB.stag = stag;
+      var C = window.SGCuore, el = C.el, ab = albLista(stag), s = albSchermata("Mini Asta · " + albNome(stag));
+      s._contenuto.appendChild(el("button", { class: "alb-stag", onclick: albScaffale }, [ el("b", { text: "📚 " + albNome(stag) }), el("span", { text: "Tutti gli album ›" }) ]));
+      s._contenuto.appendChild(albTestata(ab.tutte));
+      s._contenuto.appendChild(el("div", { class: "alb-sq" }, ab.squadre.map(function (sq) {
+        var o = albConta(ab.per[sq]);
+        return el("button", { class: "alb-tess" + (o.p === o.n ? " piena" : ""), onclick: function () { albSquadra(stag, sq); } }, [ albStemma(ab.colori[sq]),
+          el("div", { class: "tx" }, [ el("b", { text: sq }), el("span", { text: o.p + " / " + o.n }), el("div", { class: "mini" }, [ el("i", { style: "width:" + Math.round(o.p * 100 / o.n) + "%" }) ]) ]) ]);
+      })));
+      C.mostra(s);
+    });
+  }
+  // la pagina di una squadra: le figurine in ordine di numero; quelle prese si disegnano quando si vedono, una per fotogramma
+  function albSquadra(stag, sq) {
+    albPronta(stag, function () {
+      var C = window.SGCuore, el = C.el, ab = albLista(stag), l = ab.per[sq] || [], o = albConta(l), col = ab.colori[sq];
+      var s = albSchermata(sq + " · " + albNome(stag), function () { albIndice(stag); });
+      var gr = el("div", { class: "alb-gr", style: "--col:" + (window.innerWidth >= 400 ? 4 : 3) });
+      if (ALB.oss) ALB.oss.disconnect(); ALB.coda = [];
+      ALB.oss = window.IntersectionObserver ? new IntersectionObserver(function (v) { v.forEach(function (e) { if (e.isIntersecting) { ALB.oss.unobserve(e.target); albAccoda(e.target); } }); }, { rootMargin: "160px" }) : null;
+      l.forEach(function (c) {
+        var b = el("button", { class: "alb-slot", onclick: function () { albScheda(c); } }); b.__c = c;
+        if (c.x) { b.appendChild(el("div", { class: "alb-attesa" })); if (ALB.oss) ALB.oss.observe(b); else albAccoda(b); }
+        else b.appendChild(el("div", { class: "alb-vuota", html: ALB_OMBRA }, [ el("div", { class: "num", text: c.num }), el("div", { class: "nm", text: c.nome }), el("div", { class: "ru", text: ALB_SIGLA[c.ruolo] }) ]));
+        gr.appendChild(b);
+      });
+      s._contenuto.appendChild(el("div", { class: "alb-pag", style: "background:linear-gradient(180deg," + col[0] + "88,rgba(13,16,32,.2) 120px),var(--o-carta)" }, [
+        el("div", { class: "alb-pag-t" }, [ albStemma(col), el("b", { text: sq }), el("span", { text: o.p + "/" + o.n }) ]), gr ]));
+      C.mostra(s);
+    });
+  }
+  function albAccoda(b) { ALB.coda.push(b); if (!ALB.raf) ALB.raf = requestAnimationFrame(albProssima); }
+  function albProssima() {
+    ALB.raf = 0; var b;
+    while ((b = ALB.coda.shift()) && !b.isConnected) {}
+    if (!b) return;
+    var c = b.__c, w = Math.max(40, Math.round(b.clientWidth || 100));
+    try {
+      var src = conStag(c.stag, function () { return figurinaCanvas(c, null, w, false); });
+      if (src) { var cv = document.createElement("canvas"); cv.width = src.width; cv.height = src.height; cv.getContext("2d").drawImage(src, 0, 0); var a = b.querySelector(".alb-attesa"); if (a) a.remove(); b.appendChild(cv); }
+    } catch (e) {}
+    if (ALB.coda.length) ALB.raf = requestAnimationFrame(albProssima);
+  }
+  // lo scaffale: un album per stagione (quelle mai giocate spente col lucchetto)
+  function albScaffale() {
+    var C = window.SGCuore, el = C.el, st = albStat(), s = albSchermata("Mini Asta · i tuoi album", function () { albIndice(ALB.stag); });
+    s._contenuto.appendChild(el("p", { class: "alb-sk-sot", style: "text-align:left;margin:0 0 10px", text: "Un album per ogni stagione: si riempie giocando con quell'anno." }));
+    var lista = [null].concat(ELENCO_STAGIONI.slice().reverse());
+    s._contenuto.appendChild(el("div", { class: "alb-scaff" }, lista.map(function (id, i) {
+      var p = Object.keys(st[chiaveAlbum(id)] || {}).length, tot = stagionePronta(id) ? albLista(id).tutte.length : 0, cc = ALB_COP[i % ALB_COP.length];
+      return el("button", { class: "alb-cop" + (p ? "" : " chiuso") + (id === ALB.stag ? " ora" : ""), style: "--c1:" + cc[0] + ";--c2:" + cc[1], onclick: function () { albIndice(id); } }, [
+        el("small", { text: "Serie A" }), el("b", { text: id || "Oggi" }), el("span", { class: "pc", text: p ? (tot ? p + "/" + tot : p + " prese") : (tot ? "🔒 " + tot : "🔒") })
+      ]);
+    })));
+    C.mostra(s);
+  }
+  // la scheda «con te» (scelta C): i numeri di questa stagione e, se l'hai preso in più stagioni, il riquadro «In tutte le stagioni»
+  function albScheda(c) {
+    var C = window.SGCuore, el = C.el, vec = document.querySelector(".alb-velo"); if (vec) vec.remove();
+    var x = c.x, fig = el("div", { class: "fig" });
+    var tit = [ el("div", { class: "alb-sk-tit", text: c.nome }), el("div", { class: "alb-sk-sot", text: "N. " + c.num + " · " + c.squadra + " · " + ALB_RUOLO[c.ruolo] }) ];
+    var corpo;
+    if (!x) {
+      fig.style.width = "34%";
+      fig.appendChild(el("div", { class: "alb-slot" }, [ el("div", { class: "alb-vuota", html: ALB_OMBRA }, [ el("div", { class: "num", text: c.num }), el("div", { class: "nm", text: c.nome }), el("div", { class: "ru", text: ALB_SIGLA[c.ruolo] }) ]) ]));
+      corpo = [ fig ].concat(tit, [ el("div", { class: "alb-mai", text: "Non l'hai ancora preso. Compralo all'asta e la figurina si attacca qui." }) ]);
+    } else {
+      var src = conStag(c.stag, function () { return figurinaCanvas(c, null, 170, false); });
+      if (src) { var cv = document.createElement("canvas"); cv.width = src.width; cv.height = src.height; cv.getContext("2d").drawImage(src, 0, 0); fig.appendChild(cv); }
+      var pa = x[6], part = pa + (pa === 1 ? " partita" : " partite"), righe = [];
+      if (x[0]) righe.push(riga("Comprato all'asta", x[0] + (x[0] === 1 ? " volta" : " volte")), riga("💰 Prezzo", x[0] > 1 ? "pagato in media " + Math.round(x[1] / x[0]) + " · da " + x[2] + " a " + x[3] : "pagato " + x[1]));
+      if (x[4]) righe.push(riga("Senza asta", "📋 " + x[4] + (x[4] === 1 ? " volta" : " volte") + " d'ufficio"));
+      if (x[5]) righe.push(riga("Con uno scambio", "🔄 " + x[5] + (x[5] === 1 ? " volta" : " volte")));
+      corpo = [ fig ].concat(tit, [ el("div", { class: "alb-ruolo", text: "Con te nella " + albNome(c.stag) }) ]);
+      if (pa) corpo.push(el("div", { class: "alb-num" }, [ num(virgolaA(x[7] / 10 / pa), "voto · " + part), num(virgolaA(x[8] / 10 / pa), "fantamedia"), num(x[13] + "/" + pa, "vinte con lui"),
+        num(x[9], "gol"), num(x[10], "assist"), num(x[11] + (x[12] ? " · " + x[12] + "🟥" : ""), "gialli") ]));
+      else corpo.push(el("div", { class: "alb-mai", text: "Non ha ancora giocato una giornata con te." }));
+      if (righe.length) corpo.push(el("div", { class: "alb-righe" }, righe));
+      if (pa && x[15]) { var b = String(x[15]).split("|"), d = b[0].split("-"), gol = +b[2] || 0;
+        corpo.push(el("div", { class: "alb-best", html: "⭐ La partita migliore: <b>" + virgolaA(x[14] / 10) + "</b> di fantavoto" + (b[1] ? " contro " + escA(b[1]) : "") + (d.length === 3 ? " (" + (+d[2]) + " " + ALB_MESI[(+d[1] - 1) % 12] + ")" : "") + (gol ? " · " + gol + (gol === 1 ? " gol" : " gol") : "") })); }
+      var tutte = albTutte(c.id); if (tutte) corpo.push(tutte);
+    }
+    var velo = el("div", { class: "alb-velo", onclick: function (e) { if (e.target === velo) velo.remove(); } }, [ el("div", { class: "alb-foglio" }, [ el("button", { class: "chiudi", text: "✕", onclick: function () { velo.remove(); } }), el("div", { class: "alb-sk" }, corpo) ]) ]);
+    document.body.appendChild(velo);
+    function riga(a, b) { return el("div", {}, [ el("span", { text: a }), el("b", { text: b }) ]); }
+    function num(a, b) { return el("div", {}, [ el("b", { text: String(a) }), el("span", { text: b }) ]); }
+    function albTutte(id) {   // la somma di tutte le stagioni: solo se l'hai preso in più di una
+      var st = albStat(), stag = [], t = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+      [null].concat(ELENCO_STAGIONI.slice().reverse()).forEach(function (s0) { var y = (st[chiaveAlbum(s0)] || {})[id]; if (!y) return; stag.push(s0 || "Oggi"); t[0] += y[0]; t[1] += y[1]; t[2] += y[6]; t[3] += y[7]; t[4] += y[9]; t[5] += y[10]; t[6] += y[4] + y[5]; });
+      if (stag.length < 2) return null;
+      var r = [ riga("Stagioni", stag.length + " · " + stag.join(", ")) ];
+      if (t[2]) r.push(riga("Partite · voto", t[2] + " · " + virgolaA(t[3] / 10 / t[2])), riga("Gol · assist", t[4] + " · " + t[5]));
+      if (t[0]) r.push(riga("Comprato", t[0] + (t[0] === 1 ? " volta" : " volte") + " · in media " + Math.round(t[1] / t[0]) + " 💰"));
+      return el("div", { class: "alb-tutte" }, [ el("div", { class: "alb-ruolo", style: "margin:0 0 6px", text: "In tutte le stagioni" }), el("div", { class: "alb-righe" }, r) ]);
+    }
+  }
+  function escA(s) { return String(s).replace(/[&<>"]/g, function (ch) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]; }); }
+  giocoFanta.album = apriAlbum;   // (lo usa la pagina dei Trofei: SGCuore.apriAlbum)
 
   SG.registra(gioco);
   SG.registra(giocoFanta);   // (dopo L'Asta: nella lista dei giochi arriva in fondo)

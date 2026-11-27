@@ -709,6 +709,7 @@
   // schermata principale: l'elenco di TUTTI i giochi, ognuno coi suoi trofei dentro
   function schermataSfide() {
     var s = schermata({ icona: "🏆", titolo: "Trofei", sotto: "Colleziona i trofei di ogni gioco", indietro: tornaHome }); s._menu = "trofei";
+    tabTrofei(s, "trofei");   // 📒 (27 nov 2026) «🏆 Trofei · 📒 Album»
     var prof = (window.SGNube && SGNube.disponibile()) ? SGNube.profilo() : null;
     if (!prof) {
       s._contenuto.appendChild(el("p", { class: "modulo-nota", text: "Ti serve il profilo per registrare i progressi e sbloccare i trofei: i dati ti seguono su ogni telefono." }));
@@ -749,6 +750,31 @@
     });
     if (!HOME_MENU_SOTTO) s._piede.appendChild(el("button", { class: "btn btn-primario", text: "🏠 Torna alla home", onclick: schermataHome }));   // (📱 col menu sotto è un doppione)
     mostra(s);
+  }
+  // 📒 L'ALBUM DELLE FIGURINE (27 nov 2026, il proprietario: «metterla tipo su trofei e fare la categoria trofei e album»): in cima alla
+  // pagina dei Trofei le due linguette; l'album è della Mini Asta (giocoFanta.album in js/games/asta.js) e arriva col suo gioco
+  var GIOCO_ALBUM = "astafanta";
+  function tabTrofei(s, quale) {
+    s._contenuto.appendChild(el("div", { class: "alb-tab" }, [
+      el("button", { class: quale === "trofei" ? "on" : "", text: "🏆 Trofei", onclick: function () { if (quale !== "trofei") schermataSfide(); } }),
+      el("button", { class: quale === "album" ? "on" : "", text: "📒 Album", onclick: function () { if (quale !== "album") apriAlbum(); } })
+    ]));
+  }
+  function giocoAlbum() { var g = null; giochi.forEach(function (x) { if (x.id === GIOCO_ALBUM) g = x; }); return g; }
+  function apriAlbum(opz) {
+    var g = giocoAlbum(); if (!g) return;
+    opz = opz || {};
+    function vai() { var gg = giocoAlbum(); if (gg && gg.album) gg.album({ menu: opz.menu === undefined ? "trofei" : opz.menu, tabs: opz.tabs === undefined ? function (s) { tabTrofei(s, "album"); } : opz.tabs, indietro: opz.indietro || schermataSfide }); }
+    if (!(cuore.aspettaGioco && cuore.aspettaGioco(g, vai, { indietro: opz.indietro || schermataSfide }))) vai();
+  }
+  // la riga «📒 Il tuo album» nella prima schermata della Mini Asta (sotto «Come si gioca»): solo col profilo
+  function rigaAlbum(g) {
+    if (!g || g.id !== GIOCO_ALBUM) return null;
+    var p = (window.SGNube && SGNube.disponibile && SGNube.disponibile()) ? SGNube.profilo() : null; if (!p) return null;
+    var st = SGNube.statGioco ? (SGNube.statGioco(GIOCO_ALBUM) || {}) : {}, n = Object.keys(st.al_oggi || {}).length;
+    return el("button", { class: "alb-entra", onclick: function () { apriAlbum({ menu: null, tabs: null, indietro: function () { cuore.schermataModo(g); } }); } }, [
+      el("div", { class: "ic", text: "📒" }), el("div", {}, [ el("b", { text: "Il tuo album" }), el("span", { text: n ? (n === 1 ? "1 figurina" : n + " figurine") + " nella Serie A di oggi" : "Compra i calciatori e attacca le figurine" }) ]), el("div", { class: "fr", text: "›" })
+    ]);
   }
   // schermata di un singolo gioco: platino in cima + trofei per livello
   function schermataSfideGioco(gid) {
@@ -990,7 +1016,7 @@
   }
 
   // ---- al cuore: quello di questo pezzo che usano il cuore e gli altri pezzi ----
-  cuore.controllaGiorno = controllaGiorno; cuore.controllaTrofei = controllaTrofei; cuore.fuocoGiorni = fuocoGiorni;
+  cuore.apriAlbum = apriAlbum; cuore.rigaAlbum = rigaAlbum; cuore.controllaGiorno = controllaGiorno; cuore.controllaTrofei = controllaTrofei; cuore.fuocoGiorni = fuocoGiorni;
   cuore.prossimoAvviso = prossimoAvviso; cuore.prossimoPremioGiorni = prossimoPremioGiorni; cuore.schermataSfide = schermataSfide;
   cuore.schermataSfideGioco = schermataSfideGioco; cuore.trofeiDi = trofeiDi; cuore.trofeiSbloccati = trofeiSbloccati;
   cuore.trofeoFatto = trofeoFatto; cuore.valoreStat = valoreStat;

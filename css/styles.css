@@ -4589,3 +4589,11 @@ html.gettoni .tl-gradino.p1 .fac, html.gettoni .oro.tl-fine .tl-gradino.p1 .fac{
   background:transparent; border:0; box-shadow:none; font:inherit; font-size:1.12rem; font-weight:700; color:var(--o-oro-testo, #ff6d97);
   text-decoration:underline; text-decoration-thickness:1.5px; text-underline-offset:5px; text-decoration-color:rgba(255,109,151,.45); cursor:pointer; }
 .schermata.modo-fissa .mg-come:active{ opacity:.7; }
+
+/* ---- 📒 (27 nov 2026) l'album delle figurine della Mini Asta: le linguette «🏆 Trofei · 📒 Album» in cima ai Trofei e la riga
+   «Il tuo album» nella prima schermata della Mini Asta (js/cuore/trofei.js); il resto dell'album lo disegna js/games/asta.js ---- */
+.alb-tab{display:flex;gap:6px;margin:0 0 12px}
+.alb-tab button{flex:1;font:inherit;font-weight:800;font-size:.95rem;padding:9px 10px;border-radius:99px;border:1px solid var(--o-filo);background:var(--o-carta);color:var(--o-tenue);cursor:pointer}
+.alb-tab button.on{background:var(--o-scuro);color:var(--o-scuro-testo)}
+.alb-entra{display:flex;align-items:center;gap:12px;width:100%;margin:12px 0 0;padding:12px 14px;border-radius:16px;border:1px solid rgba(242,194,48,.45);background:linear-gradient(135deg,rgba(92,74,12,.5),rgba(30,36,62,.6));color:var(--o-testo);font:inherit;text-align:left;cursor:pointer}
+.alb-entra .ic{font-size:1.8rem}.alb-entra b{display:block;font-family:var(--o-tit);font-size:1.05rem}.alb-entra span{font-size:.82rem;color:var(--o-tenue)}.alb-entra .fr{margin-left:auto;font-size:1.4rem;color:var(--o-tenue)}
