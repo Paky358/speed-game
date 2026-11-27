@@ -1,6 +1,4 @@
-/* ==================================================    ]
-  },
-  {
+/* =========================================================
    NOVITÀ — il diario di cosa viene aggiunto all'app.
    La voce più recente va IN CIMA.
    Ogni voce:
@@ -25,7 +23,9 @@ window.SG_NOVITA = [
       "❌ Le lettere che non ci sono si leggono intere, con una piccola ✕: niente più T che sembra un'altra lettera.",
       "🔒 «La so!» si può usare solo se hai almeno i punti che perderesti sbagliando, e prima di bloccare ti chiede «Sei sicuro?».",
       "⏳ La Ruota del tempo ora è una categoria delle manche: «ANNO 79», cosa è successo quell'anno? Si gira e si chiamano le lettere come sempre."
-=======
+    ]
+  },
+  {
     v: 457,
     data: "27 novembre 2026",
     titolo: "La classifica di chi gioca davvero 🏆",
