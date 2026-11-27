@@ -77,6 +77,7 @@
   pezzo("memata", "data/memata.js js/games/memata.js");
   pezzo("muro", "data/muro-domande.js js/games/muro.js");   // 🧱 Il Muro (10 nov 2026)
   pezzo("pecoranera", "data/pecoranera-domande.js js/games/pecoranera.js");   // 🐑 Pecora Nera (26 nov 2026)
+  pezzo("telefono", "data/telefono-idee.js js/games/telefono.js");   // 📞 Telefono Disegnato (27 nov 2026)
 
   // ---- i giochi IN PROVA (scritti a mano, fuori dalle schede) ----
   // La tessera la vedono solo questi account; gli altri entrano lo stesso se invitati (link, codice, Sala).
@@ -131,5 +132,6 @@
   scheda("memata", "memata", {"nome":"Memata","icona":"😂","descrizione":"Esce un meme famoso coi riquadri vuoti: scrivi il tuo testo, votate i meme degli altri e scoprite chi li ha fatti.","giocatoriMin":2,"giocatoriMax":10,"difficolta":1,"tema":"oro","modi":[],"soloOnline":true,"postiOnline":10,"ritardatari":"turno","riprende":true,"riserva":true});
   scheda("muro", "muro", {"nome":"Il Muro","icona":"🧱","descrizione":"A squadre: uno risponde nella stanza, l'altro scommette le palline sul muro senza vedere la domanda.","giocatoriMin":4,"giocatoriMax":10,"difficolta":2,"tema":"oro","modi":[],"soloOnline":true,"postiOnline":10,"ritardatari":"turno","riprende":true,"riserva":true});
   scheda("pecoranera", "pecoranera", {"nome":"Tutti d'Accordo","icona":"🐑","tema":"oro","descrizione":"Tutti rispondono alla stessa domanda: vince chi scrive la cosa più scontata, come il resto del gregge!","giocatoriMin":3,"giocatoriMax":10,"difficolta":1,"provaDaSolo":true,"modi":[{"modo":"telefono","icona":"📱","nome":"Su questo telefono","sotto":"Vi passate il telefono: ognuno scrive di nascosto","amici":true,"min":3}],"postiOnline":10,"ritardatari":"turno","riprende":true,"riserva":true});
+  scheda("telefono", "telefono", {"nome":"Telefono Disegnato","icona":"📞","tema":"oro","descrizione":"Il telefono senza fili coi disegni: scrivi una frase strana, il prossimo la disegna, quello dopo indovina cosa vede… e alla fine si ride di com'è arrivata.","giocatoriMin":4,"giocatoriMax":12,"difficolta":1,"modi":[],"soloOnline":true,"postiOnline":12,"ritardatari":"partita","riprende":true,"riserva":true});
   // <<< SCHEDE
 })();

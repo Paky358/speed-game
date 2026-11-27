@@ -9,6 +9,17 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 462,
+    data: "27 novembre 2026",
+    titolo: "Gioco nuovo: Telefono Disegnato 📞✏️",
+    descrizione: [
+      "📞 Il telefono senza fili coi disegni! Ognuno scrive una frase strana, il prossimo la disegna, quello dopo vede solo il disegno e scrive cosa ci vede… e così via. Si gioca online, ognuno col suo telefono, da 4 a 12.",
+      "⚡ Giocate tutti insieme, ognuno su un libretto diverso: appena avete finito tutti si va avanti, senza aspettare il tempo. Non sai cosa scrivere? «🎲 Dammi un'idea».",
+      "📖 Alla fine si sfogliano i libretti pagina per pagina: i disegni si ridisegnano da soli, si scopre chi li ha fatti e potete reagire con 😂 😮 👏. Una ⭐ al disegno più bello di ogni libretto.",
+      "🏅 Niente punti, si gioca per ridere: a fine partita i premi (🎨 il Picasso, 😂 il libretto più bello, 🔨 il Sabotatore, 🔍 il Detective) e le foto dei libretti da mandare su WhatsApp."
+    ]
+  },
+  {
     v: 461,
     data: "27 novembre 2026",
     titolo: "Otto copertine nuove 🖼️",
