@@ -27,7 +27,7 @@ const FOTO = [
   ["2-giro-A-indice", "indice", "A"], ["2-giro-B-sfoglia", "sfoglia", "A", { sq: "Napoli" }], ["2-giro-C-lista", "lista", "A", {}, 380],
   ["3-pagina-A-insieme", "squadra", "A", { sq: "Inter" }], ["3-pagina-B-per-ruolo", "squadra", "B", { sq: "Inter" }, 200],
   ["4-mancanti-A-sagoma", "squadra", "A", { sq: "Juventus", mancante: "A" }], ["4-mancanti-B-numero", "squadra", "A", { sq: "Juventus", mancante: "B" }], ["4-mancanti-C-dorso", "squadra", "A", { sq: "Juventus", mancante: "C" }],
-  ["5-scheda-A-quadretti", "squadra", "A", { sq: "Inter" }, 0, ["Martinez L.", "A"]], ["5-scheda-B-righe", "squadra", "A", { sq: "Inter" }, 0, ["Martinez L.", "B"]], ["5-scheda-mai-presa", "squadra", "A", { sq: "Inter" }, 0, ["Akanji", "A"]],
+  ["5-scheda-A-quadretti", "squadra", "A", { sq: "Inter" }, 0, ["Martinez L.", "A"]], ["5-scheda-B-righe", "squadra", "A", { sq: "Inter" }, 0, ["Martinez L.", "B"]], ["5-scheda-C-con-tutte-le-stagioni", "squadra", "A", { sq: "Inter" }, 0, ["Martinez L.", "C"]], ["5-scheda-mai-presa", "squadra", "A", { sq: "Inter" }, 0, ["Akanji", "A"]],
   ["6-stagioni-A-linguette", "indice", "A", { linguette: true }], ["6-stagioni-B-scaffale", "scaffale"], ["6-stagioni-pagina-2017-18", "squadra", "A", { sq: "Napoli", stag: "2017-18" }]
 ];
 const TEL = [[360, 640], [412, 915]];
@@ -63,7 +63,7 @@ const TEL = [[360, 640], [412, 915]];
           const sc = w.document.querySelector(".schermata .contenuto");
           if (scorri && sc) { sc.scrollTop = scorri; w.scrollTo(0, scorri); }
           await new Promise(r => setTimeout(r, 900));
-          if (scheda) { const c = window.ALB.trova(scheda[0]); window.ALB.scheda(c, scheda[1]); await new Promise(r => setTimeout(r, 500)); }
+          if (scheda) { const c = window.ALB.trova(scheda[0]); window.ALB.scheda(c, scheda[1]); await new Promise(r => setTimeout(r, 500)); if (scheda[1] === "C") { const fg = w.document.querySelector(".alb-foglio"); if (fg) fg.scrollTop = 99999; await new Promise(r => setTimeout(r, 200)); } }
           const doc = w.document, fuori = [];
           doc.querySelectorAll(".alb-tess .tx b, .alb-vuota .nm, .alb-sk-tit, .alb-righe b, .alb-num b, .alb-entra b, .alb-entra span").forEach(e => { if (e.scrollWidth > e.clientWidth + 1) fuori.push(e.textContent.slice(0, 30)); });
           const larga = doc.documentElement.scrollWidth > w.innerWidth + 1;

@@ -68,8 +68,9 @@
     var ass = c.ruolo === "P" ? 0 : Math.round(part * r("a") * 0.35), amm = Math.round(part * r("am") * 0.3), esp = r("es") > 0.9 ? 1 : 0;
     var fv = v + (gol * 3 + ass - amm * 0.5 - esp) / part + (c.ruolo === "P" ? -0.4 : 0);
     var vinte = Math.round(part * r("w") * 0.6), prezzo = Math.max(1, Math.round(A.valoreCalc(c) / 3 + r("pr") * 4));
+    var dd = 3 + Math.round(r("mn") * 6), pMin = volte > 1 ? Math.max(1, prezzo - dd) : prezzo, pMax = volte > 1 ? prezzo + dd : prezzo, uff = r("uf") > 0.4 ? 1 : 0;
     var best = Math.max(fv + 1.5, 9 + r("b") * 4), avv = ["Lecce", "Torino", "Genoa", "Cagliari", "Udinese", "Parma"][Math.floor(r("av") * 6)];
-    return { volte: volte, prezzo: prezzo, part: part, v: v, fv: fv, gol: gol, ass: ass, amm: amm, esp: esp, vinte: vinte, best: best, bestAvv: avv, bestData: "12 nov", bestGol: Math.min(gol, 2), stagioni: volte > 2 ? ["Oggi", "2017-18"] : ["Oggi"] };
+    return { pMin: pMin, pMax: pMax, uff: uff, volte: volte, prezzo: prezzo, part: part, v: v, fv: fv, gol: gol, ass: ass, amm: amm, esp: esp, vinte: vinte, best: best, bestAvv: avv, bestData: "12 nov", bestGol: Math.min(gol, 2), stagioni: volte > 2 ? ["Oggi", "2017-18"] : ["Oggi"] };
   }
 
   // ---- 3. lo stile (Notte vivace) ----
@@ -138,6 +139,7 @@
       ".alb-righe{width:100%;display:flex;flex-direction:column;gap:2px}",
       ".alb-righe div{display:flex;justify-content:space-between;gap:10px;padding:6px 2px;border-bottom:1px solid var(--o-filo);font-size:.9rem}.alb-righe div span{color:var(--o-tenue);white-space:nowrap}.alb-righe div b{text-align:right}",
       ".alb-best{width:100%;background:var(--o-crema);border:1px solid rgba(255,79,134,.35);border-radius:14px;padding:9px 11px;font-size:.88rem}.alb-best b{color:#ff9fbc}",
+      ".alb-tutte{width:100%;background:var(--o-carta);border:1px solid var(--o-filo-oro);border-radius:14px;padding:9px 11px}",
       ".alb-mai{color:var(--o-tenue);font-size:.9rem;text-align:center;padding:10px}",
       // dove si apre: la riga dell'album sotto «Come si gioca» (A), il riquadro nel profilo (B), l'avviso dopo il podio (C)
       ".alb-entra{display:flex;align-items:center;gap:12px;width:100%;margin:12px 0 0;padding:12px 14px;border-radius:16px;border:1px solid rgba(242,194,48,.45);background:linear-gradient(135deg,rgba(92,74,12,.5),rgba(30,36,62,.6));color:var(--o-testo);font:inherit;text-align:left}",
@@ -276,20 +278,27 @@
     var tit = el("div", {}, [ el("div", { class: "alb-sk-tit", text: c.nome }), el("div", { class: "alb-sk-sot", text: "N. " + c.num + " · " + c.squadra + " · " + { P: "Portiere", D: "Difensore", C: "Centrocampista", A: "Attaccante" }[c.ruolo] }) ]);
     var corpo;
     if (!c.preso) { fig.style.width = "34%"; corpo = [ el("div", { class: "alb-sk-a" }, [ fig, tit, el("div", { class: "alb-mai", text: "Non l'hai ancora preso. Compralo all'asta e la figurina si attacca qui." }) ]) ]; }
-    else if (scelta === "B") corpo = [ el("div", { class: "alb-sk-b" }, [ fig, el("div", { style: "flex:1;min-width:0" }, [ tit,
-        el("div", { class: "alb-righe", style: "margin-top:6px" }, [
-          riga("Comprato", x.volte + (x.volte === 1 ? " volta" : " volte")),
-          riga("Pagato", virgola(x.prezzo, 0) + " 💰 di media"),
+    var paga = x.volte > 1 ? "pagato in media " + virgola(x.prezzo, 0) + " · da " + x.pMin + " a " + x.pMax : "pagato " + x.prezzo, uffT = x.uff ? "📋 " + x.uff + (x.uff === 1 ? " volta" : " volte") + " d'ufficio" : "";
+    var stagT = "Con te nella " + (ALB.stag ? A.nomeStagione(ALB.stag) : "Serie A di oggi");
+    if (scelta === "B") corpo = [ el("div", { class: "alb-sk-b" }, [ fig, el("div", { style: "flex:1;min-width:0" }, [ tit,
+        el("div", { class: "alb-ruolo", text: stagT }),
+        el("div", { class: "alb-righe" }, [
+          riga("Comprato all'asta", x.volte + (x.volte === 1 ? " volta" : " volte")),
+          riga("Pagato in media", virgola(x.prezzo, 0) + " 💰"), riga("Il più basso · alto", x.pMin + " · " + x.pMax),
+          x.uff ? riga("D'ufficio", x.uff + (x.uff === 1 ? " volta" : " volte")) : null,
           riga("Voto", virgola(x.v, 1) + " · " + x.part + (x.part === 1 ? " partita" : " partite")),
           riga("Fantamedia", virgola(x.fv, 1)),
           riga("Gol", x.gol), riga("Assist", x.ass), riga("Cartellini", x.amm + (x.esp ? " + " + x.esp + " rosso" : "")),
           riga("Vinte con lui", x.vinte + " su " + x.part)
-        ]) ]) ]), best(x) ];
+        ].filter(Boolean)) ]) ]), best(x) ];
     else corpo = [ el("div", { class: "alb-sk-a" }, [ fig, tit,
+        el("div", { class: "alb-ruolo", style: "align-self:flex-start;margin:2px 2px 0", text: stagT }),
         el("div", { class: "alb-num" }, [ num(virgola(x.v, 1), "voto · " + x.part + (x.part === 1 ? " partita" : " partite")), num(virgola(x.fv, 1), "fantamedia"), num(x.vinte + "/" + x.part, "vinte con lui"),
           num(x.gol, "gol"), num(x.ass, "assist"), num(x.amm + (x.esp ? " · " + x.esp + "🟥" : ""), "gialli") ]),
-        el("div", { class: "alb-righe" }, [ riga("Comprato", x.volte + (x.volte === 1 ? " volta" : " volte") + " · " + virgola(x.prezzo, 0) + " 💰 di media") ]),
-        best(x) ]) ];
+        el("div", { class: "alb-righe" }, [ riga("Comprato all'asta", x.volte + (x.volte === 1 ? " volta" : " volte")), riga("💰 Prezzo", paga), uffT ? riga("Senza asta", uffT) : null ].filter(Boolean)),
+        best(x) ].concat(scelta === "C" ? [ tutte(x) ] : [])) ];
+    function tutte(x) { return el("div", { class: "alb-tutte" }, [ el("div", { class: "alb-ruolo", style: "margin:0 0 6px", text: "In tutte le stagioni" }),
+        el("div", { class: "alb-righe" }, [ riga("Stagioni", "3 · Oggi, 2024-25, 2017-18"), riga("Partite · voto", (x.part + 8) + " · " + virgola(x.v + 0.2, 1)), riga("Gol · assist", (x.gol + 6) + " · " + (x.ass + 2)), riga("Comprato", (x.volte + 4) + " volte · in media " + virgola(x.prezzo + 2, 0) + " 💰") ]) ]); }
     var fo = el("div", { class: "alb-foglio" }, [ el("button", { class: "chiudi", text: "✕", onclick: function () { velo.remove(); } }) ].concat(corpo));
     var velo = el("div", { class: "alb-velo", onclick: function (e) { if (e.target === velo) velo.remove(); } }, [ fo ]);
     P.document.body.appendChild(velo);
