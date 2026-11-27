@@ -307,5 +307,5 @@
     function best(x) { return el("div", { class: "alb-best", html: "⭐ La partita migliore: <b>" + virgola(x.best, 1) + "</b> di fantavoto contro il " + x.bestAvv + " (" + x.bestData + ")" + (x.bestGol ? " · " + x.bestGol + " gol" : "") }); }
   };
   ALB.trova = function (nome) { return album().tutte.filter(function (c) { return c.nome === nome; })[0] || null; };
-  ALB.album = album;
+  ALB.album = album; ALB.A = function () { return A; }; ALB.P = function () { return P; };
 })();
