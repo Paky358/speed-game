@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 457,
+    data: "27 novembre 2026",
+    titolo: "La classifica di chi gioca davvero 🏆",
+    descrizione: [
+      "🏆 La classifica di tutti mostra fino a 100 giocatori (anche dopo aver tolto chi non gioca più) e scorre liscia anche sul telefono piccolo.",
+      "🕰️ Chi non apre l'app da più di 2 mesi non compare più in classifica, così restano quelli che giocano davvero (e spariscono pian piano i profili doppi di chi ha dimenticato la password). Il profilo non si cancella: gli amici lo vedono lo stesso e, appena torna, ricompare."
+    ]
+  },
+  {
     v: 456,
     data: "27 novembre 2026",
     titolo: "«📖 Come si gioca» si trova subito 📖",

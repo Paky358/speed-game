@@ -3865,6 +3865,11 @@ html body.tema-oro::before{ display:none; }
 .oro .am-riga{ gap:8px; }
 .oro .am-pos{ flex-basis:28px; }
 .oro .am-num b{ font-size:1.32rem; }
+/* 🕰️ (27 nov 2026) la classifica arriva al 100° posto: a 2 e 3 cifre il posto si rimpicciolisce per stare nella sua colonna;
+   le righe fuori dallo schermo si disegnano solo quando ci si arriva (cento righe con le faccine, niente scatti) */
+.oro .am-pos.c2{ font-size:.98rem; letter-spacing:-.02em; }
+.oro .am-pos.c3{ font-size:.8rem; letter-spacing:-.04em; }
+.am-corpo>.am-riga{ content-visibility:auto; contain-intrinsic-size:auto 66px; }
 @media (max-width:380px){ .oro .am-dett{ font-size:.7rem; } }
 /* «+» per chiedere l'amicizia: vetro col filo lampone (il tasto lampone pieno è uno solo per schermata: qui sarebbe uno per riga) */
 .oro .am-piu{ background:color-mix(in srgb, var(--o-oro) 14%, transparent); color:var(--o-oro-testo);
