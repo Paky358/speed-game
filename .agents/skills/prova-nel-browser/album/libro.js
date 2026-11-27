@@ -65,33 +65,34 @@
   };
   function figura(c, w) { var src = A.figurinaCanvas(c, null, w, false); if (!src) return null; var cv = P.document.createElement("canvas"); cv.width = src.width; cv.height = src.height; cv.getContext("2d").drawImage(src, 0, 0); return cv; }
   function schermo() {
-    var s = C.schermata({ icona: "", titolo: "Album", sotto: "Mini Asta · Serie A di oggi", indietro: function () {} });
+    var s = C.schermata({ icona: "", titolo: LIB.amico ? "L'album di " + LIB.amico : "Album", sotto: LIB.amico ? "👀 Solo da guardare · Serie A di oggi" : "Mini Asta · Serie A di oggi", indietro: function () {} });
     s.classList.add("lib"); s._menu = "trofei";
     var ic = s.querySelector(".testa span"); if (ic) { ic.textContent = ""; ic.innerHTML = LIB.ICONA; ic.style.width = "40px"; ic.style.display = "inline-block"; }
-    s._contenuto.appendChild(el("div", { class: "alb-tab" }, [ el("button", { text: "🏆 Trofei" }), el("button", { class: "on", html: '<span style="display:inline-block;width:20px;vertical-align:-4px">' + LIB.ICONA + "</span> Album" }) ]));
+    if (!LIB.amico) s._contenuto.appendChild(el("div", { class: "alb-tab" }, [ el("button", { text: "🏆 Trofei" }), el("button", { class: "on", html: '<span style="display:inline-block;width:20px;vertical-align:-4px">' + LIB.ICONA + "</span> Album" }) ]));
     var sc = el("div", { class: "lib-scena" }); s._contenuto.appendChild(sc); S = { s: s, scena: sc };
     C.mostra(s); return sc;
   }
+  function bordo(l) { return conta(l) === l.length ? "oro" : "argento"; }   // (la squadra completa ha il bordo d'oro)
   function conta(l) { var p = 0; l.forEach(function (c) { if (c.preso) p++; }); return p; }
   // la copertina della stagione
   LIB.copertina = function () {
     ab = W.ALB.album(); var sc = schermo(), tot = ab.tutte.length, p = conta(ab.tutte);
     var top = ab.tutte.filter(function (c) { return c.preso && c.met === "oro"; })[0] || ab.tutte[0], f = el("div", { class: "fig" });
-    var cop = el("div", { class: "lib-foglio lib-cop" }, [ el("div", { class: "an", text: "ALBUM DELLA MINI ASTA" }), el("div", { class: "ti", text: "Serie A" }), el("div", { class: "st", text: "di oggi" }), f,
-      el("div", { class: "pc", text: p + " / " + tot + " figurine" }), el("div", { class: "tc", text: "👆 Tocca per aprire" }) ]);
+    var cop = el("div", { class: "lib-foglio lib-cop" }, [ el("div", { class: "an", text: LIB.amico ? "L'ALBUM DI " + LIB.amico.toUpperCase() : "ALBUM DELLA MINI ASTA" }), el("div", { class: "ti", text: "Serie A" }), el("div", { class: "st", text: "di oggi" }), f,
+      el("div", { class: "pc", text: p + " / " + tot + " figurine" }), el("div", { class: "tc", text: LIB.amico ? "👀 Tocca per sfogliarlo" : "👆 Tocca per aprire" }) ]);
     sc.appendChild(cop); S.cop = cop;
     P.requestAnimationFrame(function () { var cv = figura(top, Math.round(sc.clientWidth * 0.34)); if (cv) f.appendChild(cv); });
   };
   function paginaIndice() {
     var pg = el("div", { class: "lib-foglio lib-carta" }, [ el("div", { class: "tt" }, [ el("b", { text: "Indice" }), el("span", { text: conta(ab.tutte) + " / " + ab.tutte.length }) ]) ]);
     pg.appendChild(el("div", { class: "lib-ind" }, ab.squadre.map(function (sq, i) {
-      var l = ab.per[sq]; return el("button", { html: P.SG_SCUDETTI.svg(sq) }, [ el("b", { text: sq }), el("i", { text: conta(l) + "/" + l.length }), el("i", { class: "pg", text: "pag. " + (i + 2) }) ]);
+      var l = ab.per[sq]; return el("button", { "data-sq": sq, html: P.SG_SCUDETTI.svg(sq, { bordo: bordo(l) }) }, [ el("b", { text: sq }), el("i", { text: conta(l) + "/" + l.length }), el("i", { class: "pg", text: "pag. " + (i + 2) }) ]);
     })));
     pg.appendChild(el("div", { class: "pn", text: "1" }));
     return pg;
   }
   function paginaSquadra(sq, i, conFig) {
-    var l = ab.per[sq], pg = el("div", { class: "lib-foglio lib-carta" }, [ el("div", { class: "tt", html: P.SG_SCUDETTI.svg(sq) }, [ el("b", { text: sq }), el("span", { text: conta(l) + " / " + l.length }) ]) ]);
+    var l = ab.per[sq], pg = el("div", { class: "lib-foglio lib-carta" }, [ el("div", { class: "tt", html: P.SG_SCUDETTI.svg(sq, { bordo: bordo(l) }) }, [ el("b", { text: sq }), el("span", { text: conta(l) + " / " + l.length }) ]) ]);
     var col = l.length > 15 ? 4 : 3, gr = el("div", { class: "lib-gr", style: "--col:" + col });
     l.forEach(function (c) {
       var cas = el("div", { class: "lib-cas" }, [ el("div", { class: "n", text: c.num }), el("div", { class: "nm", text: c.nome }) ]); cas.__c = c;
@@ -164,6 +165,28 @@
         v.style.transform = "translate(" + (dx * e).toFixed(1) + "px," + (dy * e + su).toFixed(1) + "px) scale(" + (1 + (sc - 1) * e).toFixed(3) + ") rotate(" + (-14 + 12 * e).toFixed(1) + "deg)";
         luce.style.opacity = k > 0.85 ? String((1 - k) / 0.15) : String(k > 0.7 ? (k - 0.7) / 0.15 : 0);
         if ((ferma != null && k >= ferma) || k >= 1) { if (k >= 1) { v.remove(); if (f) f.style.opacity = "1"; } return ok(); }
+        P.requestAnimationFrame(passo);
+      })(t0);
+    });
+  };
+  LIB.completa = function (sq, ferma) {
+    var b = S.ind && S.ind.querySelector("[data-sq=\"" + sq + "\"]"); if (!b) return Promise.resolve();
+    var vec = b.querySelector("svg"), r = vec.getBoundingClientRect(), br = b.getBoundingClientRect(), box = el("div", { style: "position:absolute;left:" + (r.left - br.left) + "px;top:" + (r.top - br.top) + "px;width:" + r.width + "px;height:" + r.height + "px;pointer-events:none" });
+    b.style.position = "relative"; b.appendChild(box);
+    var oro = el("div", { style: "position:absolute;inset:0;opacity:0", html: P.SG_SCUDETTI.svg(sq, { bordo: "oro" }) }); oro.firstChild.style.cssText = "width:100%;height:auto";
+    var luce = el("div", { style: "position:absolute;left:-60%;top:-50%;width:220%;height:200%;border-radius:50%;background:radial-gradient(circle,rgba(255,230,140,.95),rgba(255,200,60,.35) 35%,rgba(255,200,60,0) 65%);opacity:0" });
+    var anello = el("div", { style: "position:absolute;inset:-10%;border-radius:50%;border:3px solid rgba(255,214,90,.9);opacity:0" });
+    box.appendChild(luce); box.appendChild(oro); box.appendChild(anello);
+    try { if (P.navigator.vibrate) P.navigator.vibrate([20, 40, 30]); } catch (e) {}
+    return new Promise(function (ok) {
+      var t0 = P.performance.now(), ms = 900;
+      (function passo(t) {
+        var k = Math.min(1, (t - t0) / ms); if (ferma != null && k >= ferma) k = ferma;
+        var su = k < 0.3 ? k / 0.3 : 1, giu = k < 0.3 ? 0 : (k - 0.3) / 0.7;
+        oro.style.opacity = String(su); oro.style.transform = "scale(" + (1.25 - 0.25 * su).toFixed(3) + ")";
+        luce.style.opacity = String(k < 0.25 ? k / 0.25 : Math.max(0, 1 - giu * 1.3)); luce.style.transform = "scale(" + (0.6 + 0.6 * su).toFixed(3) + ")";
+        anello.style.opacity = String(k < 0.2 ? 0 : Math.max(0, 1 - giu)); anello.style.transform = "scale(" + (0.9 + 0.9 * giu).toFixed(3) + ")";
+        if ((ferma != null && k >= ferma) || k >= 1) return ok();
         P.requestAnimationFrame(passo);
       })(t0);
     });

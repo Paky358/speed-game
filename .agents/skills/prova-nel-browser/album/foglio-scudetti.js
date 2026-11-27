@@ -13,13 +13,13 @@ const PASSATE = ["Benevento", "Brescia", "Carpi", "Chievo", "Cremonese", "Croton
       h1{font-size:26px;margin:0 0 4px}h2{font-size:17px;color:#ff9fbc;margin:16px 0 8px}.g{display:grid;grid-template-columns:repeat(10,1fr);gap:10px}
       .c{text-align:center}.c svg{width:96px;height:auto;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}.c div{margin-top:4px;font-size:13px}
       .p{display:flex;flex-wrap:wrap;gap:12px;align-items:center;background:rgba(30,36,62,.6);border-radius:14px;padding:10px}.p svg{width:30px;height:auto}</style></head><body>
-      <h1>🛡️ Gli scudetti · forma ${forma} ${forma === "A" ? "(classica, con le «orecchie»)" : "(tonda da torneo)"}</h1>
+      <h1>🛡️ Gli scudetti · forma ${forma} ${forma === "A" ? "(classica, con le «orecchie»)" : "(tonda da torneo)"}</h1><div style="color:#a6acc8">Bordo d'argento per tutte; d'oro quando la squadra è completa (qui il Napoli, per esempio)</div>
       <h2>Le 20 squadre di oggi</h2><div class="g" id="o"></div><h2>Le stagioni passate</h2><div class="g" id="v"></div>
       <h2>Piccoli come nell'indice dell'album (30 punti)</h2><div class="p" id="s"></div>
       <script>${src}</script><script>
       const O=${JSON.stringify(OGGI)},V=${JSON.stringify(PASSATE)};
-      function cella(t){return '<div class="c">'+SG_SCUDETTI.svg(t,{forma:"${forma}"})+'<div>'+t+'</div></div>'}
-      o.innerHTML=O.map(cella).join("");v.innerHTML=V.map(cella).join("");s.innerHTML=O.concat(V).map(t=>SG_SCUDETTI.svg(t,{forma:"${forma}"})).join("");
+      function cella(t){return '<div class="c">'+SG_SCUDETTI.svg(t,{forma:"${forma}",bordo:t==="Napoli"?"oro":"argento"})+'<div>'+t+(t==="Napoli"?" ✓ completa":"")+'</div></div>'}
+      o.innerHTML=O.map(cella).join("");v.innerHTML=V.map(cella).join("");s.innerHTML=O.concat(V).map(t=>SG_SCUDETTI.svg(t,{forma:"${forma}",bordo:t==="Napoli"?"oro":"argento"})).join("");
       </script></body></html>`;
     const tmp = path.join(DOVE, "_s.html"); fs.writeFileSync(tmp, html);
     await p.goto("file:///" + tmp.split(path.sep).join("/")); await p.waitForTimeout(300);

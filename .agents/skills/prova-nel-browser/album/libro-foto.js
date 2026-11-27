@@ -30,6 +30,7 @@ async function turno() {
         const f = document.getElementById("tel-Paky"); f.style.cssText += ";left:0;top:0;transform:none;z-index:9999;width:" + L + "px;height:" + H + "px";
         await window.LIB.prepara(); const P = window.ALB.P(); P.dispatchEvent(new P.Event("resize"));
         const c = window.ALB.trova("Martinez L."); if (c) c.preso = true;
+        window.ALB.album().per.Napoli.forEach(x => { x.preso = true; });   // (il Napoli completo: bordo d'oro)
       }, [L, H]);
       const ev = (f, a) => p.evaluate(f, a);
       const scatta = async (n, ms) => { await p.waitForTimeout(ms || 600); await p.screenshot({ path: path.join(DOVE, n + "-" + L + "x" + H + ".png"), clip: { x: 0, y: 0, width: L, height: H } }); diario.push(n + " " + L + "x" + H); };
@@ -42,7 +43,7 @@ async function turno() {
       await ev(() => LIB.pagina("Inter")); await p.waitForTimeout(700); await ev(() => LIB.vola("Martinez L.", 0.5)); await scatta("3-libro-6-figurina-che-vola", 100);
       await ev(() => ALB.P().document.querySelectorAll(".lib-vola").forEach(x => x.remove()));
       // 🛡️ gli scudetti nell'album di adesso (l'indice delle squadre)
-      await ev(async () => { await ALB.scena("indice", "A"); const P = ALB.P(); P.document.querySelectorAll(".alb-tess").forEach(t => { const nm = t.querySelector(".tx b").textContent, s = t.querySelector(".stemma"); if (s) { const d = P.document.createElement("div"); d.innerHTML = P.SG_SCUDETTI.svg(nm); d.firstChild.style.cssText = "width:34px;height:auto;flex:0 0 auto"; s.replaceWith(d.firstChild); } }); });
+      await ev(async () => { await ALB.scena("indice", "A"); const P = ALB.P(); P.document.querySelectorAll(".alb-tess").forEach(t => { const nm = t.querySelector(".tx b").textContent, s = t.querySelector(".stemma"); if (s) { const d = P.document.createElement("div"); const l = ALB.album().per[nm] || [], tutte = l.length && l.every(c => c.preso); d.innerHTML = P.SG_SCUDETTI.svg(nm, { bordo: tutte ? "oro" : "argento" }); d.firstChild.style.cssText = "width:34px;height:auto;flex:0 0 auto"; s.replaceWith(d.firstChild); } }); });
       await scatta("2-scudetti-nell-indice");
       // 📒 l'icona nei tre posti: i Trofei, la Mini Asta, l'avviso
       await ev(async () => {
@@ -58,6 +59,18 @@ async function turno() {
         const r = P.document.querySelector(".alb-entra .ic"); if (r) { r.textContent = ""; r.innerHTML = '<span style="display:block;width:40px">' + LIB.ICONA + "</span>"; }
       });
       await scatta("4-icona-mini-asta");
+      // 🥇 la squadra completa: bordo d'oro nell'indice e in cima alla pagina, e il momento in cui diventa d'oro
+      await ev(() => LIB.indice()); await scatta("5-oro-1-indice-napoli-completo");
+      await ev(() => LIB.completa("Napoli", 0.32)); await scatta("5-oro-2-il-lampo", 150);
+      await ev(() => LIB.pagina("Napoli")); await scatta("5-oro-3-pagina-completa", 900);
+      // 👀 l'album di un amico (solo da guardare)
+      await ev(async () => { const P = ALB.P(), C = P.SGCuore; C.schermataTrofeiAmico({ nome: "Giulia", uid: "finto-giulia", trofei: 64, liv: { bronzo: 30, argento: 20, oro: 10, diamante: 4, platino: 0 }, giochi: { astafanta: 22, timeline: 12 }, gettone: { g: 1, e: "🦊", c: ["#ff9a4a", "#4fd8ff"] } }, "amici"); await new Promise(r => setTimeout(r, 300));
+        const g = P.document.querySelector(".am-grande"); const bt = C.el("button", { class: "btn btn-primario", style: "margin:10px 0", html: '<span style="display:inline-block;width:22px;vertical-align:-5px">' + LIB.ICONA + '</span> Guarda il suo album · 112 figurine' }); if (g) g.after(bt); });
+      await scatta("6-amici-1-dalla-sua-pagina");
+      await ev(() => { LIB.amico = "Giulia"; ALB.chi = "Giulia"; LIB.copertina(); }); await scatta("6-amici-2-copertina");
+      await ev(() => LIB.indice()); await scatta("6-amici-3-indice");
+      await ev(() => { LIB.pagina("Inter"); }); await p.waitForTimeout(700); await ev(() => ALB.scheda(ALB.trova("Martinez L."), "C")); await scatta("6-amici-4-scheda", 500);
+      await ev(() => { LIB.amico = null; ALB.chi = null; const v = ALB.P().document.querySelector(".alb-velo"); if (v) v.remove(); });
       // ⏱️ la pagina che gira col computer rallentato ×4
       if (L === 360) {
         const cdp = await ctx.newCDPSession(p); await ev(() => LIB.pagina("Inter")); await p.waitForTimeout(800);

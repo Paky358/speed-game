@@ -2,7 +2,8 @@
 // livello 0… colori un po' più seri», gli piace lo scudo col bordo d'oro lucido e dentro il segno della squadra).
 // Disegni NOSTRI: la forma dello scudo, l'oro e le luci sono nostre (stile Notte vivace); dentro solo il SEGNO della squadra coi suoi
 // colori (righe, croce, V, punta, onda, metà e metà): niente stemmi veri, niente lettere, niente animali, niente scritte dei club,
-// niente maglie. SVG piccoli fatti dal codice: window.SG_SCUDETTI.svg(squadra, { forma: "A"|"B" }) → testo svg (viewBox 100×116).
+// niente maglie. SVG piccoli fatti dal codice: window.SG_SCUDETTI.svg(squadra, { forma: "A"|"B", bordo: "argento"|"oro" }) → testo svg
+// (viewBox 100×116). Il bordo (il proprietario, 28 nov 2026): «le facciamo tutte con il bordo argento… la squadra che completi ha il bordo oro».
 (function () {
   "use strict";
   // i colori: pieni ma seri (niente fluo)
@@ -41,7 +42,7 @@
     Milan: righe([C.rosso, C.nero], 6),
     Monza: fasciaO(C.rosso, C.bianco, 48, 16),
     Napoli: onda(C.napoli, C.bianco),
-    Parma: croce(C.bianco, C.nero, 13, 66).concat([["r", 0, 0, 100, 34, C.giallo], ["r", 20, 0, 12, 34, C.blu], ["r", 44, 0, 12, 34, C.blu], ["r", 68, 0, 12, 34, C.blu]]),
+    Parma: righe([C.giallo, C.blu], 5),   // (28 nov 2026: la croce nera con le righe gialloblù era troppo vicina allo stemma vero)
     Roma: partito(C.pompei, C.giallorosa, 56).concat([["r", 0, 55, 100, 2.2, C.oro]]),
     Sassuolo: righe([C.verde, C.nero], 7),
     Torino: pieno(C.granata).concat(capo(C.bianco, 26), [["r", 0, 26, 100, 3, C.oro]]),
@@ -69,17 +70,21 @@
     A: { fuori: "M4 12 L20 4 Q50 10 80 4 L96 12 L96 56 C96 86 74 103 50 114 C26 103 4 86 4 56 Z", dentro: "M11 16 L22 10.6 Q50 16 78 10.6 L89 16 L89 56 C89 81 70 95 50 105 C30 95 11 81 11 56 Z" },
     B: { fuori: "M50 2 C70 2 86 6 96 12 L96 58 C96 88 72 106 50 114 C28 106 4 88 4 58 L4 12 C14 6 30 2 50 2 Z", dentro: "M50 9 C68 9 81 12 89 17 L89 58 C89 82 69 97 50 105 C31 97 11 82 11 58 L11 17 C19 12 32 9 50 9 Z" }
   };
+  var METALLO = {   // (il bordo lucido: argento di base, oro a squadra completa)
+    oro: { stop: "<stop offset=\"0\" stop-color=\"#fff3b8\"/><stop offset=\".28\" stop-color=\"#f2c230\"/><stop offset=\".55\" stop-color=\"#a8761a\"/><stop offset=\".78\" stop-color=\"#f7d871\"/><stop offset=\"1\" stop-color=\"#8a5c10\"/>", filo: "#5a3a06" },
+    argento: { stop: "<stop offset=\"0\" stop-color=\"#ffffff\"/><stop offset=\".28\" stop-color=\"#c3cad6\"/><stop offset=\".55\" stop-color=\"#6f7888\"/><stop offset=\".78\" stop-color=\"#e9edf3\"/><stop offset=\"1\" stop-color=\"#59616e\"/>", filo: "#3a414c" }
+  };
   var N = 0;
   function svg(sq, o) {
-    o = o || {}; var F = FORME[o.forma || "A"], segno = SEGNI[sq] || pieno("#3a4160"), id = "sc" + (++N) + "_";
+    o = o || {}; var F = FORME[o.forma || "A"], segno = SEGNI[sq] || pieno("#3a4160"), id = "sc" + (++N) + "_", M = METALLO[o.bordo === "oro" ? "oro" : "argento"];
     var pezzi = segno.map(function (p) { return p[0] === "r" ? '<rect x="' + p[1] + '" y="' + p[2] + '" width="' + p[3] + '" height="' + p[4] + '" fill="' + p[5] + '"/>' : '<path d="' + p[1] + '" fill="' + p[2] + '"/>'; }).join("");
     return '<svg viewBox="0 0 100 116" xmlns="http://www.w3.org/2000/svg" class="scudetto"' + (o.px ? ' width="' + o.px + '" height="' + Math.round(o.px * 1.16) + '"' : '') + '>' +
-      '<defs><linearGradient id="' + id + 'o" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b8"/><stop offset=".28" stop-color="#f2c230"/><stop offset=".55" stop-color="#a8761a"/><stop offset=".78" stop-color="#f7d871"/><stop offset="1" stop-color="#8a5c10"/></linearGradient>' +
+      '<defs><linearGradient id="' + id + 'o" x1="0" y1="0" x2="1" y2="1">' + M.stop + '</linearGradient>' +
       '<linearGradient id="' + id + 'l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".34"/><stop offset=".45" stop-color="#fff" stop-opacity=".06"/><stop offset="1" stop-color="#000" stop-opacity=".28"/></linearGradient>' +
       '<clipPath id="' + id + 'c"><path d="' + F.dentro + '"/></clipPath></defs>' +
       '<path d="' + F.fuori + '" fill="#0b0d18" transform="translate(0 2.5)" opacity=".55"/>' +   // (l'ombra sotto)
       '<path d="' + F.fuori + '" fill="url(#' + id + 'o)"/>' +                                    // (l'oro lucido)
-      '<path d="' + F.fuori + '" fill="none" stroke="#5a3a06" stroke-width="1.2" opacity=".7"/>' +
+      '<path d="' + F.fuori + '" fill="none" stroke="' + M.filo + '" stroke-width="1.2" opacity=".7"/>' +
       '<g clip-path="url(#' + id + 'c)">' + pezzi + '<rect x="0" y="0" width="100" height="116" fill="url(#' + id + 'l)"/>' +
       '<path d="M0 0 L100 0 L100 30 C70 44 30 44 0 30 Z" fill="#fff" opacity=".10"/></g>' +   // (la luce in alto)
       '<path d="' + F.dentro + '" fill="none" stroke="#0b0d18" stroke-width="2.2"/>' +
