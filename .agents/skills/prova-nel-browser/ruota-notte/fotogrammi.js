@@ -28,7 +28,7 @@ async function turno() {
     const page = await ctx.newPage(), cdp = await ctx.newCDPSession(page);
     await page.goto(BASE + "/sw.js", { waitUntil: "load" });
     await page.evaluate(async (MIS) => {
-      const s = await (await fetch("/.agents/skills/prova-nel-browser/copione-prova.js?" + Date.now())).text(); (0, eval)(s);
+      const s = await (await fetch("/.agents/skills/prova-nel-browser/copione-prova.js?" + Date.now())).text(); (0, eval)(s); try { await window.COPIONE.carica("ruota-notte/prove.js"); } catch (e) { await window.COPIONE.carica("preferiti/ruota2.js"); }   // (anche su una copia vecchia, per confrontare)
       const w = await window.apriTel("Paky", { x: 0 }), f = document.getElementById("tel-Paky");
       f.style.width = MIS[0] + "px"; f.style.height = MIS[1] + "px"; f.style.transform = "none"; w.dispatchEvent(new w.Event("resize"));
       const tess = await window.aspetta(() => window.COPIONE.aiuti.tessera(w, "La Ruota della Fortuna"), 8000); tess.click(); await window.dorme(400);
@@ -38,7 +38,7 @@ async function turno() {
     }, MIS);
     const righe = [];
     for (let g = 0; g < GIRI * 2; g++) {
-      const sfondo = g % 2 === 0;   // un giro con le luci dello sfondo, uno senza
+      const sfondo = true; const PROVA = (arg.css || "").split("|")[g % 2] || ""; await page.evaluate((css) => { const d = window.__W.document; let s = d.getElementById("__prova"); if (!s) { s = d.createElement("style"); s.id = "__prova"; d.head.appendChild(s); } s.textContent = css.replace("ZOOMTARDI", ""); window.__W.__RUOTA_ZOOM_DA = /ZOOMTARDI/.test(css) ? 0.8 : 0; }, PROVA);   // un giro con le luci dello sfondo, uno senza
       // Paky deve girare: se la frase lampo o una lettera lo impediscono, il pilota le fa
       const pronto = await page.evaluate(async () => {
         const w = window.__W, fine = Date.now() + 120000;
@@ -46,12 +46,13 @@ async function turno() {
           const P = w.__RUOTA && w.__RUOTA.ultima; if (!P) { await window.dorme(200); continue; }
           if (P.fase === "fine") return "fine";
           const io = P.giocatori[P.turno] && P.giocatori[P.turno].id === "host";
-          if (P.fase === "lampo" && P.lampo && !P.lampo.chi && P.lampo.n >= 3) { P.prenota("host", P.lampo.n, 300); }
-          if (P.fase === "lampo" && P.lampo && P.lampo.chi === "host") { P.lampoSoluzione("host", P.lampo.frase); }
-          if (io && P.fase === "gira" && w.document.querySelector(".ru-alto.tocca .ru-piatto-alto") && P.consonantiNascoste() > 0) return "gira";
-          if (io && P.fase === "consonante") { const L = "BCDFGHLMNPRSTVZ".split("").find(x => !P.chiamate[x]); P.consonante(L); }
-          if (io && (P.fase === "vocale" || P.fase === "risolvi")) P.rinuncia();
-          if (io && P.fase === "gira" && P.consonantiNascoste() === 0) { P.risolvi(); P.soluzione(P.frase); }
+          const az = (a, x) => w.__RUOTA.ui() && w.__RUOTA.ui().cb.onAzione(a, x);
+          if (P.fase === "lampo" && P.lampo && !P.lampo.chi && P.lampo.n >= 3) az("prenoto", { n: P.lampo.n, ms: 300 });
+          if (P.fase === "lampo" && P.lampo && P.lampo.chi === "host") az("soluzione", P.lampo.frase);
+          if (io && P.fase === "gira" && (w.document.querySelector(".ru-alto.tocca .ru-piatto-alto") || [].some.call(w.document.querySelectorAll(".ru-azioni button"), x => /Gira/.test(x.textContent) && !x.disabled)) && P.consonantiNascoste() > 0) return "gira";
+          if (io && P.fase === "consonante") { const L = "BCDFGHLMNPRSTVZ".split("").find(x => !P.chiamate[x]); az("lettera", L); }
+          if (io && P.fase === "risolvi") az("soluzione", P.frase);
+          if (io && P.fase === "gira" && P.consonantiNascoste() === 0) az("risolvi");
           await window.dorme(250);
         }
         return "tempo";
@@ -59,21 +60,23 @@ async function turno() {
       if (pronto !== "gira") { righe.push("(si ferma: " + pronto + ")"); break; }
       await page.evaluate((sf) => { const c = window.__W.document.querySelector(".ru-fondo"); if (c) c.style.display = sf ? "" : "none"; window.__W.__fermaFondo = !sf; }, sfondo);
       await cdp.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+      if (arg.profilo) { await cdp.send("Profiler.enable"); await cdp.send("Profiler.start"); }
       const r = await page.evaluate(async (forza) => {
         const w = window.__W, P = w.__RUOTA.ultima, g0 = P.giroN, t = [];
         let on = true; (function rif(ts) { if (!on) return; t.push(ts); w.requestAnimationFrame(rif); })(w.performance.now());
-        await window.spingiRuota(w, forza);
+        if (window.spingiRuota) await window.spingiRuota(w, forza); else { const b = [].find.call(w.document.querySelectorAll(".ru-azioni button"), x => /Gira/.test(x.textContent) && !x.disabled); if (b) b.click(); }
         await window.aspetta(() => P.giroN > g0 && P.fase === "girando", 4000);
         const t0 = w.performance.now(); t.length = 0;
         await window.aspetta(() => P.fase !== "girando", 12000, 50);
         on = false;
-        const d = []; for (let i = 1; i < t.length; i++) d.push(t[i] - t[i - 1]);
+        const d = [], lunghi = []; for (let i = 1; i < t.length; i++) { d.push(t[i] - t[i - 1]); if (t[i] - t[i - 1] > 50) lunghi.push(Math.round(t[i - 1] - t0) + "ms:" + Math.round(t[i] - t[i - 1])); }
         d.sort((a, b) => a - b);
         const durata = w.performance.now() - t0;
-        return { n: t.length, durata: Math.round(durata), fps: +(t.length / durata * 1000).toFixed(1), mediana: +(d[Math.floor(d.length / 2)] || 0).toFixed(1), lenti: d.filter(x => x > 50).length, peggiore: Math.round(d[d.length - 1] || 0) };
+        return { n: t.length, durata: Math.round(durata), fps: +(t.length / durata * 1000).toFixed(1), mediana: +(d[Math.floor(d.length / 2)] || 0).toFixed(1), lenti: d.filter(x => x > 50).length, peggiore: Math.round(d[d.length - 1] || 0), lunghi: lunghi.join(" ") };
       }, 0.3 + 0.35 * (g % 3));
       await cdp.send("Emulation.setCPUThrottlingRate", { rate: 1 });
-      righe.push((sfondo ? "luci accese" : "luci spente") + ": " + r.n + " fotogrammi in " + r.durata + " ms (" + r.fps + " al secondo), ogni " + r.mediana + " ms di solito, sopra i 50 ms: " + r.lenti + ", il peggiore " + r.peggiore + " ms");
+      if (arg.profilo) { const { profile } = await cdp.send("Profiler.stop"); const self = {}, dt = profile.timeDeltas || [], id2 = {}; profile.nodes.forEach(n => id2[n.id] = n); (profile.samples || []).forEach((s, i) => { const n = id2[s], k = n.callFrame.functionName + " " + (n.callFrame.url || "").split("/").pop() + ":" + n.callFrame.lineNumber; self[k] = (self[k] || 0) + (dt[i] || 0) / 1000; }); console.log(Object.entries(self).sort((a, b) => b[1] - a[1]).slice(0, 14).map(x => Math.round(x[1]) + "ms " + x[0]).join(" | ")); }
+      righe.push((PROVA ? "[" + PROVA.slice(0, 40) + "] " : "[così com'è] ") + ": " + r.n + " fotogrammi in " + r.durata + " ms (" + r.fps + " al secondo), ogni " + r.mediana + " ms di solito, sopra i 50 ms: " + r.lenti + ", il peggiore " + r.peggiore + " ms (" + r.lunghi + ")");
       console.log(righe[righe.length - 1]);
     }
     fs.writeFileSync(path.join(arg.dove || __dirname, "fotogrammi.txt"), "Computer rallentato ×4, telefono " + MIS.join("x") + "\n" + righe.join("\n") + "\n");

@@ -26,7 +26,7 @@
   var BOT_SEL = 800, BOT_SCRIVE = 250;   // il Bot: quanto tiene accesa la lettera prima di chiamarla, quanto ci mette a scrivere una lettera
   var T_MOSSA = 15000, T_RISOLVI = 45000;          // online: tempo per decidere (poi perde il turno)
   var T_GIRO = 3400;
-  var GIRO_MIN = 215, GIRO_MAX = 610;              // 🎡 quanto gira la ruota (gradi): la spinta più leggera e la più forte (1,7 giri)                               // quanto gira la ruota
+  var GIRO_MIN = 215, GIRO_MAX = 595;              // 🎡 quanto gira la ruota (gradi): la spinta più leggera e la più forte (1,7 giri)                               // quanto gira la ruota
   var SIGLA_CORTA = 2600;                          // quando si rigioca: niente presentazione lunga
   // ---- i round speciali ----
   var PREMIO_LAMPO = 1000;                         // la frase lampo (Prenota): premio fisso, nel totale della partita
@@ -2527,7 +2527,7 @@
       if (!ohh && vel < 55 && u < 0.985 && qui && qui.s === "bancarotta") { ohh = true; try { ST.FX.ohh(); } catch (e) {} }
       if (!rullo && ms > 2400 && ms * (1 - u) < 2300) { rullo = true; try { ST.FX.rullo(2.1); } catch (e) {} inquadra(ui, "lancetta", null, 1200); }
       // 🔍 lo zoom sulla lancetta: SEMPRE allo stesso punto del giro (mai deciso da dove si ferma), uguale per Bot e online
-      if (ui.flat && !ui.zoomOn && ms > 2400 && u > ZOOM_DA) { ui.zoomOn = true; ruotaAlta(ui, true, true); }   // (27 nov 2026: molto prima, così si vedono passare gli spicchi rallentando)
+      if (ui.flat && !ui.zoomOn && ms > 2400 && u > (window.__RUOTA_ZOOM_DA || ZOOM_DA)) { ui.zoomOn = true; ruotaAlta(ui, true, true); }   // (27 nov 2026: molto prima, così si vedono passare gli spicchi rallentando)
       if (u < 1) ui.rafGiro = requestAnimationFrame(passo); else fine();
     }
     ui.altoEl.classList.add("gira"); ui.ruotaEl.classList.add("gira");

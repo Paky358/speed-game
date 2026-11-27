@@ -1,0 +1,3 @@
+Computer rallentato ×4, telefono 360x780
+[così com'è] : 298 fotogrammi in 5425 ms (54.9 al secondo), ogni 17.4 ms di solito, sopra i 50 ms: 1, il peggiore 67 ms (4784ms:67)
+[così com'è] : 319 fotogrammi in 5722 ms (55.8 al secondo), ogni 17.3 ms di solito, sopra i 50 ms: 0, il peggiore 40 ms ()

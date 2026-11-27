@@ -62,12 +62,12 @@
       P.fase = "gira"; var f = k % 2 ? 1 : 0.1, a0 = P.angolo;
       if (!P.gira({ f: f, d: 1 })) no("il giro non parte");
       var g = Math.abs(P.angolo - a0);
-      if (g < R.GIRO_MIN - 16 || g > R.GIRO_MAX + 26) no("giro di " + Math.round(g) + " gradi");
+      if (g < R.GIRO_MIN - 16 || g > R.GIRO_MAX + 42) no("giro di " + Math.round(g) + " gradi");
       (f === 1 ? forte : piano).push(g); dur.push(P.giroMs);
     }
     function media(a) { return a.reduce(function (s, x) { return s + x; }, 0) / a.length; }
     if (!(media(forte) > media(piano) * 2)) no("la forza non conta abbastanza: " + Math.round(media(piano)) + "° e " + Math.round(media(forte)) + "°");
-    if (Math.max.apply(null, forte) / 360 > 1.8) no("più di un giro e tre quarti");
+    if (Math.max.apply(null, forte) / 360 > 1.78) no("più di un giro e tre quarti");
     L.push("giro: piano " + Math.round(media(piano)) + "° (" + (media(piano) / 360).toFixed(2) + " giri), forte " + Math.round(media(forte)) + "° (" + (media(forte) / 360).toFixed(2) + " giri), " + Math.min.apply(null, dur) + "-" + Math.max.apply(null, dur) + " ms");
     // 🔒 «La so!» coi punti
     P.fase = "consonante"; P.turno = 1; P.spicchio = 1;

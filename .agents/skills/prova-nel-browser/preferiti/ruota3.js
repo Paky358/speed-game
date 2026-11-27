@@ -78,7 +78,7 @@
     var mp = media(piano), mf = media(forte), qc = confine / n;
     // (27 nov 2026, il proprietario: «come in TV… al massimo un giro e mezzo, uno e tre quarti»; la spinta leggera fa poco, la forte di più)
     if (!(mp < 300)) no("piano gira troppo: " + Math.round(mp) + " gradi");
-    if (!(mf > 560 && mf <= 640)) no("forte: " + Math.round(mf) + " gradi (deve stare tra 560 e 640)");
+    if (!(mf > 550 && mf <= 640)) no("forte: " + Math.round(mf) + " gradi (deve stare tra 550 e 640)");
     if (qc < 0.25 || qc > 0.55) no("a un soffio dal confine " + Math.round(qc * 100) + "% delle volte");
     if (Object.keys(visti).length !== 24) no("escono solo " + Object.keys(visti).length + " spicchi su 24");
     L.push(n + " giri · piano " + Math.round(mp) + "° in media, forte " + Math.round(mf) + "° · vicino al confine " + Math.round(qc * 100) + "% · durata " + Math.min.apply(null, durate) + "-" + Math.max.apply(null, durate) + " ms · 24 spicchi");
