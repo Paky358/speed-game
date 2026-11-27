@@ -1916,7 +1916,7 @@
   }
 
   SG.registra({
-    id: ID, nome: "Calcio Biliardo", icona: "⚽",
+    id: ID, nome: "Calcio a Dischi", icona: "⚽",
     descrizione: "Il calcio coi dischi: tiri indietro un calciatore come una fionda, colpisci la palla e fai gol. In 1 contro 1 o a squadre fino a 2 contro 2, anche coi Bot: contro il Bot, sullo stesso telefono o online.",
     giocatoriMin: 1, giocatoriMax: 4, difficolta: 2,
     postiOnline: 2,   // online di solito in due (gli altri guardano): per la Sala resta un gioco a due (sfida, torneo, Chi vince resta)

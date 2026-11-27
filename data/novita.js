@@ -9,6 +9,27 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 459,
+    data: "27 novembre 2026",
+    titolo: "I giochi hanno nomi nuovi ✨",
+    descrizione: [
+      "Abbiamo dato a 13 giochi un nome più chiaro, che dice subito a cosa si gioca. Il gioco è lo stesso: trofei, statistiche, parole vostre e link vecchi restano tutti.",
+      "🎨 Scarabocchio → Disegna e Indovina",
+      "🕵️ L'Impostore → L'Infiltrato (il gioco dell'impostore)",
+      "🐑 Pecora Nera → Tutti d'Accordo",
+      "🕵️ Parola d'ordine → Parole in Codice",
+      "🟡 Drop 4 → Quattro in Fila",
+      "⚽ Calcio Biliardo → Calcio a Dischi",
+      "🍹 Da dove viene? → Indovina il Paese",
+      "🤨 Sì... però → Una Vita Perfetta… Quasi",
+      "🐎 Horto Muso → Al Galoppo!",
+      "🎡 La Ruota della Fortuna → La Ruota Fortunata",
+      "🏷️ Il Prezzo è Giusto → Indovina il prezzo",
+      "⚽ Mini Asta Fantacalcio → Mini Asta del Fanta (L'Asta coi temi resta «L'Asta»)",
+      "🏒 Glow Hockey → Air Hockey"
+    ]
+  },
+  {
     v: 458,
     data: "27 novembre 2026",
     titolo: "La Ruota della Fortuna rifatta 🎡",

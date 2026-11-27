@@ -21,7 +21,7 @@
 (function () {
   "use strict";
 
-  var ID = "prezzo", NOME = "Il Prezzo è Giusto!", LOGO = ["IL PREZZO", "È GIUSTO!"];
+  var ID = "prezzo", NOME = "Indovina il prezzo", LOGO = ["INDOVINA", "IL PREZZO"];
   var ST = window.SGStudio;
   function Z() { return window.SGPrezzoScena; }
   function E(v) { return Z().fmtE(v); }

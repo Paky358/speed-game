@@ -1833,7 +1833,7 @@
   ];
   function giocoAsta(f) { return {
     id: f === "fanta" ? "astafanta" : "asta",
-    nome: f === "fanta" ? "Mini Asta Fantacalcio" : "L'Asta",
+    nome: f === "fanta" ? "Mini Asta del Fanta" : "L'Asta",
     icona: f === "fanta" ? "⚽" : "🔨",
     descrizione: f === "fanta" ? "Compra all'asta 5 calciatori veri di Serie A, poi gioca la giornata: vince chi fa più fantapunti."
       : "Compra all'asta le carte migliori e costruisci il kit che gli altri voteranno.",
@@ -11637,7 +11637,7 @@
   function schermataFineAsta(t, vm, cb) {
     var el = t.el;
     salvaTrofeiAsta(t, vm, cb && cb.myId, true);
-    var etichetta = vm.formato === "fanta" ? "Mini Asta Fantacalcio" : ("L'Asta · " + (vm.temaNome || ""));
+    var etichetta = vm.formato === "fanta" ? "Mini Asta del Fanta" : ("L'Asta · " + (vm.temaNome || ""));
     var s = t.schermata({ chiara: true, icona: "🏆", titolo: "Classifica finale", sotto: etichetta });
     s.classList.add("as-fissa");   // (alta come lo schermo: "Nuova partita" si vede sempre, le fasce svelate scorrono nel centro)
     if (vm.scenario) { var sc = nodoScenario(el, vm.scenario, false); sc.style.marginTop = "2px"; s._contenuto.appendChild(sc); }
@@ -12057,7 +12057,7 @@
     s._contenuto.appendChild(el("div", { style: "margin:auto 0;display:flex;flex-direction:column;text-align:center;gap:12px;padding:4px 0" }, [
       el("div", { style: "font-size:3.2rem;line-height:1", text: "⚽" }),
       el("div", { class: "as-round" }, [
-        el("div", { class: "n", text: "Mini Asta Fantacalcio" }),
+        el("div", { class: "n", text: "Mini Asta del Fanta" }),
         el("div", { class: "t", text: "Costruisci la rosa" })
       ]),
       el("p", { class: "as-msg", text: "Ognuno parte con " + FANTA_BUDGET + " 💰. Rosa da 5: 1 portiere, 1 difensore, 2 centrocampisti, 1 attaccante." }),

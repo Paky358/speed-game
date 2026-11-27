@@ -56,6 +56,7 @@
    ========================================================= */
 (function () {
   "use strict";
+  function aGiocoAO(n) { var c = window.SGCuore; return c && c.aGioco ? c.aGioco(n) : "a " + n; }   // «si gioca all'Infiltrato», «alla Ruota Fortunata» (27 nov 2026)
 
   var DUE_ORE = 2 * 3600 * 1000, DIECI_MIN = 10 * 60 * 1000, UN_GIORNO = 24 * 3600 * 1000;
   var RICHIAMA = 30000, PICCOLO = 20000, RIPROVA_SCHEDE = 5 * 60 * 1000, MAX_VISTI = 40;
@@ -286,7 +287,7 @@
     var tx = crea("div", "ao-testo"), r1 = crea("div", "ao-r1");
     r1.appendChild(crea("b", null, nome)); r1.appendChild(document.createTextNode(" ti chiama nella Sala"));
     tx.appendChild(r1);
-    if (d.gioco) tx.appendChild(crea("div", "ao-r2", "si gioca a " + String(d.gioco).slice(0, 30)));
+    if (d.gioco) tx.appendChild(crea("div", "ao-r2", "si gioca " + aGiocoAO(String(d.gioco).slice(0, 30))));
     nodo.appendChild(tx);
     var tasti = crea("div", "ao-tasti"), si = crea("button", "ao-entra", "Entra ▶"), no = crea("button", "ao-no", "Non ora");
     si.type = no.type = "button";
@@ -373,7 +374,7 @@
     testa.appendChild(crea("b", null, "➕ Invita gli amici"));
     x.type = "button"; x.setAttribute("aria-label", "Chiudi"); x.addEventListener("click", chiudi);
     testa.appendChild(x);
-    var sotto = crea("div", "ao-sotto", (o.nomeSala || "La Sala") + (o.gioco ? " · si gioca a " + o.gioco : ""));
+    var sotto = crea("div", "ao-sotto", (o.nomeSala || "La Sala") + (o.gioco ? " · si gioca " + aGiocoAO(o.gioco) : ""));
     var piede = crea("div", "ao-piede");
     if (o.condividi) {
       var bl = crea("button", "btn btn-primario", "📤 Manda il link"); bl.type = "button";

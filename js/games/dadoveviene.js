@@ -1355,7 +1355,7 @@
   }
 
   SG.registra({
-    id: ID, nome: "Da dove viene?", icona: "🍹",
+    id: ID, nome: "Indovina il Paese", icona: "🍹",
     tema: "oro",   // 🤍 Bianco e oro: tutte le schermate chiare (la foto del piatto è la protagonista)
     descrizione: "Esce la foto di un piatto o di un drink da tutto il mondo: da che paese viene? Tre tentativi, con distanza e direzione.",
     giocatoriMin: 1, giocatoriMax: MAX, difficolta: 2,

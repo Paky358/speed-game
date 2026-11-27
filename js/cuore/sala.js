@@ -1238,7 +1238,7 @@
     var n = String(nome || ""), m;
     if ((m = /^L'(.*)$/.exec(n))) return "all'" + m[1];
     if ((m = /^(La|Il|Lo|Le|I|Gli) (.*)$/.exec(n))) return { La: "alla ", Il: "al ", Lo: "allo ", Le: "alle ", I: "ai ", Gli: "agli " }[m[1]] + m[2];
-    return "a " + n;
+    return (/^[AaÀà]/.test(n) ? "ad " : "a ") + n;   // («ad Al Galoppo!», «ad Air Hockey»)
   }
 
   // opz (facoltativo) = { codice, ripresa }: la partita di prima riprende nella stessa stanza (salaRiprendiGioco): stesso

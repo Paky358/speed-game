@@ -1017,7 +1017,7 @@
   }
 
   SG.registra({
-    id: ID, nome: "Pecora Nera", icona: "🐑", tema: "oro",
+    id: ID, nome: "Tutti d'Accordo", icona: "🐑", tema: "oro",
     descrizione: "Tutti rispondono alla stessa domanda: vince chi scrive la cosa più scontata, come il resto del gregge!",
     giocatoriMin: MIN, giocatoriMax: MAX, difficolta: 1,
     provaDaSolo: true,   // il proprietario (IL PAPPONE) la prova anche da solo o in due: sullo stesso telefono (minDi del core) e online (MINIMO)

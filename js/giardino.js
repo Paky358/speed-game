@@ -860,9 +860,9 @@
     var ATTIVITA_CIRCOLO = [
       { nome: "Scopa", icona: "🃏", tipi: ["tavolo_carte"], gioca: true },
       { nome: "Tris", icona: "⭕", tipi: ["tavolo_tris"], gioca: true },
-      { nome: "Drop 4", icona: "🟡", tipi: ["tavolo_forza4"], gioca: true },
+      { nome: "Quattro in Fila", icona: "🟡", tipi: ["tavolo_forza4"], gioca: true },
       { nome: "Battaglia Navale", icona: "🚢", tipi: ["tavolo_navale"], gioca: true },
-      { nome: "Calcio Biliardo", icona: "🎱", tipi: ["biliardo"], gioca: true },
+      { nome: "Calcio a Dischi", icona: "🎱", tipi: ["biliardo"], gioca: true },
       { nome: "Bocce", icona: "⚪", tipi: ["bocce_partita"] },
       { nome: "La partita in TV", icona: "📺", tipi: ["poltrona_circolo"] },
       { nome: "Bar", icona: "☕", tipi: ["bancone_circolo"] }
@@ -1822,7 +1822,7 @@
         if (q < .85 && Date.now() - t0 < 8000) return setTimeout(guarda, 120);
         subito = null;   // (non serve più: i disegni li tiene la cache)
         sporco = true; vela.classList.add("via"); setTimeout(function () { if (vela.parentNode) vela.parentNode.removeChild(vela); }, 400);
-        if (CIR && !opts.pos) dimmi("Benvenuto al Circolo! 🎲 Siediti a un tavolo: carte, Tris, Drop 4, Battaglia Navale; o vai al biliardo");
+        if (CIR && !opts.pos) dimmi("Benvenuto al Circolo! 🎲 Siediti a un tavolo: carte, Tris, Quattro in Fila, Battaglia Navale; o vai al biliardo");
         else if (!CIT && !CIR && !opts.pos) dimmi("Benvenuto al Casinò! 🎰 Black Jack e Poker sono aperti; allarga con due dita per vedere tutta la sala"); else if (CIT && !opts.da) dimmi("Tocca un punto per camminare, tocca un edificio per entrare 🚶");
         setTimeout(scalda, 600);
       })();

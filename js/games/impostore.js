@@ -210,10 +210,10 @@
 
   SG.registra({
     id: "impostore",
-    nome: "L'Impostore",
+    nome: "L'Infiltrato",
     icona: "🕵️",
     tema: "oro",   // 🤍 Bianco e oro: tutte le schermate chiare (lo stile sta in fondo al file)
-    descrizione: "Tutti hanno la stessa parola, tranne l'impostore (e forse una spia). Scoprite chi bluffa prima che la faccia franca.",
+    descrizione: "Il gioco dell'impostore: tutti hanno la stessa parola, tranne uno (e forse una spia). Scoprite chi bluffa prima che la faccia franca.",
     giocatoriMin: 3,
     giocatoriMax: 10,
     difficolta: 2,

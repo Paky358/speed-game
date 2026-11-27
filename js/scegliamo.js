@@ -123,7 +123,7 @@
       "  display:flex; align-items:center; justify-content:center; font-size:clamp(2.2rem, 11vw, 3rem); }",
       ".sgs-foto img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }",
       ".sgs-info{ flex:1; min-width:0; display:flex; flex-direction:column; justify-content:center; gap:3px; }",
-      ".sgs-nome{ font-size:1.2rem; font-weight:900; line-height:1.1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }",
+      ".sgs-nome{ font-size:1.2rem; font-weight:900; line-height:1.1; }",   // (il nome del gioco va a capo, mai i puntini: 27 nov 2026)
       ".sgs-riga{ font-size:.82rem; font-weight:700; opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }",
       ".sgs-facce{ display:flex; align-items:center; height:28px; margin-top:2px; }",
       ".sgs-faccia{ flex:0 0 auto; width:28px; height:28px; margin-right:-6px; border-radius:50%; overflow:hidden; background:#fff3bf;",
@@ -175,9 +175,13 @@
   }
 
   // ---- il disegno (una volta sola) ----
-  function corto(s) {
-    var c = Array.from(String(s || "").trim());
-    return c.length > 10 ? c.slice(0, 9).join("").trim() + "…" : c.join("");
+  // 🏷️ (27 nov 2026, i nomi nuovi dei giochi) il nome sulla ruota NON si taglia mai: se è lungo va su due righe (spezzate a una parola, le più pari possibile)
+  function righeNome(s) {
+    var t = String(s || "").trim().replace(/\s+/g, " "), p = t.split(" ");
+    if (Array.from(t).length <= 11 || p.length < 2) return [t];
+    var meglio = null;
+    for (var i = 1; i < p.length; i++) { var a = p.slice(0, i).join(" "), b = p.slice(i).join(" "), m = Math.max(a.length, b.length); if (!meglio || m < meglio.m) meglio = { m: m, r: [a, b] }; }
+    return meglio.r;
   }
   function disegna(cv, sp, lato) {
     if (!cv || !sp || !sp.length) return;
@@ -202,13 +206,15 @@
       c.fillText(p.icona || "🎲", r - lato * 0.04 - fIcona * 0.6, 0);
       c.textAlign = "right";
       // il nome: finisce prima dell'emoji e non va sotto il perno al centro (se è lungo si rimpicciolisce)
-      var nome = corto(p.nome), fine = r - lato * 0.04 - fIcona * 1.25, spazio = fine - r * 0.3, f = fNome;
+      var righe = righeNome(p.nome), fine = r - lato * 0.04 - fIcona * 1.25, spazio = fine - r * 0.3, f = fNome;
       c.font = "900 " + f + "px system-ui, sans-serif";
-      var largoNome = c.measureText(nome).width;
-      if (largoNome > spazio && spazio > 0) { f = Math.max(8, Math.floor(f * spazio / largoNome)); c.font = "900 " + f + "px system-ui, sans-serif"; }
+      var largoNome = Math.max.apply(null, righe.map(function (x) { return c.measureText(x).width; }));
+      if (largoNome > spazio && spazio > 0) f = Math.floor(f * spazio / largoNome);
+      if (righe.length > 1) f = Math.min(f, Math.floor(largo(r * 0.55) / 2.3));   // (due righe: devono stare nella larghezza dello spicchio)
+      f = Math.max(7, f); c.font = "900 " + f + "px system-ui, sans-serif";
       c.fillStyle = t.t;
       if (t.t === "#fff") { c.shadowColor = "rgba(0,0,0,.4)"; c.shadowBlur = 3; }
-      c.fillText(nome, fine, 0);
+      righe.forEach(function (x, k) { c.fillText(x, fine, (k - (righe.length - 1) / 2) * f * 1.08); });
       c.restore();
     });
     // i pallini sul bordo (19 nov 2026, il proprietario: il tic si deve sentire SOLO dove si vede un pallino): grandi sul confine

@@ -2010,7 +2010,7 @@
         ui.sopra.classList.add("via");
         var vinc = vm.classifica && vm.classifica.length ? ui.ids.indexOf(vm.classifica[0].id) : -1;
         // con la busta chi ha vinto l'abbiamo già festeggiato: basta un saluto
-        var chiusura = vm.busta || vm.fin ? fineCorta(ui.S) : ST.finale(ui.S, vinc, "Ha vinto La Ruota della Fortuna! 🎡");
+        var chiusura = vm.busta || vm.fin ? fineCorta(ui.S) : ST.finale(ui.S, vinc, "Ha vinto La Ruota Fortunata! 🎡");
         Promise.resolve(chiusura).catch(function () {}).then(function () {
           if (R === ui && ui.S.vivo()) { R = null; finale(t, vm, ui.cb); }
         });
@@ -2086,7 +2086,7 @@
     var ui = { t: t, el: el, cb: cb, vm: vm, ids: ids, kTab: "", kTast: "", giroN: -1, scritto: [], cur: 0, prec: null, mostrati: {}, inq: "", barraH: -1, timer: [],
       fuori: {}, jolly: {}, kTempo: "", tabPrec: "", nuove: {}, lampoVisto: {}, schTipo: "", kOrol: "", finSel: [], finSelK: "" };
     ui.S = ST.crea(t, vm.giocatori.map(function (p) { return { nome: p.nome, omino: (cb.omini() || {})[p.id] || (window.SGOmino ? SGOmino.casuale(p.nome) : null) }; }),
-      { io: cb.telefono ? -1 : ids.indexOf(cb.myId), esci: function () { fermaRegia(ui); ritmo(ui, null); ui.cb.onEsci(true); }, titolo: "La Ruota della Fortuna", logo: ["LA RUOTA", "DELLA FORTUNA"],
+      { io: cb.telefono ? -1 : ids.indexOf(cb.myId), esci: function () { fermaRegia(ui); ritmo(ui, null); ui.cb.onEsci(true); }, titolo: "La Ruota Fortunata", logo: ["LA RUOTA", "FORTUNATA"],
         senzaSchermo: true,   // 🎡 giro 3: niente maxischermo in mezzo; la ruota sta sul pavimento davanti ai concorrenti
         punti: false,         // 📺 senza studio: i punteggi sono quelli della Ruota (sotto il tabellone)
         dopoLayout: function () { if (ui.ruotaEl) mettiRuota(ui); } });
@@ -2210,7 +2210,7 @@
   function siglaCorta(S) {
     ST.viaBarra(S); ST.logoSchermo(S);
     ST.largo(S, 0);
-    ST.terzo(S, null, "Si gioca ancora!", "La Ruota della Fortuna", "🎡");
+    ST.terzo(S, null, "Si gioca ancora!", "La Ruota Fortunata", "🎡");
     ST.pubblico(S, "applauso");
     return new Promise(function (fatto) { setTimeout(function () { ST.viaTerzo(S); fatto(); }, SIGLA_CORTA); });
   }
@@ -3892,7 +3892,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
   }
   function finale(t, vm, cb) {
     stile();   // (chi arriva proprio alla fine non ha mai aperto lo studio: il riquadro della finale ha bisogno delle regole di stile)
-    var s = t.schermata({ chiara: true, icona: "🏆", titolo: "Classifica finale", sotto: "La Ruota della Fortuna" });
+    var s = t.schermata({ chiara: true, icona: "🏆", titolo: "Classifica finale", sotto: "La Ruota Fortunata" });
     var ol = t.el("ol", { class: "classifica" }), med = ["🥇", "🥈", "🥉"];
     (vm.classifica || []).forEach(function (r) {
       ol.appendChild(t.el("li", { class: r.pos === 1 && !r.uscito ? "vincitore" : "", style: r.uscito ? "opacity:.55" : null }, [
@@ -4395,7 +4395,7 @@ ST.inquadra(ui.S, cosa === "ruota" || cosa === "lancetta" ? function () { return
   }
 
   SG.registra({
-    id: ID, nome: "La Ruota della Fortuna", icona: "🎡",
+    id: ID, nome: "La Ruota Fortunata", icona: "🎡",
     descrizione: "Gira la ruota, chiama le consonanti, compra le vocali e indovina la frase! Come in TV: si comincia con la frase lampo, tra una manche e l'altra un gioco veloce (frase lampo, GiraMondo, CruciRuota), Raddoppia, Express, Mistero, il giro finale e la finale con 3 tabelloni per tutti insieme. Chi vince (se non è un Bot) sceglie una busta di Speed Coins. Mentre aspetti puoi bloccare la soluzione in segreto. Più di 3.000 frasi, e potete metterci le vostre!",
     giocatoriMin: 1, giocatoriMax: MAX, difficolta: 2, etichettaGiocatori: "👥 1–4 giocatori",
     postiOnline: MAX,   // 4 alla ruota: nella Sala, se siete di più, gioca chi sceglie l'host e gli altri guardano

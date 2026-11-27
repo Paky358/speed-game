@@ -281,7 +281,7 @@
   // il codice della Sala aperta (dalla foto trattenuta nel broker: { t: "sala", … }); null se non c'è
   function codiceSala() { return W.codici().filter(function (c) { return (W.statoStanza(c) || {}).t === "sala"; }).pop() || null; }
   // la tessera di un gioco nella home (o nella scelta dei giochi della Sala), col nome come nel titolo
-  function tessera(w, nomeGioco) { return [].find.call(w.document.querySelectorAll(".tessera"), function (t) { return (t.querySelector("h2") || {}).textContent === nomeGioco; }) || null; }
+  function tessera(w, nomeGioco) { if (W.nomeOra) nomeGioco = W.nomeOra(nomeGioco); return [].find.call(w.document.querySelectorAll(".tessera"), function (t) { return (t.querySelector("h2") || {}).textContent === nomeGioco; }) || null; }
   // i testi dei modi di "Come giocate?" (uno per riga)
   function modiVisti(w) { return [].map.call(w.document.querySelectorAll(".modo-grande"), function (b) { return b.innerText.replace(/\s+/g, " ").trim(); }); }
   // segna se una scritta compare sul telefono, anche per un attimo: var s = spiaTesto(w, /…/); … s.stop() → il testo visto o ""

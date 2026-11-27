@@ -2018,7 +2018,7 @@
         ST.largo(S, 0); ST.FX.applauso("piano");
         ui.banchi.forEach(function (B, k) { festaBanco(ui, k, true); });
         for (var k = 0; k < vm.nsq; k++) ST.faccia(S, k, "esulta");
-        ST.terzo(S, null, "Parola d'ordine", vm.vsBot ? "Voi contro il Bot" : vm.nsq === 3 ? "Rossi, Blu e Verdi" : "Rossi contro Blu", "🕵️");
+        ST.terzo(S, null, "Parole in Codice", vm.vsBot ? "Voi contro il Bot" : vm.nsq === 3 ? "Rossi, Blu e Verdi" : "Rossi contro Blu", "🕵️");
       }]);
       var squadre = vm.vsBot ? [0, 1] : [0, 1, 2].slice(0, vm.nsq);
       squadre.forEach(function (k, j) {
@@ -2055,7 +2055,7 @@
     var capi = capiDi(ui, vm, cb);
     ui.kCapi = capi.k;
     if (window.__ORDINE) window.__ORDINE.ui = ui;   // (per le prove)
-    ui.S = ST.crea(t, capi.lista, { io: capi.io, esci: function () { ui.cb.onEsci(true); }, titolo: "Parola d'ordine", logo: ["PAROLA", "D'ORDINE"],
+    ui.S = ST.crea(t, capi.lista, { io: capi.io, esci: function () { ui.cb.onEsci(true); }, titolo: "Parole in Codice", logo: ["PAROLE", "IN CODICE"],
       posti: function (S) { return postiCapi(S, ui.nsq); }, dopoLayout: function (S) { posizionaBanchi(ui, S); adattaScritte(ui); },
       punti: false });   // 📺 senza studio: le squadre con le faccine sono già sul tabellone (niente podi dei capi né banconi)
     var S = ui.S;
@@ -3051,7 +3051,7 @@
       var bg = x.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, "#1b1152"); bg.addColorStop(0.5, "#120a38"); bg.addColorStop(1, "#07041a");
       x.fillStyle = bg; x.fillRect(0, 0, W, H);
       x.textAlign = "center"; x.textBaseline = "alphabetic";
-      x.fillStyle = "#ffd43b"; x.font = "900 34px " + F; x.fillText("🕵️ PAROLA D'ORDINE", W / 2, 64);
+      x.fillStyle = "#ffd43b"; x.font = "900 34px " + F; x.fillText("🕵️ PAROLE IN CODICE", W / 2, 64);
       // chi ha vinto e perché
       x.fillStyle = "#fff"; x.font = "900 48px " + F;
       y = 128;
@@ -3104,10 +3104,10 @@
         });
       }
       // il nome dell'app
-      x.textAlign = "center"; x.fillStyle = "rgba(255,255,255,.92)"; x.font = "900 34px " + F; x.fillText("🕵️ Parola d'ordine · Revel House", W / 2, H - 66);
+      x.textAlign = "center"; x.fillStyle = "rgba(255,255,255,.92)"; x.font = "900 34px " + F; x.fillText("🕵️ Parole in Codice · Revel House", W / 2, H - 66);
       x.fillStyle = "rgba(255,255,255,.62)"; x.font = "700 26px " + F; x.fillText("Giocate con noi: " + SITO, W / 2, H - 28);
       if (window.__ORDINE) window.__ORDINE.foto = cv;   // (per le prove)
-      condividiFoto(cv, "parola-d-ordine.png", "La nostra partita a Parola d'ordine 🕵️");
+      condividiFoto(cv, "parole-in-codice.png", "La nostra partita a Parole in Codice 🕵️");
     } catch (e) {}
   }
   // la condivisione si apre subito, dentro il tocco (l'immagine è già pronta): se il telefono non la sa fare, si scarica
@@ -3580,7 +3580,7 @@
   }
 
   SG.registra({
-    id: ID, nome: "Parola d'ordine", icona: "🕵️",
+    id: ID, nome: "Parole in Codice", icona: "🕵️",
     descrizione: "Il capo dà un indizio (una parola, o un nome come SAN GENNARO), la squadra trova le sue parole sul tabellone. Occhio alla parola nera! A 2 o 3 squadre, o in pochi contro il Bot, ognuno dal suo telefono.",
     giocatoriMin: 2, giocatoriMax: MAX, difficolta: 2, etichettaGiocatori: "👥 2–12 giocatori",   // (in 2-3 si gioca contro il Bot)
     postiOnline: MAX,   // posti online (12)

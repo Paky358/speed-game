@@ -174,7 +174,7 @@
 
   SG.registra({
     id: "hockey",
-    nome: "Glow Hockey",
+    nome: "Air Hockey",
     icona: "🏒",
     descrizione: "Air hockey al neon: sfida il Bot (Facile, Medio o Difficile) o un amico sullo stesso telefono. Colpisci il disco col dito e segna nella porta di fronte.",
     giocatoriMin: 1, giocatoriMax: 2, difficolta: 2, etichettaGiocatori: "🤖 Contro il Bot · 👥 in due",
@@ -896,7 +896,7 @@
       if (tipo === "fine") {
         var vinto = st.vincitore === 1;
         var sf = t.schermata({ chiara: true, icona: (due || vinto) ? "🏆" : "🤖", titolo: due ? ("Vince " + nomeDi(st.vincitore) + "!") : (vinto ? "Hai vinto!" : "Ha vinto " + nomeDi(2)),
-          sotto: "Glow Hockey · " + (due ? "in due" : "🤖 " + nomeDi(2) + " (" + D.nome + ")") });
+          sotto: "Air Hockey · " + (due ? "in due" : "🤖 " + nomeDi(2) + " (" + D.nome + ")") });
         // punteggio grande, coi colori delle due racchette
         var lato = function (nome, gol, col) {
           return el("div", { style: "text-align:center;min-width:96px" }, [
@@ -1010,7 +1010,7 @@
       vista = tipo; stop();
       var el = t.el;
       if (tipo === "lobby") {
-        var s = t.schermata({ chiara: true, icona: "🏒", titolo: "Glow Hockey · Lobby", sotto: "Ognuno dal suo telefono", indietro: function () { rete.chiudi(); t.esci(); } });
+        var s = t.schermata({ chiara: true, icona: "🏒", titolo: "Air Hockey · Lobby", sotto: "Ognuno dal suo telefono", indietro: function () { rete.chiudi(); t.esci(); } });
         s._contenuto.appendChild(el("div", { class: "etichetta", text: "Codice della stanza" }));
         s._contenuto.appendChild(el("div", { class: "codice-stanza", text: (st.codice || "…").toUpperCase() }));
         if (st.codice && st.codice !== "…") {
@@ -1025,13 +1025,13 @@
         s._piede.appendChild(b);
         t.mostra(s);
       } else if (tipo === "fine") {
-        var sf = t.schermata({ chiara: true, icona: "🏆", titolo: st.vincitore === 1 ? "Hai vinto!" : "Ha vinto l'avversario", sotto: "Glow Hockey" });
+        var sf = t.schermata({ chiara: true, icona: "🏆", titolo: st.vincitore === 1 ? "Hai vinto!" : "Ha vinto l'avversario", sotto: "Air Hockey" });
         sf._contenuto.appendChild(el("div", { style: "text-align:center;font-size:2rem;font-weight:800;margin:10px 0", text: st.s1 + " — " + st.s2 }));
         sf._piede.appendChild(el("button", { class: "btn btn-primario", text: "🔄 Rivincita", onclick: function () { st.fase = "lobby"; render(); } }));
         sf._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "🏠 Chiudi", onclick: function () { rete.chiudi(); t.esci(); } }));
         t.mostra(sf);
       } else {
-        var sg = t.schermata({ icona: "🏒", titolo: "Glow Hockey", sotto: "Tu (blu) in basso · segna in alto", indietro: function () { stop(); rete.chiudi(); t.esci(); } });
+        var sg = t.schermata({ icona: "🏒", titolo: "Air Hockey", sotto: "Tu (blu) in basso · segna in alto", indietro: function () { stop(); rete.chiudi(); t.esci(); } });
         st._badge = el("div", { class: "modulo-nota", style: "text-align:center;margin:2px 0 4px;font-size:.78rem", text: testoCanale(st.canale) });
         sg._contenuto.appendChild(st._badge);
         C = creaCanvas(t, sg);
@@ -1117,7 +1117,7 @@
         t.risultato(vintoIo ? [io, lui] : [lui, io]);
       }
       if (tipo === "attesa") {
-        var s = t.schermata({ chiara: true, icona: "🏒", titolo: "Glow Hockey · Sala", sotto: "Stanza " + codice.toUpperCase(), indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
+        var s = t.schermata({ chiara: true, icona: "🏒", titolo: "Air Hockey · Sala", sotto: "Stanza " + codice.toUpperCase(), indietro: function () { if (S.rete) S.rete.chiudi(); t.esci(); } });
         var dentro = (S.collegato || S.vm);
         if (dentro) {
           s._contenuto.appendChild(el("div", { style: "text-align:center;font-weight:700;color:var(--o-verde, #69db7c);margin-bottom:2px", text: "✅ Sei nella stanza" }));
@@ -1134,12 +1134,12 @@
         t.mostra(s);
       } else if (tipo === "fine") {
         var vinto = S.vm && S.vm.vincitore === 2;
-        var sf = t.schermata({ chiara: true, icona: "🏆", titolo: vinto ? "Hai vinto!" : "Ha vinto l'avversario", sotto: "Glow Hockey" });
+        var sf = t.schermata({ chiara: true, icona: "🏆", titolo: vinto ? "Hai vinto!" : "Ha vinto l'avversario", sotto: "Air Hockey" });
         sf._contenuto.appendChild(el("div", { style: "text-align:center;font-size:2rem;font-weight:800;margin:10px 0", text: (S.vm ? S.vm.s2 : 0) + " — " + (S.vm ? S.vm.s1 : 0) }));
         sf._piede.appendChild(el("p", { class: "modulo-nota", text: "In attesa dell'host per la rivincita…" }));
         t.mostra(sf);
       } else {
-        var sg = t.schermata({ icona: "🏒", titolo: "Glow Hockey", sotto: "Tu (blu) in basso · segna in alto", indietro: function () { stop(); if (S.rete) S.rete.chiudi(); t.esci(); } });
+        var sg = t.schermata({ icona: "🏒", titolo: "Air Hockey", sotto: "Tu (blu) in basso · segna in alto", indietro: function () { stop(); if (S.rete) S.rete.chiudi(); t.esci(); } });
         S._badge = el("div", { class: "modulo-nota", style: "text-align:center;margin:2px 0 4px;font-size:.78rem", text: testoCanale(S.canale) });
         sg._contenuto.appendChild(S._badge);
         S.C = creaCanvas(t, sg);
@@ -1160,7 +1160,7 @@
   }
   function senzaReteHK(t) {
     var s = t.schermata({ chiara: true, icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
-    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Glow Hockey si gioca online, ognuno dal suo telefono: funziona quando il gioco è aperto dal sito pubblicato. Da un file locale non è disponibile." }));
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Air Hockey si gioca online, ognuno dal suo telefono: funziona quando il gioco è aperto dal sito pubblicato. Da un file locale non è disponibile." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
   }

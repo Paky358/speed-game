@@ -853,7 +853,7 @@
     righe.forEach(function (r) { if (r.k === o.mia) mio = r; });
     var titolo = gp.finito ? (mio ? (mio.pos === 1 ? "Hai vinto il Gran Premio!" : "Gran Premio: " + mio.pos + "°") : "Gran Premio finito!")
       : "Gran Premio · corsa " + gp.corsa + " di " + gp.di;
-    var sotto = gp.finito ? "Horto Muso · classifica a punti" : (gp.corsa + 1 >= gp.di ? "🔥 La prossima è l'ultima: punti doppi!" : "Prossima: corsa " + (gp.corsa + 1) + " di " + gp.di);
+    var sotto = gp.finito ? "Al Galoppo! · classifica a punti" : (gp.corsa + 1 >= gp.di ? "🔥 La prossima è l'ultima: punti doppi!" : "Prossima: corsa " + (gp.corsa + 1) + " di " + gp.di);
     var s = t.schermata({ chiara: true, icona: gp.finito ? "🏆" : "🏁", titolo: titolo, sotto: sotto });
     s.classList.add("ho-gp-s");
     function faccia(r) { var cfg = (o.av && r.s >= 0 && o.av[r.s]) || facciaDi(r.nome); return busto(cfg); }
@@ -937,7 +937,7 @@
   function renderFine(t, ord, nomi, io, cn, cb) {
     assicuraStile();
     var el = t.el, guardo = io == null || io < 0, mioPosto = guardo ? 0 : ord.indexOf(io) + 1, vinto = mioPosto === 1;
-    var s = t.schermata({ chiara: true, icona: guardo ? "🏁" : vinto ? "🏆" : "🏁", titolo: guardo ? "Classifica della corsa" : vinto ? "Hai vinto!" : "Arrivato " + mioPosto + "°", sotto: "Horto Muso" });
+    var s = t.schermata({ chiara: true, icona: guardo ? "🏁" : vinto ? "🏆" : "🏁", titolo: guardo ? "Classifica della corsa" : vinto ? "Hai vinto!" : "Arrivato " + mioPosto + "°", sotto: "Al Galoppo!" });
     function faccia(idx) { return busto(ultimiAv[idx] || facciaDi(nomi[idx])); }
     var podio = el("div", { class: "ho-podio" });
     [1, 0, 2].forEach(function (p) {
@@ -1499,7 +1499,7 @@
       renderLobby(t, { codice: m.codice, pronta: m.pronta, sonoHost: false, myId: S.myId, seggi: m.seggi, fuori: m.fuori, guarda: GUARDA }, { onEsci: esci });
     }
     function attesa() {   // finché non arriva la saletta dall'host
-      var s = t.schermata({ chiara: true, icona: GUARDA ? "👀" : "🐎", titolo: GUARDA ? "👀 Guardo la corsa…" : "⏳ Sto entrando…", sotto: "Horto Muso · stanza " + String(codice).toUpperCase(), indietro: esci });
+      var s = t.schermata({ chiara: true, icona: GUARDA ? "👀" : "🐎", titolo: GUARDA ? "👀 Guardo la corsa…" : "⏳ Sto entrando…", sotto: "Al Galoppo! · stanza " + String(codice).toUpperCase(), indietro: esci });
       s._contenuto.appendChild(el("p", { class: "modulo-nota", style: "text-align:center;margin-top:24px", text: "Collegamento in corso…" }));
       t.mostra(s);
     }
@@ -1542,7 +1542,7 @@
   SG.registra({
     id: "horto",
     modi: [{ modo: "bot", icona: "🤖", nome: "Contro i Bot", sotto: "Corri da solo contro i cavalli dei Bot" }],
-    nome: "Horto Muso",
+    nome: "Al Galoppo!",
     icona: "🐎",
     descrizione: "Corsa di cavalli: frusta a ritmo per accelerare, ma occhio all'energia! Contro i bot o online, ognuno dal suo telefono.",
     giocatoriMin: 1, giocatoriMax: 1, difficolta: 1,

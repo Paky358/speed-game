@@ -322,15 +322,15 @@
     { id: "scopa-v", icona: "🂡", testo: "Vinci una partita a Scopa", gioco: "scopa", stat: "vinte", meta: 1, monete: 400, xp: 100 },
     { id: "scopa-s", icona: "🧹", testo: "Fai 3 scope a Scopa", gioco: "scopa", stat: "scope", meta: 3, monete: 400, xp: 80 },
     { id: "scopa-7", icona: "7️⃣", testo: "Prendi il Settebello a Scopa", gioco: "scopa", stat: "settebello", meta: 1, monete: 300, xp: 60 },
-    { id: "hockey-v", icona: "🏒", testo: "Vinci una partita a Glow Hockey", gioco: "hockey", stat: "vittorie", meta: 1, monete: 400, xp: 100 },
-    { id: "hockey-g", icona: "🏒", testo: "Segna 10 gol a Glow Hockey", gioco: "hockey", stat: "golFatti", meta: 10, monete: 300, xp: 60 },
-    { id: "calcio-v", icona: "⚽", testo: "Vinci una partita a Calcio Biliardo", gioco: "calciobiliardo", stat: "vittorie", meta: 1, monete: 400, xp: 100 },
-    { id: "calcio-g", icona: "⚽", testo: "Segna 5 gol a Calcio Biliardo", gioco: "calciobiliardo", stat: "golFatti", meta: 5, monete: 300, xp: 60 },
-    { id: "drop4-v", icona: "🟡", testo: "Vinci una partita a Drop 4", gioco: "drop4", stat: "vinte", meta: 1, monete: 300, xp: 60 },
+    { id: "hockey-v", icona: "🏒", testo: "Vinci una partita ad Air Hockey", gioco: "hockey", stat: "vittorie", meta: 1, monete: 400, xp: 100 },
+    { id: "hockey-g", icona: "🏒", testo: "Segna 10 gol ad Air Hockey", gioco: "hockey", stat: "golFatti", meta: 10, monete: 300, xp: 60 },
+    { id: "calcio-v", icona: "⚽", testo: "Vinci una partita a Calcio a Dischi", gioco: "calciobiliardo", stat: "vittorie", meta: 1, monete: 400, xp: 100 },
+    { id: "calcio-g", icona: "⚽", testo: "Segna 5 gol a Calcio a Dischi", gioco: "calciobiliardo", stat: "golFatti", meta: 5, monete: 300, xp: 60 },
+    { id: "drop4-v", icona: "🟡", testo: "Vinci una partita a Quattro in Fila", gioco: "drop4", stat: "vinte", meta: 1, monete: 300, xp: 60 },
     { id: "navale-n", icona: "🚢", testo: "Affonda 3 navi a Battaglia Navale", gioco: "navale", stat: "naviAffondate", meta: 3, monete: 300, xp: 60 },
     { id: "navale-v", icona: "🚢", testo: "Vinci a Battaglia Navale", gioco: "navale", stat: "vittorie", meta: 1, monete: 400, xp: 100 },
     { id: "poker-v", icona: "♠️", testo: "Vinci una mano di Texas Hold'em", gioco: "poker", stat: "vittorieTexas", meta: 1, monete: 300, xp: 60 },
-    { id: "ruota-p", icona: "🎡", testo: "Gioca alla Ruota della Fortuna", gioco: "ruota", stat: "partite", meta: 1, monete: 250, xp: 50 },
+    { id: "ruota-p", icona: "🎡", testo: "Gioca alla Ruota Fortunata", gioco: "ruota", stat: "partite", meta: 1, monete: 250, xp: 50 },
     { id: "pendolo-p", icona: "🎯", testo: "Gioca 2 partite a Palla a Pendolo", gioco: "pendolo", stat: "partite", meta: 2, monete: 250, xp: 50 }
   ];
   var BONUS_SFIDE = { monete: 1000, xp: 200 };   // tutte e 3 fatte: il forziere

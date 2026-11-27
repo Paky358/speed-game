@@ -1796,7 +1796,7 @@
   }
   function senzaRete(t) {
     var s = t.schermata({ icona: "🔗", titolo: "Serve il sito pubblicato", indietro: t.esci });
-    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Scarabocchio si gioca online, ognuno dal suo telefono: funziona quando il gioco è aperto dal sito pubblicato." }));
+    s._contenuto.appendChild(t.el("p", { style: "font-size:1.05rem;line-height:1.5", text: "Disegna e Indovina si gioca online, ognuno dal suo telefono: funziona quando il gioco è aperto dal sito pubblicato." }));
     s._piede.appendChild(t.el("button", { class: "btn btn-primario", text: "Ok", onclick: t.esci }));
     t.mostra(s);
   }
@@ -1804,7 +1804,7 @@
   SG.registra({
     id: "scarabocchio",
     tema: "oro",   // 🤍 Bianco e oro: tutto il gioco è chiaro (le regole di stile stanno in fondo allo stile, sotto .oro.g-scarabocchio)
-    nome: "Scarabocchio",
+    nome: "Disegna e Indovina",
     icona: "🎨",
     descrizione: "Uno disegna una parola segreta, gli altri la indovinano scrivendo in chat: prendi tanti punti quanti secondi mancano. Si gioca online, ognuno dal suo telefono. Da 2 a 10.",
     giocatoriMin: 2, giocatoriMax: 10, difficolta: 1,

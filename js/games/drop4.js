@@ -221,7 +221,7 @@
   SG.registra({
     id: "drop4",
     tema: "oro",   // 🤍 Bianco e oro: tutto il gioco è chiaro
-    nome: "Drop 4",
+    nome: "Quattro in Fila",
     icona: "🟡",
     descrizione: "Quattro in fila a gravità: fai cadere le pedine in colonna e allinea quattro dello stesso colore. Contro il Bot, in due o online.",
     giocatoriMin: 1, giocatoriMax: 2, difficolta: 2,

@@ -1008,9 +1008,9 @@
   SG.registra({
     id: "sipero",
     tema: "oro",   // 🤍 Bianco e oro: tutto il gioco è chiaro (le regole di stile stanno in fondo allo stile, sotto .oro.g-sipero)
-    nome: "Sì... però",
+    nome: "Una Vita Perfetta… Quasi",
     icona: "🤨",
-    descrizione: "Costruite lo scenario di vita migliore (a squadre o ognuno per sé) e rovinate quello degli altri a colpi di Malus. Il giudice decide chi vince.",
+    descrizione: "Costruite la vita perfetta a colpi di Bonus… e rovinate quella degli altri coi Malus. Il giudice sceglie chi vince.",
     giocatoriMin: MIN,
     modi: [{ modo: "telefono", icona: "📱", nome: "Su questo telefono", sotto: "Vi passate il telefono: le carte restano segrete", amici: true }],
     giocatoriMax: MAX,

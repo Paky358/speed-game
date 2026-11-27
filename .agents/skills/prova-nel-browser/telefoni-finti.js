@@ -410,8 +410,15 @@ window.chiudiApp = async function (nome, opz) {
 window.codici = () => Object.keys(BR.retained).filter(k => k.endsWith("/meta")).map(k => k.split("/")[2]);
 // (n: la foto trattenuta sull'ufficio n; senza: il primo)
 window.statoStanza = (cod, n) => { try { return JSON.parse(ufficio(+n || 0).retained["seratagiochi/v1/" + cod + "/stato"] || "null"); } catch (e) { return null; } };
+// 🏷️ (27 nov 2026) 13 giochi hanno un nome nuovo: le prove scritte prima cercano ancora le tessere col nome vecchio.
+// nomeOra("Scarabocchio") = "Disegna e Indovina" (i nomi che non sono qui restano come sono).
+window.NOMI_NUOVI = { "Scarabocchio": "Disegna e Indovina", "L'Impostore": "L'Infiltrato", "Pecora Nera": "Tutti d'Accordo", "Parola d'ordine": "Parole in Codice",
+  "Drop 4": "Quattro in Fila", "Calcio Biliardo": "Calcio a Dischi", "Da dove viene?": "Indovina il Paese", "Sì... però": "Una Vita Perfetta… Quasi", "Horto Muso": "Al Galoppo!",
+  "La Ruota della Fortuna": "La Ruota Fortunata", "Il Prezzo è Giusto!": "Indovina il prezzo", "Il Prezzo è Giusto": "Indovina il prezzo", "Mini Asta Fantacalcio": "Mini Asta del Fanta", "Glow Hockey": "Air Hockey" };
+window.nomeOra = n => (typeof n === "string" && window.NOMI_NUOVI[n]) || n;
 // l'host apre una stanza online di un gioco (nome come nella tessera, es. "Tris"): restituisce il codice
 window.apriStanza = async function (w, nomeGioco) {
+  nomeGioco = nomeOra(nomeGioco);
   const tess = await aspetta(() => [...w.document.querySelectorAll(".tessera")].find(t => (t.querySelector("h2") || {}).textContent === nomeGioco), 5000);
   if (!tess) throw new Error("non trovo la tessera " + nomeGioco);
   tess.click(); await dorme(200);
