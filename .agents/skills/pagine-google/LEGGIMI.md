@@ -13,9 +13,13 @@ L'app si disegna con JavaScript: Google ne legge pochissimo. Per farci trovare d
   l'app apre «Come giocate?» di quel gioco, dopo il profilo se serve), 370-500 parole, sei altri giochi, note sui marchi.
 - `revelhouse.it/giochi/`: tutti i giochi, per categoria. `sitemap.xml` e `robots.txt` alla radice.
 - Stile: `pagine/pagine.css` (quello di privacy e regole) + `pagine/giochi.css`.
-- 🕓 **In attesa** (`IN_ATTESA` in fai-pagine.js, il Cervello 27 nov 2026): Mini Asta, Ruota e Prezzo portano nomi di altri e NON vanno online
-  finché il proprietario non decide i nomi: le pagine si preparano in `sito-in-attesa/giochi/` (mini-asta, ruota, prezzo: indirizzi neutri,
-  restano anche se il nome cambia), fuori dalla mappa, dagli elenchi e dai link. Per pubblicarne una si toglie da `IN_ATTESA` e si rifà tutto.
+- 🕓 **In attesa** (`IN_ATTESA` in fai-pagine.js): una pagina che non deve ancora andare online si prepara in `sito-in-attesa/giochi/`, fuori
+  dalla mappa, dagli elenchi e dai link. Mini Asta, Ruota e Prezzo ci sono state finché il proprietario non ha scelto i nomi nuovi (27 nov 2026):
+  oggi non c'è nessuna pagina in attesa.
+- 🏷️ **I nomi nuovi** (27 nov 2026): `NOMI` in fai-pagine.js dà già i nomi scelti dal proprietario (Disegna e Indovina, L'Infiltrato, Tutti
+  d'Accordo, Parole in Codice, Quattro in Fila, Calcio a Dischi, Indovina il Paese, Una Vita Perfetta… Quasi, Al Galoppo!, La Ruota Fortunata,
+  Indovina il prezzo, Mini Asta del Fanta, Air Hockey), anche se le schede dell'app dicono ancora quelli di prima. Gli indirizzi seguono i nomi
+  nuovi (/giochi/infiltrato/, /giochi/disegna-e-indovina/…); Mini Asta, Ruota e Prezzo tengono quelli neutri (/giochi/mini-asta/, /ruota/, /prezzo/).
 - La cartella `dist/giochi/` contiene anche i pezzi dei giochi (`<pezzo>.<impronta>.js`): le pagine sono cartelle, non si toccano.
 
 ## Come si rifà
@@ -33,6 +37,8 @@ Gli indirizzi delle pagine NON si cambiano (Google li ricorda). Un gioco che si 
 ## Regole dei testi
 - Italiano semplice e caldo, niente promesse false: «gratis» e «senza pubblicità» sono veri (regole.html); MAI «senza registrazione»
   (il profilo c'è), niente durate inventate, numeri di giocatori solo dalle schede.
-- MAI nomi di giochi in scatola, app, programmi TV o presentatori di altri (Codenames, Taboo, Forza 4…). Solo i nomi che i giochi hanno già
-  nell'app (Ruota della Fortuna, Il Prezzo è Giusto, Fantacalcio): titoli generici, nessun «come in TV», e la nota in fondo (`marchi`).
+- MAI nomi di giochi in scatola, app, programmi TV o presentatori di altri (Codenames, Taboo, Forza 4…), né come titolo né nei testi.
+  Le parole che la gente cerca sì, ma come descrizione e MAI come nome: «il gioco dell'impostore», «indovina il paese dal piatto», «green flag e
+  red flag», «il calcio con le pedine», «l'asta del fantacalcio» (per «Fantacalcio» c'è la nota in fondo alla pagina, `marchi`).
+  Il perché dei nomi e le ricerche di Google: D:/SG-nomi/giochi/LEGGIMI.md.
 - Black Jack e Poker: sempre chiaro che le monete sono finte.

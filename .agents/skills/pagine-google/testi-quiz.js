@@ -35,10 +35,10 @@ module.exports = {
     ]
   },
   dadoveviene: {
-    titolo: "Da dove viene? Indovina il piatto del mondo",
-    descr: "Gioca a Da dove viene? con gli amici, gratis dal telefono: guarda la foto di un piatto o drink e indovina da che paese arriva. Fuoco o ghiaccio!",
-    h1: "Da dove viene? Indovina il paese di un piatto o di un drink",
-    intro: "Compare la foto vera di un piatto o di un drink da tutto il mondo. Voi lo guardate, ne discutete e provate a indovinare: da che paese viene?",
+    titolo: "Indovina il Paese: da dove viene questo piatto?",
+    descr: "Gioca a Indovina il Paese con gli amici, gratis dal telefono: guarda la foto di un piatto o di un drink e indovina da che paese arriva. Fuoco o ghiaccio!",
+    h1: "Indovina il Paese: da dove viene questo piatto o questo drink?",
+    intro: "Compare la foto vera di un piatto o di un drink da tutto il mondo. Voi lo guardate, ne discutete e provate a indovinare il paese dal piatto: da dove viene?",
     sezioni: [
       { t: "Come si gioca", p: ["Avete 3 tentativi. Dopo ogni errore il gioco vi dice quanto siete lontani e in che direzione, con una freccia: Fuoco, Caldo, Tiepido, Freddo, Lontanissimo."], li: ["All'inizio vedete la foto e gli ingredienti.", "Dopo il primo errore scoprite come si prepara.", "Dopo il secondo, il nome.", "Alla fine una scheda con il paese e una curiosità.", "3 punti al primo tentativo, 2 al secondo, 1 al terzo."] },
       { t: "Gioca come vuoi", p: ["Tutti in squadra: giocate insieme e contate quanti punti fate. Oppure a due squadre: stesso piatto per tutte e due, i tentativi dell'altra squadra si vedono solo alla fine e vince chi fa più punti. Alcuni piatti hanno più paesi giusti, e c'è chi litiga volentieri su quale sia quello vero."] },
@@ -59,7 +59,7 @@ module.exports = {
   prezzo: {
     titolo: "Indovina il prezzo: il quiz dei prezzi con gli amici",
     descr: "Quanto costa? Indovina i prezzi di cose vere con gli amici, gratis dal telefono: l'Offerta, i giochi a premi e la Vetrina finale. Da 1 a 8 giocatori.",
-    h1: "Il Prezzo è Giusto: quanto costa? Indovinalo prima degli amici",
+    h1: "Indovina il prezzo: quanto costa? Scoprilo prima degli amici",
     intro: "Compare un prodotto vero, tu scrivi quanto pensi che costi. Vince chi ci va più vicino senza sforare! Ispirato ai quiz della televisione, ma da fare tra amici, dal telefono.",
     sezioni: [
       { t: "Come si gioca", p: ["Si parte con l'Offerta: si apre il sipario, esce un prodotto e avete 20 secondi per scrivere il prezzo. Vince chi ci va più vicino senza superarlo. Se sforate tutti, si rifà una volta sola."], li: ["Chi vince l'Offerta sceglie un gioco a premi, e giocate tutti insieme.", "La Ruota del 100: vince chi si avvicina di più a 100 senza superarlo.", "La Vetrina finale: tanti premi insieme, offerta segreta sul totale, vince chi si avvicina di più.", "In alternativa c'è la modalità Solo il prezzo: un oggetto dopo l'altro."] },
@@ -68,9 +68,9 @@ module.exports = {
     ]
   },
   ruota: {
-    titolo: "Gira la ruota e indovina la frase, con gli amici",
+    titolo: "La Ruota Fortunata: gira e indovina la frase",
     descr: "Gira la ruota, chiama le consonanti, compra le vocali e indovina la frase prima degli altri. Gratis dal telefono, con gli amici o contro i Bot, da 1 a 4.",
-    h1: "La Ruota della Fortuna: gira, chiama le lettere, indovina la frase",
+    h1: "La Ruota Fortunata: gira, chiama le lettere, indovina la frase",
     intro: "Una frase nascosta, una ruota da far girare e tanta suspense. Chiama le consonanti, compra le vocali e prova a risolvere prima degli altri. Ispirato ai quiz della televisione, ora sul tuo telefono.",
     sezioni: [
       { t: "Come si gioca", p: ["Si sa solo la categoria della frase. Nel tuo turno giri la ruota e chiami una consonante: guadagni quello che dice lo spicchio per ogni lettera presente. Se non c'è, il turno passa."], li: ["Bancarotta: perdi i soldi della manche.", "Passa: perdi il turno.", "Raddoppia: i soldi della manche diventano il doppio.", "Con abbastanza soldi puoi comprare una vocale.", "Quando credi di saperla, risolvi."] },
@@ -101,9 +101,9 @@ module.exports = {
     ]
   },
   horto: {
-    titolo: "Horto Muso: corsa di cavalli online con amici",
-    descr: "Gioca a Horto Muso, la corsa di cavalli da telefono, gratis: frusta a ritmo per accelerare e gestisci l'energia. Contro i Bot o online fino a 8.",
-    h1: "Horto Muso: la corsa di cavalli da fare con gli amici",
+    titolo: "Al Galoppo! La corsa dei cavalli con gli amici",
+    descr: "Al Galoppo! è la corsa dei cavalli dal telefono, gratis: frusta a ritmo per accelerare e gestisci l'energia. Contro i Bot o online fino a 8.",
+    h1: "Al Galoppo! La corsa dei cavalli da fare con gli amici",
     intro: "Cancelletti aperti, si parte! Tocca la frusta a ritmo giusto per dare la spinta al tuo cavallo, ma occhio all'energia: se la finisci, ti fermi sul più bello.",
     sezioni: [
       { t: "Come si corre", p: ["La corsa è su 1.000 metri, corsie dritte per tutti, e la telecamera segue il gruppo. I cavalli corrono da soli a una velocità minima. Ogni tocco su FRUSTA dà una spinta per un attimo."], li: ["Tocca a ritmo, non a raffica: toccare mentre la spinta dura spreca energia.", "Ogni frustata consuma energia, e se non frusti si ricarica.", "A energia zero il cavallo è sfinito: rallenta e per 3 secondi non puoi frustare.", "Tieni qualcosa per lo scatto finale!", "Vince il primo al traguardo; nei testa a testa decide il foto-finish."] },

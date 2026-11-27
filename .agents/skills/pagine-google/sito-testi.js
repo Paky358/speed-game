@@ -8,7 +8,7 @@ module.exports = {
   // la pagina d'ingresso: <title> e descrizione (stanno in app/testa.html e in index.html: le scrive fai-pagine.js)
   ingresso: {
     titolo: "Revel House · giochi da fare con gli amici, online e dal telefono",
-    descr: "Giochi per le serate con gli amici, gratis dal telefono: ognuno dal suo o passandovelo. L'Impostore, Pecora Nera, Scarabocchio, la Linea del tempo e tanti altri.",
+    descr: "Giochi per le serate con gli amici, gratis dal telefono: ognuno dal suo o passandovelo. L'Infiltrato, Tutti d'Accordo, Disegna e Indovina e tanti altri.",
     h1: "Revel House: giochi da fare con gli amici, dal telefono",
     p: [
       "Revel House è una raccolta di giochi per le serate con gli amici. Si gioca dal telefono, gratis e senza pubblicità: ognuno dal suo, anche da città diverse, oppure tutti intorno a un telefono solo che passa di mano in mano.",
@@ -40,9 +40,7 @@ module.exports = {
 
   // le note in fondo alle pagine che portano un nome di altri (non siamo affiliati)
   marchi: {
-    astafanta: "«Fantacalcio» è un marchio registrato dei suoi proprietari. La Mini Asta è un gioco amatoriale di Revel House: non è affiliata, sponsorizzata né approvata da loro, e non usa i loro servizi.",
-    ruota: "«La Ruota della Fortuna» è un marchio dei rispettivi proprietari. Questo è un gioco amatoriale di Revel House: non è il programma televisivo, non è affiliato né approvato da chi lo produce.",
-    prezzo: "«Il Prezzo è Giusto» è un marchio dei rispettivi proprietari. Questo è un gioco amatoriale di Revel House: non è il programma televisivo, non è affiliato né approvato da chi lo produce."
+    astafanta: "«Fantacalcio» è un marchio registrato dei suoi proprietari. La Mini Asta del Fanta è un gioco amatoriale di Revel House: non è affiliata, sponsorizzata né approvata da loro, e non usa i loro servizi."
   },
   marchiTutti: "Revel House è un progetto amatoriale e gratuito. I nomi di giochi, programmi e marchi citati appartengono ai loro proprietari: Revel House non è affiliata a nessuno di loro."
 };

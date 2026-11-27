@@ -1,25 +1,25 @@
 module.exports = {
   pecoranera: {
-    titolo: "Pecora Nera: il gioco del gregge con gli amici",
-    descr: "Pecora Nera: tutti rispondono alla stessa domanda e vince chi scrive la risposta più scontata. Online con gli amici o su un telefono solo, gratis.",
-    h1: "Pecora Nera: vince chi pensa come il gregge",
-    intro: "Esce una domanda, tutti scrivono di nascosto la prima risposta che viene in mente a tutti. Chi si distingue dal gruppo resta a bocca asciutta: qui vince chi segue il gregge. Si gioca dal telefono, in compagnia, da 3 a 10 persone.",
+    titolo: "Tutti d'Accordo: il gioco della risposta più scontata",
+    descr: "Tutti d'Accordo: tutti rispondono alla stessa domanda e vince chi scrive la risposta più scontata. Online con gli amici o su un telefono solo, gratis.",
+    h1: "Tutti d'Accordo: vince chi la pensa come il gruppo",
+    intro: "Esce una domanda, tutti scrivono di nascosto la prima risposta che viene in mente a tutti. Chi si distingue resta a bocca asciutta: qui vince chi la pensa come tutti gli altri. Si gioca dal telefono, in compagnia, da 3 a 10 persone.",
     sezioni: [
       { t: "Come si gioca", p: ["A ogni round c'è una domanda uguale per tutti, per esempio un frutto, un animale o una cosa da portare al mare. Scrivi la risposta che pensi scriveranno gli altri. Non quella originale: quella più scontata."],
         li: ["Si prendono tanti punti quante sono le persone che hanno scritto la tua stessa risposta, te compreso.", "Se in tre scrivete la stessa cosa, sono 3 punti a testa. Se resti da solo, prendi 0.", "Maiuscole, accenti, articoli e piccoli errori non contano. Se due risposte per voi sono la stessa cosa, le toccate e si uniscono.", "Vince il primo che arriva al traguardo: più siete, più è lontano."] },
       { t: "Online o su un telefono solo", p: ["Online ognuno gioca dal proprio telefono: chi apre la serata manda il codice o il link su WhatsApp e gli amici entrano in un attimo. Le risposte restano segrete finché non si svelano.", "Se siete tutti nella stessa stanza potete anche giocare su un telefono solo, passandolo di mano in mano: ognuno scrive di nascosto la sua risposta."] },
-      { t: "Perché fa ridere", p: ["Il bello è la rivelazione: le risposte escono una persona alla volta e si scopre chi ha pensato come chi. Ci sono sempre quelli che erano sicuri di essere nel gregge e invece no, e quelli che hanno fatto centro tutti insieme.", "È un gioco veloce, senza regole difficili: va bene per aprire una serata, per aspettare la pizza o per fare due risate con amici e parenti. Gratis e senza pubblicità."] }
+      { t: "Perché fa ridere", p: ["Il bello è la rivelazione: le risposte escono una persona alla volta e si scopre chi ha pensato come chi. Ci sono sempre quelli che erano sicuri di pensarla come tutti e invece no, e quelli che hanno fatto centro tutti insieme.", "È un gioco veloce, senza regole difficili: va bene per aprire una serata, per aspettare la pizza o per fare due risate con amici e parenti. Gratis e senza pubblicità."] }
     ]
   },
 
   impostore: {
-    titolo: "Il gioco dell'Impostore online con gli amici",
-    descr: "Il gioco dell'Impostore da fare con gli amici dal telefono: tutti hanno la stessa parola tranne uno. Scoprite chi bluffa. Gratis, online o su un telefono.",
-    h1: "L'Impostore: scoprite chi non conosce la parola",
-    intro: "Tutti hanno la stessa parola segreta, tranne uno: l'impostore. A turno dite un indizio senza svelare troppo, poi votate. Riuscirete a scoprire chi sta bluffando prima che la faccia franca?",
+    titolo: "L'Infiltrato: il gioco dell'impostore con gli amici",
+    descr: "L'Infiltrato è il gioco dell'impostore da fare con gli amici dal telefono: tutti hanno la stessa parola tranne uno. Scoprite chi bluffa. Gratis.",
+    h1: "L'Infiltrato: scoprite chi non conosce la parola",
+    intro: "Tutti hanno la stessa parola segreta, tranne uno: l'infiltrato. È il gioco dell'impostore delle serate in compagnia: a turno dite un indizio senza svelare troppo, poi votate. Riuscirete a scoprire chi sta bluffando prima che la faccia franca?",
     sezioni: [
-      { t: "Come si gioca", p: ["Ognuno vede la propria parola in segreto. Poi, a turno, dite a voce (o scrivete) una parola legata alla vostra, senza essere troppo chiari: se siete troppo vaghi sembrate voi l'impostore, se siete troppo precisi lo aiutate.", "Quando tutti hanno parlato si discute e si vota in segreto."],
-        li: ["Chi vota l'impostore prende 2 punti.", "L'impostore scoperto ha un'ultima possibilità: se indovina la parola degli altri si salva e prende punti.", "Da 4 giocatori può esserci anche una spia, che ha una parola simile a quella degli altri.", "Se volete più suspense c'è la modalità a eliminazione: dopo ogni voto esce uno, finché l'impostore è fuori o ne restano due."] },
+      { t: "Come si gioca", p: ["Ognuno vede la propria parola in segreto. Poi, a turno, dite a voce (o scrivete) una parola legata alla vostra, senza essere troppo chiari: se siete troppo vaghi sembrate voi l'infiltrato, se siete troppo precisi lo aiutate.", "Quando tutti hanno parlato si discute e si vota in segreto."],
+        li: ["Chi vota l'infiltrato prende 2 punti.", "L'infiltrato scoperto ha un'ultima possibilità: se indovina la parola degli altri si salva e prende punti.", "Da 4 giocatori può esserci anche una spia, che ha una parola simile a quella degli altri.", "Se volete più suspense c'è la modalità a eliminazione: dopo ogni voto esce uno, finché l'infiltrato è fuori o ne restano due."] },
       { t: "Online o sullo stesso telefono", p: ["Da 3 a 10 persone. Online ognuno guarda la sua parola sul proprio telefono e gli indizi si svelano tutti insieme. Chi apre la partita manda il link su WhatsApp e gli amici entrano subito.", "Se siete tutti nella stessa stanza basta un telefono solo: passa di mano e ognuno tiene premuto per leggere la sua parola, poi lo ripassa."] },
       { t: "Perché è divertente", p: ["È il gioco perfetto per le serate in compagnia: bastano due minuti per spiegarlo e ogni partita finisce con accuse, sospetti e risate. Chi ha la faccia da santo mente meglio di tutti, e di solito è proprio chi ve l'aspettate meno.", "È gratis e senza pubblicità."] }
     ]
@@ -39,9 +39,9 @@ module.exports = {
   },
 
   ordine: {
-    titolo: "Parola d'ordine: indizi e parole a squadre",
+    titolo: "Parole in Codice: il gioco di parole a squadre",
     descr: "Il gioco di parole a squadre da fare con gli amici dal telefono: il capo dà un indizio e voi trovate le parole giuste. Attenti alla parola nera! Gratis.",
-    h1: "Parola d'ordine: un indizio, tante parole da trovare",
+    h1: "Parole in Codice: un indizio, tante parole da trovare",
     intro: "Un tabellone di parole, due o tre squadre e un capo per squadra che dà un solo indizio. Riuscirete a trovare le vostre parole senza toccare la parola nera, quella che fa perdere? Un gioco di parole da fare in compagnia, online dal telefono.",
     sezioni: [
       { t: "Come si gioca", p: ["Sul tabellone ci sono 25 parole: alcune sono della vostra squadra, altre degli avversari, alcune di nessuno e una è la parola nera. Solo i capi vedono di chi è ogni parola.", "Il capo dà un indizio di una sola parola e un numero: quante parole della squadra c'entrano. Per esempio «Caldo, 2»."],
@@ -52,15 +52,15 @@ module.exports = {
   },
 
   scarabocchio: {
-    titolo: "Scarabocchio: disegna e indovina online",
-    descr: "Scarabocchio: uno disegna una parola segreta, gli altri indovinano scrivendo in chat. Gioco gratis da fare online con gli amici, da 2 a 10.",
-    h1: "Scarabocchio: disegna e fai indovinare agli amici",
-    intro: "A turno uno di voi disegna una parola segreta sulla lavagna, tutti gli altri provano a indovinarla scrivendo in chat. Più sei veloce, più punti prendi. Non serve saper disegnare: anzi, gli scarabocchi peggiori sono i più divertenti.",
+    titolo: "Disegna e Indovina: il gioco di disegno online",
+    descr: "Disegna e Indovina: uno disegna una parola segreta, gli altri indovinano scrivendo in chat. Gioco gratis da fare online con gli amici, da 2 a 10.",
+    h1: "Disegna e Indovina: fai indovinare la parola agli amici",
+    intro: "A turno uno di voi disegna una parola segreta sulla lavagna, tutti gli altri provano a indovinarla scrivendo in chat. Più sei veloce, più punti prendi. Non serve saper disegnare: anzi, i disegni peggiori sono i più divertenti.",
     sezioni: [
       { t: "Come si gioca", p: ["Chi disegna sceglie una parola tra tre e la disegna: gli altri vedono il disegno comparire in tempo reale. Per indovinare si scrive nella chat. Se la risposta è giusta non la vede nessuno, compare solo «Marco ha indovinato!»."],
         li: ["Chi indovina prende tanti punti quanti sono i secondi che restano sul timer.", "Il primo che indovina prende 10 punti in più.", "Chi disegna prende punti per ogni amico che indovina.", "Mentre il tempo passa si scoprono alcune lettere della parola.", "Chi disegna non può scrivere lettere o numeri sulla lavagna."] },
       { t: "Gli strumenti del disegno", p: ["Hai tanti colori, la gomma, diverse grandezze, la linea dritta, il tondo e il secchiello per riempire una zona con un tocco. Se sbagli, annulli.", "Potete anche scrivere le parole del vostro gruppo: nomi di amici, posti, battute. Si giocano insieme a quelle del gioco."] },
-      { t: "Solo online, ognuno dal suo telefono", p: ["Scarabocchio si gioca online da 2 a 10 persone: chi apre la serata manda il codice o il link su WhatsApp e gli amici entrano.", "È gratis, senza pubblicità, e va bene per la serata, per i viaggi in auto o per ammazzare l'attesa a una cena."] }
+      { t: "Solo online, ognuno dal suo telefono", p: ["Disegna e Indovina si gioca online da 2 a 10 persone: chi apre la serata manda il codice o il link su WhatsApp e gli amici entrano.", "È gratis, senza pubblicità, e va bene per la serata, per i viaggi in auto o per ammazzare l'attesa a una cena."] }
     ]
   },
 
@@ -104,10 +104,10 @@ module.exports = {
   },
 
   sipero: {
-    titolo: "Sì... però: il gioco dei guai e dei bonus",
+    titolo: "Una Vita Perfetta… Quasi: bonus, malus e risate",
     descr: "Costruite lo scenario di vita migliore e rovinate quello degli altri con i Malus: il giudice decide chi vince. Gioco gratis per serate con gli amici.",
-    h1: "Sì... però: bonus bellissimi, guai assicurati",
-    intro: "Immagina una vita perfetta: sì, però. Ogni squadra costruisce lo scenario più bello con le carte Bonus e rovina quello degli altri con i Malus. Poi un giudice sceglie la vita che vorrebbe vivere. Si gioca con gli amici, da 3 a 10 persone.",
+    h1: "Una Vita Perfetta… Quasi: bonus bellissimi, guai assicurati",
+    intro: "Immagina una vita perfetta… quasi. Pregi e difetti, green flag e red flag: ogni squadra costruisce lo scenario più bello con le carte Bonus e rovina quello degli altri con i Malus. Poi un giudice sceglie la vita che vorrebbe vivere. Si gioca con gli amici, da 3 a 10 persone.",
     sezioni: [
       { t: "Come si gioca", p: ["A ogni round uno di voi fa il giudice (a turno, tutti lo stesso numero di volte) e gli altri si dividono in due squadre. Le squadre giocano le carte a turno: i Bonus rendono più bello il proprio scenario, i Malus rovinano quello avversario."],
         li: ["Il tavolo si vede sempre: scegliete il Malus che incastra meglio.", "Tenendo premuta una carta la leggi in grande.", "Poi ogni squadra convince il giudice a voce che il suo scenario, guai compresi, è il migliore.", "Il giudice sceglie la squadra vincente e chi ne fa parte prende un punto.", "Vince chi ha più punti alla fine."] },
@@ -123,7 +123,7 @@ module.exports = {
     intro: "A turno uno di voi è sotto torchio e le domande parlano di lui. Scegliete l'immagine giusta, scrivete la battuta, fate il disegno. Vince chi la pensa come gli amici. Un gioco da serate in compagnia, ognuno dal suo telefono.",
     sezioni: [
       { t: "Come si gioca", p: ["In ogni posto buffo uno di voi è il protagonista: le domande sono su di lui. Ci sono quattro tipi di sfida: scegliere la carta immagine giusta, scrivere una battuta, fare un disegno oppure toccare la faccia di un amico."],
-        li: ["Prendi 100 punti per ogni amico che sceglie come te.", "Chi scrive la battuta o fa il disegno più votato prende altri 100 punti.", "Hai tre jolly che raddoppiano i punti di una domanda.", "Se votate tutti uguale scatta TUTTI D'ACCORDO e tutti prendono 100 punti."] },
+        li: ["Prendi 100 punti per ogni amico che sceglie come te.", "Chi scrive la battuta o fa il disegno più votato prende altri 100 punti.", "Hai tre jolly che raddoppiano i punti di una domanda.", "Se votate tutti uguale, tutti prendono 100 punti."] },
       { t: "Selfie e finale", p: ["All'inizio ognuno si fa un selfie con un filtro buffo, oppure sceglie una foto: la vede solo chi è entrato dal link della serata e sparisce quando uscite.", "Il gran finale è «Passa il ritratto!»: la faccia di un amico passa di telefono in telefono e ognuno ci aggiunge qualcosa. Punti doppi."] },
       { t: "Solo online, da 3 a 10", p: ["Chi di Noi? si gioca online, ognuno dal proprio telefono: chi apre la serata manda il link su WhatsApp e gli amici entrano.", "È gratis e senza pubblicità. Ideale con quelli che pensate di conoscere bene."] }
     ]

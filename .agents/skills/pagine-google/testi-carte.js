@@ -88,9 +88,9 @@ module.exports = {
   },
 
   drop4: {
-    titolo: "Drop 4 online: quattro in fila, gratis",
-    descr: "Gioca online a Drop 4, il gioco delle quattro pedine in fila: contro il Bot, con un amico sullo stesso telefono o online. Gratis, dal telefono.",
-    h1: "Drop 4: allinea quattro pedine, online o sullo stesso telefono",
+    titolo: "Quattro in Fila online: allinea le pedine, gratis",
+    descr: "Gioca online a Quattro in Fila, il gioco delle pedine da allineare: contro il Bot, con un amico sullo stesso telefono o online. Gratis, dal telefono.",
+    h1: "Quattro in Fila: allinea quattro pedine, online o sullo stesso telefono",
     intro: "Fai cadere le pedine, allinea quattro dello stesso colore e batti l'amico. Regole semplicissime, partite veloci e tanta voglia di rivincita. Si gioca gratis dal telefono.",
     sezioni: [
       { t: "Le regole", p: ["La griglia ha 7 colonne e 6 righe. Si gioca a turno: un colore è Giallo, l'altro Bianco. Nel tuo turno tocchi una colonna e la pedina cade in fondo, sul primo posto libero. Puoi anche tenere il dito sullo schermo e spostarlo, poi lasciare per far cadere la pedina."],
@@ -101,9 +101,9 @@ module.exports = {
   },
 
   hockey: {
-    titolo: "Glow Hockey: air hockey al neon gratis",
+    titolo: "Air Hockey al neon gratis, contro il Bot o un amico",
     descr: "Gioca ad air hockey al neon dal telefono: sfida il Bot (Facile, Medio o Difficile) o un amico sullo stesso telefono. Colpisci il disco e segna. Gratis!",
-    h1: "Glow Hockey: air hockey al neon contro il Bot o un amico",
+    h1: "Air Hockey: il disco al neon contro il Bot o un amico",
     intro: "Un campo da air hockey che brilla al neon, nel telefono. Muovi la racchetta col dito, colpisci il disco e segna nella porta di fronte. Perfetto per le sfide a due.",
     sezioni: [
       { t: "Come si gioca", p: ["Con il dito muovi la racchetta nella tua metà campo: la linea del centro non si può superare. Colpisci il disco e mandalo nella porta avversaria. Vince chi arriva per primo ai gol scelti: 3, 5 o 7.", "Dopo un gol il disco cade dall'alto nella metà di chi l'ha subito."],
@@ -114,10 +114,10 @@ module.exports = {
   },
 
   calciobiliardo: {
-    titolo: "Calcio Biliardo online: calcio a dischi, gratis",
-    descr: "Gioca a Calcio Biliardo dal telefono: tira i calciatori come una fionda e fai gol. Da 1 contro 1 a 2 contro 2, anche coi Bot, online o in compagnia.",
-    h1: "Calcio Biliardo: il calcio coi dischi, da soli o a squadre",
-    intro: "Tiri indietro un calciatore come una fionda, colpisci la palla e fai gol. Un calcio da tavolo da giocare sul telefono, contro il Bot, con un amico o a squadre. Gratis.",
+    titolo: "Calcio a Dischi: il calcio con le pedine, gratis",
+    descr: "Gioca a Calcio a Dischi dal telefono: tira i calciatori come una fionda e fai gol. Da 1 contro 1 a 2 contro 2, anche coi Bot, online o in compagnia.",
+    h1: "Calcio a Dischi: il calcio con le pedine, da soli o a squadre",
+    intro: "Tiri indietro un calciatore come una fionda, colpisci la palla e fai gol. È il calcio con le pedine, da giocare sul telefono: contro il Bot, con un amico o a squadre. Gratis.",
     sezioni: [
       { t: "Come si tira", p: ["Ogni squadra ha 5 calciatori, 6 nelle partite a squadre. A turno se ne tira uno: toccalo, tira indietro il dito e lascia. Più tiri indietro, più forte parte. I calciatori rimbalzano sui bordi e colpiscono la palla e gli altri calciatori. L'obiettivo è far entrare la palla nella porta avversaria.", "Dopo un gol si riparte dal centro: batte chi ha preso gol."] },
       { t: "Chi gioca e come", p: ["Si gioca in 1 contro 1, in 2 contro 1 o in 2 contro 2, con persone e Bot mescolati come volete. Si vince arrivando per primi ai gol scelti, oppure con più gol allo scadere nella partita a tempo. Se finisce pari ci sono i rigori.", "Potete giocare contro il Bot, sullo stesso telefono, oppure online in due. Chi apre la partita manda il codice o il link su WhatsApp. Online avete 30 secondi per tirare."] },

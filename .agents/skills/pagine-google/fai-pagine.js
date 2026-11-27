@@ -20,19 +20,26 @@ function scrivi(f, s) { var p = path.join(R, f); fs.mkdirSync(path.dirname(p), {
 var T = require("./sito-testi.js"), SITO = T.sito;
 // i giochi SENZA pagina oltre ai nascosti: Lanterne è di Mario (non si tocca); Palla a Pendolo e Taboo stanno per essere nascosti
 var NO_PAGINA = { lanterne: 1, pendolo: 1, taboo: 1 };
-// 🕓 le pagine IN ATTESA (il Cervello, 27 nov 2026): portano un nome di altri (Fantacalcio, Ruota della Fortuna, Il Prezzo è Giusto) e non
-// vanno online finché il proprietario non decide i nomi. Si preparano in sito-in-attesa/ (la costruzione NON la copia), fuori dalla mappa,
-// dagli elenchi e dai link. Per pubblicarne una: via da qui, rifai le pagine e la costruzione.
-var IN_ATTESA = { astafanta: 1, ruota: 1, prezzo: 1 };
+// 🕓 le pagine IN ATTESA: si preparano in sito-in-attesa/ (la costruzione NON la copia), fuori dalla mappa, dagli elenchi e dai link.
+// Per pubblicarne una: via da qui, rifai le pagine e la costruzione. Mini Asta, Ruota e Prezzo hanno aspettato i nomi nuovi
+// fino al 27 nov 2026 (il proprietario li ha scelti: ora sono accese).
+var IN_ATTESA = {};
+// 🏷️ i nomi nuovi dei giochi (scelti dal proprietario il 27 nov 2026): li mette nell'app la chat dei nomi (ramo nomi-nuovi); qui valgono
+// già, così le pagine escono coi nomi giusti anche se le schede dicono ancora quelli di prima. Quando le schede li hanno, si può togliere.
+var NOMI = {
+  scarabocchio: "Disegna e Indovina", impostore: "L'Infiltrato", pecoranera: "Tutti d'Accordo", ordine: "Parole in Codice",
+  drop4: "Quattro in Fila", calciobiliardo: "Calcio a Dischi", dadoveviene: "Indovina il Paese", sipero: "Una Vita Perfetta… Quasi",
+  horto: "Al Galoppo!", ruota: "La Ruota Fortunata", prezzo: "Indovina il prezzo", astafanta: "Mini Asta del Fanta", hockey: "Air Hockey"
+};
 // l'ordine delle pagine (i più forti prima) e l'indirizzo di ognuna: revelhouse.it/giochi/<indirizzo>/ (NON cambiarli: Google li ricorda)
 var PAGINE = [
-  ["astafanta", "mini-asta"], ["pecoranera", "pecora-nera"], ["impostore", "impostore"], ["timeline", "linea-del-tempo"],
-  ["ordine", "parola-d-ordine"], ["scarabocchio", "scarabocchio"], ["lunghezza", "stessa-lunghezza-d-onda"], ["balla", "balla-colossale"],
-  ["memata", "memata"], ["sipero", "si-pero"], ["chidinoi", "chi-di-noi"], ["nomicose", "nomi-cose-citta"], ["unaparola", "una-parola-sola"],
-  ["patata", "patata-bollente"], ["dadoveviene", "da-dove-viene"], ["muro", "il-muro"], ["prezzo", "prezzo"], ["ruota", "ruota"],
-  ["asta", "asta"], ["scalinata", "scalinata"], ["horto", "horto-muso"], ["pallamatta", "palla-matta"], ["calciobiliardo", "calcio-biliardo"],
+  ["astafanta", "mini-asta"], ["pecoranera", "tutti-d-accordo"], ["impostore", "infiltrato"], ["timeline", "linea-del-tempo"],
+  ["ordine", "parole-in-codice"], ["scarabocchio", "disegna-e-indovina"], ["lunghezza", "stessa-lunghezza-d-onda"], ["balla", "balla-colossale"],
+  ["memata", "memata"], ["sipero", "una-vita-perfetta"], ["chidinoi", "chi-di-noi"], ["nomicose", "nomi-cose-citta"], ["unaparola", "una-parola-sola"],
+  ["patata", "patata-bollente"], ["dadoveviene", "indovina-il-paese"], ["muro", "il-muro"], ["prezzo", "prezzo"], ["ruota", "ruota"],
+  ["asta", "asta"], ["scalinata", "scalinata"], ["horto", "al-galoppo"], ["pallamatta", "palla-matta"], ["calciobiliardo", "calcio-a-dischi"],
   ["scopa", "scopa"], ["scopa2v2", "scopa-a-coppie"], ["scopone", "scopone"], ["blackjack", "blackjack"], ["poker", "poker"],
-  ["tris", "tris"], ["trisgigante", "tris-gigante"], ["drop4", "drop-4"], ["hockey", "glow-hockey"]
+  ["tris", "tris"], ["trisgigante", "tris-gigante"], ["drop4", "quattro-in-fila"], ["hockey", "air-hockey"]
 ];
 // quanti giocatori, scritto a mano dove il conto delle schede direbbe una cosa strana (i giochi a due, le coppie)
 var GIOCATORI = {
@@ -63,7 +70,7 @@ var giochi = PAGINE.filter(function (p) { return visibili.indexOf(p[0]) >= 0; })
   var max = Math.max(s.giocatoriMax || 1, online ? s.postiOnline || 0 : 0);
   if (id === "horto" || id === "scalinata") min = 1;
   var foto = fs.existsSync(path.join(R, "carte/giochi/" + id + ".jpg")) ? "/carte/giochi/" + id + ".jpg" : null;
-  return { id: id, url: "/giochi/" + p[1] + "/", s: s, t: t, nome: s.nome, icona: s.icona, cat: CAT[id] || "festa", online: online, telefono: telefono, bot: bot,
+  return { id: id, url: "/giochi/" + p[1] + "/", s: s, t: t, nome: NOMI[id] || s.nome, icona: s.icona, cat: CAT[id] || "festa", online: online, telefono: telefono, bot: bot,
     soloOnline: !!s.soloOnline, min: min, max: max, gioc: GIOCATORI[id] || (min === max ? "In " + min : "Da " + min + " a " + max) + " giocatori", foto: foto };
 });
 var pubblici = giochi.filter(function (g) { return !IN_ATTESA[g.id]; });   // quelli che vanno online (gli altri: sito-in-attesa/)
