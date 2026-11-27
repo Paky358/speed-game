@@ -280,7 +280,7 @@
     if (!c.preso) { fig.style.width = "34%"; corpo = [ el("div", { class: "alb-sk-a" }, [ fig, tit, el("div", { class: "alb-mai", text: "Non l'hai ancora preso. Compralo all'asta e la figurina si attacca qui." }) ]) ]; }
     var paga = x.volte > 1 ? "pagato in media " + virgola(x.prezzo, 0) + " · da " + x.pMin + " a " + x.pMax : "pagato " + x.prezzo, uffT = x.uff ? "📋 " + x.uff + (x.uff === 1 ? " volta" : " volte") + " d'ufficio" : "";
     var stagT = "Con te nella " + (ALB.stag ? A.nomeStagione(ALB.stag) : "Serie A di oggi");
-    if (scelta === "B") corpo = [ el("div", { class: "alb-sk-b" }, [ fig, el("div", { style: "flex:1;min-width:0" }, [ tit,
+    if (!c.preso) { /* (mai presa: solo la sagoma e «Non l'hai ancora preso», sopra) */ } else if (scelta === "B") corpo = [ el("div", { class: "alb-sk-b" }, [ fig, el("div", { style: "flex:1;min-width:0" }, [ tit,
         el("div", { class: "alb-ruolo", text: stagT }),
         el("div", { class: "alb-righe" }, [
           riga("Comprato all'asta", x.volte + (x.volte === 1 ? " volta" : " volte")),
