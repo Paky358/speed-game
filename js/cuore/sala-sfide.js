@@ -79,15 +79,24 @@
     var tre = n === 3 && g.inTre && R && R.box && typeof R.box._inTre === "function";
     var cTre = tre ? carta("tre", "👥", "In tre: giocate tutti", "Tutti e tre allo stesso tavolo, ognuno per sé") : null;
     if (tre) scelta = "tre";
+    // un gioco che si fa anche a squadre (Calcio Biliardo: g.aSquadre = quanti al massimo, 2 contro 2): «A squadre» è la prima scelta
+    var sqMax = +g.aSquadre || 0, conSq = sqMax > 2 && !tre;
+    var cSq = conSq ? carta("squadre", "👥", n <= sqMax ? "A squadre: giocate tutti" : "A squadre: giocate in " + sqMax,
+      (n <= sqMax ? (n === 3 ? "2 contro 1" : "2 contro 2") : "2 contro 2, gli altri guardano") + " · le squadre le fate nella saletta, anche coi Bot") : null;
+    if (conSq) scelta = "squadre";
     var opz = cuore.opzioniTorneino(T, function () { rifai(); }, false, dispari);
     var nota = el("p", { class: "modulo-nota tn-nota" });
-    s._contenuto.appendChild(el("div", { class: "tn-scelte" }, [cTre, cT, cS].filter(Boolean)));
+    s._contenuto.appendChild(el("div", { class: "tn-scelte" }, [cTre, cSq, cT, cS].filter(Boolean)));
     if (opz) s._contenuto.appendChild(opz);
     s._contenuto.appendChild(nota);
     var via = el("button", { class: "btn btn-primario", type: "button", onclick: function () {
       if (!cuore.sala) return schermataHome();
       if (tre) try { R.box._inTre(scelta === "tre"); } catch (e) {}   // (in due per la sfida e il torneo)
       if (scelta === "tre") return cuore.salaParti(g, R, cuore.sala.membri.map(function (x) { return { id: x.id, nome: x.nome }; }));
+      if (scelta === "squadre") {   // a squadre: tutti, o (se siete di più) scegli chi gioca
+        if (cuore.sala.membri.length <= sqMax) return cuore.salaParti(g, R, cuore.sala.membri.map(function (x) { return { id: x.id, nome: x.nome }; }));
+        return schermataChiGioca(g, function (scelti) { cuore.salaParti(g, R, scelti); }, null, sqMax);
+      }
       if (scelta === "sfida") return schermataChiGioca(g, function (scelti) { cuore.salaParti(g, R, scelti); }, cuore.restaOpz(g, R));
       salaTorneino(g, R, T);
     } });
@@ -96,11 +105,11 @@
     s._piede.appendChild(bReg ? el("div", { class: "sl-tasti" }, [bReg, via]) : via);
     // si cambiano solo le classi e le scritte: niente lampeggio
     function rifai() {
-      [cTre, cT, cS].filter(Boolean).forEach(function (c) { var si = c._id === scelta; c.classList.toggle("scelta", si); c.setAttribute("aria-pressed", si ? "true" : "false"); });
+      [cTre, cSq, cT, cS].filter(Boolean).forEach(function (c) { var si = c._id === scelta; c.classList.toggle("scelta", si); c.setAttribute("aria-pressed", si ? "true" : "false"); });
       if (opz) opz.hidden = scelta !== "torneino";
-      var tx = scelta === "tre" ? "Una partita sola, tutti e tre allo stesso tavolo." : scelta === "sfida" ? "Poi scegli i due che giocano." : T.coppie === "scelte" ? "Ognuno si siede dove e con chi vuole: poi parti tu." : (dispari ? (T.resto === "passa" ? "Siete dispari: uno a sorte passa il turno." : "Siete dispari: chi resta gioca col Bot. Se lo batte va avanti, se no va avanti il Bot!") : "Siete pari: giocano tutti subito.");
+      var tx = scelta === "tre" ? "Una partita sola, tutti e tre allo stesso tavolo." : scelta === "squadre" ? (n <= sqMax ? "Una partita sola, tutti insieme: nella saletta ognuno sceglie la squadra." : "Poi scegli chi gioca.") : scelta === "sfida" ? "Poi scegli i due che giocano." : T.coppie === "scelte" ? "Ognuno si siede dove e con chi vuole: poi parti tu." : (dispari ? (T.resto === "passa" ? "Siete dispari: uno a sorte passa il turno." : "Siete dispari: chi resta gioca col Bot. Se lo batte va avanti, se no va avanti il Bot!") : "Siete pari: giocano tutti subito.");
       if (nota.textContent !== tx) nota.textContent = tx;
-      var tv = scelta === "tre" ? "▶ Si gioca in tre" : scelta === "sfida" ? "🤺 Scegli chi gioca" : "⚔️ Via al torneo";
+      var tv = scelta === "tre" ? "▶ Si gioca in tre" : scelta === "squadre" ? (n <= sqMax ? "👥 Si gioca a squadre" : "👥 Scegli chi gioca") : scelta === "sfida" ? "🤺 Scegli chi gioca" : "⚔️ Via al torneo";
       if (via.textContent !== tv) via.textContent = tv;
     }
     rifai();
@@ -201,10 +210,11 @@
   // la schermata, senza scorrere: gli avatar della Sala (5 per riga), chi gioca evidenziato, sotto chi guarda e "▶ Si gioca".
   // Un tocco aggiunge o toglie; da pieni, chi si tocca prende il posto del più vecchio scelto (l'host no). poi(scelti)
   // o (facoltativo, giochi a due) = { resta(scelti): "👑 Chi vince resta" con i due scelti }
-  function schermataChiGioca(g, poi, o) {
+  // (quanti: i posti di questa partita, se non sono quelli del gioco: es. Calcio Biliardo a squadre, 4)
+  function schermataChiGioca(g, poi, o, quanti) {
     if (!cuore.sala) return schermataHome();
     o = o && typeof o.resta === "function" ? o : null;
-    var posti = cuore.postiDi(g), conHost = posti >= 3, membri = cuore.sala.membri.slice();
+    var posti = +quanti || cuore.postiDi(g), conHost = posti >= 3, membri = cuore.sala.membri.slice();
     var sc = sceltiDiPartenza(posti, conHost).map(function (m) { return m.id; });
     var s = schermata({ icona: g.icona || "🎲", titolo: "Chi gioca " + cuore.aGioco(g.nome) + "?",
       sotto: posti === 2 ? "Giocano in 2: gli altri guardano" : "Giocano in " + posti + ": gli altri guardano",

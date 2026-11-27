@@ -176,15 +176,19 @@
     while (Date.now() < fc && !fine()) {
       var vc = vm(C);
       if (vc.fase === "gioco" && vc.stato === "mira" && vc.st && vc.n !== ultimo) {
-        var wc = W.finestra(vc.turno === 0 ? H : B), CB = wc.__CB, z = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+        // (dal 26 nov 2026 Calcio Biliardo si gioca anche a squadre: chi tira lo dice la foto, vm.sq; un altro telefono manda il tiro)
+        var lq = (vc.sq || [])[vc.turno] || [], chiT = lq.length ? lq[((vc.chi || [0, 0])[vc.turno] || 0) % ((vc.nm || [])[vc.turno] || lq.length)] : null;
+        var nomeT = chiT ? chiT.nome : (vc.turno === 0 ? H : B);
+        var wc = W.finestra(W.finestra(nomeT) ? nomeT : (vc.turno === 0 ? H : B)), CB = wc.__CB, z = vc.st.x.map(function () { return 0; });
         var s = { x: vc.st.x.slice(), y: vc.st.y.slice(), vx: z.slice(), vy: z.slice() };
         var sc = CB.sceltaBot(s, vc.turno, "difficile", vc.solo || null);
         var vx = Math.cos(sc.a) * CB.VMAX * sc.p, vy = Math.sin(sc.a) * CB.VMAX * sc.p;
         ultimo = vc.n;
-        if (vc.turno === 1) W.reteDi(B).invia({ t: "tiro", i: sc.i, vx: vx, vy: vy });
+        if (chiT && chiT.bot) { /* tira il Bot dell'host */ }
+        else if (nomeT !== H) W.reteDi(nomeT).invia({ t: "tiro", i: sc.i, vx: vx, vy: vy });
         else {
           var cv = wc.document.querySelector(".cb-scena canvas") || wc.document.querySelector("canvas");
-          var sce = cv.parentNode, cw = sce.clientWidth, ch = sce.clientHeight, S = Math.min((cw - 20) / 1, (ch - 2 * 62) / (1.55 + 2 * 0.07));
+          var sce = cv.parentNode, cw = sce.clientWidth, ch = sce.clientHeight, S = Math.min((cw - 26) / 1.07, (ch - 2 * 62) / (1.55 + 2 * 0.07));   // (26 nov 2026: col prato e i cartelloni ai lati)
           var ox = (cw - S) / 2, oy = (ch - S * 1.55) / 2, rc = cv.getBoundingClientRect();
           var x0 = ox + s.x[sc.i] * S, y0 = oy + s.y[sc.i] * S, fx = -Math.cos(sc.a), fy = -Math.sin(sc.a), posto = Infinity;
           if (fx > 0.01) posto = Math.min(posto, (cw - x0) / fx); else if (fx < -0.01) posto = Math.min(posto, x0 / -fx);
@@ -279,7 +283,8 @@
     if (!await W.aspetta(function () { return [].some.call(B.document.querySelectorAll(sel), visibile); }, 8000)) no("Bea non vede il tavolo («" + T(B).slice(0, 80) + "»)");
     await W.dorme(800);
     controllaGuarda(gid, B, "Bea", "in partita");
-    if (/Tocca a te|\(tu\)/.test(T(M))) no("Marco (in più) legge «Tocca a te» o «(tu)»");
+    // (Calcio Biliardo dal 26 nov 2026 si gioca anche a squadre: Marco non è in più, gioca con Paky)
+    if (gid !== "calciobiliardo" && /Tocca a te|\(tu\)/.test(T(M))) no("Marco (in più) legge «Tocca a te» o «(tu)»");
     await faccinaDa(B, "Bea", "Giulia");
     var mis = await misureGuarda(gid, B, "Bea", sel);
     // dal telefono di Bea passano solo messaggi del core ("__")
@@ -289,10 +294,10 @@
     if (!await W.aspetta(function () { return /Aspettiamo la prossima partita/.test(T(B)); }, 6000)) no("a fine partita Bea non legge «👀 Aspettiamo la prossima partita…» («" + T(B).slice(-120) + "»)");
     if (/tabellone/.test(T(B))) no("fuori dal torneo Bea legge «si torna al tabellone»");
     controllaGuarda(gid, B, "Bea", "a fine partita");
-    if (/Tocca a te|\(tu\)/.test(T(M))) no("Marco (in più) a fine partita legge «Tocca a te» o «(tu)»");
+    if (gid !== "calciobiliardo" && /Tocca a te|\(tu\)/.test(T(M))) no("Marco (in più) a fine partita legge «Tocca a te» o «(tu)»");
     var mf = await misureGuarda(gid, B, "Bea", FINE[gid]);   // (a fine partita: niente scorre, la nota si legge)
     var e = W.erroriTel(); if (e.length) no("errori: " + e.slice(0, 3).join(" / "));
-    return "A: Bea guarda (una targhetta, nessun «🏠 Esci» del gioco, 👏 a Giulia col nome, solo messaggi «__», misure " + mis + "; fine " + mf + "), Marco in più senza «Tocca a te»";
+    return "A: Bea guarda (una targhetta, nessun «🏠 Esci» del gioco, 👏 a Giulia col nome, solo messaggi «__», misure " + mis + "; fine " + mf + "), " + (gid === "calciobiliardo" ? "Marco gioca con Paky (a squadre, 2 contro 1)" : "Marco in più senza «Tocca a te»");
   }
 
   // ---- parte B: "👑 Chi vince resta" (dopo p6-d) ----

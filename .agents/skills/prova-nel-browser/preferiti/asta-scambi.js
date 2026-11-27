@@ -160,7 +160,7 @@
     if (!await W.aspetta(function () { var a = q(L, ".sc-annuncio"); return a && /Paky dà/.test(a.textContent); }, 4000)) no("Luca non vede l'annuncio dello scambio");
     x.push("Rifiuta, poi Accetta: «" + q(L, ".sc-annuncio").textContent.replace("🔄 SCAMBIO FATTO", "") + "»");
     await W.dorme(1000);
-    W.clicca(P, /Inizia la giornata|Si gioca!/); await W.dorme(400); W.clicca(P, /Iniziamo/);
+    W.clicca(P, /Inizia la giornata|Si gioca/); await W.dorme(400); W.clicca(P, /Iniziamo/);
     if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 8000)) no("«⏹ Fine» non porta alla classifica");
     var rp = (vm(C).classifica || []).filter(function (r) { return r.nome === "Paky"; })[0];
     if (!rp || !rp.kit.some(function (k) { return k.nome + "|" + k.squadra === kGA; })) no("la classifica non usa la rosa nuova di Paky");
@@ -188,7 +188,7 @@
     x.push("«＋1'» allunga");
     W.clicca(G, /Accetta/);
     if (!await W.aspetta(function () { return !(vm(C).scambi.prop || []).length; }, 5000)) no("Giulia accetta ma la proposta resta");
-    W.clicca(P, /Inizia la giornata|Si gioca!/); await W.dorme(400); W.clicca(P, /Iniziamo/);
+    W.clicca(P, /Inizia la giornata|Si gioca/); await W.dorme(400); W.clicca(P, /Iniziamo/);
     if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 8000)) no("il mercato non finisce");
     var gio = ((vm(C).serieA || {}).partite || []).map(function (p) { return [p.c, p.f].sort().join("-"); }).sort().join(","), merc = mercato.map(function (p) { return p.slice().sort().join("-"); }).sort().join(",");
     if (gio !== merc) no("le partite del mercato non sono quelle della giornata");
@@ -201,7 +201,7 @@
     await asta(P, C);
     var G = W.finestra("Giulia"), L = W.finestra("Luca"), tutti = [P, G, L];
     if (!await W.aspetta(function () { return q(P, ".mc-mia .mc-p"); }, 8000)) no("il mercato non arriva");
-    W.clicca(P, /Inizia la giornata|Si gioca!/); await W.dorme(400); W.clicca(P, /Iniziamo/);
+    W.clicca(P, /Inizia la giornata|Si gioca/); await W.dorme(400); W.clicca(P, /Iniziamo/);
     if (!await W.aspetta(function () { return vm(C).fase === "fine"; }, 8000)) no("il mercato non finisce");
     // 🏆 (15 nov 2026) la classifica a figurine: su tutti, la più scarsa per prima (in basso a destra), la più forte per ultima (in alto a sinistra)
     if (!await W.aspetta(function () { return tutti.every(function (w) { return w.document.querySelectorAll(".cr-r").length === 3; }); }, 15000)) no("la classifica a figurine non arriva su tutti");

@@ -1672,10 +1672,13 @@
   function modoDi(g, modo) { return modiDi(g).filter(function (m) { return m.modo === modo; })[0] || null; }
   function schermataModo(g) {
     var s = schermata({ icona: g.icona, titolo: g.nome, sotto: "Come giocate?", indietro: tornaHome });
-    var io = profiloAttivo(), griglia = el("div", { class: "modo-scelta" });
+    // (26 nov 2026, il proprietario: «non le voglio giganti, però così le vedo troppo piccole… togliamo l'avatar») i riquadri hanno
+    // la STESSA misura in tutti i giochi (.modo-fissa in css/styles.css), non si allungano: il blocco sta al centro dello spazio e,
+    // se non ci sta, scorre solo il centro («Come si gioca» resta a vista). Niente avatar sotto.
+    s.classList.add("prima-fissa", "modo-fissa");
+    var griglia = el("div", { class: "modo-scelta" });
     var modi = modiDi(g), ultimo = ultimoModo(g);
     if (giocoOnline(g)) conCodice(modi);   // subito sotto "Online": chi è invitato entra col codice
-    if (modi.length >= 5) griglia.classList.add("tanti");   // (5 modi o più, con la Compagnia: righe più basse, tutto in uno schermo a 360x640)
     modi.forEach(function (m) {
       var tit = el("div", { class: "mg-tit", text: m.nome });
       if (m.modo === ultimo && modi.length > 1) tit.appendChild(el("span", { class: "mg-ultimo", text: "l'ultima volta" }));   // si ritrova subito come avete giocato
@@ -1691,23 +1694,9 @@
       });
     });
     s._contenuto.appendChild(griglia);
-    if (io && io.omino && window.SGOmino) s._contenuto.appendChild(el("div", { class: "modo-avatar", html: SGOmino.svg(io.omino) }));
     s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Come si gioca", onclick: function () { schermataRegole(g, function () { schermataModo(g); }); } }));
     mostra(s);
-    adattaModo(s, griglia);
-  }
-  // (21 nov 2026) «Come giocate?» sta tutta nello schermo, senza scorrere: se non ci sta, prima i riquadri più bassi
-  // (come con 5 modi), poi via l'avatar in fondo (è solo per bellezza). Mai niente di più grande
-  function adattaModo(s, griglia) {
-    function sfora() { var H = window.innerHeight || document.documentElement.clientHeight; return document.documentElement.scrollHeight > H + 1 || s.scrollHeight > s.clientHeight + 1; }
-    function prova() {   // (si rifà dopo un attimo: i caratteri possono arrivare dopo; aggiunge soltanto, niente lampeggio)
-      if (!s.isConnected) return;
-      var av = s.querySelector(".modo-avatar");
-      if (!sfora()) return;
-      griglia.classList.add("tanti");
-      if (sfora() && av) av.hidden = true;
-    }
-    requestAnimationFrame(prova); setTimeout(prova, 150); setTimeout(prova, 700);
+    segnaAltroSotto(s);   // (se scorre: la sfumatura in fondo, come nelle impostazioni)
   }
   // l'ultimo modo scelto per ogni gioco (su questo telefono): nella prima schermata ha la scritta "l'ultima volta"
   function ultimoModo(g) { var o = leggiL("sg-ultimo-modo", {}); return (o && typeof o === "object" && o[g.id]) || null; }

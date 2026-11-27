@@ -9,11 +9,136 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
-    v: 442,
-    data: "26 novembre 2026",
+    v: 455,
+    data: "27 novembre 2026",
     titolo: "Palla a Pendolo, Battaglia Navale e Taboo si riposano un po' 🎯",
     descrizione: [
       "🎯 Palla a Pendolo, 🚢 Battaglia Navale e 🤐 Taboo non sono più tra i giochi della prima schermata, della Sala e dei tornei: li stiamo sistemando per renderli migliori. Chi apre un link vecchio di una loro partita ci entra lo stesso."
+    ]
+  },
+  {
+    v: 454,
+    data: "27 novembre 2026",
+    titolo: "Mini Asta: le azioni sempre alla stessa velocità ⏱️",
+    descrizione: [
+      "⏱️ Nella giornata le azioni corrono sempre alla stessa velocità: niente più azioni svelte nel finale o quando si è in tanti, e poi lente all'improvviso.",
+      "🎥 Il rallentatore c'è su ogni tiro, ed è sempre lungo uguale: un po' più corto di prima, così la giornata non si allunga.",
+      "👥 Quando si è in tanti, per non allungare la giornata si accorciano un po' annunci e pause, mai l'azione.",
+      "🔁 Anche il rigore da ripetere va alla stessa velocità del primo."
+    ]
+  },
+  {
+    v: 453,
+    data: "27 novembre 2026",
+    titolo: "Mini Asta: negli scambi si vede chi è pronto e tutte le proposte ✅",
+    descrizione: [
+      "✅ Negli scambi a fine asta c'è il tasto «⚽ Si gioca»: quando hai finito di scambiare lo tocchi, e se ci ripensi lo ritocchi.",
+      "👀 In fondo tutti vedono quanti sono pronti («✅ 3 su 4 pronti») e chi; sulla rosa di chi è pronto c'è il ✅. Così si capisce subito chi vuole ancora scambiare. Chi propone uno scambio non è più pronto.",
+      "⚽ Chi tiene la partita ha «Inizia la giornata»: quando sono pronti tutti si accende e dice «✅ Tutti pronti: ⚽ Si gioca!». Decide sempre lui: la giornata non parte da sola (solo allo scadere del tempo, come prima).",
+      "📋 Scorrendo verso destra, o col tasto «📋 Proposte ▶», c'è la pagina con tutte le proposte della partita: chi a chi, cosa dà, cosa chiede e com'è andata (in corso, accettata, rifiutata, ritirata, non più valida).",
+      "🧹 In alto c'è solo «⏱ +1 minuto», per chi tiene la partita: non finisce più sopra l'orologio."
+    ]
+  },
+  {
+    v: 452,
+    data: "27 novembre 2026",
+    titolo: "Quattro copertine nuove 🎨",
+    descrizione: [
+      "📡 Stessa Lunghezza d'Onda: il quadrante col bersaglio, la scala «FREDDO» e «CALDO» e l'indizio «Tè».",
+      "🤥 La Balla Colossale: la notizia «Il sangue del polpo è…» e le risposte, due balle col naso di Pinocchio e quella vera.",
+      "✏️ Nomi, Cose e Città: la lettera «M» e il foglio con Marco, Martello, Milano e Mucca.",
+      "⚽ Calcio Biliardo: lo stadio di notte, i dischi Lampone e Ciano e il pallone che entra in porta."
+    ]
+  },
+  {
+    v: 451,
+    data: "27 novembre 2026",
+    titolo: "«Come giocate?» si legge meglio 🎮",
+    descrizione: [
+      "🔎 Nella schermata dove si sceglie come giocare i riquadri sono più alti e le scritte un po' più grandi: niente più occhi strizzati.",
+      "📏 I riquadri sono della stessa misura in tutti i giochi: mai più minuscoli in un gioco e giganti in un altro. Quando sono pochi stanno al centro dello schermo.",
+      "🧹 Sotto i riquadri non c'è più il gettone: non serviva."
+    ]
+  },
+  {
+    v: 450,
+    data: "27 novembre 2026",
+    titolo: "L'Impostore ha la copertina nuova 🎭",
+    descrizione: [
+      "🎭 Nella prima schermata L'Impostore ha un'immagine nuova: tre carte «PIZZA» uguali e una carta nera con la maschera che dice «FOCACCIA», sotto il riflettore. Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
+    v: 449,
+    data: "27 novembre 2026",
+    titolo: "«Sì... però» ha la copertina nuova 🤨",
+    descrizione: [
+      "🤨 Nella prima schermata «Sì... però» ha un'immagine nuova: la carta verde «SÌ… Sai volare» e sopra, sbattuta, la carta rossa «PERÒ… solo in mutande». Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
+    v: 448,
+    data: "27 novembre 2026",
+    titolo: "Calcio Biliardo: la palla più viva, con la scia ☄️",
+    descrizione: [
+      "🏓 La palla rimbalza molto di più su sponde, pali e pedine e scivola più lontano sull'erba: le azioni sono più movimentate e i gol arrivano più spesso.",
+      "☄️ Quando corre, la palla lascia una scia luminosa che segue la sua strada, rimbalzi compresi: più va forte, più si accende.",
+      "💥 Dove la palla rimbalza si accende un piccolo lampo."
+    ]
+  },
+  {
+    v: 447,
+    data: "27 novembre 2026",
+    titolo: "Black Jack e Linea del tempo hanno la copertina nuova 🃏",
+    descrizione: [
+      "🃏 Black Jack: sul tavolo verde l'asso di picche e il re di cuori, la mano perfetta, con il «21» d'oro sopra.",
+      "⏳ Linea del tempo: le carte in fila con l'anno (1492, 1879, 1969) e il biplano «????» che scende al suo posto. Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
+    v: 446,
+    data: "27 novembre 2026",
+    titolo: "Scarabocchio ha la copertina nuova ✏️",
+    descrizione: [
+      "✏️ Nella prima schermata Scarabocchio ha un'immagine nuova: un gatto disegnato male sulla lavagna e la chat degli amici che provano a indovinare, «volpe», «cane»… «GATTO!». Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
+    v: 445,
+    data: "26 novembre 2026",
+    titolo: "L'Asta ha la copertina nuova 🔨",
+    descrizione: [
+      "🔨 Nella prima schermata L'Asta ha un'immagine nuova: il martelletto che batte e le carte del round delle armi contro gli zombie, dalla katana «AGGIUDICATO!» per 6 crediti fino alla ciabatta infradito. Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
+    v: 444,
+    data: "26 novembre 2026",
+    titolo: "Parola d'ordine ha la copertina nuova 🔵",
+    descrizione: [
+      "🔵 Nella prima schermata Parola d'ordine ha un'immagine nuova: le carte del gioco con le parole e l'indizio dei Blu, «MARE 2», che porta alle due parole girate, ONDA e PORTO. Così si capisce subito a cosa si gioca."
+    ]
+  },
+  {
+    v: 443,
+    data: "26 novembre 2026",
+    titolo: "Calcio Biliardo a squadre: 2 contro 2 ⚽",
+    descrizione: [
+      "👥 Adesso si gioca anche a squadre: 2 contro 2, 2 contro 1, e con i Bot come volete (anche due di voi contro due Bot). Si tira una squadra alla volta: tu, un avversario, il tuo compagno, l'altro avversario.",
+      "🎯 A squadre ognuno ha 6 pedine e tutti possono tirarle tutte. Sopra la pedina che parte compare piccolo il nome di chi ha tirato, e l'attaccante ha la faccia di chi tocca.",
+      "🔀 Le squadre si fanno in un attimo: nella saletta online ognuno cambia squadra con la freccia e chi apre la stanza mette o toglie i Bot; sullo stesso telefono si fa nelle regole, prima di cominciare. Nella Sala, se siete in 3 o 4, la prima scelta è «👥 A squadre».",
+      "⚡ Il passaggio: se dopo il tuo tiro la palla tocca per ultima un'altra pedina della tua squadra, tiri ancora tu, con quella pedina, entro 5 secondi (l'anello d'oro si svuota). Una volta sola per turno. Si spegne nelle regole.",
+      "🏟️ Il campo è uno stadio vero: tribune piene coi colori delle squadre, prato a strisce, aree e dischetto, porte con la rete e i pali bianchi, bandierine e cartelloni luminosi ai lati.",
+      "🎨 Le squadre sono Lampone (sotto) e Ciano (sopra).",
+      "🚪 Online, se uno esce a metà partita i suoi tiri li fa il Bot; se una squadra resta senza persone, vince l'altra."
+    ]
+  },
+  {
+    v: 442,
+    data: "26 novembre 2026",
+    titolo: "Il Prezzo è Giusto ha la copertina nuova 🏷️",
+    descrizione: [
+      "🏷️ Nella prima schermata Il Prezzo è Giusto ha un'immagine nuova: lo studio TV, lo scooter in palio sulla pedana e il display del prezzo con la cifra da indovinare, «?.450 €». Così si capisce subito a cosa si gioca."
     ]
   },
   {
