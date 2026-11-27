@@ -7,7 +7,7 @@ Partite online vere con i telefoni finti: frasi scritte, disegni fatti col dito 
 Ogni foto è fatta su due telefoni: basso (360x640) e alto (412x915). Quando si scrive c'è anche una foto con la tastiera aperta (360x340).
 - `n4/`, `n6/`, `n10/`: le foto una per una, il diario (`diario-N.txt`) e la foto per WhatsApp di un libretto (`whatsapp-N.png`).
 - `nN/foglio-360-a.png`, `-b`, `-c` in ogni cartella: le foto del telefono basso, piccole su un foglio solo, da guardare in un colpo.
-- **I nomi sulle pagine** (controllati dalla prova td7, in 4 e in 5: ogni pagina col nome di chi l'ha fatta davvero, nella rivelazione, nel feed e nella foto per WhatsApp). In 4 e in 6 chi scrive la frase la **disegna anche lui** (come in Telestrations), così ogni libretto finisce con una frase scritta: per questo nel libretto di Paky c'è «Paky ha scritto» e poi «Paky ha disegnato». In 5, 7 e da 8 in su il primo disegno lo fa quello dopo.
+- **I nomi sulle pagine** (controllati dalle prove td7 in 4 e td7b in 5): ogni pagina ha il nome di chi l'ha fatta davvero, nella rivelazione, nel feed e nella foto per WhatsApp. **Mai la stessa persona due volte nello stesso libretto** (28 nov 2026). Prima in 4 e in 6 chi scriveva la frase la disegnava anche lui (la regola di Telestrations per i numeri pari): non c'è più, e col gioco di prima la td7 fallisce.
 - **«Telefono senza fili» non compare da nessuna parte** (è un marchio depositato da un altro): la foto per WhatsApp finisce con «revelhouse.it · Telefono Disegnato».
 - Controlli fatti in tutte e tre le partite:
   - niente esce dallo schermo e niente scorre;
@@ -16,7 +16,7 @@ Ogni foto è fatta su due telefoni: basso (360x640) e alto (412x915). Quando si 
 
 ## Come si gioca adesso
 - **Partenza**: frase libera, col tasto «🎲 Non mi viene niente: dammi un'idea» (426 frasi pronte).
-- **Libretti di al massimo 7 pagine**: in 4 sono 5, in 6 sono 7, in 10 sono 7.
+- **Libretti di una pagina a testa, al massimo 7**: in 4 sono 4, in 6 sono 6, in 10 sono 7. In 4 e in 6 il libretto finisce con un disegno («…ed è arrivata così» mostra il disegno grande).
 - **La rivelazione la sfoglia chi tiene la partita**: tasto «Avanti ▶» che va avanti da solo, più ⏸ per fermarsi.
 - **Ritmo** a scelta nelle regole: svelto, normale (80 secondi per disegnare) o con calma.
 - **Non si aspetta il più lento**: appena hanno finito tutti si passa il libretto.
@@ -43,6 +43,7 @@ Ogni foto è fatta su due telefoni: basso (360x640) e alto (412x915). Quando si 
   - i trofei;
   - il modo sullo stesso telefono;
   - unire la lavagna con quella di Disegna e Indovina (oggi è copiata dentro il gioco).
+- **I · In 4 e in 6 il libretto finisce con un disegno** (da quando nessuno fa due pagine dello stesso libretto). L'alternativa è un libretto di una pagina in meno (in 4 sono 3: frase, disegno, frase) che finisce con una frase: più corto ma con la frase finale da ridere.
 
 ## Le prove
 `.agents/skills/prova-nel-browser/preferiti/telefono.js` contiene td0-td6:

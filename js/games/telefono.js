@@ -4,9 +4,9 @@
    (studio, foto e scelte in D:/SG-telefono-prove).
    - Ognuno scrive una frase strana; il telefono dopo la DISEGNA; quello dopo vede solo il disegno e scrive cosa ci
      vede; poi si disegna di nuovo, e così via. Tutti lavorano INSIEME, ognuno su un libretto diverso.
-   - I libretti (uno a testa): la prima pagina è scritta, poi disegno e scritta a turno, l'ultima è scritta.
-     In N dispari N pagine; in N pari (fino a 6) chi ha scritto la frase la disegna anche (come in Telestrations), così
-     N+1 pagine; mai più di 7 pagine (da 8 in su ogni libretto salta qualcuno). Nessuno vede due volte lo stesso libretto.
+   - I libretti (uno a testa): la prima pagina è scritta, poi disegno e scritta a turno. Ogni libretto passa da tutti una
+     volta sola: N pagine, mai più di 7 (da 8 in su ogni libretto salta qualcuno); in 4 e in 6 finisce con un disegno.
+     MAI due pagine della stessa persona nello stesso libretto (deciso il 28 nov 2026). Nessuno vede due volte lo stesso libretto.
    - Non si aspetta il più lento: appena hanno finito tutti si va avanti (il tempo c'è, ma non si deve aspettarlo).
    - Chi esce non rompe niente: la sua pagina si salta e il libretto continua dall'ultima pagina buona.
    - Alla fine si sfogliano i libretti uno alla volta (va avanti chi tiene la partita, col conto che va avanti da solo):
@@ -80,11 +80,11 @@
   // =========================================================
   //  LE REGOLE (senza grafica): pagine, chi fa cosa, quanto somigliano le frasi, i premi
   // =========================================================
-  // lo schema dei libretti con N giocatori: pari = chi scrive la frase la disegna anche (N pari fino a 6)
-  function schema(N) {
-    var pari = N % 2 === 0 && N + 1 <= MAXP;
-    return { pari: pari, L: pari ? N + 1 : Math.max(1, Math.min(N, MAXP)) };
-  }
+  // lo schema dei libretti con N giocatori: ogni libretto passa da tutti UNA volta sola, N pagine (al massimo MAXP).
+  // MAI due pagine della stessa persona nello stesso libretto (28 nov 2026: niente più «chi scrive la frase la disegna anche»
+  // dei numeri pari di Telestrations): in 4 e in 6 il libretto finisce quindi con un disegno.
+  // (pari resta sempre falso: chiFa e libroDi lo accettano ancora per le prove vecchie)
+  function schema(N) { return { pari: false, L: Math.max(1, Math.min(N, MAXP)) }; }
   // chi (il posto, da 0 a N-1) fa la pagina r del libretto b
   function chiFa(b, r, N, pari) { return pari ? (r === 0 ? b : (b + r - 1) % N) : (b + r) % N; }
   // il libretto su cui lavora il posto i al passo r
@@ -734,7 +734,6 @@
       var b = libroDi(i, H.giro, N(), H.pari), lb = H.libri[b], pg = lb && lb.pag[H.giro]; if (!pg) return;
       var ins = H.giro ? ingresso(lb, H.giro) : null, m = { t: "comp", k: kGiro(), pk: pg.pk, r: H.giro, L: H.L, tipo: pg.t };
       if (ins) m.ins = ins.t === "s" ? { t: "s", x: ins.x } : { t: "d", d: DIS[ins.pk] };
-      if (ins && ins.chi === id) m.tua = 1;   // (in pari chi ha scritto la frase la disegna anche)
       if (H.fatti[id]) m.tuo = pg.t === "s" ? { x: pg.x || "" } : { d: DIS[pg.pk] || "" };
       privato(id, m);
     }
@@ -1376,6 +1375,21 @@
     // la fine del libretto: «era partita così… ed è arrivata così», e la ⭐ al disegno più bello
     function mostraFine(v) {
       feed.hidden = true; fine.hidden = false; svuota(fine); reaz.classList.add("su");
+      var tele = [];
+      // (si rimisura anche quando cambia lo schermo: rotazione, tastiera)
+      if (window.ResizeObserver && !ui.roFine) { var ultH = 0; ui.roFine = new ResizeObserver(function () { if (fine.hidden || Math.abs(fine.clientHeight - ultH) < 2) return; ultH = fine.clientHeight; if (ui.adattaFine) ui.adattaFine(); }); ui.roFine.observe(fine); ui.timer.push({ ro: ui.roFine }); }
+      // i disegni alla misura più grande che ci sta: l'ultima pagina (se è un disegno) fino a 150, le miniature fino a 88 (70 se sono tante);
+      // se la fine del libretto non ci sta nello schermo si rimpiccioliscono insieme (sul telefono basso, coi libretti che finiscono col disegno)
+      ui.adattaFine = adattaFine;
+      function adattaFine() {
+        var k = 1;
+        function rifai() { tele.forEach(function (x) { disegnoFermo(x.cv, x.tr, Math.round((x.u ? 150 : tele.length > 4 ? 70 : 88) * k)); }); }
+        requestAnimationFrame(function () {
+          if (!document.body.contains(fine)) return;
+          rifai();
+          for (var g = 0; g < 8 && fine.scrollHeight > fine.clientHeight + 1 && k > 0.45; g++) { k -= 0.08; rifai(); }
+        });
+      }
       var lb = rv.pag, primo = lb[0], ult = null, pa = pDi(v, primo.chi) || { nome: "?" };
       for (var j = lb.length - 1; j > 0; j--) if (!lb[j].s) { ult = lb[j]; break; }
       var pu = ult ? pDi(v, ult.chi) || { nome: "?" } : null;
@@ -1386,12 +1400,12 @@
       if (ult) {
         fine.appendChild(el("div", { class: "td-etich" }, [gettone(ui.t, pu, "p"), document.createTextNode("…ed è arrivata così")]));
         if (ult.t === "s") fine.appendChild(el("div", { class: "td-foglietto td-fr td-grande", text: ult.x || "" }));
-        else { var dd = (rv.dis || {})[ult.pk] || mem.visto(v.partita, ult.pk); var cvu = el("canvas", { class: "td-cv td-ult" }); fine.appendChild(cvu); if (dd) requestAnimationFrame(function () { disegnoFermo(cvu, decodifica(dd), 150); }); }
+        else { var dd = (rv.dis || {})[ult.pk] || mem.visto(v.partita, ult.pk); var cvu = el("canvas", { class: "td-cv td-ult" }); fine.appendChild(cvu); if (dd) tele.push({ cv: cvu, tr: decodifica(dd), u: 1 }); }
       }
       FX.rullo(); FX.arrivo();
       // i disegni del libretto, piccoli: si tocca quello più bello (non il proprio)
       var dis = []; lb.forEach(function (pg, j) { if (pg.t === "d" && !pg.s && ((rv.dis || {})[pg.pk] || mem.visto(v.partita, pg.pk))) dis.push({ pg: pg, j: j }); });
-      if (!dis.length) { ui.fineAgg = null; return; }
+      if (!dis.length) { ui.fineAgg = null; adattaFine(); return; }
       var tit = el("p", { class: "td-sotto td-st-tit", text: gioco ? "⭐ Il disegno più bello? Tocca" : "⭐ Il disegno più bello" });
       var mini = el("div", { class: "td-mini" }), m = {};
       dis.forEach(function (x) {
@@ -1399,9 +1413,10 @@
         var bx = el("button", { class: "td-m" + (mio ? " mio" : ""), disabled: !gioco || mio ? "disabled" : null, onclick: function () { vibra(12); cb.onStella(rv.b, x.j); } }, [cv, s]);
         mini.appendChild(bx); m[x.j] = { b: bx, s: s, pg: x.pg };
         var d = (rv.dis || {})[x.pg.pk] || mem.visto(v.partita, x.pg.pk);
-        requestAnimationFrame(function () { disegnoFermo(cv, decodifica(d), dis.length > 3 ? 70 : 88); });
+        tele.push({ cv: cv, tr: decodifica(d) });
       });
       fine.appendChild(tit); fine.appendChild(mini);
+      adattaFine();
       ui.fineAgg = function (v2) {
         var r2 = v2.riv, cs = r2.stelle || {}, mie = (r2.mie || {})[cb.myId];
         Object.keys(m).forEach(function (j) {
@@ -1411,7 +1426,7 @@
         });
       };
     }
-    ui.primoStep = true; ui.fineAgg = null;
+    ui.primoStep = true; ui.fineAgg = null; ui.roFine = null; ui.adattaFine = null;
     step(vm);
     var ro = window.ResizeObserver ? new ResizeObserver(function () { misuraFeed(); }) : null; if (ro) { ro.observe(feed); ui.timer.push({ ro: ro }); }
     // i disegni che mi mancano (ho ricaricato): li chiedo a chi tiene la partita
@@ -1709,7 +1724,7 @@
       ".td-vola{position:absolute;bottom:0;font-size:2rem;animation:tdVola 1.6s ease-out forwards;filter:drop-shadow(0 4px 6px rgba(0,0,0,.4))}",
       ".td-vola.mio{font-size:2.3rem}",
       "@keyframes tdVola{0%{opacity:0;transform:translate(0,0) scale(.6)}12%{opacity:1;transform:translate(0,-30px) scale(1.1)}100%{opacity:0;transform:translate(var(--dx,0),-260px) scale(1)}}",
-      ".td-finelib{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:8px;overflow:hidden}",
+      ".td-finelib{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:safe center;gap:8px;overflow:hidden}",
       ".td-etich{display:flex;align-items:center;gap:7px;font-size:.74rem;font-weight:800;color:var(--o-tenue,#a6acc8);letter-spacing:.06em;text-transform:uppercase}",
       ".td-freccia{align-self:center;font-weight:800;color:var(--o-oro-testo,#ff6d97);font-size:.8rem}",
       ".td-grande{font-size:1.5rem!important;padding:14px 16px!important;box-shadow:0 0 0 3px var(--o-oro,#ff4f86),0 16px 40px -10px rgba(224,34,90,.7)!important;animation:tdArriva .6s .5s both}",

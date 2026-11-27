@@ -1,7 +1,7 @@
 // PROVE DEL «📞 TELEFONO DISEGNATO» (27 nov 2026, chat «📞✏️ Telefono Disegnato»).
 //   prova.js --porta 8996 --carica preferiti/telefono.js --prova td0,td1,…
 // td0 le regole senza grafica: pagine per 2-12 giocatori (nessuno tocca due volte lo stesso libretto, ognuno lavora a ogni
-//     passo, ultima pagina scritta), disegni che vanno e tornano uguali, la semplificazione, i premi.
+//     passo, una pagina a testa fino a 7), disegni che vanno e tornano uguali, la semplificazione, i premi.
 // td1 in 4 dalla stanza: frasi, disegni e frasi che non passano MAI nella foto mentre si gioca; si va avanti appena hanno
 //     finito tutti; la rivelazione coi disegni, una reazione, la ⭐; i premi e i tasti del core.
 // td2 chi arriva tardi (Sara: entra alla prossima, niente lavagna), chi guarda (Dina col link: targhetta del core, niente
@@ -90,7 +90,8 @@
       var v = vm(C); if (v.fase === "fine") return true;
       if (!v.riv) return false;
       var k = v.riv.i + "|" + v.riv.p;
-      if (!visti[k]) { visti[k] = 1; if (fai) fai(v); return false; }
+      if (!visti[k]) { visti[k] = 1; var at = fai && fai(v); if (typeof at === "number") visti[k + "t"] = Date.now() + at; return false; }
+      if (visti[k + "t"] && Date.now() < visti[k + "t"]) return false;   // (fai ha chiesto di aspettare: ms)
       var b = [].find.call(w.document.querySelectorAll(".td-avanti .td-tasto"), function (x) { return vede(x) && !x.classList.contains("v"); });
       if (b && !visti[k + "c"]) { visti[k + "c"] = 1; b.click(); }
       return false;
@@ -108,8 +109,7 @@
     for (var N = 2; N <= 12; N++) {
       var sc = R.schema(N); pagine.push(N + "→" + sc.L);
       if (sc.L > R.MAXP) no("in " + N + " i libretti hanno " + sc.L + " pagine");
-      if (sc.L % 2 !== 1) no("in " + N + " l'ultima pagina non è scritta (" + sc.L + " pagine)");
-      if (N >= 4 && N <= 7 && sc.L < N) no("in " + N + " un libretto non passa da tutti (" + sc.L + ")");
+      if (sc.L !== Math.min(N, R.MAXP)) no("in " + N + " i libretti hanno " + sc.L + " pagine (dovevano essere " + Math.min(N, R.MAXP) + ": una a testa, al massimo " + R.MAXP + ")");
       var tocchi = {};
       for (var r = 0; r < sc.L; r++) {
         var usati = {};
@@ -119,8 +119,8 @@
           usati[i] = 1;
           if (R.libroDi(i, r, N, sc.pari) !== b) no("in " + N + " libroDi e chiFa non vanno d'accordo (" + b + ", " + r + ")");
           var kk = b + "|" + i;
-          // chi ha scritto la frase la disegna anche (solo in pari): è l'unica pagina doppia permessa
-          if (tocchi[kk] && !(sc.pari && r === 1 && i === b)) no("in " + N + " il posto " + i + " tocca due volte il libretto " + b);
+          // MAI due pagine della stessa persona nello stesso libretto (28 nov 2026: niente eccezioni)
+          if (tocchi[kk]) no("in " + N + " il posto " + i + " fa due pagine del libretto " + b + " (passo " + (r + 1) + ")");
           tocchi[kk] = 1;
         }
         if (Object.keys(usati).length !== N) no("in " + N + " al passo " + r + " qualcuno non lavora");
@@ -149,7 +149,7 @@
   COPIONE.aggiungi("td1", { nome: "Telefono Disegnato in 4: pagine segrete, avanti appena finiti, rivelazione, reazioni, ⭐, premi", fai: async function () {
     var nomi = ["Paky", "Giulia", "Luca", "Marco"];
     var Z = await TD.stanza(nomi.slice(1)), C = Z.C, P = Z.P, G = F("Giulia");
-    if (vm(C).L !== 5) no("in 4 i libretti hanno " + vm(C).L + " pagine (dovevano essere 5)");
+    if (vm(C).L !== 4) no("in 4 i libretti hanno " + vm(C).L + " pagine (dovevano essere 4)");
     // mentre si gioca, nella foto non c'è niente di quello che si scrive o si disegna
     var segreti = [], spia = setInterval(function () { var v = vm(C); if (v.passo === "giro" || v.passo === "ripresa") { var s = JSON.stringify(v); if (/zorbak|segreto/i.test(s) || /"d":"\d+\.\d/.test(s)) segreti.push(v.giro); } }, 60);
     if (!await W.aspetta(function () { return cosa(G) === "scrivo" && /Scrivi una frase/.test(T(G)); }, 8000)) no("Giulia non ha il campo per la frase («" + T(G).slice(0, 100) + "»)");
@@ -160,9 +160,10 @@
     var t0 = Date.now();
     await TD.passo(C, nomi, frasi);
     if (Date.now() - t0 > 12000) no("il primo passo non è andato avanti appena hanno finito tutti (" + (Date.now() - t0) + " ms)");
-    // il passo 2 in 4 (pari): chi ha scritto la frase la disegna anche
+    // il passo 2: Giulia disegna la frase di un ALTRO (mai la sua)
     if (!await W.aspetta(function () { return cosa(G) === "disegno"; }, 8000)) no("al passo 2 Giulia non disegna («" + T(G).slice(0, 100) + "»)");
-    if (!/Disegna la tua frase/i.test(T(G)) || !/Zorbak segreto di Giulia/.test(T(G))) no("al passo 2 Giulia non vede la sua frase da disegnare («" + T(G).slice(0, 120) + "»)");
+    if (/Zorbak segreto di Giulia/.test(T(G))) no("al passo 2 Giulia disegna la sua frase («" + T(G).slice(0, 120) + "»)");
+    if (!/Disegna questa frase/i.test(T(G)) || !/Zorbak segreto di (Paky|Luca|Marco)/.test(T(G))) no("al passo 2 Giulia non vede la frase di un altro da disegnare («" + T(G).slice(0, 120) + "»)");
     await TD.passo(C, nomi, frasi);
     // il passo 3: si scrive cosa si vede nel disegno di un altro (c'è la lavagna ferma, non la frase)
     if (!await W.aspetta(function () { return cosa(G) === "scrivo"; }, 8000)) no("al passo 3 Giulia non scrive");
@@ -198,7 +199,7 @@
     G.document.querySelector(".td-gal-lib").click();
     if (!await W.aspetta(function () { return G.document.querySelector(".td-gal .td-cv"); }, 4000)) no("nel libretto della galleria non ci sono i disegni");
     var err = W.erroriTel(); if (err.length) no("errori: " + err.slice(0, 3).join(" / "));
-    return "4 libretti da 5 pagine, niente nella foto, reazione e ⭐ ok; premi: " + pr.map(function (p) { return p.ic + " " + p.nome; }).join(", ");
+    return "4 libretti da 4 pagine, niente nella foto, reazione e ⭐ ok; premi: " + pr.map(function (p) { return p.ic + " " + p.nome; }).join(", ");
   } });
 
   COPIONE.aggiungi("td2", { nome: "Telefono Disegnato: chi arriva tardi, chi guarda, chi ricarica mentre disegna, chi esce a metà", fai: async function () {
@@ -390,10 +391,10 @@
   } });
 })();
 
-// td7 i nomi giusti su ogni pagina (in 4: chi scrive la frase la disegna anche; in 5: mai): ogni telefono si annota le
-//     pagine che ha fatto (__TD_FATTE), e nella foto della partita, nel feed di Giulia e nella foto per WhatsApp ogni
-//     pagina deve avere il nome di chi l'ha fatta davvero; nessuno due volte nello stesso libretto (tranne la frase e il
-//     primo disegno in 4)
+// td7 (in 4) e td7b (in 5) i nomi giusti su ogni pagina: ogni telefono si annota le pagine che ha fatto (__TD_FATTE), e nella
+//     foto della partita, nel feed di Giulia e nella foto per WhatsApp ogni pagina deve avere il nome di chi l'ha fatta
+//     davvero; MAI la stessa persona due volte nello stesso libretto (né di fila né separate), nemmeno nella foto per WhatsApp.
+//     (col gioco del 27 nov 2026, dove in 4 chi scriveva la frase la disegnava anche, td7 fallisce: è questa la prova)
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, vm = A.vm, no = A.no, T = A.T, TD = W.TD;
@@ -406,13 +407,17 @@
     tutti.forEach(function (n) { (W.finestra(n).__TD_FATTE || []).forEach(function (x) { fatte[x.pk] = x.id; }); });
     var attese = vm(C).L * n;
     if (Object.keys(fatte).length !== attese) err.push("pagine annotate " + Object.keys(fatte).length + " (dovevano essere " + attese + ")");
-    var visti = {};
+    var visti = {}, finiti = {};
+    var fG = W.document.getElementById("tel-Giulia"); if (fG) { fG.style.width = "360px"; fG.style.height = "640px"; W.finestra("Giulia").dispatchEvent(new (W.finestra("Giulia").Event)("resize")); }
     await TD.sfoglia(C, "Paky", function (v) {
       var rv = v.riv, chi = {};
+      // la fine del libretto sta tutta nel telefono basso (in 4 finisce con un disegno)
+      if (rv.fin && !finiti[rv.i]) { finiti[rv.i] = 1; setTimeout(function () { var G = W.finestra("Giulia"), fl = G.document.querySelector(".td-finelib"); if (!fl || fl.hidden) return; if (fl.scrollHeight > fl.clientHeight + 1) err.push("la fine del libretto " + (rv.i + 1) + " non ci sta a 360x640 (+" + (fl.scrollHeight - fl.clientHeight) + ")"); }, 900); }
+      if (rv.fin) return 1300;
       rv.pag.forEach(function (pg, j) {
         if (fatte[pg.pk] !== pg.chi) err.push("libretto di " + nomeDi[rv.a] + " pagina " + (j + 1) + ": la foto dice " + nomeDi[pg.chi] + ", l'ha fatta " + nomeDi[fatte[pg.pk]]);
         if (j === 0 && pg.chi !== rv.a) err.push("il libretto di " + nomeDi[rv.a] + " comincia con la frase di " + nomeDi[pg.chi]);
-        var doppia = chi[pg.chi] != null && !(n % 2 === 0 && j === 1 && chi[pg.chi] === 0);
+        var doppia = chi[pg.chi] != null;   // (MAI due pagine della stessa persona nello stesso libretto, nemmeno in 4)
         if (doppia) err.push("nel libretto di " + nomeDi[rv.a] + " " + nomeDi[pg.chi] + " fa due pagine (" + (chi[pg.chi] + 1) + " e " + (j + 1) + ")");
         chi[pg.chi] = j;
       });
@@ -436,7 +441,10 @@
     for (var k = 0; k < n; k++) {
       G.document.querySelectorAll(".td-gal-lib")[k].click(); await W.dorme(200);
       G.__TD_WA = null; W.clicca(G, /Manda su WhatsApp/); await W.dorme(300);
-      (G.__TD_WA || []).forEach(function (x) { if (nomeDi[fatte[x.pk]] !== x.nome) err.push("foto per WhatsApp, pagina " + x.pk + ": " + x.nome + " (l'ha fatta " + nomeDi[fatte[x.pk]] + ")"); });
+      (G.__TD_WA || []).forEach(function (x, j, l) {
+        if (nomeDi[fatte[x.pk]] !== x.nome) err.push("foto per WhatsApp, pagina " + x.pk + ": " + x.nome + " (l'ha fatta " + nomeDi[fatte[x.pk]] + ")");
+        if (l.some(function (y, k) { return k < j && y.nome === x.nome; })) err.push("foto per WhatsApp del libretto " + (k + 1) + ": " + x.nome + " fa due pagine" + (j && l[j - 1].nome === x.nome ? " di fila" : ""));
+      });
       if (!G.__TD_WA) err.push("la foto per WhatsApp del libretto " + (k + 1) + " non parte");
       G.document.querySelector(".td-gal .td-esci").click(); await W.dorme(150);
     }
