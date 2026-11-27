@@ -126,7 +126,7 @@
         }
       }
       return el("button", { class: "am-riga" + (x.io ? " io" : "") + (pos && pos <= 3 ? " podio p" + pos : ""), onclick: function () { schermataTrofeiAmico(x, scheda); } }, [
-        el("span", { class: "am-pos", text: medaglia }),
+        el("span", { class: "am-pos" + (pos >= 100 ? " c3" : pos >= 10 ? " c2" : ""), text: medaglia }),   // (🕰️ fino al 100°: a 2 e 3 cifre più piccolo)
         faccina(x, "am-fac"),
         el("div", { class: "am-info" }, [
           el("div", { class: "am-nome", text: x.nome + (x.io ? " (tu)" : "") }),
@@ -158,7 +158,7 @@
           corpo.appendChild(el("div", { class: "am-sep", text: "…" }));
           corpo.appendChild(riga(io, 0, false));
         }
-        corpo.appendChild(el("p", { class: "modulo-nota am-nota", text: "Tocca ➕ per chiedere l'amicizia, o un nome per vedere i suoi trofei." }));
+        corpo.appendChild(el("p", { class: "modulo-nota am-nota", text: "Tocca ➕ per chiedere l'amicizia, o un nome per vedere i suoi trofei. Chi non apre l'app da 2 mesi non compare, finché non torna." }));
       }).catch(errore);
     } else if (scheda === "amici") {
       var campo = el("input", { class: "link-campo", type: "text", maxlength: "20", placeholder: "Cerca un nome…" });

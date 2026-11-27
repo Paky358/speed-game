@@ -29,7 +29,8 @@
   function giornoDi(ms) { var d = new Date(ms); return d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate(); }
   function regaloPronto() { return !!(profilo && (!profilo.bonusUltimo || giornoDi(profilo.bonusUltimo) !== giornoDi(Date.now()))); }
   function finoAMezzanotte() { var d = new Date(); d.setHours(24, 0, 0, 0); return Math.max(0, d.getTime() - Date.now()); }
-  var auth = null, db = null, pronto = false, utente = null, profilo = null, ascolta = [], ultimaScheda = null;
+  var auth = null, db = null, pronto = false, utente = null, profilo = null, ascolta = [], ultimaScheda = null,
+    cacheClass = null, ASSENTE_MS = 60 * 864e5;   // 🕰️ la classifica letta (un minuto) e i 60 giorni di assenza che la nascondono
   // il saldo che il gioco del Casinò in corso "conosce" (letto all'inizio o salvato l'ultima volta):
   // i giochi salvano il loro saldo e qui si aggiunge solo la differenza, così le monete prese
   // intanto (livelli, bonus) non si cancellano mai
@@ -60,7 +61,7 @@
       db = firebase.firestore();
       // la sessione resta salvata: riaprendo l'app si e' gia' loggati
       auth.onAuthStateChanged(function (u) {
-        utente = u || null; ultimaScheda = null;
+        utente = u || null; ultimaScheda = null; cacheClass = null;
         if (u) caricaProfilo(u.uid);
         else { profilo = null; pronto = true; notifica(); }
       });
@@ -423,10 +424,33 @@
       })).then(function (l) { return l.filter(Boolean); });
     },
     // classifica di TUTTI: chi ha più trofei (i primi n)
+    // 🕰️ (27 nov 2026) solo chi ha aperto l'app col profilo negli ultimi 60 giorni (SGNube.attivo): si leggono
+    // pagine da 150 schede (in ordine di trofei) finché i posti visibili sono n, al massimo 6 pagine (900 letture);
+    // per un minuto si tiene quella letta (cambiare scheda o chiedere l'amicizia non la rilegge)
     classificaGenerale: function (n) {
       if (!auth || !utente) return Promise.reject(new Error("offline"));
-      return db.collection("pubblici").orderBy("trofei", "desc").limit(n || 100).get()
-        .then(function (q) { return q.docs.map(function (d) { return conGettone(d.data()); }); });
+      n = n || 100;
+      if (cacheClass && cacheClass.n === n && Date.now() - cacheClass.t < 60000) return Promise.resolve(cacheClass.l.slice());
+      var ora = Date.now(), tenuti = [], PAG = Math.max(n + 50, 150), giri = 0;
+      function pagina(dopo) {
+        var q = db.collection("pubblici").orderBy("trofei", "desc");
+        if (dopo) q = q.startAfter(dopo);
+        return q.limit(PAG).get().then(function (s) {
+          s.docs.forEach(function (d) { var x = d.data(); if (tenuti.length < n && SGNube.attivo(x, ora)) tenuti.push(conGettone(x)); });
+          if (tenuti.length >= n || s.docs.length < PAG || ++giri >= 6) { cacheClass = { n: n, t: Date.now(), l: tenuti }; return tenuti.slice(); }
+          return pagina(s.docs[s.docs.length - 1]);
+        });
+      }
+      return pagina(null);
+    },
+    // 🕰️ chi compare in classifica: la scheda pubblica si riscrive (campo agg, l'ora) ogni volta che si apre l'app col
+    // profilo, quindi agg = l'ultima volta che c'è stato. Più di 60 giorni = nascosto (NON cancellato: amici, richieste
+    // e ricerca per nome come prima; se torna, la sua scheda si riscrive e ricompare). Senza agg (non dovrebbe esserci:
+    // c'è da quando c'è la classifica, 25 set 2026) conta il gettone: chi non ce l'ha non è più entrato dal 13 nov.
+    attivo: function (d, ora) {
+      if (!d || d.cancellato) return false;
+      if (typeof d.agg === "number" && d.agg > 0) return (ora || Date.now()) - d.agg <= ASSENTE_MS;
+      return !!d.gettone;
     },
 
     // ---- richieste di amicizia ----
