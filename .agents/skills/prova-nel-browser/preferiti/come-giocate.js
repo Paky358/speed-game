@@ -5,7 +5,7 @@
 // cg1: la prova. Nessun avatar sotto i riquadri; i riquadri alti uguali in TUTTI i giochi e su tutti i telefoni (mai sotto 84 px,
 //      mai sopra 96: non si allungano per riempire); titolo e frase della stessa misura dappertutto; dove ci stanno, il blocco
 //      sta al centro dello spazio (sopra e sotto lo stesso vuoto, ±12 px) e niente scorre; dove non ci stanno (360x640 da 5
-//      modi) si scorre e «Come si gioca» resta in fondo; ogni riquadro ha il testo intero (niente tagliato).
+//      modi) si scorre; «📖 Come si gioca» (col libro) sta subito sotto l'ultima tessera, al centro, e non c'è più niente in fondo; ogni riquadro ha il testo intero (niente tagliato).
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no;
@@ -31,10 +31,15 @@
         tit: cs.fontSize, sot: cs2 ? cs2.fontSize : "", tagliato: b.scrollHeight > b.clientHeight + 1 || (so && so.scrollHeight > so.clientHeight + 1) };
     });
     var c = gr.parentNode, rc = c.getBoundingClientRect(), rg = gr.getBoundingClientRect();
-    var piede = d.querySelector(".schermata .piede"), rp = piede ? piede.getBoundingClientRect() : null;
-    var H = w.innerHeight;
-    return { tess: tess, avatar: !!d.querySelector(".modo-avatar"), sopra: Math.round(rg.top - rc.top + c.scrollTop), sotto: Math.round(c.scrollHeight - (rg.bottom - rc.top + c.scrollTop)),
-      scorre: c.scrollHeight > c.clientHeight + 1 || d.documentElement.scrollHeight > H + 1, piedeIn: rp ? rp.bottom <= H + 1 && rp.top >= 0 : false, H: H };
+    var come = c.querySelector(".mg-come"), rk = come ? come.getBoundingClientRect() : null, H = w.innerHeight;
+    var ult = gr.lastElementChild.getBoundingClientRect(), fine = rk ? rk.bottom : rg.bottom;
+    var scorre = c.scrollHeight > c.clientHeight + 1 || d.documentElement.scrollHeight > H + 1;
+    // (27 nov 2026) «📖 Come si gioca» subito sotto l'ultima tessera, al centro, col libro; nel piede non c'è più niente
+    var vede = false; if (rk) { c.scrollTop = c.scrollHeight; vede = come.getBoundingClientRect().bottom <= H + 1; c.scrollTop = 0; }
+    return { tess: tess, avatar: !!d.querySelector(".modo-avatar"), sopra: Math.round(rg.top - rc.top + c.scrollTop), sotto: Math.round(c.scrollHeight - (fine - rc.top + c.scrollTop)),
+      scorre: scorre, come: rk ? { testo: come.innerText.trim(), libro: /📖/.test(come.textContent), sotto: Math.round(rk.top - ult.bottom),
+        centro: Math.round((rk.left + rk.right) / 2 - (rg.left + rg.right) / 2), h: Math.round(rk.height), font: w.getComputedStyle(come).fontSize, vede: vede, inVista: !scorre ? rk.bottom <= H + 1 : null } : null,
+      piedeVuoto: !(d.querySelector(".schermata .piede") || { textContent: "" }).textContent.trim(), H: H };
   }
   async function giro(fai) {
     var dati = [];
@@ -73,12 +78,22 @@
       var puoScorrere = m.tel === "360x640" && m.tess.length >= 5;   // (sul telefono basso da 5 modi in su si scorre: meglio che rimpicciolire)
       if (!puoScorrere && m.scorre) err.push(chi + ": scorre (" + m.tess.length + " riquadri)");
       if (!m.scorre && Math.abs(m.sopra - m.sotto) > 12) err.push(chi + ": non è al centro (sopra " + m.sopra + ", sotto " + m.sotto + ")");
-      if (!m.piedeIn) err.push(chi + ": «Come si gioca» non si vede");
+      var k = m.come;
+      if (!k) err.push(chi + ": non c'è «📖 Come si gioca»");
+      else {
+        if (!/Come si gioca/.test(k.testo) || !k.libro) err.push(chi + ": la scritta è «" + k.testo + "» (senza libro?)");
+        if (k.sotto < 0 || k.sotto > 24) err.push(chi + ": «Come si gioca» non è subito sotto le tessere (" + k.sotto + " px)");
+        if (Math.abs(k.centro) > 3) err.push(chi + ": «Come si gioca» non è al centro (" + k.centro + " px)");
+        if (k.h < 44) err.push(chi + ": «Come si gioca» troppo basso per il dito (" + k.h + " px)");
+        if (!k.vede) err.push(chi + ": «Come si gioca» non si raggiunge scorrendo");
+        if (k.inVista === false) err.push(chi + ": «Come si gioca» fuori dallo schermo");
+      }
+      if (!m.piedeVuoto) err.push(chi + ": in fondo allo schermo c'è ancora qualcosa");
     });
     if (Object.keys(hs).length > 2) err.push("riquadri di altezze diverse: " + Object.keys(hs).join(", "));
     if (Object.keys(tit).length > 1) err.push("titoli di misure diverse: " + Object.keys(tit).join(", "));
     if (Object.keys(sot).length > 1) err.push("frasi di misure diverse: " + Object.keys(sot).join(", "));
     if (err.length) no(err.join(" · "));
-    return dati.length + " schermate · riquadri " + Object.keys(hs).join("/") + " px · titolo " + Object.keys(tit).join("/") + " · frase " + Object.keys(sot).join("/");
+    return dati.length + " schermate · «Come si gioca» " + dati[0].come.font + ", " + dati.map(function (m) { return m.come.sotto; }).filter(function (v, i, a) { return a.indexOf(v) === i; }).join("/") + " px sotto · riquadri " + Object.keys(hs).join("/") + " px · titolo " + Object.keys(tit).join("/") + " · frase " + Object.keys(sot).join("/");
   } });
 })();

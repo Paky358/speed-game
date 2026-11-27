@@ -4575,3 +4575,12 @@ html.gettoni .tl-gradino.p1 .fac, html.gettoni .oro.tl-fine .tl-gradino.p1 .fac{
 .schermata.modo-fissa .mg-tit{ font-size:1.2rem; line-height:1.12; }
 .schermata.modo-fissa .mg-sotto{ font-size:.94rem; line-height:1.25; margin-top:3px; }
 .schermata.modo-fissa .mg-freccia{ font-size:1.9rem; flex:0 0 auto; }
+/* «📖 Come si gioca» (27 nov 2026, il proprietario: «serve "Come si gioca" con un libro… appena sotto le tessere»): non una
+   tessera ma una scritta da toccare, più grande del tasto leggero di prima, col libro e la sottolineatura leggera, subito sotto
+   l'ultima tessera e al centro. Tessere e scritta stanno insieme al centro dello spazio (margine automatico sopra le tessere e
+   sotto la scritta); se non ci stanno si scorre e la scritta segue l'ultima tessera. js/core.js schermataModo */
+.schermata.modo-fissa .modo-scelta{ margin:auto 0 0; padding-bottom:0; }
+.schermata.modo-fissa .mg-come{ flex:0 0 auto; align-self:center; margin:4px auto auto; min-height:var(--tocco, 52px); padding:8px 18px;
+  background:transparent; border:0; box-shadow:none; font:inherit; font-size:1.12rem; font-weight:700; color:var(--o-oro-testo, #ff6d97);
+  text-decoration:underline; text-decoration-thickness:1.5px; text-underline-offset:5px; text-decoration-color:rgba(255,109,151,.45); cursor:pointer; }
+.schermata.modo-fissa .mg-come:active{ opacity:.7; }

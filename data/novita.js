@@ -9,6 +9,14 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 456,
+    data: "27 novembre 2026",
+    titolo: "«📖 Come si gioca» si trova subito 📖",
+    descrizione: [
+      "📖 In «Come giocate?» la scritta «Come si gioca» ora ha il libro, è più grande e sta subito sotto i riquadri, al centro: non più piccola in fondo allo schermo. Toccala e leggi le regole del gioco."
+    ]
+  },
+  {
     v: 455,
     data: "27 novembre 2026",
     titolo: "Palla a Pendolo, Battaglia Navale e Taboo si riposano un po' 🎯",

@@ -1674,7 +1674,7 @@
     var s = schermata({ icona: g.icona, titolo: g.nome, sotto: "Come giocate?", indietro: tornaHome });
     // (26 nov 2026, il proprietario: «non le voglio giganti, però così le vedo troppo piccole… togliamo l'avatar») i riquadri hanno
     // la STESSA misura in tutti i giochi (.modo-fissa in css/styles.css), non si allungano: il blocco sta al centro dello spazio e,
-    // se non ci sta, scorre solo il centro («Come si gioca» resta a vista). Niente avatar sotto.
+    // se non ci sta, scorre solo il centro. Niente avatar sotto.
     s.classList.add("prima-fissa", "modo-fissa");
     var griglia = el("div", { class: "modo-scelta" });
     var modi = modiDi(g), ultimo = ultimoModo(g);
@@ -1694,7 +1694,9 @@
       });
     });
     s._contenuto.appendChild(griglia);
-    s._piede.appendChild(el("button", { class: "btn btn-fantasma", text: "Come si gioca", onclick: function () { schermataRegole(g, function () { schermataModo(g); }); } }));
+    // (27 nov 2026, il proprietario: «serve "Come si gioca" con un libro… appena sotto le tessere») una scritta da toccare, col
+    // libro, subito SOTTO l'ultima tessera (non in fondo allo schermo): sta al centro insieme alle tessere e, se si scorre, le segue
+    s._contenuto.appendChild(el("button", { class: "mg-come", text: "📖 Come si gioca", onclick: function () { schermataRegole(g, function () { schermataModo(g); }); } }));
     mostra(s);
     segnaAltroSotto(s);   // (se scorre: la sfumatura in fondo, come nelle impostazioni)
   }
