@@ -9,6 +9,15 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 461,
+    data: "27 novembre 2026",
+    titolo: "Otto copertine nuove 🖼️",
+    descrizione: [
+      "🖼️ Nella prima schermata otto giochi hanno una copertina nuova, che fa vedere a cosa si gioca: Memata, Indovina il Paese, Il Muro, Scopa, Tris, Tris Gigante, Una Vita Perfetta… Quasi e Tutti d'Accordo.",
+      "🐑 Tutti d'Accordo, Il Muro e Tris Gigante prima non avevano nessuna immagine."
+    ]
+  },
+  {
     v: 460,
     data: "27 novembre 2026",
     titolo: "I giochi hanno nomi nuovi ✨",
