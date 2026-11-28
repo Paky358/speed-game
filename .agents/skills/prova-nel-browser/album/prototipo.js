@@ -277,9 +277,9 @@
     else fig.appendChild(slot(Object.assign({}, c, { preso: false }), ALB.mancante || "A"));
     var tit = el("div", {}, [ el("div", { class: "alb-sk-tit", text: c.nome }), el("div", { class: "alb-sk-sot", text: "N. " + c.num + " · " + c.squadra + " · " + { P: "Portiere", D: "Difensore", C: "Centrocampista", A: "Attaccante" }[c.ruolo] }) ]);
     var corpo;
-    if (!c.preso) { fig.style.width = "34%"; corpo = [ el("div", { class: "alb-sk-a" }, [ fig, tit, el("div", { class: "alb-mai", text: "Non l'hai ancora preso. Compralo all'asta e la figurina si attacca qui." }) ]) ]; }
+    if (!c.preso) { fig.style.width = "34%"; corpo = [ el("div", { class: "alb-sk-a" }, [ fig, tit, el("div", { class: "alb-mai", text: ALB.chi ? ALB.chi + " non l'ha ancora preso." : "Non l'hai ancora preso. Compralo all'asta e la figurina si attacca qui." }) ]) ]; }
     var paga = x.volte > 1 ? "pagato in media " + virgola(x.prezzo, 0) + " · da " + x.pMin + " a " + x.pMax : "pagato " + x.prezzo, uffT = x.uff ? "📋 " + x.uff + (x.uff === 1 ? " volta" : " volte") + " d'ufficio" : "";
-    var stagT = "Con te nella " + (ALB.stag ? A.nomeStagione(ALB.stag) : "Serie A di oggi");
+    var stagT = "Con " + (ALB.chi || "te") + " nella " + (ALB.stag ? A.nomeStagione(ALB.stag) : "Serie A di oggi");
     if (!c.preso) { /* (mai presa: solo la sagoma e «Non l'hai ancora preso», sopra) */ } else if (scelta === "B") corpo = [ el("div", { class: "alb-sk-b" }, [ fig, el("div", { style: "flex:1;min-width:0" }, [ tit,
         el("div", { class: "alb-ruolo", text: stagT }),
         el("div", { class: "alb-righe" }, [
@@ -307,5 +307,5 @@
     function best(x) { return el("div", { class: "alb-best", html: "⭐ La partita migliore: <b>" + virgola(x.best, 1) + "</b> di fantavoto contro il " + x.bestAvv + " (" + x.bestData + ")" + (x.bestGol ? " · " + x.bestGol + " gol" : "") }); }
   };
   ALB.trova = function (nome) { return album().tutte.filter(function (c) { return c.nome === nome; })[0] || null; };
-  ALB.album = album;
+  ALB.album = album; ALB.A = function () { return A; }; ALB.P = function () { return P; };
 })();
