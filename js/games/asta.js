@@ -7499,6 +7499,7 @@
     Object.keys(S).forEach(function (s) { if (S[s] && S[s].ASPETTO) basi.push(S[s].ASPETTO); });
     var ch = chiaviDi(pid);
     for (var i = 0; i < basi.length; i++) for (var j = 0; j < ch.length; j++) { var d = (basi[i] || {})[ch[j]]; if (d && d.p) return d; }
+    var X = window.SG_FANTA_ASPETTO_PID; if (X && X[pid] && X[pid].p) return X[pid];   // (29 nov 2026: la faccia vera di una stagione passata anche se quella stagione non è caricata; data/fanta-aspetto-pid.js)
     return null;
   }
   function facciaProp(k) {   // la faccia fatta da IL PAPPONE per questo calciatore, e su quale chiave sta: { a, chiave, anno }
@@ -14498,7 +14499,7 @@
   function escA(s) { return String(s).replace(/[&<>"]/g, function (ch) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]; }); }
   giocoFanta.album = apriAlbum;   // (lo usa la pagina dei Trofei: SGCuore.apriAlbum)
   giocoFanta.libro = function () { return LIB; };   // (per le prove: lo stato del libro)
-  giocoFanta.provaAlbum = { pacchettoDiOggi: pacchettoDiOggi, dataOggi: dataOggi, PK_GIORNO: PK_GIORNO, lista: albLista, speciali: ALB_SPECIALI, img: ALB_IMG, figura: function (c, w) { return figurinaCanvas(c, null, w, false); },
+  giocoFanta.provaAlbum = { pacchettoDiOggi: pacchettoDiOggi, dataOggi: dataOggi, PK_GIORNO: PK_GIORNO, lista: albLista, speciali: ALB_SPECIALI, img: ALB_IMG, figura: function (c, w) { return figurinaCanvas(c, null, w, false); }, figuraStag: function (stag, c, w) { return conStag(stag, function () { return figurinaCanvas(c, null, w, false); }); },
     formato: function (n) { LIB_PAG = n; ALB_POSTI = n * 2; LIB_COL = n === 15 ? 3 : 4; }, copertina: function (n) { LIB_COP = n; }, aspetto: function (stag, nome, sq) { return conStag(stag, function () { var k = chiaveCalc({ nome: nome, squadra: sq }); return { k: k, a: aspettoVero(k), persona: personaDi(k) }; }); }, apri: function (stag) { ALB.opz = ALB.opz || {}; albStile(); libro(stag || null, 0, true); }, colori: ALB_COLORI, busti: COP_BUSTI,
     ovrSq: function (sq) { return overallSquadra(sq); } };   // (per le foto: 16 = 4×4, 15 = 3×5)   // (per le prove: il tetto del giorno)
 

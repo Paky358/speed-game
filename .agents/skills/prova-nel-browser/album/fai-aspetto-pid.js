@@ -1,0 +1,8 @@
+// fa data/fanta-aspetto-pid.js (29 nov 2026): le facce vere delle stagioni passate (ASPETTO di data/fanta-<anno>.js) per persona («fc<numero>»),
+// così valgono per lo stesso calciatore in tutte le stagioni. Uso: node fai-aspetto-pid.js (da rifare quando cambia un ASPETTO delle stagioni)
+global.window = global; const fs = require("fs"), path = require("path"), D = path.join(__dirname, "../../../../data/"), out = {}; let n = 0;
+for (let a = 2015; a <= 2040; a++) if (fs.existsSync(D + "fanta-" + a + ".js")) require(D + "fanta-" + a + ".js");
+const S = window.SG_FANTA_STAGIONI || {};
+Object.keys(S).sort().forEach(s => { const A = S[s].ASPETTO || {}, I = S[s].IDS || {}; Object.keys(A).forEach(k => { const d = A[k]; if (!d || !d.p || !I[k]) return; const pid = "fc" + I[k]; if (!out[pid]) { out[pid] = Object.assign({}, d, { da: s }); n++; } }); });
+const txt = "/* 🎨 LE FACCE VERE DELLE STAGIONI PASSATE PER PERSONA (29 nov 2026): l'aspetto che sta nei dati di una stagione passata (ASPETTO in\n   data/fanta-<anno>.js, dalle foto di quell'anno) vale per lo STESSO calciatore in tutte le stagioni, anche quando quella stagione non è\n   stata aperta (prima si vedeva solo se il telefono l'aveva già caricata: Kolarov nell'album 2018-19 usciva a caso). Chiave «fc<numero di\n   fantacalcio.it>», da = la stagione da cui viene. Si rifà con .agents/skills/prova-nel-browser/album/fai-aspetto-pid.js. */\nwindow.SG_FANTA_ASPETTO_PID = {\n" + Object.keys(out).map(p => "  " + JSON.stringify(p) + ": " + JSON.stringify(out[p])).join(",\n") + "\n};\n";
+fs.writeFileSync(D + "fanta-aspetto-pid.js", txt); console.log(n + " persone");

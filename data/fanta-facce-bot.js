@@ -632,5 +632,6 @@ window.SG_FANTA_FACCE_BOT = {
   "fc1917": {"p":2,"c":"castano","t":"tirati indietro","b":"corta","f":"ovale","foto":"Google Immagini (solo guardata)"},
   "fc1895": {"p":3,"c":"castano scuro","t":"lunghi mossi","b":"corta","f":"ovale","foto":"Google Immagini (solo guardata)"},
   "fc73": {"p":2,"c":"biondo scuro","t":"corti col ciuffo","b":"corta","f":"squadrato","foto":"Google Immagini (solo guardata)"},
-  "fc5867": {"p":5,"c":"castano scuro","t":"ricci","b":"niente","f":"ovale","foto":"Google Immagini (solo guardata)"}
+  "fc5867": {"p":5,"c":"castano scuro","t":"ricci","b":"niente","f":"ovale","foto":"Google Immagini (solo guardata)"},
+  "fc2285": {"p":3,"c":"castano scuro","t":"corti","b":"corta","f":"squadrato","foto":"Mattia Bani.jpg"}
 };
