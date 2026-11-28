@@ -283,7 +283,7 @@
   function tasto(P, re) { return qa(P, ".pk-piede button").filter(function (b) { return re.test(b.textContent); })[0]; }
 
   COPIONE.aggiungi("al5", { nome: "Pacchetti: i due tasti, si striscia (il tocco non basta), 3 carte salvate prima dell'animazione, il mazzetto si gira e si butta, «Aprili tutti» a onda, l'ordine a caso, i doppioni ×N, il metallo che sale", fai: async function () {
-    var x = [], stat = { al_oggi: {}, pk: { oggi: 3 } }, salvate = [], migliori = [0, 0, 0];
+    var x = [], stat = { al_oggi: {}, pk: { oggi: 3 } }, salvate = [], migliori = [0, 0, 0, 0, 0];
     statConSpia(stat, salvate);
     try {
       var P = await W.apriTel("Paky", { x: 0 });
@@ -312,20 +312,23 @@
       var prima = salvate.length; tasto(P, /Apri 1/).click();
       if (!await W.aspetta(function () { return q(P, ".pk-busta"); }, 5000)) no("il pacchetto non arriva");
       var sv = salvate.slice(prima); if (sv.length !== 1) no("salvataggi prima della striscia: " + sv.length + " (voluto 1)");
-      if (stat.pk.oggi !== 2 || !stat.pkUltimo || stat.pkUltimo.p.length !== 1 || stat.pkUltimo.p[0].length !== 3) no("dopo «Apri 1»: pacchetti " + stat.pk.oggi + ", ultimo " + JSON.stringify(stat.pkUltimo).slice(0, 80));
+      if (stat.pk.oggi !== 2 || !stat.pkUltimo || stat.pkUltimo.p.length !== 1 || stat.pkUltimo.p[0].length !== 5) no("dopo «Apri 1»: pacchetti " + stat.pk.oggi + ", ultimo " + JSON.stringify(stat.pkUltimo).slice(0, 80));
       // 4. un tocco non basta; la striscia sì
       var b = q(P, ".pk-busta"); await gesto(P, b, [0.5, 0.5], [0.5, 0.5], 1); await W.dorme(400);
       if (q(P, ".pk-mazzo")) no("un tocco ha aperto il pacchetto");
       await gesto(P, b, [0.05, 0.14], [0.95, 0.14]);
-      if (!await W.aspetta(function () { return qa(P, ".pk-mazzo .pk-carta").length === 3; }, 5000)) no("strisciando non escono le 3 carte coperte");
-      // 5. il mazzetto: si gira (tocco), si butta di lato (striscia), tre volte; poi il riassunto
-      for (var k = 0; k < 3; k++) {
-        var mz = q(P, ".pk-mazzo"); await W.dorme(250); await gesto(P, mz, [0.5, 0.5], [0.5, 0.5], 1);
-        if (!await W.aspetta(function () { return q(P, ".pk-mazzo .pk-carta.girata"); }, 3000)) no("la carta " + (k + 1) + " non si gira");
-        await W.dorme(300); await gesto(P, mz, [0.3, 0.5], [0.95, 0.5]); await W.dorme(600);
+      if (!await W.aspetta(function () { return qa(P, ".pk-mazzo .pk-carta").length === 5; }, 5000)) no("strisciando non escono le 5 carte");
+      if (!q(P, ".pk-mazzo .pk-carta.girata")) no("la prima carta non si vede subito");
+      // 5. il mazzetto di faccia: trascinando piano si sbircia (non si butta), strisciando si butta; 5 volte; poi il riassunto
+      var mz0 = q(P, ".pk-mazzo"); await W.dorme(400); var prima5 = qa(P, ".pk-mazzo .pk-carta").length; await gesto(P, mz0, [0.4, 0.5], [0.62, 0.5], 14); await W.dorme(500);
+      if (qa(P, ".pk-mazzo .pk-carta").length !== prima5) no("sbirciando piano la carta è volata via");
+      for (var k = 0; k < 5; k++) {
+        var mz = q(P, ".pk-mazzo"); await W.dorme(450);
+        if (!await W.aspetta(function () { return q(P, ".pk-mazzo .pk-carta.girata"); }, 3000)) no("la carta " + (k + 1) + " non si vede");
+        await gesto(P, mz, [0.3, 0.5], [1.1, 0.5]); await W.dorme(600);
       }
-      if (!await W.aspetta(function () { return q(P, ".pk-somma"); }, 4000)) no("niente riassunto dopo le 3 carte");
-      if (!/3 figurine/.test(testo(P, ".pk-somma")) || qa(P, ".pk-griglia .pk-carta").length !== 3) no("il riassunto: «" + testo(P, ".pk-somma") + "»");
+      if (!await W.aspetta(function () { return q(P, ".pk-somma"); }, 4000)) no("niente riassunto dopo le 5 carte");
+      if (!/5 figurine/.test(testo(P, ".pk-somma")) || qa(P, ".pk-griglia .pk-carta").length !== 5) no("il riassunto: «" + testo(P, ".pk-somma") + "»");
       if (!qa(P, ".pk-griglia .pk-carta.nuova").length) no("nel pacchetto nessuna «NUOVA!» (la 1ª scelta è sempre nuova)");
       x.push("Apri 1: " + testo(P, ".pk-somma"));
       // 6. «Aprili tutti» con 60 pacchetti in più: una striscia, l'onda (un tocco salta alla fine), il nastro, il riassunto
@@ -336,14 +339,14 @@
       await gesto(P, q(P, ".pk-scena"), [0.5, 0.5], [0.5, 0.5], 1);   // (un tocco: alla fine dell'onda)
       if (!await W.aspetta(function () { return q(P, ".pk-nastro"); }, 6000)) no("dopo l'onda non si scorrono le carte");
       await gesto(P, q(P, ".pk-nastro"), [0.8, 0.5], [0.2, 0.5]); await W.dorme(500);
-      if (!/^2 \/ 186/.test(testo(P, ".pk-scena .pk-dito"))) no("scorrendo: «" + testo(P, ".pk-scena .pk-dito") + "»");
-      tasto(P, /riassunto/).click(); if (!await W.aspetta(function () { return /186 figurine/.test(testo(P, ".pk-somma")); }, 4000)) no("il riassunto di tutti: «" + testo(P, ".pk-somma") + "»");
+      if (!/^2 \/ 310/.test(testo(P, ".pk-scena .pk-dito"))) no("scorrendo: «" + testo(P, ".pk-scena .pk-dito") + "»");
+      tasto(P, /riassunto/).click(); if (!await W.aspetta(function () { return /310 figurine/.test(testo(P, ".pk-somma")); }, 4000)) no("il riassunto di tutti: «" + testo(P, ".pk-somma") + "»");
       if (stat.pk.oggi !== 0) no("pacchetti alla fine: " + stat.pk.oggi);
       x.push("Aprili tutti: " + testo(P, ".pk-somma"));
       // 7. l'ordine a caso: la carta migliore (quando ce n'è una sola) sta al 1°, 2° o 3° posto
-      var tot = migliori[0] + migliori[1] + migliori[2];
-      if (tot < 20 || migliori.some(function (y) { return y < tot * 0.15; })) no("dove sta la carta migliore nei pacchetti: " + migliori.join("/"));
-      x.push("la migliore al 1°/2°/3° posto: " + migliori.join("/"));
+      var tot = migliori.reduce(function (a, b) { return a + b; }, 0);
+      if (tot < 20 || migliori.some(function (y) { return y < tot * 0.09; })) no("dove sta la carta migliore nei pacchetti: " + migliori.join("/"));
+      x.push("la migliore al 1°…5° posto: " + migliori.join("/"));
       // 8. il metallo che sale (come ricomprato): «⬆ Oro!» una volta
       qa(P, ".pk-piede button").pop().click(); await W.dorme(600);
       stat.al_oggi[id(oro.nome + " (Inter)")][16] = 2;

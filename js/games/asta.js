@@ -8654,9 +8654,9 @@
   var ALB_SPECIALI = { rara: "viola", ex: "nero" }, ALB_NOME_SPECIALE = { rara: "RARA", ex: "EX" };
   // 🖼️ LE IMMAGINI DELL'ALBUM DA FILE (le disegna Gemini; misure e regole nel LEGGIMI di D:/SG-album-prove/libro2). Un'immagine si accende
   //  mettendo il file in ALB_IMG.cartella e il suo nome qui (true, o la squadra nella lista festa); se manca, resta il disegno del codice.
-  //  copertina: copertina.webp (lo stadio di notte, uguale per tutte le stagioni); pacchetto: pacchetto.webp (o pacchetto-<stagione>.webp
-  //  se c'è in pacchettiStagione); dorso: dorso.webp (il dorso delle carte coperte); festa: festa/<Squadra>.webp (la squadra completa).
-  var ALB_IMG = { cartella: "carte/album/", copertina: false, pacchetto: false, pacchettiStagione: [], dorso: false, festa: [] };
+  //  copertina: il nome del file (29 nov 2026: «copertina-stadio», di Gemini; c'è anche «copertina-viola»), lo sfondo uguale per tutte le stagioni; pacchetto: pacchetto.webp (o pacchetto-<stagione>.webp
+  //  se c'è in pacchettiStagione); festa: festa/<Squadra>.webp (la squadra completa). Niente dorso: le carte escono di faccia (29 nov 2026).
+  var ALB_IMG = { cartella: "carte/album/", copertina: "copertina-stadio", pacchetto: false, pacchettiStagione: [], festa: [] };
   function albImg(nome) { return ALB_IMG.cartella + nome + ".webp"; }
   function metalloDi(f) { return METALLI[ALB_SPECIALI[f] || f] || null; }
   function luce(x) { var s = String(x), m = s.indexOf("rgb") === 0 ? s.replace(/[^0-9,]/g, "").split(",") : null, n = m ? 0 : parseInt(s.slice(1), 16) || 0, v = m ? [+m[0], +m[1], +m[2]] : [n >> 16, n >> 8 & 255, n & 255]; v = v.map(function (y) { y /= 255; return y <= 0.03928 ? y / 12.92 : Math.pow((y + 0.055) / 1.055, 2.4); }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; }
@@ -13524,8 +13524,15 @@
       ".pk-busta.scuoti{animation:pkNo .45s}@keyframes pkNo{20%{transform:rotate(-4deg)}45%{transform:rotate(4deg)}70%{transform:rotate(-2deg)}100%{transform:none}}",
       ".pk-marca{font-family:var(--o-tit);font-weight:800;letter-spacing:.2em;font-size:.72rem;color:#ffe28a}.pk-tit{font-family:var(--o-tit);font-weight:800;font-size:1.9rem;line-height:1;color:#fff;text-shadow:0 3px 0 rgba(60,0,30,.6)}",
       ".pk-stag{font-weight:800;font-size:.85rem;color:#ffe3ee}.pk-num{margin-top:10px;font-weight:900;font-size:.8rem;color:#0b0f26;background:linear-gradient(180deg,#fff3b8,#f2c230);border-radius:99px;padding:3px 10px}",
-      ".lb-img{background-size:cover;background-position:center}.lb-buio{position:absolute;inset:0;background:#05061a;opacity:.62;z-index:1;pointer-events:none}",
-      ".pk-fronte.img,.pk-dorso.img{background-size:cover;background-position:center}.pk-fronte.img:before{display:none}",
+      ".lb-img{background-size:cover;background-position:center 62%}.lb-buio{position:absolute;inset:0;background:#05061a;opacity:.62;z-index:1;pointer-events:none}",
+      ".pk-anno{font-family:var(--o-tit);font-weight:800;font-size:2.15rem;line-height:1;color:#fff;letter-spacing:.02em;text-shadow:0 3px 0 rgba(0,0,0,.35)}.pk-bu{display:block;margin:2px 0 -6px}.pk-bu.vuoto{height:40%}",
+      ".pk-fronte .pk-num{margin-top:0;position:relative;z-index:1}",
+      ".lb-cs{position:absolute;left:5%;right:5%;z-index:3;pointer-events:none}.lb-cs-p{position:absolute;display:flex;align-items:flex-end;justify-content:center}",
+      ".lb-cs-p .bu{position:absolute;inset:0;opacity:0;transition:opacity .35s}.lb-cs-p.campione{z-index:2}.lb-cs-p.campione:before{content:'';position:absolute;inset:-12% -18% 0;border-radius:50%;background:radial-gradient(circle at 50% 60%,rgba(255,216,74,.38),rgba(0,0,0,0) 66%)}",
+      ".lb-cs-n{position:relative;z-index:1;margin-bottom:4%;display:flex;flex-direction:column;align-items:center;background:rgba(6,8,22,.78);border-radius:8px;padding:2px 6px;max-width:100%;line-height:1.1}",
+      ".lb-cs-n b{font-size:.68rem;font-weight:900;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.lb-cs-n span{font-size:.56rem;font-weight:800;color:#ffe28a;white-space:nowrap}",
+      ".lb-cs-p.campione .lb-cs-n b{font-size:.86rem}.lb-cs-p.campione .lb-cs-n span{font-size:.66rem}.lb-cs-p.su{align-items:flex-start}.lb-cs-p .bu{-webkit-mask-image:linear-gradient(#000 80%,transparent);mask-image:linear-gradient(#000 80%,transparent)}.lb-cs-p.su .lb-cs-n{position:absolute;top:-15px;margin:0;padding:1px 5px}",
+      ".pk-fronte.img{background-size:cover;background-position:center}.pk-fronte.img:before{display:none}",
       ".lb-festa-img{position:fixed;inset:0;z-index:66;opacity:0;background-size:cover;background-position:center bottom;pointer-events:none}.lb-festa-img .lb-banda{top:30%}",
       ".pk-luce2{position:absolute;inset:-38%;border-radius:50%;opacity:0;pointer-events:none}",
       ".pk-pila{position:relative;width:min(56vw,220px);aspect-ratio:1/1.45}.pk-pila .pk-busta{position:absolute;inset:0;width:auto}",
@@ -13536,13 +13543,10 @@
       ".pk-carta{position:relative;aspect-ratio:1/1.36}.pk-mazzo{position:relative}.pk-mazzo .pk-carta{position:absolute;left:0;top:0;width:100%;will-change:transform}",
       ".pk-nastro{position:relative;width:100%}.pk-carta.nel-nastro{position:absolute;top:22px;will-change:transform,opacity}",
       ".pk-gira{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateY(180deg);will-change:transform}",
-      ".pk-dorso,.pk-faccia{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:7%/5%;overflow:hidden}",
+      ".pk-faccia{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:7%/5%;overflow:hidden}",
       ".pk-faccia canvas{width:100%;height:100%;display:block}",
-      ".pk-dorso{transform:rotateY(180deg);background:repeating-linear-gradient(45deg,#3a1f6e 0 8px,#2c1758 8px 16px);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 4px #b9774a,inset 0 0 0 6px rgba(0,0,0,.35)}",
-      ".pk-carta.argento .pk-dorso{box-shadow:inset 0 0 0 4px #d7def0,inset 0 0 0 6px rgba(0,0,0,.35)}.pk-carta.oro .pk-dorso{box-shadow:inset 0 0 0 4px #ffd84a,inset 0 0 0 6px rgba(0,0,0,.35),inset 0 0 18px rgba(255,216,74,.45)}",
-      ".pk-carta.rara .pk-dorso{box-shadow:inset 0 0 0 4px var(--pk-rara,#a97de8),inset 0 0 0 6px rgba(0,0,0,.35),inset 0 0 18px var(--pk-rara,#a97de8)}.pk-carta.ex .pk-dorso{box-shadow:inset 0 0 0 4px var(--pk-ex,#d7dde8),inset 0 0 0 6px rgba(0,0,0,.5),inset 0 0 18px var(--pk-ex,#d7dde8)}",
+      ".pk-carta.in-mazzo .pk-faccia{box-shadow:0 0 0 2px #b9774a}.pk-carta.in-mazzo.argento .pk-faccia{box-shadow:0 0 0 2px #e4e9f6,0 0 8px rgba(220,228,250,.45)}.pk-carta.in-mazzo.oro .pk-faccia{box-shadow:0 0 0 2.5px #ffd84a,0 0 14px rgba(255,216,74,.75)}.pk-carta.in-mazzo.rara .pk-faccia{box-shadow:0 0 0 2.5px var(--pk-rara,#a97de8),0 0 14px var(--pk-rara,#a97de8)}.pk-carta.in-mazzo.ex .pk-faccia{box-shadow:0 0 0 2.5px var(--pk-ex,#d7dde8),0 0 14px var(--pk-ex,#d7dde8)}",
       ".pk-carta.rara.girata .pk-raggi,.pk-carta.ex.girata .pk-raggi{opacity:1;transition:opacity .4s;background:radial-gradient(circle,var(--pk-luce,#c9a8ff),rgba(0,0,0,0) 66%)}",
-      ".pk-dorso-in{font-family:var(--o-tit);font-weight:800;font-size:.7rem;letter-spacing:.15em;color:#ffe28a;transform:rotate(-30deg)}",
       ".pk-luccica{position:absolute;inset:0;overflow:hidden;pointer-events:none}.pk-luccica i{position:absolute;top:-20%;bottom:-20%;left:25%;width:50%;opacity:0;transform:skewX(-14deg);background:linear-gradient(100deg,rgba(255,255,255,0),rgba(255,255,255,.45) 50%,rgba(255,255,255,0))}",
       ".pk-carta.oro .pk-luccica i{background:linear-gradient(100deg,rgba(255,236,150,0),rgba(255,240,170,.85) 50%,rgba(255,236,150,0))}",
       ".pk-raggi{position:absolute;inset:-35%;border-radius:50%;opacity:0;pointer-events:none;background:radial-gradient(circle,rgba(255,226,120,.75),rgba(255,200,60,.25) 40%,rgba(255,200,60,0) 68%)}",
@@ -13676,9 +13680,10 @@
     var npk = libPacchi(LIB.stag) || (libUltimo(LIB.stag) ? "…" : 0);   // (anche un pacchetto rimasto a metà: si ritrova)
     if (npk) f.appendChild(el("button", { class: "pk-apri", onclick: function (e) { e.stopPropagation(); libPacchetti(); } }, [ el("span", { class: "pk-ic", text: "📦" }), el("b", { text: "Apri i pacchetti" }), el("span", { class: "pk-n", text: String(npk) }) ]));
     LIB.scena.appendChild(f); libBarra(null);
+    libCopSquadre(f, LIB.stag);
     var buio = null;
     if (ALB_IMG.copertina) {   // (🖼️ l'immagine di Gemini: si vede sotto un velo scuro che si toglie al tocco, al posto dei riflettori disegnati)
-      var im = el("div", { class: "lb-sf lb-img", style: "background-image:url(" + albImg("copertina") + ")" }); f.insertBefore(im, base); base.remove(); luci.forEach(function (c) { c.remove(); }); luci = [];
+      var im = el("div", { class: "lb-sf lb-img", style: "background-image:url(" + albImg(ALB_IMG.copertina === true ? "copertina" : ALB_IMG.copertina) + ")" }); f.insertBefore(im, base); base.remove(); luci.forEach(function (c) { c.remove(); }); luci = [];
       buio = el("div", { class: "lb-buio" }); f.insertBefore(buio, im.nextSibling);
     } else if (SF()) { SF().copertina(base, "B", null); luci.forEach(function (c, i) { SF().copertina(c, "B", i < 4 ? i : "campo"); }); }
     var via = false, festa = LIB.festa;
@@ -13733,6 +13738,63 @@
       x.__ok = true; libLc(x);
     }
     if (LIB.coda.length) LIB.raf = requestAnimationFrame(libFigura);
+  }
+  // 🏆 LE COPERTINE E I PACCHETTI DI OGNI STAGIONE (29 nov 2026): data/album-copertine.js dice, per ogni stagione, le prime 6 della classifica
+  //  finale (oggi le più forti) e il calciatore di ognuna (capitano o stella). LIB_COP = quante squadre sulla copertina (4 o 6: lo sceglie il
+  //  proprietario sulle foto); la 1ª (la campione) davanti, più grande. Il pacchetto ha il colore della stagione (ALB_COLORI) e il calciatore
+  //  della campione. I busti si disegnano UNA volta (COP_BUSTI) e poi si copiano.
+  var LIB_COP = 4, ALB_ANNO_OGGI = "2026-27";
+  var ALB_COLORI = { "2015-16": "#e03a3a", "2016-17": "#f27a1c", "2017-18": "#8cc63f", "2018-19": "#22a35a", "2019-20": "#12b5a6", "2020-21": "#22c3e6",
+    "2021-22": "#3d8bf0", "2022-23": "#2340b8", "2023-24": "#d23ad0", "2024-25": "#ff6fa5", "2025-26": "#9a1d3f", "oggi": "#4a6274" };
+  var COP_BUSTI = {};
+  function copLista(stag) { return (window.SG_ALBUM_COPERTINE || {})[stag || "oggi"] || null; }
+  function copColore(stag) { return ALB_COLORI[stag || "oggi"] || "#4a6274"; }
+  function copMix(h, a, k) {   // (un colore schiarito o scurito: a = "#fff" o "#000", k da 0 a 1)
+    var p = function (x, i) { return parseInt(x.slice(1 + i * 2, 3 + i * 2), 16); }, o = "#";
+    for (var i = 0; i < 3; i++) o += ("0" + Math.round(p(h, i) + (p(a, i) - p(h, i)) * k).toString(16)).slice(-2); return o;
+  }
+  function copBusto(stag, x, w) {   // il busto del calciatore x = [squadra, nome] (disegnato una volta sola a quella misura; poi si copia)
+    var k = (stag || "oggi") + "|" + x[1] + "|" + x[0] + "|" + w;
+    if (!(k in COP_BUSTI)) {
+      COP_BUSTI[k] = null;
+      try { conStag(stag, function () {
+        var ab = albLista(stag), c = ((ab.per || {})[x[0]] || []).filter(function (y) { return y.nome === x[1]; })[0], ru = c ? c.ruolo : "C";
+        var src = bustoCanvas({ nome: x[1], squadra: x[0], ruolo: ru }, w); if (src) COP_BUSTI[k] = src;
+      }); } catch (e) {}
+    }
+    var src = COP_BUSTI[k]; if (!src) return null;
+    var cv = document.createElement("canvas"); cv.width = src.width; cv.height = src.height; cv.getContext("2d").drawImage(src, 0, 0); cv.style.width = cv.style.height = w + "px"; return cv;
+  }
+  function libCopSquadre(f, stag) {   // la foto di squadra in piedi sul campo: dietro la 2ª, la 3ª… in fila, davanti in mezzo la campione, più grande
+    var C = window.SGCuore, el = C.el, L = copLista(stag); if (!L) return;
+    var n = Math.min(LIB_COP, L.length), box = el("div", { class: "lb-cs" }); f.appendChild(box);
+    var nodi = [];
+    for (var j = 0; j < n; j++) { var x = L[j], nodo = el("div", { class: "lb-cs-p" + (j ? " su" : " campione") }); nodo.appendChild(el("div", { class: "lb-cs-n" }, [ el("b", { text: x[1] }), el("span", { text: (!j && stag ? "🏆 " : "") + x[0] }) ])); box.appendChild(nodo); nodi.push({ nodo: nodo, x: x, j: j }); }
+    var ordine = n > 4 ? [4, 2, 1, 3, 5] : [2, 1, 3], misura = 0;
+    function disponi() {   // (dopo che la copertina ha le sue misure vere: sotto le scritte, sopra il tasto dei pacchetti)
+      if (!box.isConnected) return;
+      var tx = f.querySelector(".tx"), fr = f.getBoundingClientRect(), giu = f.querySelector(".pk-apri") || f.querySelector(".tc");
+      var cima = (tx ? tx.getBoundingClientRect().bottom - fr.top : fr.height * 0.45) + 6, fondo = (giu ? giu.getBoundingClientRect().top - fr.top : fr.height * 0.86) - 4;
+      var H = Math.max(90, fondo - cima), W = fr.width * 0.9, k = n - 1;
+      var wf = Math.floor(Math.min(H * 0.74, W * (n > 4 ? 0.4 : 0.46))), wb = Math.floor(Math.min(wf * (n > 4 ? 0.64 : 0.76), W / (k * (n > 4 ? 0.74 : 0.88) + 0.26)));
+      var passo = wb * (n > 4 ? 0.74 : 0.88), x0 = (W - (passo * (k - 1) + wb)) / 2, yf = H - wf, yb = Math.max(16, yf - wb * 0.4);
+      box.style.top = cima + "px"; box.style.height = H + "px";
+      nodi.forEach(function (q) {
+        var i = ordine.indexOf(q.j), w = q.j ? wb : wf, x = q.j ? x0 + passo * i : (W - wf) / 2, y = q.j ? yb : yf; q.w = w;
+        q.nodo.style.cssText = "left:" + Math.round(x) + "px;top:" + Math.round(y) + "px;width:" + w + "px;height:" + w + "px";
+      });
+      if (misura++ === 0) disegna();
+    }
+    var festa = LIB.festa, dopo = window.requestIdleCallback ? function (fn) { requestIdleCallback(fn, { timeout: 300 }); } : function (fn) { setTimeout(fn, 30); };
+    function disegna() {   // (un busto alla volta, prima la campione; già disegnati = una copia)
+      var coda = nodi.slice();
+      (function uno() {
+        if (festa !== LIB.festa || !coda.length || !box.isConnected) return; var q = coda.shift(), cv = copBusto(stag, q.x, q.w);
+        if (cv) { cv.className = "bu"; q.nodo.insertBefore(cv, q.nodo.firstChild); requestAnimationFrame(function () { cv.style.opacity = "1"; }); }
+        dopo(uno);
+      })();
+    }
+    requestAnimationFrame(disponi); if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { var w0 = nodi.map(function (q) { return q.w; }).join(); disponi(); if (nodi.map(function (q) { return q.w; }).join() !== w0) nodi.forEach(function (q) { var v = q.nodo.querySelector(".bu"); if (v) v.remove(); }), misura = 0, disponi(); });
   }
   var LIB_PAG = 16, LIB_COL = 4;   // (il proprietario, 29 nov 2026: 4×4 = 16 figurine per pagina, 32 per squadra su 2 pagine)
   function libFoglioSq(sq, pag, i) {
@@ -14007,7 +14069,7 @@
   //  (stat.astafanta.pk.<stagione>, nel profilo). Si aprono quando vuoi dall'album: «📦 Apri 1» (si striscia il pacchetto, il mazzetto
   //  di 3 coperte si inclina per sbirciare i bordi, si girano una alla volta) o «📦 Aprili tutti» (una striscia, l'onda dei pacchetti,
   //  poi le carte si scorrono col dito e il riassunto).
-  //  Le carte: PK_CARTE (3), in ordine A CASO (la migliore può essere la prima: l'ordine non dice niente). La prima scelta è sempre una che
+  //  Le carte: PK_CARTE (5, dal 29 nov 2026; prima 3), in ordine A CASO (la migliore può essere la prima: l'ordine non dice niente). La prima scelta è sempre una che
   //  ti manca, più spesso delle squadre quasi finite (PK_AIUTO); le altre col metallo coi pesi PK_PESI. Chi è uscito dal listone si trova
   //  SOLO nei pacchetti, un po' più raro (PK_USCITO). Il pacchetto si decide e si SALVA prima dell'animazione, con una scrittura sicura
   //  (SGNube.transazioneStat: due telefoni con lo stesso profilo non ne aprono di più né ne perdono; senza rete non si apre niente).
@@ -14020,7 +14082,7 @@
   //  PK_CARTE carte per pacchetto; PK_PESI la probabilità di ogni carta per categoria (bronzo, argento, oro: chi va all'asta; rara: chi non
   //  c'è mai andato; ex: chi è uscito dal listone); PK_MANCA quante volte in più esce, dentro la sua categoria, chi ti manca; PK_AIUTO quanto
   //  la carta «sempre nuova» preferisce le squadre quasi finite. In ogni pacchetto: almeno una che manca e almeno una di un calciatore all'asta.
-  var PK_CARTE = 3, PK_PESI = { bronzo: 0.55, argento: 0.28, oro: 0.10, rara: 0.06, ex: 0.01 }, PK_MANCA = 3, PK_AIUTO = 2;
+  var PK_CARTE = 5, PK_PESI = { bronzo: 0.58, argento: 0.28, oro: 0.08, rara: 0.052, ex: 0.008 }, PK_MANCA = 3, PK_AIUTO = 2;
   function libPacchi(stag) { var pk = albStat().pk || {}; return Math.max(0, Math.round(+pk[chiaveStag(stag)] || 0)); }
   function albCopie(x) { return x ? (x[0] || 0) + (x[4] || 0) + (x[5] || 0) + (x[17] || 0) : 0; }   // (🔁 le copie che hai avuto: asta, ufficio, scambio, pacchetti)
   function libPocoMoto() { try { return window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } }
@@ -14112,7 +14174,11 @@
     }
     function bustaNodo() {
       var imP = ALB_IMG.pacchettiStagione.indexOf(stag) >= 0 ? albImg("pacchetto-" + stag) : ALB_IMG.pacchetto ? albImg("pacchetto") : null;
-      return el("div", { class: "pk-busta" }, [ el("div", { class: "pk-luce" }), el("div", { class: "pk-strappo" }), el("div", { class: "pk-fronte" + (imP ? " img" : ""), style: imP ? "background-image:url(" + imP + ")" : null }, [ el("div", { class: "pk-marca", text: "MINI ASTA" }), el("div", { class: "pk-tit", text: "Figurine" }), el("div", { class: "pk-stag", text: "📦 " + (stag || "Serie A di oggi") }), el("div", { class: "pk-num", text: PK_CARTE + " figurine" }) ]), el("div", { class: "pk-taglio" }, [ el("i") ]) ]);
+      var col = copColore(stag), anno = stag || ALB_ANNO_OGGI, L = copLista(stag), wb = Math.round(Math.min(220, scena.clientWidth * 0.56) * 0.62);
+      var sfondo = (imP ? "background-image:url(" + imP + ");background-color:" + col + ";background-blend-mode:multiply;" : "background:linear-gradient(160deg," + copMix(col, "#ffffff", 0.32) + "," + col + " 45%," + copMix(col, "#000000", 0.55) + ");");
+      var bu = L && L[0] ? copBusto(stag, L[0], wb) : null; if (bu) bu.className = "pk-bu";
+      return el("div", { class: "pk-busta", style: "--pk-col:" + col }, [ el("div", { class: "pk-luce" }), el("div", { class: "pk-strappo", style: "background:linear-gradient(180deg," + copMix(col, "#ffffff", 0.45) + "," + copMix(col, "#000000", 0.25) + ")" }),
+        el("div", { class: "pk-fronte" + (imP ? " img" : ""), style: sfondo }, [ el("div", { class: "pk-marca", text: "MINI ASTA · FIGURINE" }), el("div", { class: "pk-anno", text: anno }), bu || el("div", { class: "pk-bu vuoto" }), el("div", { class: "pk-num", text: PK_CARTE + " figurine" }) ]), el("div", { class: "pk-taglio" }, [ el("i") ]) ]);
     }
     function migliore(l) { var m = 0; l.forEach(function (o) { var i = ALB_METALLI.indexOf(o.met); if (i <= 2) m = Math.max(m, i); }); return m; }   // (il metallo più alto: 0 bronzo, 1 argento, 2 oro)
     function speciale(l) { var sp = null; l.forEach(function (o) { if (o.met === "ex") sp = "ex"; else if (o.met === "rara" && !sp) sp = "rara"; }); return sp; }   // (📦 la carta speciale più rara del pacchetto)
@@ -14165,19 +14231,19 @@
     }
     function cartaNodo(o, w, coperta, daW) {
       var src = sorgente(o, daW || w);
-      var dorso = ALB_IMG.dorso ? el("div", { class: "pk-dorso img", style: "background-image:url(" + albImg("dorso") + ")" }) : el("div", { class: "pk-dorso" }, [ el("div", { class: "pk-dorso-in", text: "MINI ASTA" }) ]), fronte = el("div", { class: "pk-faccia" }, [ el("div", { class: "pk-luccica" }, [ el("i") ]) ]);
+      var fronte = el("div", { class: "pk-faccia" }, [ el("div", { class: "pk-luccica" }, [ el("i") ]) ]);   // (dal 29 nov 2026 niente dorso: le carte escono di faccia)
       if (src) { var cv = document.createElement("canvas"); cv.width = src.width; cv.height = src.height; cv.getContext("2d").drawImage(src, 0, 0); fronte.insertBefore(cv, fronte.firstChild); }
-      var gira = el("div", { class: "pk-gira", style: coperta ? "" : "transform:none" }, [ dorso, fronte ]), MTo = metalloDi(o.met), n = el("div", { class: "pk-carta " + o.met + (o.nuova ? " nuova" : o.sale ? " sale" : " doppia") + (coperta ? "" : " girata"), style: "width:" + w + "px" + (ALB_NOME_SPECIALE[o.met] && MTo ? ";--pk-luce:" + MTo.ovr : "") }, [ el("div", { class: "pk-raggi" }), gira ]);
+      var gira = el("div", { class: "pk-gira", style: "transform:none" }, [ fronte ]), MTo = metalloDi(o.met), n = el("div", { class: "pk-carta " + o.met + (o.nuova ? " nuova" : o.sale ? " sale" : " doppia") + (coperta ? "" : " girata"), style: "width:" + w + "px" + (ALB_NOME_SPECIALE[o.met] && MTo ? ";--pk-luce:" + MTo.ovr : "") }, [ el("div", { class: "pk-raggi" }), gira ]);
       n.appendChild(el("span", { class: "pk-tag", text: o.nuova ? "NUOVA!" : o.sale ? "⬆ " + o.met.toUpperCase() + "!" : "Ce l'hai già" }));
       if (o.copie >= 2) n.appendChild(el("span", { class: "pk-copie", text: "×" + o.copie }));
       n.__gira = gira; n.__o = o; return n;
     }
-    function rivela(n) {   // la carta si gira: «ding», l'argento un po' di più, l'oro col colpo e la vibrazione
+    function rivela(n) {   // la carta arriva in cima al mazzetto: «ding», l'argento un po' di più, l'oro col colpo e la vibrazione
       var o = n.__o; n.classList.add("pronta");
       if (o.met === "oro" || o.met === "ex" || o.met === "rara") { libSuono("oro"); libVibra([18, 40, 26]); } else if (o.met === "argento") libSuono("argento"); else libSuono("ding");
       if (o.nuova && o.met !== "oro") libVibra(10);
-      return libTempo(poco ? 1 : 420, function (k) { var e = 1 - Math.pow(1 - k, 2.5); n.__gira.style.transform = "rotateY(" + (180 - 180 * e).toFixed(1) + "deg) scale(" + (1 + Math.sin(k * Math.PI) * 0.08).toFixed(3) + ")"; })
-        .then(function () { n.classList.add("girata"); });
+      n.classList.add("girata");   // (la carta è già di faccia: «girata» accende «NUOVA!» e la luce)
+      return libTempo(poco ? 1 : 340, function (k) { n.__gira.style.transform = "scale(" + (1 + Math.sin(k * Math.PI) * 0.07).toFixed(3) + ")"; });
     }
     function inclina(n, dx, dy, w) {   // la carta (girata) sotto il dito si inclina e la luce le scorre sopra
       if (poco) return; var ry = Math.max(-22, Math.min(22, dx / w * 40)), rx = Math.max(-16, Math.min(16, -dy / w * 32));
@@ -14185,32 +14251,37 @@
       var lu = n.querySelector(".pk-luccica i"); if (lu) { lu.style.transform = "translateX(" + (ry / 22 * 90).toFixed(1) + "%) skewX(-14deg)"; lu.style.opacity = Math.min(1, Math.abs(ry) / 10 + Math.abs(rx) / 14).toFixed(3); }
     }
     function piatta(n) { n.__gira.style.transform = "none"; var lu = n.querySelector(".pk-luccica i"); if (lu) lu.style.opacity = "0"; }
-    // ---- il mazzetto di 3 coperte: lo inclini e vedi i bordi; le giri una alla volta, poi le butti di lato ----
-    function largaMazzo() { var W = scena.clientWidth - 28, H = scena.clientHeight - 70; return Math.floor(Math.min(W * 0.62, H / 1.36, 250)); }
+    // ---- il mazzetto di 5 DI FACCIA (29 nov 2026, il proprietario): la prima si vede subito; trascinando di lato il mazzetto si apre a
+    //  ventaglio e si sbirciano i BORDI delle carte dietro (il colore del metallo); si strisciano via una alla volta ----
+    function largaMazzo() { var W = scena.clientWidth - 28, H = scena.clientHeight - 70; return Math.floor(Math.min(W * 0.6, H / 1.42, 250)); }
     function largaNastro() { var W = scena.clientWidth - 28, H = scena.clientHeight - 90; return Math.floor(Math.min(W * 0.62, H / 1.36, 240)); }
     function mazzetto(carte, e) {
       pulisci(); var w = largaMazzo();
-      var mz = el("div", { class: "pk-mazzo", style: "width:" + w + "px;height:" + Math.round(w * 1.36) + "px" }); scena.appendChild(mz);
+      var mz = el("div", { class: "pk-mazzo", style: "width:" + w + "px;height:" + Math.round(w * 1.36) + "px;margin-bottom:26px" }); scena.appendChild(mz);
       var nodi = carte.map(function (o, i) { var n = cartaNodo(o, w, true); n.classList.add("in-mazzo"); n.style.zIndex = 10 - i; mz.appendChild(n); return n; });
-      var dito = el("p", { class: "pk-dito", text: "↔ Inclina per sbirciare i bordi · 👆 tocca o striscia in su per girare" }); scena.appendChild(dito);
-      vass.innerHTML = ""; var top = 0, girata = false, d = null, via = false;
-      function posa(t) {   // t: l'inclinazione del mazzetto (-1…1): le carte sotto scivolano di lato e si vedono i bordi
-        for (var i = top; i < nodi.length; i++) { var p = i - top, n = nodi[i]; n.style.transform = "translate(" + (p * 4 + t * p * w * 0.16).toFixed(1) + "px," + (p * 5).toFixed(1) + "px) rotate(" + (t * p * 3).toFixed(2) + "deg)"; }
-        if (!poco && nodi[top] && !girata) nodi[top].__gira.style.transform = "rotateY(" + (180 - t * 14).toFixed(1) + "deg)";
+      var dito = el("p", { class: "pk-dito", text: "↔ Trascina di lato per sbirciare i bordi · striscia via per la prossima" }); scena.appendChild(dito);
+      vass.innerHTML = ""; var top = 0, d = null, via = false;
+      function posa(t, dx) {   // t (-1…1): le carte sotto si aprono a ventaglio e si vedono i bordi; dx: la carta in cima segue un po' il dito
+        mz.style.transform = "translateX(" + (-t * (nodi.length - 1 - top) * w * 0.065).toFixed(1) + "px)";   // (il mazzetto si sposta dall'altra parte: il ventaglio resta nello schermo)
+        for (var i = top; i < nodi.length; i++) { var p = i - top, n = nodi[i];
+          n.style.transform = p ? "translate(" + (p * 3 + t * p * w * 0.13).toFixed(1) + "px," + (p * 4).toFixed(1) + "px) rotate(" + (t * p * 2.6).toFixed(2) + "deg)" : "translate(" + ((dx || 0) * 0.35).toFixed(1) + "px,0) rotate(" + ((dx || 0) / w * 6).toFixed(2) + "deg)"; }
       }
-      posa(0);
+      posa(0); rivela(nodi[0]);
       G.giu = function (ev) { if (via) return; d = { x: ev.clientX, y: ev.clientY, t: performance.now() }; try { scena.setPointerCapture(ev.pointerId); } catch (er) {} };
-      G.muovi = function (ev) { if (!d || via) return; var dx = ev.clientX - d.x, dy = ev.clientY - d.y; if (girata) inclina(nodi[top], dx, dy, w); else posa(Math.max(-1, Math.min(1, dx / (w * 0.9)))); };
+      G.muovi = function (ev) { if (!d || via) return; var dx = ev.clientX - d.x, dy = ev.clientY - d.y;
+        if (Math.abs(dy) > Math.abs(dx) * 1.2) { posa(0); inclina(nodi[top], dx, dy, w); } else { piatta(nodi[top]); posa(Math.max(-1, Math.min(1, dx / (w * 0.5))), dx); } };
       G.su = function (ev) {
-        if (!d || via) return; var dx = ev.clientX - d.x, dy = ev.clientY - d.y, tocco = Math.abs(dx) < 8 && Math.abs(dy) < 8; d = null;
-        if (!girata) { posa(0); if (tocco || (dy < -45 && Math.abs(dy) > Math.abs(dx))) { girata = true; via = true; nodi[top].classList.remove("in-mazzo"); rivela(nodi[top]).then(function () { via = false; dito.textContent = "✨ Inclinala col dito · striscia di lato per la prossima"; }); } return; }
-        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) || tocco) butta(dx >= 0 ? 1 : -1); else piatta(nodi[top]);
+        if (!d || via) return; var dx = ev.clientX - d.x, dy = ev.clientY - d.y, dt = Math.max(1, performance.now() - d.t), tocco = Math.abs(dx) < 8 && Math.abs(dy) < 8; d = null;
+        if (tocco || Math.abs(dx) > Math.abs(dy) && (Math.abs(dx) > w * 0.7 || Math.abs(dx) > 45 && Math.abs(dx) / dt > 0.55)) butta(dx >= 0 ? 1 : -1); else { posa(0); piatta(nodi[top]); }
       };
-      function butta(s) {   // la carta vola di lato e finisce nel vassoio in basso; sotto c'è la prossima
+      function butta(s) {   // la carta vola di lato e finisce nel vassoio in basso; sotto c'è la prossima, già di faccia
         via = true; var n = nodi[top], mini = cartaNodo(n.__o, 54, false, w); mini.classList.add("mini"); vass.appendChild(mini);
-        libSuono("carta", 200);
-        libTempo(poco ? 1 : 320, function (k) { var e2 = k * k; n.style.transform = "translate(" + (s * e2 * w * 1.3).toFixed(1) + "px," + (-30 * Math.sin(k * Math.PI)).toFixed(1) + "px) rotate(" + (s * 25 * e2).toFixed(1) + "deg)"; n.style.opacity = (1 - e2).toFixed(3); })
-          .then(function () { n.remove(); top++; girata = false; via = false; if (top >= nodi.length) return fine(); posa(0); dito.textContent = "👆 Tocca o striscia in su per girare la prossima"; });
+        libSuono("carta", 200); piatta(n);
+        var x0 = parseFloat((/translate\(([-0-9.]+)px/.exec(n.style.transform) || [0, 0])[1]) || 0;
+        for (var i = top + 1; i < nodi.length; i++) nodi[i].style.transition = "transform .22s ease-out";
+        top++; posa(0);
+        libTempo(poco ? 1 : 300, function (k) { var e2 = k * k; n.style.transform = "translate(" + (x0 + s * e2 * w * 1.3).toFixed(1) + "px," + (-26 * Math.sin(k * Math.PI)).toFixed(1) + "px) rotate(" + (s * 25 * e2).toFixed(1) + "deg)"; n.style.opacity = (1 - e2).toFixed(3); })
+          .then(function () { n.remove(); for (var i = top; i < nodi.length; i++) nodi[i].style.transition = ""; if (top >= nodi.length) return fine(); via = false; rivela(nodi[top]); dito.textContent = top === nodi.length - 1 ? "✓ L'ultima · striscia via per il riassunto" : "↔ Sbircia i bordi · striscia via per la prossima (" + (nodi.length - top) + ")"; });
       }
       function fine() { libVisto(e.t || (albStat().pkUltimo || {}).t); riassunto(carte, false); }
     }
@@ -14221,7 +14292,8 @@
       var col = Math.min(tante ? 4 : 3, mostra.length), rows = Math.ceil(mostra.length / col), w = Math.floor(Math.min((W - 14 * (col - 1)) / col, (H - 22 * rows) / rows / 1.36, 150));
       scena.appendChild(el("div", { class: "pk-somma" }, [ el("b", { text: carte.length + (carte.length === 1 ? " figurina" : " figurine") }), el("span", { text: (nuove ? "✨ " + nuove + (nuove === 1 ? " nuova" : " nuove") : "nessuna nuova") + (ori ? " · 🥇 " + ori + (ori === 1 ? " oro" : " ori") : "") }) ]));
       var gr = el("div", { class: "pk-griglia", style: "grid-template-columns:repeat(" + col + "," + w + "px)" }); scena.appendChild(gr);
-      mostra.forEach(function (o) { gr.appendChild(cartaNodo(o, w, false)); });
+      var daW = tante ? largaNastro() : largaMazzo();   // (le figurine già disegnate per il mazzetto o il nastro: si copiano, non si ridisegnano)
+      mostra.forEach(function (o) { gr.appendChild(cartaNodo(o, w, false, daW)); });
       if (tante && mostra.length < carte.length) scena.appendChild(el("p", { class: "pk-dito", text: "Qui le nuove e le più belle: tutte le altre sono già nel tuo album" }));
       tasti(true);
     }
@@ -14385,7 +14457,8 @@
   giocoFanta.album = apriAlbum;   // (lo usa la pagina dei Trofei: SGCuore.apriAlbum)
   giocoFanta.libro = function () { return LIB; };   // (per le prove: lo stato del libro)
   giocoFanta.provaAlbum = { pacchettoDiOggi: pacchettoDiOggi, dataOggi: dataOggi, PK_GIORNO: PK_GIORNO, lista: albLista, speciali: ALB_SPECIALI, img: ALB_IMG, figura: function (c, w) { return figurinaCanvas(c, null, w, false); },
-    formato: function (n) { LIB_PAG = n; ALB_POSTI = n * 2; LIB_COL = n === 15 ? 3 : 4; } };   // (per le foto: 16 = 4×4, 15 = 3×5)   // (per le prove: il tetto del giorno)
+    formato: function (n) { LIB_PAG = n; ALB_POSTI = n * 2; LIB_COL = n === 15 ? 3 : 4; }, copertina: function (n) { LIB_COP = n; }, apri: function (stag) { ALB.opz = ALB.opz || {}; albStile(); libro(stag || null, 0, true); }, colori: ALB_COLORI, busti: COP_BUSTI,
+    ovrSq: function (sq) { return overallSquadra(sq); } };   // (per le foto: 16 = 4×4, 15 = 3×5)   // (per le prove: il tetto del giorno)
 
   SG.registra(gioco);
   SG.registra(giocoFanta);   // (dopo L'Asta: nella lista dei giochi arriva in fondo)
