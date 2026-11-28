@@ -119,7 +119,7 @@
   };
   // la città: far (lontana, più chiara e trasparente) e near (vicina, scura col filo di luce del colore della squadra sopra)
   function disegnaCitta(x, sq, w, base, k, T, opz) {
-    if (!CITTA[sq]) return;   // (le squadre senza città, per ora quelle delle stagioni passate: le disegnerà Gemini; il proprietario, 28 nov 2026)
+    if (!CITTA_CODICE || !CITTA[sq]) return;   // (le squadre senza città, per ora quelle delle stagioni passate: le disegnerà Gemini; il proprietario, 28 nov 2026)
     var def = CITTA[sq], dpr = opz.dpr, r = rnd("citta|" + sq);
     function strato(fn, colore, filo, alfa) {
       var t = tela(w, base + 4, dpr), m = M(t.x, w, base, k); m.__x = t.x; m.__r = r; t.x.fillStyle = "#000"; fn(m);
@@ -337,5 +337,8 @@
   // la doppia pagina col telefono girato (il dorso in mezzo)
   // le squadre che hanno la città in un file (carte/album/citta/<Squadra>.webp): si aggiunge qui il nome quando arriva il disegno
   var CITTA_FILE = [];
+  // le 20 città disegnate dal codice (sagome): false = spente per tutti, finché non arrivano i disegni di Gemini (la pagina resta coi
+  // colori della squadra, il campo e le luci)
+  var CITTA_CODICE = true;
   window.L2S = { CITTA_FILE: CITTA_FILE, CARTELLA: "carte/album/citta/", pagina: pagina, retro: retro, copertina: copertina, indice: indice, tinte: tinte, rgba: rgba, mix: mix, luce: luce, CITTA: CITTA };
 })();

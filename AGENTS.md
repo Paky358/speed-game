@@ -314,7 +314,15 @@ Lista `TROFEI` in js/cuore/trofei.js (`{ gioco, livello, icona, nome, desc, stat
     - Chi esce dal listone resta al suo posto (`c.esce`): «💎 Introvabile» se l'hai, se no «🔒 Non più all'asta», e non conta più nel totale della squadra (scelta da confermare).
     - Chi entra dopo va nelle pagine «🆕 Aggiornamenti» in fondo (`ab.agg`): non sposta nessuno e non toglie l'oro.
   - **Le città da file** (per Gemini): `carte/album/citta/<Squadra>.webp` (1080×720, notte, città nella metà di sotto) e il nome in `CITTA_FILE` in `js/album-sfondi.js`. Se c'è, prende il posto di quella del codice; le regole sono nel LEGGIMI di D:/SG-album-prove/libro2.
-  - Prove al2, al3 e al4 (album fisso e città da file) in `preferiti/asta-album.js`.
+  - **Il metallo preso non si perde** (voce dell'album di 18 numeri: 16 = il metallo migliore preso, 17 = le volte trovato nei pacchetti). La carta resta col metallo preso (`c.metFisso`, che `fasciaDi` rispetta); se oggi vale di più ha «⬆ ora è oro». Quando il metallo sale (ricomprato o trovato nel pacchetto) c'è la festa `libSale`, una volta.
+  - **📦 I pacchetti** (il proprietario, 28 nov 2026):
+    - Si accumulano: +1 a ogni partita, solo sul podio e solo per chi gioca, in `stat.astafanta.pk.<stagione>` nel profilo.
+    - Si aprono quando vuoi dall'album: «📦 Apri i pacchetti» sulla copertina e nell'indice, col pallino `.alb-pallino` sull'album (js/cuore/trofei.js).
+    - Dentro ci sono `PK_CARTE` 4 figurine. La 1ª è sempre una che manca, più spesso delle squadre quasi finite; le altre a caso coi pesi `PK_PESI` (70/24/6).
+    - Il pacchetto si salva PRIMA dell'animazione. MAI a pagamento. I doppioni per ora non servono.
+    - La simulazione (D:/SG-album-prove/libro2/pacchetti) dà la prima squadra completa in circa 25 partite e l'album intero in circa 80.
+  - Quante figurine per pagina: fino a 12 (sul telefono piccolo 64-70 px); oggi il massimo è 12. Le misure sono nel LEGGIMI.
+  - Prove al2, al3, al4 (album fisso e città da file) e al5 (pacchetti e metallo) in `preferiti/asta-album.js`.
   - Foto del gioco vero: `album/libro-vero-foto.js` (anche la misura ×4). Le proposte A/B/C: `album/libro2.js` e `album/libro2-foto.js`.
 
 ## Procedure dettagliate (skill)

@@ -19,6 +19,8 @@ window.SG_NOVITA = [
       "👆 Le pagine si sfogliano col dito, con il fruscio della carta. Le figurine che ti mancano hanno il bordo d'oro: toccale e sai chi ti manca.",
       "✨ La figurina nuova vola e si attacca da sola la prima volta che apri l'album. Quando completi una squadra, la pagina fa festa.",
       "🔢 Ogni figurina ha il suo numero per sempre, in ordine di ruolo e di maglia. Se un calciatore esce dal listone resta al suo posto: chi l'ha preso ce l'ha «💎 Introvabile». Chi entra dopo va nelle pagine «🆕 Aggiornamenti» in fondo.",
+      "📦 A ogni partita di Mini Asta ti arriva un pacchetto di figurine gratis: si accumulano e li apri quando vuoi dall'album. Dentro 4 figurine, e una è sempre nuova!",
+      "🥇 Il metallo che hai preso non si perde mai. Se un calciatore oggi vale di più, la sua carta te lo dice; ricomprandolo, o trovandolo in un pacchetto, sale.",
       "📱 Gira il telefono di lato e vedi le due pagine della squadra affiancate."
     ]
   },
