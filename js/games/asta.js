@@ -14310,6 +14310,7 @@
   function escA(s) { return String(s).replace(/[&<>"]/g, function (ch) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]; }); }
   giocoFanta.album = apriAlbum;   // (lo usa la pagina dei Trofei: SGCuore.apriAlbum)
   giocoFanta.libro = function () { return LIB; };   // (per le prove: lo stato del libro)
+  giocoFanta.provaAlbum = { pacchettoDiOggi: pacchettoDiOggi, dataOggi: dataOggi, PK_GIORNO: PK_GIORNO };   // (per le prove: il tetto del giorno)
 
   SG.registra(gioco);
   SG.registra(giocoFanta);   // (dopo L'Asta: nella lista dei giochi arriva in fondo)
