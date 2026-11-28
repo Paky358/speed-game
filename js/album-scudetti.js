@@ -91,5 +91,5 @@
       '<path d="' + F.dentro + '" fill="none" stroke="#fff6d0" stroke-width=".7" opacity=".55" transform="translate(0 -.6)"/>' +
       '</svg>';
   }
-  window.SG_SCUDETTI = { svg: svg, squadre: Object.keys(SEGNI), SEGNI: SEGNI };
+  window.SG_SCUDETTI = { svg: svg, squadre: Object.keys(SEGNI), SEGNI: SEGNI, FORME: FORME };   // (FORME: per lo scudetto sul petto dei busti, js/games/asta.js scudoPetto)
 })();

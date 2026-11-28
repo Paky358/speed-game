@@ -8325,6 +8325,18 @@
     if (P && P.a) return { a: P.a, b: P.b || P.a, righe: !!P.righe, pant: P.pant || "#1b1b1b", coll: P.b || P.a, por: true };
     var k = kitDi(c.squadra, false); if (c && c.ruolo === "P") { var k2 = {}; for (var x in k) k2[x] = k[x]; k2.por = true; return k2; } return k;
   }
+  function scudoPetto(cx, sq, x, y, h) {   // 🛡️ il nostro scudetto (forma A, bordo d'oro) disegnato sul canvas, centro (x, y), alto h (data/… js/album-scudetti.js)
+    var S = window.SG_SCUDETTI; if (!S || !S.FORME || typeof Path2D === "undefined") return;
+    var F = S.FORME.A, seg = S.SEGNI[sq] || [["r", 0, 0, 100, 116, "#3a4160"]], k = h / 116;
+    cx.save(); cx.translate(x - 50 * k, y - 58 * k); cx.scale(k, k);
+    var fuori = new Path2D(F.fuori), dentro = new Path2D(F.dentro), g = cx.createLinearGradient(0, 0, 100, 116);
+    g.addColorStop(0, "#fff3b8"); g.addColorStop(0.3, "#f2c230"); g.addColorStop(0.6, "#a8761a"); g.addColorStop(0.8, "#f7d871"); g.addColorStop(1, "#8a5c10");
+    cx.fillStyle = "rgba(11,13,24,.45)"; cx.translate(0, 3); cx.fill(fuori); cx.translate(0, -3);   // (l'ombra)
+    cx.fillStyle = g; cx.fill(fuori);
+    cx.save(); cx.clip(dentro); seg.forEach(function (p) { cx.fillStyle = p[0] === "r" ? p[5] : p[2]; if (p[0] === "r") cx.fillRect(p[1], p[2], p[3], p[4]); else cx.fill(new Path2D(p[1])); });
+    var lu = cx.createLinearGradient(0, 0, 0, 116); lu.addColorStop(0, "rgba(255,255,255,.3)"); lu.addColorStop(0.5, "rgba(255,255,255,.04)"); lu.addColorStop(1, "rgba(0,0,0,.25)"); cx.fillStyle = lu; cx.fillRect(0, 0, 100, 116); cx.restore();
+    cx.strokeStyle = "#0b0d18"; cx.lineWidth = 3.5; cx.stroke(dentro); cx.restore();
+  }
   function bustoCanvas(c, w) {   // il calciatore dalla vita in su, sfondo trasparente, w x w punti (proporzioni come un corpo vero, con la testa da cartone come gli avatar)
     var d = Math.min(2, window.devicePixelRatio || 1), cv = tela(w * d, w * d), cx = cv.getContext("2d"); cv.style.width = cv.style.height = w + "px";
     var k = chiaveCalc(c), kit = kitBusto(c), ca = coloriAspetto(aspettoVero(k)), mg = numeroMaglia(c), PI = Math.PI, h = hashNome(k + "|posa"), por = !!kit.por;
@@ -8421,7 +8433,12 @@
     cx.strokeStyle = "rgba(0,0,0,.22)"; cx.lineWidth = u * 0.009; [-1, 1].forEach(function (s) { cx.beginPath(); cx.moveTo(s * u * 0.19, u * 0.44); cx.quadraticCurveTo(s * u * 0.2, u * 0.53, s * u * 0.25, u * 0.6); cx.stroke(); });
     var gp = cx.createRadialGradient(-u * 0.1, u * 0.55, 0, -u * 0.1, u * 0.55, u * 0.16); gp.addColorStop(0, "rgba(255,255,255,.1)"); gp.addColorStop(1, "rgba(255,255,255,0)"); cx.fillStyle = gp; cx.fillRect(-u * 0.3, u * 0.4, u * 0.4, u * 0.3);
     cx.strokeStyle = "rgba(0,0,0,.1)"; cx.lineWidth = u * 0.01; [-1, 1].forEach(function (s) { cx.beginPath(); cx.moveTo(s * u * 0.03, u * 0.62); cx.quadraticCurveTo(s * u * 0.12, u * 0.645, s * u * 0.2, u * 0.615); cx.stroke(); });   // (sotto i pettorali, appena accennato: niente pieghe sulla pancia)
-    if (mg.n != null) { cx.font = "900 " + (u * 0.075).toFixed(1) + "px system-ui,sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; var ch = chiaraC(kit.a); cx.lineWidth = u * 0.016; cx.strokeStyle = ch ? "rgba(255,255,255,.8)" : "rgba(0,0,0,.55)"; var nX = posa === "guanti" ? -m * u * 0.165 : -m * u * 0.115, nY = posa === "guanti" ? u * 0.51 : u * 0.56; cx.strokeText(mg.n, nX, nY); cx.fillStyle = ch ? "#16161a" : "#ffffff"; cx.fillText(mg.n, nX, nY); }   // (coi guanti uniti il numero sale, se no lo coprono)
+    // 👕 (29 nov 2026, il proprietario: «come nelle maglie vere») sul petto lo SCUDETTO sul lato del cuore (la sinistra del calciatore = la DESTRA per
+    //  chi guarda) e il NUMERO piccolo dall'altra parte, dove c'è il marchio dello sponsor tecnico; niente al centro. Alla stessa altezza, un po' più
+    //  su coi guanti uniti e col pollice (se no le mani li coprono). Chi non ha il numero: solo lo scudetto
+    var pY = posa === "guanti" ? u * 0.498 : posa === "pollice" || posa === "conserte" ? u * 0.545 : u * 0.556, pX = posa === "guanti" ? u * 0.158 : u * 0.118;
+    if (mg.n != null) { cx.font = "900 " + (u * 0.066).toFixed(1) + "px system-ui,sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; var ch = chiaraC(kit.a); cx.lineWidth = u * 0.014; cx.strokeStyle = ch ? "rgba(255,255,255,.8)" : "rgba(0,0,0,.55)"; cx.strokeText(mg.n, -pX, pY); cx.fillStyle = ch ? "#16161a" : "#ffffff"; cx.fillText(mg.n, -pX, pY); }
+    scudoPetto(cx, c.squadra, pX, pY, u * 0.088);
     cx.restore();
     cx.fillStyle = scuro(pelle, 0.86); cx.beginPath(); cx.moveTo(-u * 0.07, u * 0.418); cx.lineTo(0, u * 0.49); cx.lineTo(u * 0.07, u * 0.418); cx.closePath(); cx.fill();   // il colletto a V
     cx.strokeStyle = coll; cx.lineWidth = u * 0.026; cx.beginPath(); cx.moveTo(-u * 0.095, u * 0.415); cx.lineTo(0, u * 0.505); cx.lineTo(u * 0.095, u * 0.415); cx.stroke();
@@ -13768,6 +13785,7 @@
   //  della campione. I busti si disegnano UNA volta (COP_BUSTI) e poi si copiano.
   var LIB_COP = 4, ALB_ANNO_OGGI = "2026-27";   // (il proprietario, 29 nov 2026: le prime 4; niente nomi, sul petto il nostro scudetto)
   function copStemma(sq, w) {   // il nostro scudetto (forma A) piccolo sul petto, dove starebbe lo stemma vero
+    return null;   // (29 nov 2026: lo scudetto ora lo disegna il busto stesso, bustoCanvas → scudoPetto, a destra per chi guarda)
     var S = window.SG_SCUDETTI; if (!S) return null;
     var im = document.createElement("img"); im.className = "cop-st"; im.alt = ""; im.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(S.svg(sq, { forma: "A", bordo: "oro" }));
     im.style.width = Math.max(8, Math.round(w * 0.11)) + "px"; return im;
@@ -14512,7 +14530,7 @@
   function escA(s) { return String(s).replace(/[&<>"]/g, function (ch) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]; }); }
   giocoFanta.album = apriAlbum;   // (lo usa la pagina dei Trofei: SGCuore.apriAlbum)
   giocoFanta.libro = function () { return LIB; };   // (per le prove: lo stato del libro)
-  giocoFanta.provaAlbum = { pacchettoDiOggi: pacchettoDiOggi, dataOggi: dataOggi, PK_GIORNO: PK_GIORNO, lista: albLista, speciali: ALB_SPECIALI, img: ALB_IMG, figura: function (c, w) { return figurinaCanvas(c, null, w, false); }, figuraStag: function (stag, c, w) { return conStag(stag, function () { return figurinaCanvas(c, null, w, false); }); },
+  giocoFanta.provaAlbum = { pacchettoDiOggi: pacchettoDiOggi, dataOggi: dataOggi, PK_GIORNO: PK_GIORNO, lista: albLista, speciali: ALB_SPECIALI, img: ALB_IMG, figura: function (c, w) { return figurinaCanvas(c, null, w, false); }, posaDi: function (c) { var kit = kitBusto(c), pose = kit.por ? POSE_PORTIERE : POSE_BUSTO; return pose[hashNome(chiaveCalc(c) + "|posa") % pose.length]; }, figuraStag: function (stag, c, w) { return conStag(stag, function () { return figurinaCanvas(c, null, w, false); }); },
     formato: function (n) { LIB_PAG = n; ALB_POSTI = n * 2; LIB_COL = n === 15 ? 3 : 4; }, copertina: function (n) { LIB_COP = n; }, aspetto: function (stag, nome, sq) { return conStag(stag, function () { var k = chiaveCalc({ nome: nome, squadra: sq }); return { k: k, a: aspettoVero(k), persona: personaDi(k) }; }); }, apri: function (stag) { ALB.opz = ALB.opz || {}; albStile(); libro(stag || null, 0, true); }, colori: ALB_COLORI, busti: COP_BUSTI,
     ovrSq: function (sq) { return overallSquadra(sq); } };   // (per le foto: 16 = 4×4, 15 = 3×5)   // (per le prove: il tetto del giorno)
 
