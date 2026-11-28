@@ -9,6 +9,16 @@
    ========================================================= */
 window.SG_NOVITA = [
   {
+    v: 464,
+    data: "28 novembre 2026",
+    titolo: "Mini Asta: nessun calciatore nascosto dietro un altro 👀",
+    descrizione: [
+      "👀 Nella giornata un calciatore non sparisce più dietro un altro: quando due finiscono uno davanti all'altro, uno dei due fa un passetto di lato. Possono stare vicinissimi e coprirsi un po', ma di ognuno si vede sempre più di metà.",
+      "⚽ Chi ha il pallone resta dove sta: si sposta chi gli sta attorno (prima l'arbitro e chi non fa l'azione). Così i tuoi calciatori si vedono anche quando ricevono il passaggio, e non sembra più che la passino a un avversario.",
+      "🤫 Come sempre non svela niente: fino al tiro tutto è uguale, che finisca in gol o no."
+    ]
+  },
+  {
     v: 462,
     data: "27 novembre 2026",
     titolo: "Mini Asta: l'album delle figurine 📒",

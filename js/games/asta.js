@@ -9345,6 +9345,119 @@
       });
       return out;
     }
+  function abbraccioDi(sc, p, u, o, j, s) {
+      var fe = sc.fest, T = sc.festT; if (!fe || !T || sc.rete == null || p < T[0] + 0.08 || (fe.sq !== "A" && fe.sq !== "D")) return null;
+      if (!sc.abb) {   // (chi va: deciso una volta sola, dalle posizioni di partenza)
+        var fin = fe.pts[fe.pts.length - 1], ff2 = pieno(sc, fin[1], fin[2]), l = [];   // (in metri del campo, non in pixel: uguale su tutti i telefoni)
+        (sc.folla || []).forEach(function (q, k) { if (q.sq !== fe.sq) return; var bx2 = vrs(sc) < 0 ? 1 - q.x : q.x; l.push([k, Math.pow((bx2 - ff2[0]) * 105, 2) + Math.pow((q.y - ff2[1]) * 68, 2)]); });
+        l.sort(function (a2, b2) { return (a2[1] - b2[1]) || (a2[0] - b2[0]); }); sc.abb = l.slice(0, 3).map(function (x) { return x[0]; });
+      }
+      var r = sc.abb.indexOf(j); if (r < 0) return null;
+      var w = liscio((p - T[0] - 0.08 - r * 0.02) / Math.max(0.08, T[1] - T[0] + 0.02)), qf = lungo(fe.pts, p), sf = P(sc, qf[1], qf[2]);
+      var off = [[-0.95, 0.22], [1.0, 0.12], [0.15, -0.5]][r], tx = sf[0] + off[0] * u, ty = sf[1] + off[1] * u;
+      var nx = s[0] + (tx - s[0]) * w, ny = s[1] + (ty - s[1]) * w, arr = w >= 0.98;
+      return { s: [nx, ny], dir: sf[0] >= nx ? 1 : -1, corre: arr ? 0 : Math.min(1, w * 6), ph: (p * 90 + r) * Math.PI * 2, braccia: arr ? 0.75 + 0.25 * Math.abs(Math.sin(p * 60 + r)) : 0 };
+    }
+    function posFolla(sc, ff, o) { var bx = vrs(sc) < 0 ? 1 - o.x : o.x, X = bx + (ff[0] - bx) * (sc.segui || 0.14), Y = o.y + (ff[1] - o.y) * 0.12; return base(X, Y); }   // (gli altri posti: seguono un po' il pallone)
+    function portiereVeroDi(sc, a) { return !(a.chi && a.chi.nome) && (a.sq === "pA" || a.sq === "pD") && sc.altri ? sc.altri[a.sq.slice(1)].P[0] || null : null; }   // (il portiere senza nome: quello vero della squadra, se nessuno l'ha comprato)
+    function aspAttore(sc, a) { var gkA = portiereVeroDi(sc, a); return a.chi && a.chi.nome ? a.chi.asp || null : gkA ? gkA.asp : a.chi && a.chi.vero ? a.chi.asp : a.fig ? a.fig.asp : null; }
+    // 👀 MAI UNO NASCOSTO DIETRO UN ALTRO (28 nov 2026, il proprietario provando da solo: «il mio calciatore sembra la passi all'avversario e che
+    // l'avversario faccia gol, e solo dopo il gol, grazie all'esultanza, si vede che c'è il nostro compagno proprio dietro all'altro… Molto vicino
+    // sì, anche che uno copre un po' dell'altro va bene, ma non completamente»). Di ogni omino, sullo schermo, si vede sempre più di metà corpo:
+    // quando uno ne copre un altro troppo, uno dei due fa un passetto di lato (solo di lato sullo schermo, al massimo un omino e poco più, piano:
+    // mai uno scatto) e torna al suo posto quando non serve più. Si sposta per primo chi conta meno: l'arbitro e i guardalinee, poi chi sta
+    // negli altri posti, poi chi fa l'azione lontano dal pallone; chi ha il pallone o ci è vicinissimo (un contrasto, un tackle) non si sposta, i
+    // vostri meno degli altri, il portiere poco. ANTI-SPOILER: lo spostamento a un istante dipende SOLO da dove sono tutti (e la telecamera) in
+    // quell'istante e prima: si calcola in avanti, un passo alla volta (SEP_N passi per azione), mai guardando dopo. Fino al tiro tutti sono
+    // uguali in ogni esito, quindi lo è anche lo spostamento (prova sv1). La giornata e i punti non cambiano: cambia solo dove si disegnano.
+    var SEPARA = true, SEP_N = 240, SEP_VIS = 0.7;
+    var SAG_R = [[-0.3, -0.9, 0.3, 0.05], [-0.33, -1.12, 0.33, -0.78], [-0.41, -1.9, 0.41, -1.07]], SAG_T = [0, -2.2, 0.38];   // (la sagoma di un omino in piedi, in omini: gambe, pantaloncini, maglia e testa; i piedi in 0, in su è meno)
+    var SAG_P = [[-0.15, -0.15], [0.15, -0.15], [-0.15, -0.5], [0.15, -0.5], [-0.15, -0.8], [0.15, -0.8], [-0.2, -0.95], [0.2, -0.95], [-0.28, -1.2], [0, -1.2], [0.28, -1.2], [-0.3, -1.5], [0, -1.5], [0.3, -1.5], [-0.3, -1.8], [0, -1.8], [0.3, -1.8], [0, -2.2], [-0.22, -2.2], [0.22, -2.2], [0, -2.45]];   // (i punti della sagoma che si contano)
+    function inSagoma(lx, ly) { for (var i = 0; i < SAG_R.length; i++) { var r = SAG_R[i]; if (lx >= r[0] && lx <= r[2] && ly >= r[1] && ly <= r[3]) return true; } return Math.pow(lx - SAG_T[0], 2) + Math.pow(ly - SAG_T[1], 2) <= SAG_T[2] * SAG_T[2]; }
+    function sepFig(sc, t, u, tP, tM) {   // dove sono tutti al tempo t (pixel del campo, come in disegna), la loro posa (salto, a terra, tuffo) e quanto possono spostarsi
+      var pb = lungo(sc.palla, t, true) || [t, 0.5, 0.5, 0], ff = pieno(sc, pb[1], pb[2]), out = [];
+      (sc.folla || []).forEach(function (o, j) { var s = posFolla(sc, ff, o), ab = abbraccioDi(sc, t, u, o, j, s); if (ab) s = ab.s; out.push({ x: s[0], y: s[1], al: (o.asp && o.asp.alt) || 1, mob: o.nome ? 0.6 : 1, cap: 1.4, salto: 0, rt: 0, gin: 0, pie: 0 }); });
+      sc.attori.forEach(function (a) {
+        var q = lungo(a.pts, t), s = P(sc, q[1], q[2]), asA = aspAttore(sc, a), po = posa(a.pose, t), mob, cap;
+        if (a.sq === "arb" || a.sq === "gl") { mob = 1.5; cap = 1.4; }   // (l'arbitro e i guardalinee: si spostano loro)
+        else {   // (chi fa l'azione: più è vicino al pallone, meno si sposta; a meno di 60 cm, mai)
+          var dm = Math.sqrt(Math.pow((q[1] - pb[1]) * ARB_MX, 2) + Math.pow((q[2] - pb[2]) * ARB_MY, 2)), m = Math.max(0, Math.min(1, (dm - 0.6) / 1.9));
+          cap = m * 1.2; mob = m * (a.sq === "pA" || a.sq === "pD" ? 0.5 : 1) * (a.chi && a.chi.nome ? 0.6 : 1);
+        }
+        var rt = (po.tuffo >= 0 ? tP * po.tuffo : tM * -po.tuffo) + (po.cade >= 0 ? tP * po.cade : tM * -po.cade);   // (la posa come in disegna, senza le piccole inclinazioni di chi corre)
+        out.push({ x: s[0], y: s[1], al: (asA && asA.alt) || 1, mob: mob, cap: cap, salto: po.salto || 0, rt: rt, gin: po.ginocchia || 0, pie: po.piega || 0 });
+      });
+      return out;
+    }
+    function sepVis(fi, dav, fs, rx) {   // quanto si vede di fi (0-1) con davanti tutti quelli di dav (fs spostato di rx pixel di lato): punto per punto della sagoma, con la posa di tutti
+      var n = 0, i, k, P0 = fi.pts || (fi.pts = SAG_P.map(function (pt) { var vx = fi.kk * pt[0], vy = fi.kk * (pt[1] + 1.15); return [fi.un * (vx * fi.c - vy * fi.s), fi.sy + fi.un * (vx * fi.s + vy * fi.c - fi.lift - fi.anca)]; }));
+      for (i = 0; i < P0.length; i++) {
+        var X = fi.X + P0[i][0], Y = P0[i][1], coperto = false;
+        for (k = 0; k < dav.length && !coperto; k++) {
+          var fj = dav[k], ux = (X - fj.X - (fj === fs ? rx : 0)) / fj.un, uy = (Y - fj.sy) / fj.un + fj.lift + fj.anca, wx = ux * fj.c + uy * fj.s, wy = -ux * fj.s + uy * fj.c;
+          coperto = inSagoma(wx / fj.kk, wy / fj.kk - 1.15);
+        }
+        if (!coperto) n++;
+      }
+      return n / P0.length;
+    }
+    function sepSchermo(sc, t, u) {   // tutti al tempo t sullo schermo (senza spostamenti), con la sagoma pronta
+      var cam = camera(sc, t), w = A.w, h = A.h;
+      var e1 = P(sc, 0.6, 0.8), e0 = P(sc, 0.4, 0.8), ex = e1[0] - e0[0], ey = e1[1] - e0[1], el = Math.sqrt(ex * ex + ey * ey) || 1, tP = Math.atan2(ex / el, -ey / el), tM = Math.atan2(-ex / el, ey / el);
+      if (!A.vert) { tP = Math.PI / 2; tM = -Math.PI / 2; }
+      var F = sepFig(sc, t, u, tP, tM);
+      F.forEach(function (f) {
+        var sx = w / 2 + (f.x - cam.cx) * cam.z, sy = h / 2 + (f.y - cam.cy) * cam.z, q = 1;
+        if (A.pv) { var r = pr(sx, sy); sx = r[0]; sy = r[1]; q = r[2]; }
+        var hh = f.salto, gi = Math.min(1, Math.abs(Math.sin(f.rt)));
+        f.sx = sx; f.sy = sy; f.un = u * f.al * cam.z * q; f.lift = hh * 2.4 * A.zl - f.gin * 0.5 - f.pie * 0.3; f.anca = 1.15 * (1 - 0.68 * gi * (1 - Math.min(1, hh * 3))); f.kk = 1 + hh * 0.25; f.c = Math.cos(f.rt); f.s = Math.sin(f.rt);
+      });
+      return F;
+    }
+    function sepPasso(sc, S, k, u) {   // gli spostamenti (in omini, di lato) al passo k, da quelli del passo prima
+      var t = k / SEP_N, F = sepSchermo(sc, t, u), n = F.length, prev = k ? S.off[k - 1] : null, o = [], i, j, it;
+      var cl = function (v, c) { return Math.max(-c, Math.min(c, v)); };
+      F.forEach(function (f, i) {
+        var v = prev ? prev[i] || 0 : 0; o.push(cl(v > 0 ? Math.max(0, v - 0.03) : Math.min(0, v + 0.03), f.cap));   // (torna piano al suo posto)
+      });
+      var ord = F.map(function (f, i) { return i; }).sort(function (a, b) { return F[a].sy - F[b].sy || a - b; });   // (nell'ordine in cui si disegnano: prima chi è dietro)
+      F.forEach(function (f, i) { f.i = i; });
+      for (it = 0; it < (k ? 3 : 8); it++) for (var a1 = 0; a1 < n; a1++) {   // per ognuno (da chi è più dietro): tutti quelli disegnati davanti a lui che lo toccano
+        i = ord[a1]; var fi = F[i], dav = [], fj; fi.X = fi.sx + o[i] * fi.un;
+        for (var a2 = a1 + 1; a2 < n; a2++) {
+          j = ord[a2]; fj = F[j]; var uq = (fi.un + fj.un) / 2, dq = (fj.sy - fi.sy) / uq; if (dq > 6) break;
+          fj.X = fj.sx + o[j] * fj.un;
+          if (Math.abs(fj.X - fi.X) / uq > 3.2 || dq > 3.4 + Math.max(0, fj.lift)) { delete S.lato[i + "," + j]; continue; }
+          dav.push(fj);
+        }
+        if (!dav.length || sepVis(fi, dav, null, 0) >= SEP_VIS) continue;
+        var best = null, bc = 0;   // (si sposta chi lo copre di più, tra quelli che possono)
+        dav.forEach(function (q) { if (fi.mob + q.mob < 0.03) return; var c = 1 - sepVis(fi, [q], null, 0); if (c > bc) { bc = c; best = q; } });
+        if (!best) continue;   // (tutti e due sul pallone: un contrasto, si toccano)
+        fj = best; j = fj.i;
+        var ua = (fi.un + fj.un) / 2, dx = (fj.X - fi.X) / ua, key = i + "," + j, mi = fi.mob, mj = fj.mob;
+        var raw = (fj.sx - fi.sx) / ua, sg = S.lato[key];
+        if (Math.abs(raw) > 0.3) sg = raw > 0 ? 1 : -1; else if (!sg) sg = Math.abs(dx) > 0.02 ? (dx > 0 ? 1 : -1) : (mj >= mi ? 1 : -1);   // (da che parte va: dove sta davvero; quando sono quasi uno sull'altro, quella di prima)
+        S.lato[key] = sg;
+        var lo = 0, hi = 2.6; if (sepVis(fi, dav, fj, sg * hi * ua) < SEP_VIS) lo = hi; else for (var b = 0; b < 7; b++) { var md = (lo + hi) / 2; if (sepVis(fi, dav, fj, sg * md * ua) >= SEP_VIS) hi = md; else lo = md; }
+        var need = hi + 0.02;
+        var sj = mj / (mi + mj), vj = o[j] + sg * need * sj * ua / fj.un, vi = o[i] - sg * need * (1 - sj) * ua / fi.un, cj = cl(vj, fj.cap), ci = cl(vi, fi.cap);
+        if (mi > 0.001 && cj !== vj) ci = cl(ci - (vj - cj) * fj.un / fi.un, fi.cap);   // (chi non può più spostarsi lascia il resto all'altro)
+        if (mj > 0.001 && ci !== vi) cj = cl(cj - (vi - ci) * fi.un / fj.un, fj.cap);
+        o[j] = cj; o[i] = ci; fi.X = fi.sx + o[i] * fi.un;
+      }
+      if (prev) for (i = 0; i < n; i++) o[i] = cl(prev[i] + cl(o[i] - prev[i], 0.2), F[i].cap);   // (piano: mai uno scatto)
+      if (A.debugSep) (S.mob || (S.mob = []))[k] = F.map(function (f) { return [+f.mob.toFixed(2), +f.cap.toFixed(2)]; });   // (solo per le prove)
+      return o;
+    }
+    function separa(sc, p, u) {   // gli spostamenti al tempo p (in omini, di lato sullo schermo): si calcolano una volta, in avanti, man mano che l'azione va
+      var key = A.w + "|" + A.h + "|" + (A.pv ? 1 : 0) + "|" + (sc.replay ? 1 : 0) + "|" + (sc.folla || []).length + "|" + sc.attori.length + "|" + u;
+      var S = sc.__sep; if (!S || S.key !== key) S = sc.__sep = { key: key, off: [], lato: {} };
+      var x = Math.max(0, Math.min(1, p)) * SEP_N, k1 = Math.min(SEP_N, Math.floor(x) + 1);
+      while (S.off.length <= k1) S.off.push(sepPasso(sc, S, S.off.length, u));
+      var k0 = Math.floor(x), f = x - k0, a = S.off[k0], b = S.off[Math.min(SEP_N, k0 + 1)];
+      return a.map(function (v, i) { return v + ((b[i] || 0) - v) * f; });
+    }
     function disegna(sc, p) {
       var w = A.w, h = A.h, d = A.d; if (!w) return;
 
@@ -9378,41 +9491,34 @@
       if (!A.vert) { tP = Math.PI / 2; tM = -Math.PI / 2; }   // (campo orizzontale: chi si tuffa verso il basso si stende a destra, verso l'alto a sinistra)
       var figure = [];
       // 🤗 l'abbraccio (6 nov 2026): dopo il gol i 3 compagni più vicini (della squadra di chi segna) corrono da lui e gli saltano attorno a braccia alzate
-      function abbraccio(o, j, s) {
-        var fe = sc.fest, T = sc.festT; if (!fe || !T || sc.rete == null || p < T[0] + 0.08 || (fe.sq !== "A" && fe.sq !== "D")) return null;
-        if (!sc.abb) {   // (chi va: deciso una volta sola, dalle posizioni di partenza)
-          var fin = fe.pts[fe.pts.length - 1], ff2 = pieno(sc, fin[1], fin[2]), l = [];   // (in metri del campo, non in pixel: uguale su tutti i telefoni)
-          (sc.folla || []).forEach(function (q, k) { if (q.sq !== fe.sq) return; var bx2 = vrs(sc) < 0 ? 1 - q.x : q.x; l.push([k, Math.pow((bx2 - ff2[0]) * 105, 2) + Math.pow((q.y - ff2[1]) * 68, 2)]); });
-          l.sort(function (a2, b2) { return (a2[1] - b2[1]) || (a2[0] - b2[0]); }); sc.abb = l.slice(0, 3).map(function (x) { return x[0]; });
-        }
-        var r = sc.abb.indexOf(j); if (r < 0) return null;
-        var w = liscio((p - T[0] - 0.08 - r * 0.02) / Math.max(0.08, T[1] - T[0] + 0.02)), qf = lungo(fe.pts, p), sf = P(sc, qf[1], qf[2]);
-        var off = [[-0.95, 0.22], [1.0, 0.12], [0.15, -0.5]][r], tx = sf[0] + off[0] * u, ty = sf[1] + off[1] * u;
-        var nx = s[0] + (tx - s[0]) * w, ny = s[1] + (ty - s[1]) * w, arr = w >= 0.98;
-        return { s: [nx, ny], dir: sf[0] >= nx ? 1 : -1, corre: arr ? 0 : Math.min(1, w * 6), ph: (p * 90 + r) * Math.PI * 2, braccia: arr ? 0.75 + 0.25 * Math.abs(Math.sin(p * 60 + r)) : 0 };
-      }
+      function abbraccio(o, j, s) { return abbraccioDi(sc, p, u, o, j, s); }
       var fd = folla(sc, p), fv = Math.max(0, folla(sc, Math.min(1, p + 0.015)) - fd);   // (quanta strada fanno gli altri: tutti la stessa, seguono il pallone)
       (sc.folla || []).forEach(function (o, j) {   // gli altri: seguono un po' il pallone, a passi veri (fermi se il pallone è fermo)
-        var bx = vrs(sc) < 0 ? 1 - o.x : o.x, X = bx + (ff[0] - bx) * (sc.segui || 0.14), Y = o.y + (ff[1] - o.y) * 0.12;
-        var s = base(X, Y), cr = Math.min(1, fv / (u * 0.25)), ph = (fd / (u * 2.4) + o.k) * Math.PI * 2, gk = o.sq === "pA" || o.sq === "pD";
+        var s = posFolla(sc, ff, o), cr = Math.min(1, fv / (u * 0.25)), ph = (fd / (u * 2.4) + o.k) * Math.PI * 2, gk = o.sq === "pA" || o.sq === "pD";
         if (!o.dir || Math.abs(gp[0] - s[0]) > u * 0.8) o.dir = gp[0] >= s[0] ? 1 : -1;   // (si girano solo quando il pallone è passato davvero dall'altra parte)
         var ab = abbraccio(o, j, s), br = 0;
         if (ab) { s = ab.s; o.dir = ab.dir; cr = ab.corre; ph = ab.ph; br = ab.braccia; }
-        figure.push({ x: s[0], y: s[1], kit: kitDiSq(sc, o.sq), o: { sw: Math.sin(ph) * 0.45 * cr, sv: Math.cos(ph) * cr, guanti: gk, pronto: gk ? 1 - cr : 0, braccia: br, pelle: o.asp ? o.asp.pelle : aspetto(o.n).pelle, capelli: aspetto(o.n).capelli, stile: aspetto(o.n).stile, scarpe: aspetto(o.n).scarpe, asp: o.asp || null }, dir: o.dir, chi: o.nome ? o : null, numA: o.numA });
+        figure.push({ x: s[0], y: s[1], kit: kitDiSq(sc, o.sq), o: { sw: Math.sin(ph) * 0.45 * cr, sv: Math.cos(ph) * cr, guanti: gk, pronto: gk ? 1 - cr : 0, braccia: br, pelle: o.asp ? o.asp.pelle : aspetto(o.n).pelle, capelli: aspetto(o.n).capelli, stile: aspetto(o.n).stile, scarpe: aspetto(o.n).scarpe, asp: o.asp || null }, dir: o.dir, chi: o.nome ? o : null, numA: o.numA, id: j });
       });
       sc.attori.forEach(function (a, i) {
         var q = lungo(a.pts, p), q2 = lungo(a.pts, Math.min(1, p + 0.015)), s = P(sc, q[1], q[2]), s2 = P(sc, q2[1], q2[2]), dx = s2[0] - s[0], dy = s2[1] - s[1], vel = Math.sqrt(dx * dx + dy * dy);
         var po = posa(a.pose, p), dir = guarda(sc, a, staccato(a, po, p));
         var ruota = (po.tuffo >= 0 ? tP * po.tuffo : tM * -po.tuffo) + (po.cade >= 0 ? tP * po.cade : tM * -po.cade) - dir * po.capriola * Math.PI * 0.85, giu = Math.min(1, Math.abs(Math.sin(ruota)));   // (la capriola all'indietro, rispetto a dove guarda)
         var corre = Math.min(1, vel / (u * 0.25)) * (1 - Math.min(1, giu * 1.6)), ph = strada(sc, a, p) / (u * 2.4) * Math.PI * 2, lato = vel > 0.01 ? Math.abs(dx) / vel : 0, n = i + 30;
-        var gkA = !(a.chi && a.chi.nome) && (a.sq === "pA" || a.sq === "pD") && sc.altri ? sc.altri[a.sq.slice(1)].P[0] || null : null, asA = a.chi && a.chi.nome ? a.chi.asp || null : gkA ? gkA.asp : a.chi && a.chi.vero ? a.chi.asp : a.fig ? a.fig.asp : null;   // (il portiere senza nome: quello vero della squadra, se nessuno l'ha comprato)   // (un passo ogni 1,2 omini di strada)
+        var gkA = portiereVeroDi(sc, a), asA = aspAttore(sc, a);   // (il portiere senza nome: quello vero della squadra, se nessuno l'ha comprato)   // (un passo ogni 1,2 omini di strada)
         figure.push({ x: s[0], y: s[1], kit: kitDiSq(sc, a.sq), dir: dir,
           o: { sw: Math.sin(ph) * 0.45 * corre, sv: Math.cos(ph) * corre, vr: vel > 0.01 ? Math.abs(dy) / vel : 0, salto: po.salto + corre * 0.03 * Math.abs(Math.sin(ph)), ruota: ruota + dir * (corre * 0.1 * lato + po.inclina * 0.28), giu: giu,
             calcio: po.calcio, braccia: Math.max(po.braccia, Math.min(0.6, giu)), carta: po.carta, gl: a.sq === "gl", bandiera: po.bandiera, punta: po.punta, nudo: po.nudo > 0.5 ? 1 : 0, ali: po.ali, ginocchia: po.ginocchia, piega: po.piega, allunga: po.allunga, guanti: a.sq === "pA" || a.sq === "pD", chiP: a.sq,
             pronto: (a.sq === "pA" || a.sq === "pD") && giu < 0.05 && po.salto < 0.05 && po.braccia < 0.05 ? 1 - corre : 0, pelle: asA ? asA.pelle : aspetto(n).pelle, capelli: aspetto(n).capelli, stile: aspetto(n).stile, scarpe: aspetto(n).scarpe, asp: asA },
-          chi: a.chi && a.chi.nome ? a.chi : null, numA: gkA ? gkA.num : a.chi && a.chi.vero ? a.chi.num : a.fig ? a.fig.num : null, ai: i });
+          chi: a.chi && a.chi.nome ? a.chi : null, numA: gkA ? gkA.num : a.chi && a.chi.vero ? a.chi.num : a.fig ? a.fig.num : null, ai: i, id: (sc.folla || []).length + i });
       });
+      if (SEPARA && A.separa !== false) { var sep = separa(sc, p, u); figure.forEach(function (f) { var o = sep[f.id]; if (o) f.x += o * u * ((f.o.asp && f.o.asp.alt) || 1); }); }   // 👀 (28 nov 2026) mai uno nascosto dietro un altro: un passetto di lato (vedi separa)
       figure.sort(function (a, b) { return a.y - b.y; });
+      if (A.figureCb) {   // (solo per le prove: dove sono gli omini sullo schermo e quanto sono grandi, nell'ordine in cui si disegnano)
+        var scr = function (x, y) { return A.pv ? campoSchermo(x, y) : [w / 2 + (x - cam.cx) * cam.z, h / 2 + (y - cam.cy) * cam.z, 1]; }, sB = scr(gp[0], gp[1]);
+        A.figureCb(figure.map(function (f) { var r = scr(f.x, f.y); return { id: f.id, x: r[0], y: r[1], un: u * ((f.o.asp && f.o.asp.alt) || 1) * cam.z * r[2], o: f.o, dir: f.dir, ai: f.ai, chi: f.chi ? f.chi.nome || "?" : null }; }), { p: p, zl: A.zl, palla: [sB[0], sB[1], pb[3] || 0], un: u * cam.z * sB[2] });
+        if (A.soloFigure) { ctx.restore(); A.pj = false; return; }
+      }
       var nomi = [], yG = A.pv ? base(0.5 + GL * 0.496, 0.5)[1] : 0, yN = A.pv ? base(0.5 + NET * 0.496, 0.5)[1] : 0, telaioFatto = false, palloFatto = false;
       var su = A.pv && vrs(sc) < 0, ySu = su ? base(0.5 - GL * 0.496, 0.5)[1] : 0;
       if (su) { if (gp[1] < base(0.5 - NET * 0.496, 0.5)[1] - 0.5) pallone(); porta3D(false, "dietro", sc, p); if (gp[1] < ySu + 0.5) pallone(); porta3D(false, "legni", sc, p); }   // (🧤 dietro la rete: prima il pallone, poi la porta davanti)
@@ -9664,7 +9770,8 @@
     };   // la scena ferma (prima dell'azione), o il campo intero vuoto
     A.comparse = comparse;   // (solo per le prove: chi c'è in campo, senza disegnare)
     A.foto = function (sc, p) { A.ferma(); A.sc = sc; if (!sc.folla) sc.folla = comparse(sc); disegna(sc, p); };
-    A.camera = function (sc, p) { return camera(sc, p); };   // (per le prove: la telecamera a un momento, senza disegnare)
+    A.camera = function (sc, p) { return camera(sc, p); };
+    A.sagoma = { punti: SAG_P, dentro: inSagoma, schermo: function (sc, t) { return sepSchermo(sc, t, A.u * 1.12); }, vis: sepVis };   // (per le prove: la sagoma degli omini)   // (per le prove: la telecamera a un momento, senza disegnare)
     // 📺 (11 nov 2026, il proprietario col Cervello: «il gol in fuorigioco annullato dal VAR») il fermo immagine del VAR: il momento del passaggio a
     // chi ha segnato, lui cerchiato di rosso con la scritta. Solo dopo il gol (si sa già che il VAR sta controllando): non svela niente
     A.fotoVar = function (sc) {
