@@ -14384,7 +14384,7 @@
   function escA(s) { return String(s).replace(/[&<>"]/g, function (ch) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]; }); }
   giocoFanta.album = apriAlbum;   // (lo usa la pagina dei Trofei: SGCuore.apriAlbum)
   giocoFanta.libro = function () { return LIB; };   // (per le prove: lo stato del libro)
-  giocoFanta.provaAlbum = { pacchettoDiOggi: pacchettoDiOggi, dataOggi: dataOggi, PK_GIORNO: PK_GIORNO, lista: albLista, speciali: ALB_SPECIALI, img: ALB_IMG,
+  giocoFanta.provaAlbum = { pacchettoDiOggi: pacchettoDiOggi, dataOggi: dataOggi, PK_GIORNO: PK_GIORNO, lista: albLista, speciali: ALB_SPECIALI, img: ALB_IMG, figura: function (c, w) { return figurinaCanvas(c, null, w, false); },
     formato: function (n) { LIB_PAG = n; ALB_POSTI = n * 2; LIB_COL = n === 15 ? 3 : 4; } };   // (per le foto: 16 = 4×4, 15 = 3×5)   // (per le prove: il tetto del giorno)
 
   SG.registra(gioco);
