@@ -253,9 +253,12 @@
       extra = extra || {};
       var c = contaTrofeiFanta(righe, A, me, { stat: st, stagione: STAG_ATT, oggi: dataOggi(), tr: extra.tr || (extra.trDi ? extra.trDi(me) : null), gufi: extra.gufi || null, mioId: online ? meId : null });
       if (window.SG_PROVA_TROFEI) window.SG_PROVA_TROFEI(c, me);   // (solo per le prove)
-      var al = albumDati(me, A, st);   // 📒 (27 nov 2026) l'album delle figurine: i numeri «con te» di ogni calciatore della rosa, per stagione
-      SGNube.salvaProgressi(null, "astafanta", c.incr.concat([["pk." + chiaveStag(STAG_ATT), 1]]), c.rec, c.set.concat(al.set).concat([["ultimaPartitaTrofei", sessione]]));   // (📦 +1 pacchetto)
-      avvisoAlbum(al.nuove, 1);
+      // 📒 (27 nov 2026) l'album delle figurine: i numeri «con te» di ogni calciatore della rosa, per stagione; 📦 (28 nov 2026) +1 pacchetto.
+      // SOLO dalle partite ONLINE con almeno 2 persone (il proprietario, 28 nov 2026 notte: «altrimenti uno si avvia le partite da solo e se li
+      // prende»): sullo stesso telefono (e in «Prova da solo») niente figurine, niente numeri, niente pacchetti; i trofei come prima.
+      var vale = online && righe.length >= 2, al = vale ? albumDati(me, A, st) : { set: [], nuove: [] }, pk = vale ? pacchettoDiOggi(st) : null;
+      SGNube.salvaProgressi(null, "astafanta", c.incr.concat(pk && pk.ok ? [["pk." + chiaveStag(STAG_ATT), 1]] : []), c.rec, c.set.concat(al.set).concat(pk ? pk.set : []).concat([["ultimaPartitaTrofei", sessione]]));
+      if (vale) avvisoAlbum(al.nuove, pk && pk.ok ? 1 : 0, pk && !pk.ok); else avvisoSoloOnline();
     } catch (e) { if (window.console) console.warn("trofei Mini Asta", e); }
   }
 
@@ -13276,10 +13279,24 @@
     });
     return { set: set, nuove: nuove };
   }
+  // 📦 il tetto dei pacchetti al giorno (contro chi fa le partite apposta): oltre PK_GIORNO niente pacchetto, «torna domani»
+  var PK_GIORNO = 10;
+  function pacchettoDiOggi(st) {
+    var oggi = dataOggi(), g = String(st.pkGiorno || "").split("|"), n = g[0] === oggi ? (+g[1] || 0) : 0;
+    if (n >= PK_GIORNO) return { ok: false, set: [] };
+    return { ok: true, set: [["pkGiorno", oggi + "|" + (n + 1)]] };
+  }
+  // sullo stesso telefono: una riga gentile, una volta al giorno su questo telefono («📒 Figurine e pacchetti si vincono online»)
+  function avvisoSoloOnline() {
+    var C = window.SGCuore, k = "sg-alb-solo-online", oggi = dataOggi(); if (!C || !C.codaTrofei) return;
+    try { if (localStorage.getItem(k) === oggi) return; localStorage.setItem(k, oggi); } catch (e) {}
+    C.codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "📒", su: "Album", nome: "Figurine e pacchetti si vincono online", sotto: "Gioca la Mini Asta online con gli amici" });
+    if (C.prossimoAvviso) C.prossimoAvviso();
+  }
   // dopo il podio: «📒 2 figurine nuove» (come gli avvisi di XP: non conta tra i 3 dei trofei; a partita in corso il tocco chiude e basta)
-  function avvisoAlbum(nuove, pacchi) {   // (📦 28 nov 2026: «+1 pacchetto», non blocca niente: si apre quando vuoi dall'album)
-    var C = window.SGCuore; nuove = nuove || []; if ((!nuove.length && !pacchi) || !C || !C.codaTrofei) return;
-    var n = nuove.length, nomi = nuove.slice(0, 2).map(function (c) { return c.nome; }), pk = pacchi ? "📦 +" + pacchi + " pacchetto" : "";
+  function avvisoAlbum(nuove, pacchi, tetto) {   // (📦 28 nov 2026: «+1 pacchetto», non blocca niente: si apre quando vuoi dall'album)
+    var C = window.SGCuore; nuove = nuove || []; if ((!nuove.length && !pacchi && !tetto) || !C || !C.codaTrofei) return;
+    var n = nuove.length, nomi = nuove.slice(0, 2).map(function (c) { return c.nome; }), pk = pacchi ? "📦 +" + pacchi + " pacchetto" : tetto ? "📦 Hai preso tutti i pacchetti di oggi, torna domani" : "";
     C.codaTrofei.push({ tipo: "xp", cls: "tl-oro", icona: "📒", su: "Nell'album", nome: n ? (n === 1 ? "1 figurina nuova" : n + " figurine nuove") : pk, sotto: n ? nomi.join(" e ") + (n > 2 ? " e altre " + (n - 2) : "") + (pk ? " · " + pk : "") : "Aprilo quando vuoi dall'album" });
     if (C.prossimoAvviso) C.prossimoAvviso();
   }
@@ -13300,9 +13317,9 @@
   // le figurine di una stagione (28 nov 2026, decisioni del proprietario): l'album di ogni stagione è FISSO. Oggi la base è data/album-oggi.js
   //  (il listone del 28 nov 2026); le stagioni passate non cambiano mai (i loro dati sono fermi). Per squadra, in ordine di ruolo (P, D, C, A)
   //  e dentro il ruolo per numero di maglia (chi non l'ha in fondo, per nome): il posto NON dipende dal metallo, ogni figurina ha il suo
-  //  numero per sempre. Chi esce dal listone resta al suo posto (c.esce: «💎 Introvabile» se l'hai, se no «🔒 Non più all'asta» e non conta
-  //  più nel totale della squadra). Chi entra dopo va nelle pagine «🆕 Aggiornamenti» in fondo (ab.agg, numeri dopo l'ultimo): non sposta
-  //  nessuno e non toglie l'oro a una squadra già completa. (Il metallo è quello di adesso: quale mostrare se la quotazione cambia è da decidere.)
+  //  numero per sempre. Chi esce dal listone resta al suo posto (c.esce: «💎 Introvabile» se l'hai, se no «📦 Solo nei pacchetti»: dal 29 nov 2026 si trova nei pacchetti e conta
+  //  nel totale della squadra come gli altri). Chi entra dopo va nelle pagine «🆕 Aggiornamenti» in fondo (ab.agg, numeri dopo l'ultimo): non sposta
+  //  nessuno e non toglie l'oro a una squadra già completa. (Il metallo: quello migliore che hai preso, c.metFisso; vedi albVoce.)
   function albLista(stag) {
     return conStag(stag, function () {
       var D = window.SG_FANTA_CALCIATORI || {}, ora = {}, per = {}, tutte = [], agg = [], miei = albMiei(stag), fisso = !stag ? window.SG_ALBUM_OGGI : null;
@@ -13324,8 +13341,8 @@
       return { squadre: squadre, per: per, tutte: tutte, agg: agg, colori: squadre.reduce(function (o, s) { o[s] = coloriSquadra(s) || ["#334", "#889"]; return o; }, {}) };
     });
   }
-  // il conto: chi è uscito dal listone e non l'hai non conta più (non si può prendere); chi l'ha, conta
-  function albConta(l) { var o = { n: 0, p: 0, oro: [0, 0], argento: [0, 0], bronzo: [0, 0] }; l.forEach(function (c) { if (c.esce && !c.x) return; o.n++; if (c.x) o.p++; var y = o[c.met]; if (y) { y[1]++; if (c.x) y[0]++; } }); return o; }
+  // il conto (29 nov 2026: chi è uscito dal listone si trova nei pacchetti, quindi conta come tutti gli altri)
+  function albConta(l) { var o = { n: 0, p: 0, oro: [0, 0], argento: [0, 0], bronzo: [0, 0] }; l.forEach(function (c) { o.n++; if (c.x) o.p++; var y = o[c.met]; if (y) { y[1]++; if (c.x) y[0]++; } }); return o; }
   function albStile() {
     if (document.getElementById("alb-stile")) return;
     var s = document.createElement("style"); s.id = "alb-stile";
@@ -13448,30 +13465,53 @@
       ".lb-cop .pk-apri{position:absolute;z-index:4;left:50%;bottom:13%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;font:inherit;color:#0b0f26;background:linear-gradient(180deg,#fff3b8,#f2c230 55%,#d9a21f);border:0;border-radius:99px;padding:8px 10px 8px 14px;box-shadow:0 8px 20px -6px rgba(0,0,0,.7),0 0 18px rgba(242,194,48,.45);white-space:nowrap}",
       ".lb-cop .pk-apri b{font-weight:900;font-size:.95rem}.lb-cop .pk-apri .pk-n{min-width:26px;height:26px;border-radius:99px;background:#e0225a;color:#fff;font-weight:900;font-size:.9rem;display:flex;align-items:center;justify-content:center;padding:0 6px}",
       ".lb-it .pk-mini{border-color:rgba(242,194,48,.9);background:rgba(242,194,48,.18);color:#ffe28a}",
-      ".lb-pk{position:fixed;inset:0;z-index:85;display:flex;flex-direction:column;background:radial-gradient(120% 70% at 50% 30%,#2a1846,#0d1022 60%,#06081a);color:#fff}",
+      ".lb-pk{position:fixed;inset:0;z-index:85;display:flex;flex-direction:column;background:radial-gradient(120% 70% at 50% 30%,#2a1846,#0d1022 60%,#06081a);color:#fff;-webkit-user-select:none;user-select:none}",
       ".pk-testa{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:12px 14px}.pk-testa b{font-family:var(--o-tit);font-weight:800;font-size:1.2rem}.pk-quanti{color:#ffe28a;font-weight:800;font-size:.9rem}",
       ".pk-chiudi{margin-left:auto;font:inherit;width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;font-weight:900}",
-      ".pk-scena{flex:1;min-height:0;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 14px;perspective:1200px}",
-      ".pk-piede{flex:0 0 auto;display:flex;flex-direction:column;gap:8px;padding:10px 16px calc(16px + env(safe-area-inset-bottom))}",
-      ".pk-busta{position:relative;width:min(58vw,230px);aspect-ratio:1/1.45;border:0;padding:0;background:none;font:inherit;color:#fff}",
+      ".pk-scena{flex:1;min-height:0;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 14px;perspective:1100px;touch-action:none;overflow:hidden}",
+      ".pk-vassoio{flex:0 0 auto;display:flex;justify-content:center;gap:8px;min-height:0}.pk-vassoio:empty{display:none}.pk-vassoio{padding:4px 0}",
+      ".pk-piede{flex:0 0 auto;display:flex;flex-direction:column;gap:8px;padding:10px 16px calc(16px + env(safe-area-inset-bottom))}.pk-piede:empty{display:none}",
+      // il pacchetto: la bustina, il taglio da strisciare, la luce (oro o argento), lo strappo, i raggi e le scintille
+      ".pk-busta{position:relative;width:min(56vw,220px);aspect-ratio:1/1.45;color:#fff}",
       ".pk-fronte,.pk-strappo{position:absolute;left:0;right:0;border-radius:10px;background:linear-gradient(160deg,#ff4f86,#a01b4d 45%,#4a1f8a);box-shadow:inset 0 0 0 2px rgba(255,226,138,.75),0 20px 34px -14px #000}",
-      ".pk-fronte{top:13%;bottom:0;border-radius:4px 4px 12px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:linear-gradient(160deg,#ff4f86,#a01b4d 45%,#4a1f8a),#a01b4d;will-change:transform,opacity}",
+      ".pk-fronte{top:13%;bottom:0;border-radius:4px 4px 12px 12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;will-change:transform,opacity}",
       ".pk-fronte:before{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(115deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.28) 45%,rgba(255,255,255,0) 60%);pointer-events:none}",
-      ".pk-strappo{top:0;height:14%;border-radius:12px 12px 2px 2px;background:linear-gradient(180deg,#ffd979,#c99a26);will-change:transform,opacity}",
+      ".pk-strappo{top:0;height:14%;border-radius:12px 12px 2px 2px;background:linear-gradient(180deg,#ffd979,#c99a26);will-change:transform,opacity;z-index:2}",
+      ".pk-taglio{position:absolute;left:5%;right:5%;top:13.5%;height:0;border-top:2px dashed rgba(255,255,255,.65);z-index:3}.pk-taglio i{position:absolute;left:0;right:0;top:-3px;height:4px;border-radius:4px;background:linear-gradient(90deg,#fff7cc,#ffd84a);box-shadow:0 0 10px #ffd84a;transform:scaleX(0);transform-origin:0 50%}",
+      ".pk-luce{position:absolute;inset:-35%;border-radius:50%;opacity:0;pointer-events:none;background:radial-gradient(circle,rgba(255,226,120,.95),rgba(255,200,60,.45) 35%,rgba(255,200,60,0) 66%)}.pk-busta.argento .pk-luce{background:radial-gradient(circle,rgba(235,240,255,.8),rgba(200,210,240,.3) 35%,rgba(200,210,240,0) 62%)}",
+      ".pk-raggi2{position:absolute;left:50%;top:14%;width:300%;aspect-ratio:1;margin:-150% 0 0 -150%;border-radius:50%;opacity:0;pointer-events:none;background:repeating-conic-gradient(rgba(255,226,120,.55) 0 7deg,rgba(255,226,120,0) 7deg 22deg);-webkit-mask:radial-gradient(circle,#000 20%,transparent 68%);mask:radial-gradient(circle,#000 20%,transparent 68%)}",
+      ".pk-scint{position:absolute;left:50%;top:14%;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;opacity:0;pointer-events:none;background:radial-gradient(circle,#fff,#ffd84a 45%,rgba(255,216,74,0) 70%)}.pk-scint.argento{background:radial-gradient(circle,#fff,#d7def0 45%,rgba(215,222,240,0) 70%)}",
+      ".pk-busta.scuoti{animation:pkNo .45s}@keyframes pkNo{20%{transform:rotate(-4deg)}45%{transform:rotate(4deg)}70%{transform:rotate(-2deg)}100%{transform:none}}",
       ".pk-marca{font-family:var(--o-tit);font-weight:800;letter-spacing:.2em;font-size:.72rem;color:#ffe28a}.pk-tit{font-family:var(--o-tit);font-weight:800;font-size:1.9rem;line-height:1;color:#fff;text-shadow:0 3px 0 rgba(60,0,30,.6)}",
       ".pk-stag{font-weight:800;font-size:.85rem;color:#ffe3ee}.pk-num{margin-top:10px;font-weight:900;font-size:.8rem;color:#0b0f26;background:linear-gradient(180deg,#fff3b8,#f2c230);border-radius:99px;padding:3px 10px}",
-      ".pk-dito,.pk-vuoto{text-align:center;color:#c9cfe6;font-weight:700;font-size:.9rem;margin:14px 0 0}",
-      ".pk-griglia{display:grid;gap:18px 16px;justify-content:center;align-content:center}",
-      ".pk-carta{position:relative;aspect-ratio:1/1.36;opacity:.35;transition:opacity .25s}.pk-carta.pronta{opacity:1}",
+      ".pk-pila{position:relative;width:min(56vw,220px);aspect-ratio:1/1.45}.pk-pila .pk-busta{position:absolute;inset:0;width:auto}",
+      ".pk-fila{position:relative;width:min(46vw,180px);aspect-ratio:1/1.45;margin-left:-24%}.pk-busta.in-fila{position:absolute;inset:0;width:auto;will-change:transform,opacity}",
+      ".pk-dito,.pk-vuoto{text-align:center;color:#c9cfe6;font-weight:700;font-size:.9rem;margin:14px 0 0}.pk-ritrovato{color:#ffe28a;margin:0 0 10px}",
+      // le carte: coperte col bordo del loro metallo (si sbircia), girate con la luce che scorre, «NUOVA!», ⬆, ×copie
+      ".pk-griglia{display:grid;gap:22px 14px;justify-content:center;align-content:center}",
+      ".pk-carta{position:relative;aspect-ratio:1/1.36}.pk-mazzo{position:relative}.pk-mazzo .pk-carta{position:absolute;left:0;top:0;width:100%;will-change:transform}",
+      ".pk-nastro{position:relative;width:100%}.pk-carta.nel-nastro{position:absolute;top:22px;will-change:transform,opacity}",
       ".pk-gira{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateY(180deg);will-change:transform}",
       ".pk-dorso,.pk-faccia{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:7%/5%;overflow:hidden}",
       ".pk-faccia canvas{width:100%;height:100%;display:block}",
-      ".pk-dorso{transform:rotateY(180deg);background:repeating-linear-gradient(45deg,#3a1f6e 0 8px,#2c1758 8px 16px);box-shadow:inset 0 0 0 3px #f2c230;display:flex;align-items:center;justify-content:center}.pk-dorso-in{font-family:var(--o-tit);font-weight:800;font-size:.7rem;letter-spacing:.15em;color:#ffe28a;transform:rotate(-30deg)}",
+      ".pk-dorso{transform:rotateY(180deg);background:repeating-linear-gradient(45deg,#3a1f6e 0 8px,#2c1758 8px 16px);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 4px #b9774a,inset 0 0 0 6px rgba(0,0,0,.35)}",
+      ".pk-carta.argento .pk-dorso{box-shadow:inset 0 0 0 4px #d7def0,inset 0 0 0 6px rgba(0,0,0,.35)}.pk-carta.oro .pk-dorso{box-shadow:inset 0 0 0 4px #ffd84a,inset 0 0 0 6px rgba(0,0,0,.35),inset 0 0 18px rgba(255,216,74,.45)}",
+      ".pk-dorso-in{font-family:var(--o-tit);font-weight:800;font-size:.7rem;letter-spacing:.15em;color:#ffe28a;transform:rotate(-30deg)}",
+      ".pk-luccica{position:absolute;inset:0;overflow:hidden;pointer-events:none}.pk-luccica i{position:absolute;top:-20%;bottom:-20%;left:25%;width:50%;opacity:0;transform:skewX(-14deg);background:linear-gradient(100deg,rgba(255,255,255,0),rgba(255,255,255,.45) 50%,rgba(255,255,255,0))}",
+      ".pk-carta.oro .pk-luccica i{background:linear-gradient(100deg,rgba(255,236,150,0),rgba(255,240,170,.85) 50%,rgba(255,236,150,0))}",
       ".pk-raggi{position:absolute;inset:-35%;border-radius:50%;opacity:0;pointer-events:none;background:radial-gradient(circle,rgba(255,226,120,.75),rgba(255,200,60,.25) 40%,rgba(255,200,60,0) 68%)}",
       ".pk-carta.oro.girata .pk-raggi{opacity:1;transition:opacity .4s}.pk-carta.argento.girata .pk-raggi{opacity:.55;transition:opacity .4s;background:radial-gradient(circle,rgba(230,236,255,.6),rgba(200,210,240,.2) 40%,rgba(200,210,240,0) 68%)}",
       ".pk-tag{position:absolute;left:50%;top:-10px;transform:translateX(-50%) scale(.4);opacity:0;z-index:3;font-weight:900;font-size:.78rem;white-space:nowrap;padding:3px 9px;border-radius:99px;color:#0b0f26;background:linear-gradient(180deg,#fff3b8,#f2c230);box-shadow:0 0 14px rgba(242,194,48,.7);transition:transform .3s cubic-bezier(.2,1.6,.4,1),opacity .2s}",
       ".pk-carta.girata .pk-tag{opacity:1;transform:translateX(-50%) scale(1)}.pk-carta.nuova .pk-tag{background:linear-gradient(180deg,#ff8fb1,#e0225a);color:#fff;box-shadow:0 0 16px rgba(224,34,90,.75)}",
-      ".pk-carta.doppia .pk-tag{background:rgba(20,24,46,.9);color:#c9cfe6;box-shadow:none;border:1px solid rgba(255,255,255,.2)}.pk-carta.doppia.girata .pk-faccia{opacity:.62}",
+      ".pk-carta.doppia .pk-tag{background:rgba(20,24,46,.9);color:#c9cfe6;box-shadow:none;border:1px solid rgba(255,255,255,.2)}",
+      ".pk-copie{position:absolute;right:-6px;top:-6px;z-index:4;min-width:24px;height:24px;border-radius:99px;background:#151a2e;border:1.5px solid #ffd84a;color:#ffe28a;font-weight:900;font-size:.72rem;display:none;align-items:center;justify-content:center;padding:0 4px}.pk-carta.girata .pk-copie{display:flex}",
+      ".pk-carta.mini{width:54px}.pk-carta.mini .pk-tag{display:none}.pk-carta.mini .pk-copie{transform:scale(.7)}",
+      ".pk-somma{display:flex;flex-direction:column;align-items:center;gap:2px;margin:0 0 14px}.pk-somma b{font-family:var(--o-tit);font-weight:800;font-size:1.3rem}.pk-somma span{color:#ffe28a;font-weight:800;font-size:.9rem}",
+      ".lb-pk.poco .pk-raggi2,.lb-pk.poco .pk-scint{display:none}",
+      // 🔁 i doppioni nell'album
+      ".lb-copie{position:absolute;right:-5%;top:-4%;z-index:3;min-width:calc(var(--fw,90px)*.24);height:calc(var(--fw,90px)*.24);border-radius:99px;background:#151a2e;border:1.5px solid #ffd84a;color:#ffe28a;font-weight:900;font-size:calc(var(--fw,90px)*.12);display:flex;align-items:center;justify-content:center;padding:0 3px}",
+      ".lb-scena.doppi .lb-cas:not(.doppia){opacity:.12}.lb-filtro{position:absolute;z-index:8;top:6px;right:8px;font:inherit;font-weight:900;font-size:.75rem;color:#0b0f26;background:linear-gradient(180deg,#fff3b8,#f2c230);border:0;border-radius:99px;padding:4px 10px}",
+      ".lb-it button.on{background:rgba(242,194,48,.85);color:#0b0f26}",
       ".lb-raro{position:absolute;left:50%;bottom:-5%;transform:translateX(-50%);z-index:2;font-size:calc(var(--fw,90px)*.085 + 3px);font-weight:900;white-space:nowrap;color:#e9f6ff;background:linear-gradient(180deg,#5a7dff,#2a3fa8);border:1px solid #bcd0ff;border-radius:99px;padding:1px 6px;box-shadow:0 0 10px rgba(120,160,255,.7)}",
       ".lb-vuoto.chiuso{border-color:rgba(166,172,200,.45);border-style:solid;background:rgba(4,6,18,.72)}.lb-vuoto.chiuso .n{color:#a6acc8}.lb-vuoto.chiuso .nm{color:#c9cfe6}.lb-vuoto.chiuso .ru{color:#c9cfe6;letter-spacing:0;white-space:nowrap;font-size:calc(var(--fw,90px)*.075 + 2px)}",
       ".lb-t2 .sc.agg{font-size:1.3rem}.lb-ig .scudetto.agg{display:flex;align-items:center;justify-content:center;height:calc(var(--sw,40px)*1.16);font-size:calc(var(--sw,40px)*.7);filter:none}",
@@ -13562,7 +13602,7 @@
     var C = window.SGCuore, s = albSchermata("Mini Asta · " + albNome(LIB.stag));
     s.classList.remove("alb"); s.classList.add("lb");
     var sc = C.el("div", { class: "lb-scena" }); s._contenuto.appendChild(sc);
-    LIB.s = s; LIB.scena = sc; LIB.nodi = {}; LIB.coda = []; LIB.giro = null; LIB.festa++;
+    LIB.s = s; LIB.scena = sc; LIB.nodi = {}; LIB.coda = []; LIB.giro = null; LIB.festa++; if (LIB.doppi) setTimeout(function () { libDoppi(true); }, 0);
     libDito(sc);
     return s;
   }
@@ -13586,7 +13626,7 @@
       el("div", { class: "pc", text: o.p + " / " + o.n + " figurine" }),
       el("div", { class: "met" }, ["oro", "argento", "bronzo"].map(function (m) { return el("span", { text: { oro: "🥇", argento: "🥈", bronzo: "🥉" }[m] + " " + o[m][0] + "/" + o[m][1] }); })), scaf ]));
     f.appendChild(el("div", { class: "tc", text: "👆 Tocca per accendere le luci" }));
-    var npk = libPacchi(LIB.stag);
+    var npk = libPacchi(LIB.stag) || (libUltimo(LIB.stag) ? "…" : 0);   // (anche un pacchetto rimasto a metà: si ritrova)
     if (npk) f.appendChild(el("button", { class: "pk-apri", onclick: function (e) { e.stopPropagation(); libPacchetti(); } }, [ el("span", { class: "pk-ic", text: "📦" }), el("b", { text: "Apri i pacchetti" }), el("span", { class: "pk-n", text: String(npk) }) ]));
     LIB.scena.appendChild(f);
     if (SF()) { SF().copertina(base, "B", null); luci.forEach(function (c, i) { SF().copertina(c, "B", i < 4 ? i : "campo"); }); }
@@ -13655,7 +13695,7 @@
   function libGriglia(lista) {
     var el = window.SGCuore.el, gr = el("div", { class: "lb-gr" });
     lista.forEach(function (c) {
-      var cas = el("button", { class: "lb-cas" + (c.esce ? " esce" : "") }); cas.__c = c;
+      var cas = el("button", { class: "lb-cas" + (c.esce ? " esce" : "") + (albCopie(c.x) >= 2 ? " doppia" : "") }); cas.__c = c;
       if (c.x && LIB.viste.f[c.id]) cas.appendChild(libFig(c));
       else cas.appendChild(libVuoto(c));
       cas.addEventListener("click", function () { if (LIB.trascinato || LIB.giro) return; if (c.x && cas.querySelector(".lb-fig")) albScheda(c); else if (!c.x) libFumetto(cas); });
@@ -13671,8 +13711,9 @@
     cont.appendChild(libGriglia(P.l)); f.appendChild(el("div", { class: "lb-pn", text: String(i + 1) }));
     return f;
   }
-  function libFig(c) { var el = window.SGCuore.el, f = el("div", { class: "lb-fig", style: "--r:" + (((c.num * 37) % 7 - 3) * 0.8).toFixed(1) + "deg" }, [ el("div", { class: "alb-attesa" }) ]); if (c.esce) f.appendChild(el("span", { class: "lb-raro", text: "💎 Introvabile" })); else if (c.sale) f.appendChild(el("span", { class: "lb-ora " + c.sale, text: "⬆ ora è " + c.sale })); return f; }
-  function libVuoto(c) { var el = window.SGCuore.el; return el("div", { class: "lb-vuoto" + (c.esce ? " chiuso" : ""), html: LIB_SAGOMA }, [ el("div", { class: "n", text: c.num }), el("div", { class: "nm", text: c.nome }), el("div", { class: "ru", text: c.esce ? "🔒 Non più all'asta" : c.agg ? c.squadra : ALB_SIGLA[c.ruolo] }) ]); }
+  function libFig(c) { var el = window.SGCuore.el, cp = albCopie(c.x), f = el("div", { class: "lb-fig", style: "--r:" + (((c.num * 37) % 7 - 3) * 0.8).toFixed(1) + "deg" }, [ el("div", { class: "alb-attesa" }) ]); if (cp >= 2) f.appendChild(el("span", { class: "lb-copie", text: "×" + cp }));
+    if (c.esce) f.appendChild(el("span", { class: "lb-raro", text: "💎 Introvabile" })); else if (c.sale) f.appendChild(el("span", { class: "lb-ora " + c.sale, text: "⬆ ora è " + c.sale })); return f; }
+  function libVuoto(c) { var el = window.SGCuore.el; return el("div", { class: "lb-vuoto" + (c.esce ? " chiuso" : ""), html: LIB_SAGOMA }, [ el("div", { class: "n", text: c.num }), el("div", { class: "nm", text: c.nome }), el("div", { class: "ru", text: c.esce ? "📦 Solo nei pacchetti" : c.agg ? c.squadra : ALB_SIGLA[c.ruolo] }) ]); }
   function libAdatta(f) {   // la pagina intera nello spazio, con le figurine più grandi che ci stanno (e il prato libero in fondo)
     var gr = f.querySelector(".lb-gr"), n = gr.children.length, gap = 9, gw = gr.clientWidth || f.clientWidth - 28;
     var prato = Math.max(26, f.clientHeight * 0.06), gh = f.clientHeight - gr.offsetTop - prato - 16, best = null;
@@ -13688,8 +13729,8 @@
   function libFoglioInd() {
     var C = window.SGCuore, el = C.el, ab = LIB.ab, f = el("div", { class: "lb-foglio lb-ind" }), cont = el("div", { class: "lb-cont" });
     f.appendChild(el("canvas", { class: "lb-sf" })); f.appendChild(cont);
-    var npk = libPacchi(LIB.stag);
-    cont.appendChild(el("div", { class: "lb-it" }, [ el("b", { text: "Indice" }), libConto(ab.tutte), npk ? el("button", { class: "pk-mini", text: "📦 " + npk, "aria-label": "Apri i pacchetti", onclick: function () { if (!LIB.trascinato && !LIB.giro) libPacchetti(); } }) : null, el("button", { text: "📚", "aria-label": "Tutti gli album", onclick: function () { if (!LIB.trascinato) albScaffale(); } }) ].filter(Boolean)));
+    var npk = libPacchi(LIB.stag) || (libUltimo(LIB.stag) ? "…" : 0);
+    cont.appendChild(el("div", { class: "lb-it" }, [ el("b", { text: "Indice" }), libConto(ab.tutte), npk ? el("button", { class: "pk-mini", text: "📦 " + npk, "aria-label": "Apri i pacchetti", onclick: function () { if (!LIB.trascinato && !LIB.giro) libPacchetti(); } }) : null, el("button", { class: "lb-doppi" + (LIB.doppi ? " on" : ""), text: "🔁", "aria-label": "Solo i doppioni", onclick: function () { if (!LIB.trascinato) libDoppi(!LIB.doppi); } }), el("button", { text: "📚", "aria-label": "Tutti gli album", onclick: function () { if (!LIB.trascinato) albScaffale(); } }) ].filter(Boolean)));
     cont.appendChild(el("div", { class: "lb-ig" }, ab.squadre.map(function (sq) {
       var l = ab.per[sq], o = albConta(l), tutta = o.p === o.n, nu = libNuove(l).length, b = el("button", { "data-sq": sq, html: libScudetto(sq, l), onclick: function () { if (!LIB.trascinato && !LIB.giro) libGira(libDi(sq)); } }, [
         el("div", { class: "lab" }, [ el("b", { text: sq }), el("i", { class: tutta ? "tutta" : "", text: (tutta ? "✓ " : "") + o.p + "/" + o.n }), el("i", { class: "pg", text: "pag. " + (libDi(sq) + 1) }) ]) ]);
@@ -13724,6 +13765,12 @@
     q.push(function () { var c = LIB.nodi[i], p = LIB.nodi[i - 1]; if (c) libRetro(c); if (p) libRetro(p); });   // (anche il retro della pagina che girerà: pronto prima del dito)
     var dopo = window.requestIdleCallback ? function (f) { LIB.prep = requestIdleCallback(f, { timeout: 400 }); } : function (f) { LIB.prep = setTimeout(f, 160); };
     (function uno() { if (festa !== LIB.festa || LIB.i !== i || !q.length) return; q.shift()(); if (q.length) dopo(uno); })();
+  }
+  // 🔁 il filtro dei doppioni: le carte restano al loro posto, si spengono quelle con una copia sola
+  function libDoppi(si) {
+    LIB.doppi = !!si; var el = window.SGCuore.el; LIB.scena.classList.toggle("doppi", LIB.doppi);
+    [].forEach.call(LIB.scena.querySelectorAll(".lb-filtro"), function (x) { x.remove(); }); [].forEach.call(LIB.scena.querySelectorAll(".lb-doppi"), function (x) { x.classList.toggle("on", LIB.doppi); });
+    if (LIB.doppi) LIB.scena.appendChild(el("button", { class: "lb-filtro", text: "🔁 Solo doppioni ✕", onclick: function () { libDoppi(false); } }));
   }
   function libFrecce() {
     var el = window.SGCuore.el; [].forEach.call(LIB.scena.querySelectorAll(".lb-fr"), function (x) { x.remove(); });
@@ -13814,7 +13861,7 @@
     var el = window.SGCuore.el, c = cas.__c;
     [].forEach.call(LIB.scena.querySelectorAll(".lb-fum"), function (x) { x.remove(); }); [].forEach.call(LIB.scena.querySelectorAll(".batte"), function (x) { x.classList.remove("batte"); });
     cas.classList.add("batte");
-    var fu = el("div", { class: "lb-fum", html: c.esce ? "<b>🔒 Non più all'asta</b>" + escA(c.nome) + " è uscito dal listone: chi l'aveva preso ce l'ha «💎 Introvabile»." : "<b>Non l'hai ancora preso…</b>" + escA(c.nome) + ": compralo all'asta e la figurina si attacca qui." }); cas.appendChild(fu);
+    var fu = el("div", { class: "lb-fum", html: c.esce ? "<b>📦 Solo nei pacchetti</b>" + escA(c.nome) + " è uscito dal listone: all'asta non c'è più, ma si trova ancora nei pacchetti." : "<b>Non l'hai ancora preso…</b>" + escA(c.nome) + ": compralo all'asta e la figurina si attacca qui." }); cas.appendChild(fu);
     var r = fu.getBoundingClientRect(), sr = (cas.closest(".due") || LIB.scena).getBoundingClientRect();
     if (r.top < sr.top + 4) fu.classList.add("giu");
     if (r.left < sr.left + 4) fu.style.marginLeft = (-75 + sr.left + 4 - r.left) + "px"; else if (r.right > sr.right - 4) fu.style.marginLeft = (-75 - (r.right - sr.right + 4)) + "px";
@@ -13895,105 +13942,274 @@
     }).then(function () { festa.remove(); banda.remove(); cori.forEach(function (c) { c.n.remove(); }); });
   }
   // =========================================================
-  // 📦 I PACCHETTI (28 nov 2026, il proprietario: «apri i pacchetti per trovare le pippe… li mettiamo accumulabili»). Ogni partita di
-  //  Mini Asta (solo chi gioca, mai chi guarda) dà un pacchetto della stagione giocata: +1 sul podio, insieme alle coppe
-  //  (stat.astafanta.pk.<stagione>, nel profilo: si vede su tutti i telefoni). Si aprono quando vuoi, dalla copertina o dall'indice
-  //  dell'album. Dentro PK_CARTE figurine di quell'album: la prima è sempre una che ti manca, più spesso delle squadre che hai quasi
-  //  finito (PK_AIUTO); le altre a caso col metallo coi pesi PK_PESI (bronzo spesso, oro raro). Chi è uscito dal listone non c'è.
-  //  La carta trovata ha solo la figurina (niente numeri «con te»): comprandolo all'asta si riempie. Se il metallo di oggi è più alto di
-  //  quello che avevi, sale. I doppioni per ora non servono a niente. MAI a pagamento. Numeri dalla simulazione in
-  //  D:/SG-album-prove/libro2/pacchetti (con 4 carte: la prima squadra completa in circa 25 partite, l'album intero in circa 80).
+  // 📦 I PACCHETTI (28-29 nov 2026, il proprietario: «apri i pacchetti per trovare le pippe… li mettiamo accumulabili»; l'apertura «come in
+  //  Pokémon TCG Pocket», presa come spunto e rifatta nostra). Ogni partita di Mini Asta ONLINE (almeno 2 persone; mai chi guarda, mai
+  //  sullo stesso telefono) dà un pacchetto della stagione giocata: +1 sul podio insieme alle coppe, al massimo PK_GIORNO al giorno
+  //  (stat.astafanta.pk.<stagione>, nel profilo). Si aprono quando vuoi dall'album: «📦 Apri 1» (si striscia il pacchetto, il mazzetto
+  //  di 3 coperte si inclina per sbirciare i bordi, si girano una alla volta) o «📦 Aprili tutti» (una striscia, l'onda dei pacchetti,
+  //  poi le carte si scorrono col dito e il riassunto).
+  //  Le carte: PK_CARTE (3), in ordine A CASO (la migliore può essere la prima: l'ordine non dice niente). La prima scelta è sempre una che
+  //  ti manca, più spesso delle squadre quasi finite (PK_AIUTO); le altre col metallo coi pesi PK_PESI. Chi è uscito dal listone si trova
+  //  SOLO nei pacchetti, un po' più raro (PK_USCITO). Il pacchetto si decide e si SALVA prima dell'animazione, con una scrittura sicura
+  //  (SGNube.transazioneStat: due telefoni con lo stesso profilo non ne aprono di più né ne perdono; senza rete non si apre niente).
+  //  L'ultimo aperto resta nel profilo (pkUltimo): se la pagina si ricarica a metà, riaprendo i pacchetti lo ritrovi uguale.
+  //  MAI a pagamento. I doppioni si contano (copie = asta + ufficio + scambio + pacchetti), per ora non servono a niente.
+  //  Numeri dalla simulazione in D:/SG-album-prove/libro2/pacchetti.
   // =========================================================
-  var PK_CARTE = 4, PK_PESI = [0.7, 0.24, 0.06], PK_AIUTO = 2;
+  var PK_CARTE = 3, PK_PESI = [0.7, 0.24, 0.06], PK_AIUTO = 2, PK_USCITO = 0.5;
   function libPacchi(stag) { var pk = albStat().pk || {}; return Math.max(0, Math.round(+pk[chiaveStag(stag)] || 0)); }
-  function libPescaPacchetto(ab, presi) {   // presi: id → metallo che hai (anche quelli appena trovati in questo giro)
-    var ok = ab.tutte.filter(function (c) { return !c.esce; }), carte = [], per = {}, R = Math.random;
-    ab.squadre.forEach(function (sq) { per[sq] = ok.filter(function (c) { return c.squadra === sq; }); });
+  function albCopie(x) { return x ? (x[0] || 0) + (x[4] || 0) + (x[5] || 0) + (x[17] || 0) : 0; }   // (🔁 le copie che hai avuto: asta, ufficio, scambio, pacchetti)
+  function libPocoMoto() { try { return window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } }
+  function libMescola(l) { for (var i = l.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = l[i]; l[i] = l[j]; l[j] = t; } return l; }
+  function libPesca(l, peso) { var tot = 0; l.forEach(function (c) { tot += peso(c); }); var x = Math.random() * tot; for (var i = 0; i < l.length; i++) { x -= peso(l[i]); if (x <= 0) return l[i]; } return l[l.length - 1]; }
+  function libPescaPacchetto(ab, presi) {   // presi: id → metallo che hai (cambia anche con le carte appena trovate)
+    var tutte = ab.tutte, carte = [], per = {}, R = Math.random, pu = function (c) { return c.esce ? PK_USCITO : 1; };
+    ab.squadre.forEach(function (sq) { per[sq] = ab.per[sq]; });
     var tot = 0, pesi = ab.squadre.map(function (sq) { var l = per[sq], h = l.filter(function (c) { return presi[c.id] != null; }).length, m = l.length - h; var p = m ? Math.pow(h / l.length, PK_AIUTO) + 0.05 : 0; tot += p; return p; });
-    if (tot) {   // la carta nuova «mirata»
+    if (tot) {   // la carta nuova «mirata»: di una squadra (più spesso quelle quasi finite), dentro bronzo più facile dell'oro
       var x = R() * tot, sq = ab.squadre[0]; for (var j = 0; j < pesi.length; j++) { x -= pesi[j]; if (x <= 0) { sq = ab.squadre[j]; break; } }
-      var mancano = per[sq].filter(function (c) { return presi[c.id] == null; }), PM = { bronzo: 1, argento: 0.6, oro: 0.25 }, tt = 0; mancano.forEach(function (c) { tt += PM[c.met]; });
-      var y = R() * tt; for (var k = 0; k < mancano.length; k++) { y -= PM[mancano[k].met]; if (y <= 0 || k === mancano.length - 1) { carte.push(mancano[k]); break; } }
-    } else {   // (agg: chi è entrato dopo)
-      var ma = ok.filter(function (c) { return presi[c.id] == null; }); if (ma.length) carte.push(ma[Math.floor(R() * ma.length)]);
+      var PM = { bronzo: 1, argento: 0.6, oro: 0.25 }; carte.push(libPesca(per[sq].filter(function (c) { return presi[c.id] == null; }), function (c) { return PM[c.met] * pu(c); }));
+    } else { var ma = tutte.filter(function (c) { return presi[c.id] == null; }); if (ma.length) carte.push(ma[Math.floor(R() * ma.length)]); }
+    var perMet = { bronzo: [], argento: [], oro: [] }; tutte.forEach(function (c) { perMet[c.met].push(c); });
+    while (carte.length < PK_CARTE) { var z = R(), m = z < PK_PESI[0] ? "bronzo" : z < PK_PESI[0] + PK_PESI[1] ? "argento" : "oro"; carte.push(libPesca(perMet[m].length ? perMet[m] : tutte, pu)); }
+    return libMescola(carte.map(function (c) { var mt = ALB_METALLI.indexOf(c.met), prima = presi[c.id]; var o = { c: c, id: c.id, nuova: prima == null, sale: prima != null && mt > prima, met: c.met }; presi[c.id] = Math.max(prima == null ? -1 : prima, mt); return o; }));
+  }
+  // prende n pacchetti: decide le carte e le scrive nel profilo IN UNA VOLTA (le carte, i pacchetti in meno, l'ultimo aperto). Torna
+  // { uscite: [{ c, nuova, sale, met, copie }], pacchi: [[…3], …], n } o null (niente da aprire); senza rete la promessa fallisce.
+  function libPrendi(stag, n) {
+    var ab = albLista(stag), sk = chiaveAlbum(stag), pkk = chiaveStag(stag), perId = {}; ab.tutte.forEach(function (c) { perId[c.id] = c; });
+    function decidi(st) {
+      var ha = Math.max(0, Math.round(+((st.pk || {})[pkk]) || 0)), k = Math.min(n, ha); if (!k) return null;
+      var miei = st[sk] || {}, presi = {}, voci = {};
+      ab.tutte.forEach(function (c) { var v = miei[c.id]; if (v) { var x = albVoce(v); presi[c.id] = x[16] >= 0 ? x[16] : ALB_METALLI.indexOf(c.met); } });
+      var pacchi = []; for (var i = 0; i < k; i++) pacchi.push(libPescaPacchetto(ab, presi));
+      if (window.SG_PROVA_PACCO) pacchi = window.SG_PROVA_PACCO(pacchi, ab) || pacchi;   // (solo per le prove e le foto)
+      var uscite = [].concat.apply([], pacchi);
+      uscite.forEach(function (o) { var x = voci[o.id] || albVoce(miei[o.id]); x[16] = Math.max(x[16], ALB_METALLI.indexOf(o.met)); x[17]++; voci[o.id] = x; o.copie = albCopie(x); });
+      var set = Object.keys(voci).map(function (id) { return [sk + "." + id, voci[id]]; });
+      var t = Date.now(); set.push(["pk." + pkk, ha - k], ["pkUltimo", { s: pkk, t: t, p: pacchi.map(function (l) { return l.map(function (o) { return [o.id, o.met, o.nuova ? 1 : 0, o.sale ? 1 : 0]; }); }) }]);
+      return { set: set, pacchi: pacchi, uscite: uscite, n: k, t: t };
     }
-    var perMet = { bronzo: [], argento: [], oro: [] }; ok.forEach(function (c) { perMet[c.met].push(c); });
-    while (carte.length < PK_CARTE) { var z = R(), m = z < PK_PESI[0] ? "bronzo" : z < PK_PESI[0] + PK_PESI[1] ? "argento" : "oro", l = perMet[m].length ? perMet[m] : ok; carte.push(l[Math.floor(R() * l.length)]); }
-    return carte.map(function (c) { var mt = ALB_METALLI.indexOf(c.met), prima = presi[c.id]; var o = { c: c, nuova: prima == null, sale: prima != null && mt > prima, met: c.met }; presi[c.id] = Math.max(prima == null ? -1 : prima, mt); return o; });
+    var N = window.SGNube;
+    if (N && N.transazioneStat) return N.transazioneStat("astafanta", decidi);
+    var e = decidi(JSON.parse(JSON.stringify(albStat())));   // (le prove: senza Firebase, la stessa cosa con salvaProgressi)
+    if (e && N && N.salvaProgressi) N.salvaProgressi(null, "astafanta", [], [], e.set);
+    if (window.SG_PROVA_PACCHI) window.SG_PROVA_PACCHI(stag, e);
+    return Promise.resolve(e);
   }
-  function libSalvaPacchi(stag, uscite) {   // le carte nell'album (nel profilo) e il pacchetto in meno: subito, prima dell'animazione
-    var st = albStat(), sk = chiaveAlbum(stag), miei = st[sk] || {}, voci = {}, set = [];
-    uscite.forEach(function (o) { var id = o.c.id, x = voci[id] || albVoce(miei[id]); x[16] = Math.max(x[16], ALB_METALLI.indexOf(o.met)); x[17]++; voci[id] = x; });
-    Object.keys(voci).forEach(function (id) { set.push([sk + "." + id, voci[id]]); });
-    var n = uscite.length / PK_CARTE;
-    if (window.SGNube && SGNube.salvaProgressi) SGNube.salvaProgressi(null, "astafanta", [["pk." + chiaveStag(stag), -n]], [], set);
-    if (window.SG_PROVA_PACCHI) window.SG_PROVA_PACCHI(stag, uscite, set, n);   // (solo per le prove)
+  // l'ultimo pacchetto aperto, ritrovato com'era (se la pagina si è ricaricata a metà apertura)
+  function libUltimo(stag) {
+    var u = albStat().pkUltimo; if (!u || u.s !== chiaveStag(stag) || !u.p) return null;
+    try { if (localStorage.getItem("sg-pk-visto") === String(u.t)) return null; } catch (e) {}
+    var ab = albLista(stag), perId = {}; ab.tutte.forEach(function (c) { perId[c.id] = c; });
+    var pacchi = u.p.map(function (l) { return l.map(function (q) { var c = perId[q[0]]; return c ? { c: c, id: q[0], met: q[1], nuova: !!q[2], sale: !!q[3], copie: albCopie(c.x) } : null; }).filter(Boolean); });
+    return { pacchi: pacchi, uscite: [].concat.apply([], pacchi), t: u.t };
   }
-  function libPacchetti(tutti) {
-    var C = window.SGCuore, el = C.el, stag = LIB.stag, festa = ++LIB.festa;
-    var ov = el("div", { class: "lb-pk" }), scena = el("div", { class: "pk-scena" }), piede = el("div", { class: "pk-piede" });
-    ov.appendChild(el("div", { class: "pk-testa" }, [ el("b", { text: "📦 Pacchetti" }), el("span", { class: "pk-quanti" }), el("button", { class: "pk-chiudi", text: "✕", onclick: chiudi }) ])); ov.appendChild(scena); ov.appendChild(piede);
-    document.body.appendChild(ov); LIB.pk = ov;
+  function libVisto(t) { try { localStorage.setItem("sg-pk-visto", String(t)); } catch (e) {} }
+  // ---- i suoni: il fruscio del pacchetto, il «ding» delle carte, il colpo sull'oro (mai a raffica: uno ogni PK_SUONO ms) ----
+  var PK_SUONO = { ultimo: 0 };
+  function libSuono(tipo, raro) {
+    var t = performance.now(); if (raro && t - PK_SUONO.ultimo < raro) return; PK_SUONO.ultimo = t;
+    if (tipo === "carta") return libFruscio();
+    try {
+      var ctx = window.SGCuore.audioCtx && window.SGCuore.audioCtx(); if (!ctx) return; var o = ctx.currentTime;
+      function nota(f, da, dur, vol, forma) { var s = ctx.createOscillator(), g = ctx.createGain(); s.type = forma || "sine"; s.frequency.value = f; g.gain.setValueAtTime(0, o + da); g.gain.linearRampToValueAtTime(vol, o + da + 0.01); g.gain.exponentialRampToValueAtTime(0.0008, o + da + dur); s.connect(g); g.connect(ctx.destination); s.start(o + da); s.stop(o + da + dur + 0.02); }
+      if (tipo === "ding") { nota(1320, 0, 0.25, 0.09); nota(1980, 0.04, 0.2, 0.05); }
+      else if (tipo === "argento") { nota(1175, 0, 0.35, 0.1); nota(1568, 0.06, 0.35, 0.08); }
+      else if (tipo === "oro") { nota(98, 0, 0.35, 0.35, "triangle"); nota(784, 0.05, 0.6, 0.1); nota(1175, 0.12, 0.6, 0.09); nota(1568, 0.2, 0.8, 0.09); }
+    } catch (e) {}
+  }
+  function libVibra(p) { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} }
+  // ---- 📦 la schermata dei pacchetti ----
+  function libPacchetti(modo) {
+    var C = window.SGCuore, el = C.el, stag = LIB.stag, festa = ++LIB.festa, poco = libPocoMoto();
+    var ov = el("div", { class: "lb-pk" + (poco ? " poco" : "") }), scena = el("div", { class: "pk-scena" }), piede = el("div", { class: "pk-piede" }), vass = el("div", { class: "pk-vassoio" });
+    ov.appendChild(el("div", { class: "pk-testa" }, [ el("b", { text: "📦 Pacchetti" }), el("span", { class: "pk-quanti" }), el("button", { class: "pk-chiudi", text: "✕", "aria-label": "Chiudi", onclick: chiudi }) ]));
+    ov.appendChild(scena); ov.appendChild(vass); ov.appendChild(piede); document.body.appendChild(ov); LIB.pk = ov;
+    function vivo() { return festa === LIB.festa && ov.isConnected; }
     function chiudi() { ov.remove(); LIB.pk = null; libro(stag, LIB.i || 0); }
     function quanti() { var n = libPacchi(stag); ov.querySelector(".pk-quanti").textContent = n ? (n === 1 ? "1 da aprire" : n + " da aprire") : "nessuno da aprire"; return n; }
-    function presiOra() { var p = {}, ab = albLista(stag); ab.tutte.forEach(function (c) { if (c.x) p[c.id] = c.metPreso; }); return { p: p, ab: ab }; }
-    function busta() {   // la bustina chiusa: tocchi e si apre
-      scena.innerHTML = ""; piede.innerHTML = ""; var n = quanti(); if (!n) { scena.appendChild(el("p", { class: "pk-vuoto", text: "Hai aperto tutti i pacchetti. Ne arriva uno a ogni partita di Mini Asta." })); piede.appendChild(el("button", { class: "btn btn-primario", text: "Torna all'album", onclick: chiudi })); return; }
-      var b = el("button", { class: "pk-busta" }, [ el("div", { class: "pk-strappo" }), el("div", { class: "pk-fronte" }, [ el("div", { class: "pk-marca", text: "MINI ASTA" }), el("div", { class: "pk-tit", text: "Figurine" }), el("div", { class: "pk-stag", text: albNome(stag) }), el("div", { class: "pk-num", text: PK_CARTE + " figurine" }) ]) ]);
-      b.onclick = function () { if (b.__via) return; b.__via = true; apri(b); };
-      scena.appendChild(b); scena.appendChild(el("p", { class: "pk-dito", text: "👆 Tocca il pacchetto per aprirlo" }));
-      if (n > 1) piede.appendChild(el("button", { class: "btn", text: "📦 Aprili tutti (" + n + ")", onclick: tuttiInsieme }));
+    function pulisci() { scena.innerHTML = ""; piede.innerHTML = ""; vass.innerHTML = ""; G = {}; }
+    function tasti(dopo) {   // i due tasti: «📦 Apri 1» e «📦 Aprili tutti (N)»
+      var n = quanti();
+      if (n) { piede.appendChild(el("button", { class: "btn btn-primario", text: dopo ? "📦 Apri il prossimo (" + n + ")" : "📦 Apri 1", onclick: function () { uno(); } })); if (n > 1) piede.appendChild(el("button", { class: "btn", text: "📦 Aprili tutti (" + n + ")", onclick: function () { tutti(); } })); }
+      if (dopo || !n) piede.appendChild(el("button", { class: n ? "btn btn-testo" : "btn btn-primario", text: "📒 Guarda l'album", onclick: chiudi }));
     }
-    function apri(b) {
-      var P = presiOra(), uscite = libPescaPacchetto(P.ab, P.p); libSalvaPacchi(stag, uscite); quanti();
-      try { if (navigator.vibrate) navigator.vibrate(18); } catch (e) {}
-      var str = b.querySelector(".pk-strappo"), fr = b.querySelector(".pk-fronte"); libFruscio();
-      libTempo(650, function (k) { var e = 1 - Math.pow(1 - k, 3); str.style.transform = "translate(" + (40 * e).toFixed(1) + "px," + (-90 * e).toFixed(1) + "px) rotate(" + (18 * e).toFixed(1) + "deg)"; str.style.opacity = (1 - e).toFixed(3); fr.style.transform = "translateY(" + (60 * e).toFixed(1) + "px) scale(" + (1 - 0.1 * e).toFixed(3) + ")"; fr.style.opacity = (1 - k).toFixed(3); })
-        .then(function () { if (festa !== LIB.festa) return; mostraCarte(uscite, false); });
+    function errore(e) { pulisci(); scena.appendChild(el("p", { class: "pk-vuoto", text: (navigator.onLine === false || !e || /offline|unavailable|network|rete/i.test(String(e && (e.code || e.message)))) ? "📶 Serve la rete per aprire i pacchetti. Non hai perso niente: riprova quando sei online." : "📦 Il pacchetto non si è aperto. Non hai perso niente: riprova." })); tasti(false); }
+    function casa() {   // la pila dei pacchetti chiusi e i due tasti
+      pulisci(); var n = quanti();
+      if (!n) { scena.appendChild(el("p", { class: "pk-vuoto", text: "Hai aperto tutti i pacchetti. Ne arriva uno a ogni partita di Mini Asta online." })); tasti(false); return; }
+      var pila = el("div", { class: "pk-pila" }); for (var i = Math.min(n, 4) - 1; i >= 0; i--) { var b = bustaNodo(); b.style.transform = "translate(" + (i * 7) + "px," + (-i * 7) + "px) rotate(" + (i * 2.5) + "deg)"; pila.appendChild(b); }
+      scena.appendChild(pila); scena.appendChild(el("p", { class: "pk-dito", text: n === 1 ? "Hai 1 pacchetto da aprire" : "Hai " + n + " pacchetti da aprire" })); tasti(false);
     }
-    function cartaNodo(o, w) {
-      var c = o.c, fig = { nome: c.nome, squadra: c.squadra, ruolo: c.ruolo, metFisso: o.met }, src = conStag(c.stag, function () { return figurinaCanvas(fig, null, w, false); });
-      var dorso = el("div", { class: "pk-dorso" }, [ el("div", { class: "pk-dorso-in", text: "MINI ASTA" }) ]), fronte = el("div", { class: "pk-faccia" });
-      if (src) { var cv = document.createElement("canvas"); cv.width = src.width; cv.height = src.height; cv.getContext("2d").drawImage(src, 0, 0); fronte.appendChild(cv); }
-      var gira = el("div", { class: "pk-gira" }, [ dorso, fronte ]), n = el("div", { class: "pk-carta " + o.met + (o.nuova ? " nuova" : o.sale ? " sale" : " doppia"), style: "width:" + w + "px" }, [ el("div", { class: "pk-raggi" }), gira ]);
+    function bustaNodo() {
+      return el("div", { class: "pk-busta" }, [ el("div", { class: "pk-luce" }), el("div", { class: "pk-strappo" }), el("div", { class: "pk-fronte" }, [ el("div", { class: "pk-marca", text: "MINI ASTA" }), el("div", { class: "pk-tit", text: "Figurine" }), el("div", { class: "pk-stag", text: "📦 " + (stag || "Serie A di oggi") }), el("div", { class: "pk-num", text: PK_CARTE + " figurine" }) ]), el("div", { class: "pk-taglio" }, [ el("i") ]) ]);
+    }
+    function migliore(l) { var m = 0; l.forEach(function (o) { m = Math.max(m, ALB_METALLI.indexOf(o.met)); }); return m; }
+    // ---- «📦 Apri 1»: si decide e si salva, poi si striscia il pacchetto ----
+    function uno() {
+      pulisci(); scena.appendChild(el("p", { class: "pk-dito", text: "⏳ Prendo il pacchetto…" }));
+      libPrendi(stag, 1).then(function (e) { if (!vivo()) return; if (!e) return casa(); quanti(); striscia(e.pacchi[0], e); }, function (er) { if (vivo()) errore(er); });
+    }
+    function striscia(carte, e) {
+      pulisci(); var b = bustaNodo(), m = migliore(carte), luce = b.querySelector(".pk-luce"), linea = b.querySelector(".pk-taglio i");
+      if (m) b.classList.add(["", "argento", "oro"][m]); scena.appendChild(b); scena.appendChild(el("p", { class: "pk-dito", text: "👉 Striscia sul pacchetto per aprirlo" }));   // (col bronzo nessuna classe: mai un nome vuoto)
+      prepara(carte, largaMazzo());   // (le 3 figurine si disegnano adesso, a pacchetto chiuso: quando si apre sono pronte)
+      var d = null, aperto = false;
+      function prog(p) { linea.style.transform = "scaleX(" + p.toFixed(3) + ")"; if (m) luce.style.opacity = (Math.min(1, p * 1.6) * (m === 2 ? 1 : 0.55)).toFixed(3); }
+      G.giu = function (ev) { if (aperto) return; d = { x: ev.clientX, y: ev.clientY, id: ev.pointerId }; try { scena.setPointerCapture(ev.pointerId); } catch (er) {} };
+      G.muovi = function (ev) { if (!d || aperto) return; var dx = ev.clientX - d.x, dy = ev.clientY - d.y; if (Math.abs(dx) < Math.abs(dy)) return; prog(Math.max(0, Math.min(1, Math.abs(dx) / (b.clientWidth * 0.8)))); };
+      G.su = function (ev) {
+        if (!d || aperto) return; var dx = ev.clientX - d.x, dy = ev.clientY - d.y; d = null;
+        if (Math.abs(dx) > b.clientWidth * 0.45 && Math.abs(dx) > Math.abs(dy)) { aperto = true; prog(1); apri(b, carte, m).then(function () { if (vivo()) mazzetto(carte, e); }); }
+        else { prog(0); if (Math.abs(dx) < 8 && Math.abs(dy) < 8) { b.classList.remove("scuoti"); void b.offsetWidth; b.classList.add("scuoti"); } }   // (un tocco non basta: il pacchetto fa «no»)
+      };
+    }
+    function apri(b, carte, m) {   // lo strappo; con un oro il pacchetto si accende e butta fuori raggi e scintille
+      var str = b.querySelector(".pk-strappo"), fr = b.querySelector(".pk-fronte"), luce = b.querySelector(".pk-luce");
+      libSuono("carta"); libVibra(m === 2 ? [20, 40, 30] : 14); if (m === 2) libSuono("oro"); else if (m === 1) libSuono("argento");
+      var scint = []; if (m && !poco) for (var i = 0; i < (m === 2 ? 14 : 6); i++) { var a = (i / (m === 2 ? 14 : 6)) * Math.PI * 2, s = el("div", { class: "pk-scint " + (m === 2 ? "oro" : "argento") }); s.__a = a; b.appendChild(s); scint.push(s); }
+      if (m === 2 && !poco) b.appendChild(el("div", { class: "pk-raggi2" }));
+      var rg = b.querySelector(".pk-raggi2");
+      return libTempo(m === 2 ? 1100 : m === 1 ? 800 : 600, function (k) {
+        var e1 = 1 - Math.pow(1 - Math.min(1, k / 0.55), 3);
+        str.style.transform = "translate(" + (50 * e1).toFixed(1) + "px," + (-110 * e1).toFixed(1) + "px) rotate(" + (22 * e1).toFixed(1) + "deg)"; str.style.opacity = (1 - e1).toFixed(3);
+        if (m) luce.style.opacity = (k < 0.6 ? 1 : (1 - k) / 0.4 * (m === 2 ? 1 : 0.55)).toFixed(3);
+        if (rg) { rg.style.opacity = (k < 0.25 ? k / 0.25 : Math.max(0, 1 - (k - 0.25) / 0.75)).toFixed(3); rg.style.transform = "scale(" + (0.6 + k * 0.9).toFixed(3) + ") rotate(" + (k * 40).toFixed(1) + "deg)"; }
+        scint.forEach(function (s, i) { var t = Math.max(0, (k - 0.08) / 0.8), r = t * (90 + (i % 3) * 30); s.style.transform = "translate(" + (Math.cos(s.__a) * r).toFixed(1) + "px," + (Math.sin(s.__a) * r - 40 * t).toFixed(1) + "px) scale(" + (1 - t * 0.6).toFixed(3) + ")"; s.style.opacity = (t <= 0 ? 0 : 1 - t).toFixed(3); });
+        var e2 = Math.max(0, (k - 0.45) / 0.55); fr.style.transform = "translateY(" + (70 * e2).toFixed(1) + "px) scale(" + (1 - 0.15 * e2).toFixed(3) + ")"; fr.style.opacity = (1 - e2).toFixed(3);
+      });
+    }
+    var G = {};   // (i gesti della fase di adesso: un ascoltatore solo sulla scena, le fasi cambiano solo G)
+    scena.addEventListener("pointerdown", function (ev) { if (G.giu) G.giu(ev); }); scena.addEventListener("pointermove", function (ev) { if (G.muovi) G.muovi(ev); }); scena.addEventListener("pointerup", function (ev) { if (G.su) G.su(ev); }); scena.addEventListener("pointercancel", function (ev) { if (G.su) G.su(ev); });
+    var pronte = {}, tocco = false;
+    scena.addEventListener("pointerdown", function () { tocco = true; }, true); ["pointerup", "pointercancel"].forEach(function (t) { scena.addEventListener(t, function () { setTimeout(function () { tocco = false; }, 300); }, true); });   // (le figurine delle carte già disegnate: id|metallo|larghezza → canvas; le mini sono la stessa, più piccola)
+    function sorgente(o, w) { var c = o.c, k = o.id + "|" + o.met + "|" + w; if (!pronte[k]) { var fig = { nome: c.nome, squadra: c.squadra, ruolo: c.ruolo, metFisso: o.met }, src = conStag(c.stag, function () { return figurinaCanvas(fig, null, w, false); }); if (src) { var cv = document.createElement("canvas"); cv.width = src.width; cv.height = src.height; cv.getContext("2d").drawImage(src, 0, 0); pronte[k] = cv; } } return pronte[k] || null; }
+    function prepara(lista, w, fatto) {   // a pacchetto chiuso: una figurina per volta, quando il telefono è libero
+      var q = lista.slice(), fs0 = festa, dopo = window.requestIdleCallback ? function (f) { requestIdleCallback(f); } : function (f) { setTimeout(f, 60); };   // (solo quando il telefono è davvero libero: mai in mezzo a un movimento)
+      (function uno() { if (fs0 !== LIB.festa || !q.length) { if (fatto) fatto(); return; } if (tocco) return setTimeout(uno, 250); sorgente(q.shift(), w); dopo(uno); })();   // (col dito sul vetro si aspetta: la striscia prima di tutto)
+    }
+    function cartaNodo(o, w, coperta, daW) {
+      var src = sorgente(o, daW || w);
+      var dorso = el("div", { class: "pk-dorso" }, [ el("div", { class: "pk-dorso-in", text: "MINI ASTA" }) ]), fronte = el("div", { class: "pk-faccia" }, [ el("div", { class: "pk-luccica" }, [ el("i") ]) ]);
+      if (src) { var cv = document.createElement("canvas"); cv.width = src.width; cv.height = src.height; cv.getContext("2d").drawImage(src, 0, 0); fronte.insertBefore(cv, fronte.firstChild); }
+      var gira = el("div", { class: "pk-gira", style: coperta ? "" : "transform:none" }, [ dorso, fronte ]), n = el("div", { class: "pk-carta " + o.met + (o.nuova ? " nuova" : o.sale ? " sale" : " doppia") + (coperta ? "" : " girata"), style: "width:" + w + "px" }, [ el("div", { class: "pk-raggi" }), gira ]);
       n.appendChild(el("span", { class: "pk-tag", text: o.nuova ? "NUOVA!" : o.sale ? "⬆ " + o.met.toUpperCase() + "!" : "Ce l'hai già" }));
-      n.__gira = gira; return n;
+      if (o.copie >= 2) n.appendChild(el("span", { class: "pk-copie", text: "×" + o.copie }));
+      n.__gira = gira; n.__o = o; return n;
     }
-    function mostraCarte(uscite, tante) {
-      scena.innerHTML = ""; piede.innerHTML = "";
-      var W = (scena.clientWidth || 320) - 28, H = (scena.clientHeight || 420) - 30, col = tante ? Math.min(4, uscite.length) : 2, rows = Math.ceil(uscite.length / col);
-      var w = Math.floor(Math.min((W - 16 * (col - 1)) / col, (H - 18 * rows) / rows / 1.36, tante ? 120 : 150));
+    function rivela(n) {   // la carta si gira: «ding», l'argento un po' di più, l'oro col colpo e la vibrazione
+      var o = n.__o; n.classList.add("pronta");
+      if (o.met === "oro") { libSuono("oro"); libVibra([18, 40, 26]); } else if (o.met === "argento") libSuono("argento"); else libSuono("ding");
+      if (o.nuova && o.met !== "oro") libVibra(10);
+      return libTempo(poco ? 1 : 420, function (k) { var e = 1 - Math.pow(1 - k, 2.5); n.__gira.style.transform = "rotateY(" + (180 - 180 * e).toFixed(1) + "deg) scale(" + (1 + Math.sin(k * Math.PI) * 0.08).toFixed(3) + ")"; })
+        .then(function () { n.classList.add("girata"); });
+    }
+    function inclina(n, dx, dy, w) {   // la carta (girata) sotto il dito si inclina e la luce le scorre sopra
+      if (poco) return; var ry = Math.max(-22, Math.min(22, dx / w * 40)), rx = Math.max(-16, Math.min(16, -dy / w * 32));
+      n.__gira.style.transform = "rotateX(" + rx.toFixed(1) + "deg) rotateY(" + ry.toFixed(1) + "deg)";
+      var lu = n.querySelector(".pk-luccica i"); if (lu) { lu.style.transform = "translateX(" + (ry / 22 * 90).toFixed(1) + "%) skewX(-14deg)"; lu.style.opacity = Math.min(1, Math.abs(ry) / 10 + Math.abs(rx) / 14).toFixed(3); }
+    }
+    function piatta(n) { n.__gira.style.transform = "none"; var lu = n.querySelector(".pk-luccica i"); if (lu) lu.style.opacity = "0"; }
+    // ---- il mazzetto di 3 coperte: lo inclini e vedi i bordi; le giri una alla volta, poi le butti di lato ----
+    function largaMazzo() { var W = scena.clientWidth - 28, H = scena.clientHeight - 70; return Math.floor(Math.min(W * 0.62, H / 1.36, 250)); }
+    function largaNastro() { var W = scena.clientWidth - 28, H = scena.clientHeight - 90; return Math.floor(Math.min(W * 0.62, H / 1.36, 240)); }
+    function mazzetto(carte, e) {
+      pulisci(); var w = largaMazzo();
+      var mz = el("div", { class: "pk-mazzo", style: "width:" + w + "px;height:" + Math.round(w * 1.36) + "px" }); scena.appendChild(mz);
+      var nodi = carte.map(function (o, i) { var n = cartaNodo(o, w, true); n.classList.add("in-mazzo"); n.style.zIndex = 10 - i; mz.appendChild(n); return n; });
+      var dito = el("p", { class: "pk-dito", text: "↔ Inclina per sbirciare i bordi · 👆 tocca o striscia in su per girare" }); scena.appendChild(dito);
+      vass.innerHTML = ""; var top = 0, girata = false, d = null, via = false;
+      function posa(t) {   // t: l'inclinazione del mazzetto (-1…1): le carte sotto scivolano di lato e si vedono i bordi
+        for (var i = top; i < nodi.length; i++) { var p = i - top, n = nodi[i]; n.style.transform = "translate(" + (p * 4 + t * p * w * 0.16).toFixed(1) + "px," + (p * 5).toFixed(1) + "px) rotate(" + (t * p * 3).toFixed(2) + "deg)"; }
+        if (!poco && nodi[top] && !girata) nodi[top].__gira.style.transform = "rotateY(" + (180 - t * 14).toFixed(1) + "deg)";
+      }
+      posa(0);
+      G.giu = function (ev) { if (via) return; d = { x: ev.clientX, y: ev.clientY, t: performance.now() }; try { scena.setPointerCapture(ev.pointerId); } catch (er) {} };
+      G.muovi = function (ev) { if (!d || via) return; var dx = ev.clientX - d.x, dy = ev.clientY - d.y; if (girata) inclina(nodi[top], dx, dy, w); else posa(Math.max(-1, Math.min(1, dx / (w * 0.9)))); };
+      G.su = function (ev) {
+        if (!d || via) return; var dx = ev.clientX - d.x, dy = ev.clientY - d.y, tocco = Math.abs(dx) < 8 && Math.abs(dy) < 8; d = null;
+        if (!girata) { posa(0); if (tocco || (dy < -45 && Math.abs(dy) > Math.abs(dx))) { girata = true; via = true; nodi[top].classList.remove("in-mazzo"); rivela(nodi[top]).then(function () { via = false; dito.textContent = "✨ Inclinala col dito · striscia di lato per la prossima"; }); } return; }
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) || tocco) butta(dx >= 0 ? 1 : -1); else piatta(nodi[top]);
+      };
+      function butta(s) {   // la carta vola di lato e finisce nel vassoio in basso; sotto c'è la prossima
+        via = true; var n = nodi[top], mini = cartaNodo(n.__o, 54, false, w); mini.classList.add("mini"); vass.appendChild(mini);
+        libSuono("carta", 200);
+        libTempo(poco ? 1 : 320, function (k) { var e2 = k * k; n.style.transform = "translate(" + (s * e2 * w * 1.3).toFixed(1) + "px," + (-30 * Math.sin(k * Math.PI)).toFixed(1) + "px) rotate(" + (s * 25 * e2).toFixed(1) + "deg)"; n.style.opacity = (1 - e2).toFixed(3); })
+          .then(function () { n.remove(); top++; girata = false; via = false; if (top >= nodi.length) return fine(); posa(0); dito.textContent = "👆 Tocca o striscia in su per girare la prossima"; });
+      }
+      function fine() { libVisto(e.t || (albStat().pkUltimo || {}).t); riassunto(carte, false); }
+    }
+    // ---- il riassunto: le carte trovate, «NUOVA!», ⬆, ×copie ----
+    function riassunto(carte, tante) {
+      pulisci(); var W = scena.clientWidth - 28, H = scena.clientHeight - 80, nuove = carte.filter(function (o) { return o.nuova; }).length, ori = carte.filter(function (o) { return o.met === "oro"; }).length;
+      var mostra = tante ? carte.filter(function (o) { return o.nuova || o.sale || o.met === "oro"; }).slice(0, 12) : carte; if (!mostra.length) mostra = carte.slice(0, 6);
+      var col = Math.min(tante ? 4 : 3, mostra.length), rows = Math.ceil(mostra.length / col), w = Math.floor(Math.min((W - 14 * (col - 1)) / col, (H - 22 * rows) / rows / 1.36, 150));
+      scena.appendChild(el("div", { class: "pk-somma" }, [ el("b", { text: carte.length + (carte.length === 1 ? " figurina" : " figurine") }), el("span", { text: (nuove ? "✨ " + nuove + (nuove === 1 ? " nuova" : " nuove") : "nessuna nuova") + (ori ? " · 🥇 " + ori + (ori === 1 ? " oro" : " ori") : "") }) ]));
       var gr = el("div", { class: "pk-griglia", style: "grid-template-columns:repeat(" + col + "," + w + "px)" }); scena.appendChild(gr);
-      var nodi = uscite.map(function (o) { var n = cartaNodo(o, w); gr.appendChild(n); return n; });
-      var i = 0, fs1 = festa;
-      (function prossima() {   // si girano una alla volta; l'oro si fa aspettare un attimo di più, con la sua luce
-        if (fs1 !== LIB.festa || !ov.isConnected) return;
-        if (i >= nodi.length) return finito();
-        var n = nodi[i++], o = uscite[i - 1], oro = o.met === "oro";
-        n.classList.add("pronta");
-        setTimeout(function () {
-          if (fs1 !== LIB.festa) return;
-          if (oro || o.nuova) try { if (navigator.vibrate) navigator.vibrate(oro ? [15, 40, 25] : 10); } catch (e) {}
-          libTempo(tante ? 260 : 420, function (k) { var e = 1 - Math.pow(1 - k, 2.5); n.__gira.style.transform = "rotateY(" + (180 - 180 * e).toFixed(1) + "deg) scale(" + (1 + Math.sin(k * Math.PI) * 0.08).toFixed(3) + ")"; })
-            .then(function () { n.classList.add("girata"); setTimeout(prossima, tante ? 90 : oro ? 650 : 380); });
-        }, tante ? 40 : oro ? 520 : 160);
-      })();
-      function finito() {
-        var n = quanti();
-        if (n) { piede.appendChild(el("button", { class: "btn btn-primario", text: "📦 Apri il prossimo (" + n + ")", onclick: busta })); if (n > 1) piede.appendChild(el("button", { class: "btn", text: "Aprili tutti (" + n + ")", onclick: tuttiInsieme })); }
-        else piede.appendChild(el("button", { class: "btn btn-primario", text: "📒 Guarda l'album", onclick: chiudi }));
+      mostra.forEach(function (o) { gr.appendChild(cartaNodo(o, w, false)); });
+      if (tante && mostra.length < carte.length) scena.appendChild(el("p", { class: "pk-dito", text: "Qui le nuove e le più belle: tutte le altre sono già nel tuo album" }));
+      tasti(true);
+    }
+    // ---- «📦 Aprili tutti»: una striscia, l'onda dei pacchetti (al massimo 6 in vista, sempre più veloce, un tocco salta alla fine),
+    //  poi le carte si scorrono col dito una alla volta, poi il riassunto ----
+    function tutti() {
+      pulisci(); scena.appendChild(el("p", { class: "pk-dito", text: "⏳ Prendo i pacchetti…" }));
+      libPrendi(stag, libPacchi(stag)).then(function (e) { if (!vivo()) return; if (!e) return casa(); quanti(); onda(e); }, function (er) { if (vivo()) errore(er); });
+    }
+    function onda(e) {
+      pulisci(); var fila = el("div", { class: "pk-fila" }), P = e.pacchi, VIS = 6, nodi = []; scena.appendChild(fila);
+      var dito = el("p", { class: "pk-dito", text: "👉 Striscia una volta: si aprono tutti (" + P.length + ")" }); scena.appendChild(dito);
+      for (var i = 0; i < Math.min(VIS, P.length); i++) nodi.push(metti(i));
+      function metti(i) { var b = bustaNodo(); b.classList.add("in-fila"); var mi = migliore(P[i]); if (mi) b.classList.add(["", "argento", "oro"][mi]); b.style.transform = "translateX(" + ((i - 0) * 34) + "%) scale(" + (1 - i * 0.06).toFixed(3) + ")"; b.style.zIndex = 100 - i; b.__i = i; fila.appendChild(b); return b; }
+      var d = null, parte = false, salta = false;
+      G.giu = function (ev) { if (parte) { salta = true; return; } d = { x: ev.clientX, y: ev.clientY }; try { scena.setPointerCapture(ev.pointerId); } catch (er) {} };
+      G.muovi = function (ev) { if (!d || parte) return; var dx = ev.clientX - d.x; nodi[0].querySelector(".pk-taglio i").style.transform = "scaleX(" + Math.min(1, Math.abs(dx) / (nodi[0].clientWidth * 0.8)).toFixed(3) + ")"; };
+      G.su = function (ev) { if (!d || parte) return; var dx = ev.clientX - d.x, dy = ev.clientY - d.y; d = null; if (Math.abs(dx) > nodi[0].clientWidth * 0.45 && Math.abs(dx) > Math.abs(dy)) { parte = true; dito.textContent = "👆 Tocca per saltare alla fine"; via(0); } else nodi[0].querySelector(".pk-taglio i").style.transform = "scaleX(0)"; };
+      var passo = 460;
+      function via(i) {   // il pacchetto i si apre (l'oro si accende senza fermare la fila), la fila avanza
+        if (!vivo()) return;
+        if (i >= P.length || salta) return scorri(e);
+        var b = nodi.shift(), m = migliore(P[i]), luce = b.querySelector(".pk-luce"), str = b.querySelector(".pk-strappo");
+        if (m === 2) { libSuono("oro", 700); libVibra(16); } else libSuono("carta", 380);
+        var dur = Math.max(140, passo);
+        libTempo(poco ? 1 : dur, function (k) {
+          str.style.transform = "translateY(" + (-80 * k).toFixed(1) + "px) rotate(" + (18 * k).toFixed(1) + "deg)"; str.style.opacity = (1 - k).toFixed(3);
+          if (m) luce.style.opacity = (Math.sin(k * Math.PI) * (m === 2 ? 1 : 0.55)).toFixed(3);
+          b.style.transform = "translate(" + (-30 * k).toFixed(1) + "%," + (-18 * k).toFixed(1) + "%) scale(" + (1 + 0.1 * k).toFixed(3) + ")"; b.style.opacity = (1 - k * k).toFixed(3);
+          nodi.forEach(function (n, j) { var pos = j + 1 - k; n.style.transform = "translateX(" + (pos * 34).toFixed(1) + "%) scale(" + (1 - pos * 0.06).toFixed(3) + ")"; });
+        }).then(function () { b.remove(); var nx = i + VIS; if (nx < P.length) nodi.push(metti(nx)); passo = Math.max(140, passo * 0.86); via(i + 1); });
       }
     }
-    function tuttiInsieme() {
-      var n = libPacchi(stag), P = presiOra(), tutte = []; for (var k = 0; k < n; k++) tutte = tutte.concat(libPescaPacchetto(P.ab, P.p));
-      if (!tutte.length) return busta();
-      libSalvaPacchi(stag, tutte); quanti();
-      tutte.sort(function (a, b) { return (b.nuova - a.nuova) || (ALB_METALLI.indexOf(b.met) - ALB_METALLI.indexOf(a.met)); });   // (prima le nuove e l'oro)
-      var nuove = tutte.filter(function (o) { return o.nuova || o.sale; }), resto = tutte.length - nuove.length;
-      mostraCarte(nuove.length ? nuove : tutte.slice(0, 8), true);
-      if (resto && nuove.length) scena.appendChild(el("p", { class: "pk-dito", text: "e " + resto + (resto === 1 ? " figurina che avevi già" : " figurine che avevi già") }));
+    function scorri(e) {   // le carte trovate, una alla volta, col dito (si disegnano solo le vicine); poi il riassunto
+      pulisci(); var carte = e.uscite, w = largaNastro(), gap = 18, i = 0;
+      var nastro = el("div", { class: "pk-nastro", style: "height:" + Math.round(w * 1.36 + 30) + "px" }), conto = el("p", { class: "pk-dito" }); scena.appendChild(nastro); scena.appendChild(conto);
+      var posti = {}, viste = {}, d = null;
+      function slot(j) { if (posti[j] || j < 0 || j >= carte.length) return; var n = cartaNodo(carte[j], w, !viste[j]); n.classList.add("nel-nastro"); n.style.left = "50%"; n.style.marginLeft = (-w / 2) + "px"; nastro.appendChild(n); posti[j] = n; }
+      var vicine = 0;
+      function disegna(off) {
+        slot(i); for (var j = i - vicine; j <= i + vicine; j++) slot(j);
+        Object.keys(posti).forEach(function (k) { var j = +k, n = posti[k]; if (Math.abs(j - i) > 3) { n.remove(); delete posti[k]; return; } var p = (j - i) * (w + gap) + off, z = 1 - Math.min(1, Math.abs(p) / (w + gap)) * 0.14; n.style.transform = "translateX(" + p.toFixed(1) + "px) scale(" + z.toFixed(3) + ")"; n.style.opacity = (1 - Math.min(0.6, Math.abs(p) / (w + gap) * 0.45)).toFixed(3); });
+        conto.textContent = (i + 1) + " / " + carte.length + " · ↔ scorri col dito" + (i === carte.length - 1 ? " · ✓ ultima" : "");
+      }
+      function vai(j) {
+        var da = (i - j) * (w + gap); i = Math.max(0, Math.min(carte.length - 1, j)); disegna(da); var n = posti[i];
+        if (n && !viste[i]) { viste[i] = 1; rivela(n); } avanti();
+        libTempo(poco ? 1 : 240, function (k) { var ee = 1 - Math.pow(1 - k, 3); disegna(da * (1 - ee)); });
+      }
+      disegna(0); viste[0] = 1; rivela(posti[0]);
+      prepara(carte.slice(1, 4), w, function () { if (vivo() && nastro.isConnected) { vicine = 2; disegna(0); } });   // (poi le vicine, già disegnate)
+      var avanti = function () { prepara(carte.slice(i + 1, i + 4), w); };
+      G.giu = function (ev) { d = { x: ev.clientX, y: ev.clientY }; try { scena.setPointerCapture(ev.pointerId); } catch (er) {} };
+      G.muovi = function (ev) { if (!d) return; var dx = ev.clientX - d.x; disegna(dx); };
+      G.su = function (ev) { if (!d) return; var dx = ev.clientX - d.x; d = null; if (dx < -40) { if (i >= carte.length - 1) return fine(); vai(i + 1); } else if (dx > 40) vai(i - 1); else { disegna(0); if (Math.abs(dx) < 8) { if (i >= carte.length - 1) return fine(); vai(i + 1); } } };
+      piede.appendChild(el("button", { class: "btn", text: "⏩ Vai al riassunto", onclick: fine }));
+      function fine() { libVisto(e.t || (albStat().pkUltimo || {}).t); riassunto(carte, true); }
     }
-    if (tutti) tuttiInsieme(); else busta();
+    // l'ultimo pacchetto aperto e non finito di guardare (la pagina si è ricaricata a metà): si ritrova uguale
+    var ult = libUltimo(stag);
+    if (ult && ult.uscite.length) { quanti(); if (ult.pacchi.length === 1) mazzetto(ult.pacchi[0], ult); else scorri(ult); scena.insertBefore(el("p", { class: "pk-dito pk-ritrovato", text: "📦 Ecco il pacchetto che stavi aprendo" }), scena.firstChild); return; }
+    if (modo === "tutti") tutti(); else if (modo === "uno") uno(); else casa();
   }
   // ---- 📱↔️ col telefono girato: le due pagine della squadra affiancate, come un album aperto ----
   function libAperto(i) {

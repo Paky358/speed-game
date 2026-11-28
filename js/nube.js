@@ -514,6 +514,21 @@
     // salva in un colpo: saldo del Casinò (fiches = monete) + contatori (incrementi) + record (max) + valori da impostare
     //   incrs / recs / sets = liste di coppie [chiave, valore]
     //   (sets serve per cose che possono anche scendere, es. la serie di risposte giuste in corso)
+    // 🔐 (28 nov 2026, i pacchetti dell'album) una scrittura SICURA sulle statistiche di un gioco: dentro una transazione legge il profilo
+    // vero dal server, fn(stat del gioco) decide e torna { set: [[campo, valore], …] } (o null = niente); due telefoni con lo stesso
+    // profilo non possono contare due volte. Senza rete la transazione non riesce e non scrive niente (la promessa fallisce).
+    transazioneStat: function (gioco, fn) {
+      if (!auth || !utente || !profilo || !db.runTransaction) return Promise.reject(new Error("profilo"));
+      var ref = db.collection("profili").doc(utente.uid), esito = null;
+      return db.runTransaction(function (tr) {
+        return tr.get(ref).then(function (d) {
+          var st = ((d.exists ? d.data() : {}).stat || {})[gioco] || {};
+          esito = fn(JSON.parse(JSON.stringify(st))); if (!esito || !esito.set || !esito.set.length) return;
+          var patch = {}; esito.set.forEach(function (kv) { patch["stat." + gioco + "." + kv[0]] = kv[1]; });
+          tr.update(ref, patch);
+        });
+      }).then(function () { if (esito && esito.set) esito.set.forEach(function (kv) { setNested(profilo, "stat." + gioco + "." + kv[0], kv[1]); }); return esito; });
+    },
     salvaProgressi: function (fichesN, gioco, incrs, recs, sets) {
       if (!auth || !utente || !profilo) return Promise.resolve();
       var FV = firebase.firestore.FieldValue, patch = {};

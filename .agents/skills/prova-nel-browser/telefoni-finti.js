@@ -246,6 +246,7 @@ window.preparaFinestra = function (w, nome, opz) {
     v.esci = () => { mem.fp = null; setTimeout(avvisa, 5); return Promise.resolve(); };
     v.salvaOmino = (cfg, omini, n) => { if (!mem.fp) return Promise.resolve(); mem.fp.omino = cfg; if (omini) { mem.fp.omini = omini; mem.fp.ominoN = n || 0; } return Promise.resolve(); };
     v.salvaProgressi = (...a) => { if (window.__spiaProgressi) window.__spiaProgressi(nome, a, w); }; v.statGioco = g => (window.__statFinte && window.__statFinte(nome, g)) || ({}); v.salvaFiches = () => {}; v.fiches = () => 1000;   // (24 nov 2026: le prove dei trofei della Mini Asta guardano chi salva e quando)
+    v.transazioneStat = (g, fn) => { const st = (window.__statFinte && window.__statFinte(nome, g)) || {}, e = fn(JSON.parse(JSON.stringify(st))); if (e && e.set && window.__spiaProgressi) window.__spiaProgressi(nome, [null, g, [], [], e.set], w); return window.__senzaRete ? Promise.reject(new Error("unavailable")) : Promise.resolve(e); };   // (29 nov 2026: la scrittura sicura dei pacchetti; legge e scrive tutto in un colpo come la transazione vera; __senzaRete = niente rete)
     // le liste del profilo (es. "compagnie"): salvate davvero in BR.nube[uid].liste (di partenza quelle di opz.profilo.liste)
     v.lista = n => {
       const u = uidMio(); if (!u) return copia([]);
