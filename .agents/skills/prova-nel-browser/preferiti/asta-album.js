@@ -107,7 +107,7 @@
       tab[1].click();
       if (!await W.aspetta(function () { return q(P, ".lb-cop canvas"); }, 20000)) no("la copertina non arriva (" + testo(P, ".schermata h1") + ")");
       if (!/^3 \/ \d{3} figurine$/.test(testo(P, ".lb-cop .pc"))) no("la copertina dice «" + testo(P, ".lb-cop .pc") + "»");
-      if (!q(P, ".alb-tab button.on") || !/Album/.test(testo(P, ".alb-tab button.on"))) no("nell'album la linguetta accesa non è «Album»");
+      if (q(P, ".schermata.lb .alb-tab") || !/Album/.test(testo(P, ".lb-riga")) || !q(P, ".lb-riga .tr")) no("in cima all'album non c'è la riga sottile «‹ Album … 🏆 Trofei» (o ci sono ancora le linguette): «" + testo(P, ".lb-riga") + "»");
       x.push("copertina «" + testo(P, ".lb-cop .pc") + "»");
       await apriCopertina(P);
       var sq = qa(P, ".lb-ig button[data-sq]"); if (sq.length !== 20) no("squadre nell'indice " + sq.length);
@@ -115,18 +115,20 @@
       if (!q(P, ".lb-ig .scudetto")) no("niente scudetti nell'indice");
       if (q(P, ".lb-ig .nuove")) no("la prima volta l'indice segna figurine «nuove»");
       x.push("indice: " + sq.length + " squadre, «" + testo(P, ".lb-ind .lb-it .n") + "»");
-      // 3. l'Inter: due pagine (1 portieri e difensori, 2 centrocampisti e attaccanti)
+      // 3. l'Inter: due pagine da 16 posti (4×4), la rosa in ordine di ruolo e maglia, poi i posti liberi; in cima «‹ 🛡 Inter 3 / 21»
       await vai(P, ".lb-ig button[data-sq=Inter]", "Inter 1");
-      var f1 = vista(P); if (!/Portieri e difensori/i.test(f1.querySelector(".lb-sez").textContent)) no("la 1ª pagina dell'Inter non è «Portieri e difensori»");
-      if (f1.querySelectorAll(".lb-fig").length) no("nella 1ª pagina dell'Inter ci sono figurine (Martinez L., Barella e Thuram sono a centrocampo e in attacco)");
-      if (!f1.querySelector(".lb-sf") || !f1.querySelector(".lb-t1 .scudetto")) no("la 1ª pagina non ha sfondo o scudetto");
+      var f1 = vista(P); if (f1.querySelectorAll(".lb-cas").length !== 16) no("la 1ª pagina dell'Inter ha " + f1.querySelectorAll(".lb-cas").length + " posti (voluti 16)");
+      if (f1.querySelectorAll(".lb-fig").length) no("nella 1ª pagina dell'Inter ci sono figurine (Martinez L., Barella e Thuram sono dal 17° posto)");
+      if (!f1.querySelector(".lb-sf") || !q(P, ".lb-riga .scudetto") || !/Inter/.test(testo(P, ".lb-riga")) || !/3 \/ 21/.test(testo(P, ".lb-riga"))) no("la riga in cima: «" + testo(P, ".lb-riga") + "»");
+      var nums = qa(P, ".lb-cas").filter(function (b) { return f1.contains(b); }).map(function (b) { return b.__c.num; }); if (nums[0] !== 225 || nums[15] !== 240) no("i numeri della 1ª pagina dell'Inter: " + nums[0] + "…" + nums[15] + " (voluti 225…240: l'Inter è l'8ª squadra, 32 posti a testa)");
       await vai(P, ".lb-fr.giu", "Inter 2");
       var f2 = vista(P);
       if (!await W.aspetta(function () { return f2.querySelectorAll(".lb-fig canvas").length >= 3; }, 8000)) no("le 3 figurine prese dell'Inter non si disegnano (" + f2.querySelectorAll(".lb-fig canvas").length + ")");
-      var vuote = f2.querySelectorAll(".lb-vuoto").length, slot = f2.querySelectorAll(".lb-cas").length;
+      var vuote = f2.querySelectorAll(".lb-vuoto").length, slot = f2.querySelectorAll(".lb-cas:not(.libero)").length, liberi = f2.querySelectorAll(".lb-cas.libero").length;
       if (vuote !== slot - 3) no("sagome " + vuote + " su " + slot + " (voluto " + (slot - 3) + ")");
+      if (slot !== 5 || liberi !== 11) no("la 2ª pagina dell'Inter: " + slot + " calciatori e " + liberi + " posti liberi (voluti 5 e 11)");
       if (P.document.documentElement.scrollWidth > P.innerWidth + 1) no("la pagina scorre di lato");
-      var cas = qa(P, ".lb-cas").filter(function (b) { return f2.contains(b); });
+      var cas = qa(P, ".lb-cas:not(.libero)").filter(function (b) { return f2.contains(b); });
       cas.forEach(function (b) { var r = b.getBoundingClientRect(), rf = f2.getBoundingClientRect(); if (r.bottom > rf.bottom - 20 || r.right > rf.right + 1 || r.left < rf.left - 1) no("la casella di " + b.__c.nome + " esce dalla pagina"); });
       x.push("Inter: 1ª pagina " + f1.querySelectorAll(".lb-cas").length + " caselle, 2ª " + (slot - vuote) + " figurine e " + vuote + " sagome");
       // 4. la scheda «con te» di Martinez L.
@@ -171,14 +173,14 @@
       var P = await W.apriTel("Paky", { x: 0 });
       if (!P.SG_FANTA_IDS) await new Promise(function (ok) { P.SGCuore.caricaPezzo("asta").then(ok, ok); });
       var d = datiFinti(P); stat.al_oggi = d.st.al_oggi; pulisciViste(P);
-      var lec = P.SG_FANTA_CALCIATORI, lecce = []; ["P", "D", "C", "A"].forEach(function (r) { ["A", "B", "C"].forEach(function (f) { ((lec[r] || {})[f] || []).forEach(function (k) { if (/\(Lecce\)$/.test(k)) lecce.push({ k: k, r: r }); }); }); });
-      lecce.slice(1).forEach(function (c) { stat.al_oggi[d.id(c.k)] = [1, 5, 5, 5, 0, 0, 1, 60, 60, 0, 0, 0, 0, 0, 60, "2026-11-20|Inter|0"]; });   // (al Lecce manca solo il portiere)
+      var gA = P.SGCuore.giochi.filter(function (y) { return y.id === "astafanta"; })[0], lecce = gA.provaAlbum.lista(null).per.Lecce;   // (tutta la rosa del Lecce, come nell'album)
+      lecce.slice(1).forEach(function (c) { stat.al_oggi[c.id] = [1, 5, 5, 5, 0, 0, 1, 60, 60, 0, 0, 0, 0, 0, 60, "2026-11-20|Inter|0"]; });   // (al Lecce manca solo il portiere)
       // 1. la prima volta: niente voli
       P.SGCuore.apriAlbum(); if (!await W.aspetta(function () { return q(P, ".lb-cop canvas"); }, 20000)) no("la copertina non arriva");
       await apriCopertina(P);
       if (q(P, ".lb-ig .nuove")) no("la prima volta ci sono «nuove» nell'indice");
       // 2. dopo una partita: il portiere del Lecce (la completa) e Dimarco
-      stat.al_oggi[d.id(lecce[0].k)] = [1, 3, 3, 3, 0, 0, 1, 60, 60, 0, 0, 0, 0, 0, 60, "2026-11-28|Inter|0"];
+      stat.al_oggi[lecce[0].id] = [1, 3, 3, 3, 0, 0, 1, 60, 60, 0, 0, 0, 0, 0, 60, "2026-11-28|Inter|0"];
       stat.al_oggi[d.id("Dimarco (Inter)")] = [1, 12, 12, 12, 0, 0, 1, 70, 80, 0, 1, 0, 0, 1, 80, "2026-11-28|Lecce|0"];
       P.SGCuore.apriAlbum(); if (!await W.aspetta(function () { return q(P, ".lb-cop canvas"); }, 8000)) no("la copertina non torna");
       await apriCopertina(P);
@@ -218,14 +220,14 @@
     return x.join(" · ");
   } });
 
-  COPIONE.aggiungi("al4", { nome: "Album fisso: ordine per ruolo e numero di maglia, chi esce resta (💎 Introvabile o 📦 Solo nei pacchetti), chi entra va negli «🆕 Aggiornamenti», la città da un file", fai: async function () {
+  COPIONE.aggiungi("al4", { nome: "Album fisso: ordine per ruolo e numero di maglia, chi esce resta (💎 Introvabile o 📦 Solo nei pacchetti), chi entra va nel primo posto libero della sua squadra, la città da un file", fai: async function () {
     var x = [], stat = {};
     W.__statFinte = function (nome, g) { return g === "astafanta" ? stat : {}; };
     try {
       var P = await W.apriTel("Paky", { x: 0 });
       if (!P.SG_FANTA_IDS) await new Promise(function (ok) { P.SGCuore.caricaPezzo("asta").then(ok, ok); });
       var d = datiFinti(P); stat.al_oggi = d.st.al_oggi; pulisciViste(P);
-      var FIS = P.SG_ALBUM_OGGI, DAT = P.SG_FANTA_CALCIATORI, NUM = P.SG_FANTA_NUMERI || {};
+      var FIS = P.SG_ALBUM_OGGI, DAT = P.SG_FANTA_CALCIATORI, NUM = Object.assign({}, P.SG_FANTA_NUMERI || {}); Object.keys((P.SG_FANTA_CAMPO || {}).calciatori || {}).forEach(function (k) { if (NUM[k] == null) NUM[k] = P.SG_FANTA_CAMPO.calciatori[k][2]; });   // (anche i numeri dei «solo per il campo»)
       if (!FIS || Object.keys(FIS).length !== 20) no("non c'è l'album fisso di oggi (data/album-oggi.js)");
       // 1. l'ordine: in ogni squadra P, D, C, A e dentro il ruolo per numero di maglia (chi non l'ha in fondo)
       var male = [];
@@ -241,24 +243,20 @@
       try {
         P.SGCuore.apriAlbum(); if (!await W.aspetta(function () { return q(P, ".lb-cop canvas"); }, 20000)) no("la copertina non arriva");
         await apriCopertina(P);
-        var ba = q(P, ".lb-ig button.agg"); if (!ba) no("nell'indice non ci sono gli «🆕 Aggiornamenti»");
-        else if (!/Aggiornamenti/.test(ba.textContent) || !/1\/1/.test(ba.textContent)) no("il riquadro degli aggiornamenti dice «" + ba.textContent + "»");
-        // la 1ª pagina dell'Inter: Bisseck 🔒 al suo posto; la 2ª: Martinez L. 💎 al suo posto, Barella non c'è più
+        if (q(P, ".lb-ig button.agg")) no("ci sono gli «🆕 Aggiornamenti»: Barella doveva andare nel posto libero dell'Inter");
+        // la 1ª pagina dell'Inter: Bisseck 📦 al suo posto; la 2ª: Martinez L. 💎 al suo posto e Barella nel primo posto libero (n. 245)
         await vai(P, ".lb-ig button[data-sq=Inter]", "Inter 1");
         var bis = qa(P, ".lb-cas").filter(function (b) { return vista(P).contains(b) && b.__c.nome === "Bisseck"; })[0];
         if (!bis || !/Solo nei pacchetti/.test(bis.textContent)) no("Bisseck (uscito, non preso) non dice «📦 Solo nei pacchetti»");
         bis.click(); await W.dorme(200); if (!/Solo nei pacchetti/.test(testo(P, ".lb-fum"))) no("il fumetto di Bisseck non dice «Solo nei pacchetti»");
-        var nI = testo(P, ".lb-t1 .lb-conto .n"); x.push("Inter «" + nI + "» (Bisseck conta: si trova nei pacchetti)");
+        var nI = testo(P, ".lb-riga .lb-conto .n"); x.push("Inter «" + nI + "» (Bisseck conta: si trova nei pacchetti)");
         await vai(P, ".lb-fr.giu", "Inter 2");
         var f2 = vista(P), mar = qa(P, ".lb-cas").filter(function (b) { return f2.contains(b) && b.__c.nome === "Martinez L."; })[0];
         if (!mar || !mar.querySelector(".lb-fig") || !/Introvabile/.test(mar.textContent)) no("Martinez L. (uscito, preso) non ha «💎 Introvabile»");
-        if (qa(P, ".lb-cas").some(function (b) { return f2.contains(b) && b.__c.nome === "Barella"; })) no("Barella è ancora nella pagina dell'Inter");
-        // gli aggiornamenti: Barella, figurina attaccata (l'avevi già), col numero dopo l'ultimo
-        var ia = qa(P, ".lb-ig button.agg").length; P.SGCuore.apriAlbum(); await W.aspetta(function () { return q(P, ".lb-cop canvas"); }, 8000); await apriCopertina(P);
-        q(P, ".lb-ig button.agg").click(); if (!await W.aspetta(function () { var f = vista(P); return f && f.classList.contains("lb-agg") && !libro(P).giro; }, 6000)) no("la pagina degli aggiornamenti non si apre");
-        var fa = vista(P), bar = qa(P, ".lb-cas").filter(function (b) { return fa.contains(b) && b.__c.nome === "Barella"; })[0];
-        if (!bar) no("negli aggiornamenti non c'è Barella"); else if (bar.__c.num !== 280) no("Barella negli aggiornamenti ha il numero " + bar.__c.num + " (voluto 280: dopo le 279 figurine fisse della prova)");
-        x.push("aggiornamenti: Barella n. " + (bar && bar.__c.num) + ", Martinez L. 💎, Bisseck 📦");
+        var bar = qa(P, ".lb-cas").filter(function (b) { return f2.contains(b) && b.__c.nome === "Barella"; })[0];
+        if (!bar || !bar.__c.arrivo || bar.__c.num !== 245) no("Barella (arrivato dopo) non è nel primo posto libero dell'Inter (n. " + (bar && bar.__c.num) + ", voluto 245)");
+        var lib = qa(P, ".lb-cas.libero").filter(function (b) { return f2.contains(b); }).map(function (b) { return b.__c.num; }); if (lib[0] !== 246) no("il primo posto libero dopo Barella è " + lib[0]);
+        x.push("Barella arrivato dopo: n. " + (bar && bar.__c.num) + " nel posto libero dell'Inter; Martinez L. 💎, Bisseck 📦");
         // la città del Napoli dal file: la pagina si disegna con l'immagine
         P.SGCuore.apriAlbum(); await W.aspetta(function () { return q(P, ".lb-cop canvas"); }, 8000); await apriCopertina(P);
         await vai(P, ".lb-ig button[data-sq=Napoli]", "Napoli 1");
