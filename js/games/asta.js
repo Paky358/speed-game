@@ -13287,22 +13287,32 @@
     var prima = STAG_ATT; if (stag !== prima) usaStagione(stag);
     try { return fn(); } finally { if (STAG_ATT !== prima) usaStagione(prima); }
   }
-  // le figurine di una stagione: i calciatori all'asta (gruppi A, B, C), per squadra, poi ruolo, poi quotazione; il numero dell'album
+  // le figurine di una stagione (28 nov 2026, decisioni del proprietario): l'album di ogni stagione è FISSO. Oggi la base è data/album-oggi.js
+  //  (il listone del 28 nov 2026); le stagioni passate non cambiano mai (i loro dati sono fermi). Per squadra, in ordine di ruolo (P, D, C, A)
+  //  e dentro il ruolo per numero di maglia (chi non l'ha in fondo, per nome): il posto NON dipende dal metallo, ogni figurina ha il suo
+  //  numero per sempre. Chi esce dal listone resta al suo posto (c.esce: «💎 Introvabile» se l'hai, se no «🔒 Non più all'asta» e non conta
+  //  più nel totale della squadra). Chi entra dopo va nelle pagine «🆕 Aggiornamenti» in fondo (ab.agg, numeri dopo l'ultimo): non sposta
+  //  nessuno e non toglie l'oro a una squadra già completa. (Il metallo è quello di adesso: quale mostrare se la quotazione cambia è da decidere.)
   function albLista(stag) {
     return conStag(stag, function () {
-      var D = window.SG_FANTA_CALCIATORI || {}, per = {}, tutte = [], miei = albMiei(stag);
+      var D = window.SG_FANTA_CALCIATORI || {}, ora = {}, per = {}, tutte = [], agg = [], miei = albMiei(stag), fisso = !stag ? window.SG_ALBUM_OGGI : null;
       ALB_RUOLI.forEach(function (r) { ["A", "B", "C"].forEach(function (f) { ((D[r] || {})[f] || []).forEach(function (k) {
-        var m = /^(.*) \((.*)\)$/.exec(k); if (!m) return; (per[m[2]] = per[m[2]] || []).push({ nome: m[1], squadra: m[2], ruolo: r });
+        var m = /^(.*) \((.*)\)$/.exec(k); if (m) ora[k] = { nome: m[1], squadra: m[2], ruolo: r };
       }); }); });
+      function maglia(c) { var x = numeroMaglia(c).n; return x == null ? 1e4 : x; }
+      function ordina(l) { return l.sort(function (a, b) { return ALB_RUOLI.indexOf(a.ruolo) - ALB_RUOLI.indexOf(b.ruolo) || maglia(a) - maglia(b) || a.nome.localeCompare(b.nome, "it"); }); }
+      var visti = {};
+      if (fisso) Object.keys(fisso).forEach(function (sq) { per[sq] = fisso[sq].map(function (v) { var r = v.charAt(0), nome = v.slice(2), k = nome + " (" + sq + ")"; visti[k] = 1; return { nome: nome, squadra: sq, ruolo: r, esce: !ora[k] }; }); });
+      else Object.keys(ora).forEach(function (k) { var c = ora[k]; (per[c.squadra] = per[c.squadra] || []).push(c); });
       var squadre = Object.keys(per).sort(function (a, b) { return a.localeCompare(b, "it"); }), n = 0;
-      squadre.forEach(function (s) {
-        per[s].sort(function (a, b) { return ALB_RUOLI.indexOf(a.ruolo) - ALB_RUOLI.indexOf(b.ruolo) || valoreCalc(b) - valoreCalc(a) || a.nome.localeCompare(b.nome); });
-        per[s].forEach(function (c) { c.num = ++n; c.met = fasciaDi(c); c.id = idAlbum(c); c.x = miei[c.id] || null; c.stag = stag; tutte.push(c); });
-      });
-      return { squadre: squadre, per: per, tutte: tutte, colori: squadre.reduce(function (o, s) { o[s] = coloriSquadra(s) || ["#334", "#889"]; return o; }, {}) };
+      function metti(c) { c.num = ++n; c.met = fasciaDi(c); c.id = idAlbum(c); c.x = miei[c.id] || null; c.stag = stag; tutte.push(c); }
+      squadre.forEach(function (s) { if (!fisso) ordina(per[s]); per[s].forEach(metti); });
+      if (fisso) { Object.keys(ora).forEach(function (k) { if (!visti[k]) agg.push(ora[k]); }); agg.sort(function (a, b) { return a.squadra.localeCompare(b.squadra, "it") || ALB_RUOLI.indexOf(a.ruolo) - ALB_RUOLI.indexOf(b.ruolo) || maglia(a) - maglia(b) || a.nome.localeCompare(b.nome, "it"); }); agg.forEach(function (c) { c.agg = true; metti(c); }); }
+      return { squadre: squadre, per: per, tutte: tutte, agg: agg, colori: squadre.reduce(function (o, s) { o[s] = coloriSquadra(s) || ["#334", "#889"]; return o; }, {}) };
     });
   }
-  function albConta(l) { var o = { n: l.length, p: 0, oro: [0, 0], argento: [0, 0], bronzo: [0, 0] }; l.forEach(function (c) { if (c.x) o.p++; var y = o[c.met]; if (y) { y[1]++; if (c.x) y[0]++; } }); return o; }
+  // il conto: chi è uscito dal listone e non l'hai non conta più (non si può prendere); chi l'ha, conta
+  function albConta(l) { var o = { n: 0, p: 0, oro: [0, 0], argento: [0, 0], bronzo: [0, 0] }; l.forEach(function (c) { if (c.esce && !c.x) return; o.n++; if (c.x) o.p++; var y = o[c.met]; if (y) { y[1]++; if (c.x) y[0]++; } }); return o; }
   function albStile() {
     if (document.getElementById("alb-stile")) return;
     var s = document.createElement("style"); s.id = "alb-stile";
@@ -13419,6 +13429,9 @@
       ".lb-vuoto .ru{position:relative;font-size:calc(var(--fw,90px)*.085 + 2px);font-weight:900;letter-spacing:.08em;color:rgba(255,226,138,.75)}",
       ".lb-fig{position:absolute;inset:-1.5%;transform:rotate(var(--r,0deg))}.lb-fig canvas{width:100%;height:100%;display:block;filter:drop-shadow(1px 4px 3px rgba(0,0,0,.6))}",
       ".lb-fig .alb-attesa{border-radius:7px}",
+      ".lb-raro{position:absolute;left:50%;bottom:-5%;transform:translateX(-50%);z-index:2;font-size:calc(var(--fw,90px)*.085 + 3px);font-weight:900;white-space:nowrap;color:#e9f6ff;background:linear-gradient(180deg,#5a7dff,#2a3fa8);border:1px solid #bcd0ff;border-radius:99px;padding:1px 6px;box-shadow:0 0 10px rgba(120,160,255,.7)}",
+      ".lb-vuoto.chiuso{border-color:rgba(166,172,200,.45);border-style:solid;background:rgba(4,6,18,.72)}.lb-vuoto.chiuso .n{color:#a6acc8}.lb-vuoto.chiuso .nm{color:#c9cfe6}.lb-vuoto.chiuso .ru{color:#c9cfe6;letter-spacing:0;white-space:nowrap;font-size:calc(var(--fw,90px)*.075 + 2px)}",
+      ".lb-t2 .sc.agg{font-size:1.3rem}.lb-ig .scudetto.agg{display:flex;align-items:center;justify-content:center;height:calc(var(--sw,40px)*1.16);font-size:calc(var(--sw,40px)*.7);filter:none}",
       ".lb-lc{position:absolute;inset:2.5%;border-radius:6%/4.5%;overflow:hidden;pointer-events:none}.lb-lc i{position:absolute;top:-20%;bottom:-20%;left:0;width:45%;opacity:0;background:linear-gradient(100deg,rgba(255,255,255,0),rgba(255,255,255,.55) 45%,rgba(255,255,255,.8) 50%,rgba(255,255,255,.55) 55%,rgba(255,255,255,0));transform:translateX(-120%) skewX(-12deg);will-change:transform,opacity}",
       ".lb-lc.oro i{background:linear-gradient(100deg,rgba(255,240,170,0),rgba(255,236,150,.75) 45%,rgba(255,255,230,1) 50%,rgba(255,236,150,.75) 55%,rgba(255,240,170,0))}",
       ".lb-fum{position:absolute;z-index:8;left:50%;bottom:calc(100% + 8px);width:150px;margin-left:-75px;padding:8px 10px;border-radius:12px;background:#151a2e;border:1px solid rgba(242,194,48,.55);color:#fff;font-size:.74rem;font-weight:700;line-height:1.25;text-align:center;box-shadow:0 10px 20px -8px #000;pointer-events:none}",
@@ -13482,7 +13495,13 @@
   function libSalvaViste() { if (!LIB.viste) return; var tutte = {}; try { tutte = JSON.parse(localStorage.getItem(libChiaveViste()) || "{}") || {}; } catch (e) {} tutte[chiaveStag(LIB.stag)] = LIB.viste; try { localStorage.setItem(libChiaveViste(), JSON.stringify(tutte)); } catch (e) {} }
   function libNuove(l) { return l.filter(function (c) { return c.x && !LIB.viste.f[c.id]; }); }
   // ---- le pagine: 0 = l'indice, poi due per squadra ----
-  function libPagine(ab) { var p = [{ t: "ind" }]; ab.squadre.forEach(function (sq) { p.push({ t: "sq", sq: sq, p: 1 }, { t: "sq", sq: sq, p: 2 }); }); return p; }
+  var LIB_AGG = 9;   // (figurine per pagina negli «🆕 Aggiornamenti»)
+  function libPagine(ab) {
+    var p = [{ t: "ind" }]; ab.squadre.forEach(function (sq) { p.push({ t: "sq", sq: sq, p: 1 }, { t: "sq", sq: sq, p: 2 }); });
+    for (var k = 0; k < (ab.agg || []).length; k += LIB_AGG) p.push({ t: "agg", l: ab.agg.slice(k, k + LIB_AGG), n: k / LIB_AGG + 1, di: Math.ceil(ab.agg.length / LIB_AGG) });
+    return p;
+  }
+  function libPrimaAgg() { for (var i = 0; i < LIB.pag.length; i++) if (LIB.pag[i].t === "agg") return i; return -1; }
   function libDi(sq) { for (var i = 0; i < LIB.pag.length; i++) if (LIB.pag[i].sq === sq) return i; return 0; }
   function libOrizz() { return window.innerWidth > window.innerHeight && window.innerHeight < 560 && window.innerWidth >= 560; }
   function libBordo(l) { var o = albConta(l); return o.p === o.n ? "oro" : "argento"; }
@@ -13507,6 +13526,7 @@
   function libro(stag, i, cop, sq) {
     albPronta(stag, function () {
       libStile(); ALB.stag = LIB.stag = stag; LIB.ab = albLista(stag); LIB.pag = libPagine(LIB.ab); LIB.viste = libViste(stag, LIB.ab); if (sq) i = libDi(sq);
+      LIB.ab.squadre.forEach(function (q) { libCittaImg(q); });   // (le città in file cominciano ad arrivare subito)
       var s = libSchermata(); window.SGCuore.mostra(s);
       if (cop) libCopertina(); else libMostra(i || 0, true);
     });
@@ -13556,10 +13576,10 @@
   // ---- una pagina: nasce nascosta nella scena, prende la misura, disegna lo sfondo una volta, poi le figurine in coda ----
   function libNodo(i, dove) {
     var n = LIB.nodi[i]; if (n && n.isConnected && !dove) return n;
-    var P = LIB.pag[i], f = P.t === "ind" ? libFoglioInd() : libFoglioSq(P.sq, P.p, i);
+    var P = LIB.pag[i], f = P.t === "ind" ? libFoglioInd() : P.t === "agg" ? libFoglioAgg(P, i) : libFoglioSq(P.sq, P.p, i);
     f.style.visibility = "hidden"; (dove || LIB.scena).appendChild(f);
     if (P.t === "ind") libAdattaInd(f); else libAdatta(f);
-    if (SF()) { if (P.t === "ind") SF().indice(f.querySelector(".lb-sf"), "B"); else SF().pagina(f.querySelector(".lb-sf"), P.sq, P.p, "B", { top: f.__top, pratoAlto: f.__prato }); }
+    if (SF()) { if (P.t === "ind") SF().indice(f.querySelector(".lb-sf"), "B"); else SF().pagina(f.querySelector(".lb-sf"), P.sq || "", P.p || 2, "B", { top: f.__top, pratoAlto: f.__prato, citta: P.sq ? libCittaImg(P.sq, f) : null }); }
     [].forEach.call(f.querySelectorAll(".lb-fig"), function (x) { LIB.coda.push(x); });
     if (!LIB.raf) LIB.raf = requestAnimationFrame(libFigura);
     if (!dove) LIB.nodi[i] = f;
@@ -13579,23 +13599,34 @@
   }
   function libFoglioSq(sq, pag, i) {
     var C = window.SGCuore, el = C.el, l = LIB.ab.per[sq] || [], lista = l.filter(function (c) { return LIB_RUOLI[pag].indexOf(c.ruolo) >= 0; });
-    var f = el("div", { class: "lb-foglio lb-pag" }), cont = el("div", { class: "lb-cont" }); f.appendChild(el("canvas", { class: "lb-sf" })); f.appendChild(cont); f.__sq = sq; f.__pag = pag;
+    var f = el("div", { class: "lb-foglio lb-pag" }), cont = el("div", { class: "lb-cont" }); f.appendChild(el("canvas", { class: "lb-sf" })); f.appendChild(cont); f.__sq = sq; f.__pag = pag; f.__lista = lista;
     if (pag === 1) cont.appendChild(el("div", { class: "lb-t1" }, [ el("span", { class: "sc", html: libScudetto(sq, l) }), el("div", { class: "nm" }, [ el("b", { text: sq }), libConto(l) ]) ]));
     else cont.appendChild(el("div", { class: "lb-t2" }, [ el("span", { class: "sc", html: libScudetto(sq, l) }), el("b", { text: sq }), libConto(l, true) ]));
     cont.appendChild(el("div", { class: "lb-sez", text: LIB_SEZ[pag] }));
-    var gr = el("div", { class: "lb-gr" });
+    cont.appendChild(libGriglia(lista)); f.appendChild(el("div", { class: "lb-pn", text: String(i + 1) }));
+    return f;
+  }
+  function libGriglia(lista) {
+    var el = window.SGCuore.el, gr = el("div", { class: "lb-gr" });
     lista.forEach(function (c) {
-      var cas = el("button", { class: "lb-cas" }); cas.__c = c;
+      var cas = el("button", { class: "lb-cas" + (c.esce ? " esce" : "") }); cas.__c = c;
       if (c.x && LIB.viste.f[c.id]) cas.appendChild(libFig(c));
       else cas.appendChild(libVuoto(c));
       cas.addEventListener("click", function () { if (LIB.trascinato || LIB.giro) return; if (c.x && cas.querySelector(".lb-fig")) albScheda(c); else if (!c.x) libFumetto(cas); });
       gr.appendChild(cas);
     });
-    cont.appendChild(gr); f.appendChild(el("div", { class: "lb-pn", text: String(i + 1) }));
+    return gr;
+  }
+  // le pagine «🆕 Aggiornamenti»: chi è entrato nel listone dopo che l'album è stato fatto (in fondo: non sposta nessuno)
+  function libFoglioAgg(P, i) {
+    var el = window.SGCuore.el, f = el("div", { class: "lb-foglio lb-pag lb-agg" }), cont = el("div", { class: "lb-cont" }); f.appendChild(el("canvas", { class: "lb-sf" })); f.appendChild(cont); f.__lista = P.l; f.__pag = 2;
+    cont.appendChild(el("div", { class: "lb-t2" }, [ el("span", { class: "sc agg", text: "🆕" }), el("b", { text: "Aggiornamenti" + (P.di > 1 ? " " + P.n + "/" + P.di : "") }), libConto(LIB.ab.agg, true) ]));
+    cont.appendChild(el("div", { class: "lb-sez", text: "Entrati nel listone dopo" }));
+    cont.appendChild(libGriglia(P.l)); f.appendChild(el("div", { class: "lb-pn", text: String(i + 1) }));
     return f;
   }
-  function libFig(c) { var el = window.SGCuore.el; return el("div", { class: "lb-fig", style: "--r:" + (((c.num * 37) % 7 - 3) * 0.8).toFixed(1) + "deg" }, [ el("div", { class: "alb-attesa" }) ]); }
-  function libVuoto(c) { var el = window.SGCuore.el; return el("div", { class: "lb-vuoto", html: LIB_SAGOMA }, [ el("div", { class: "n", text: c.num }), el("div", { class: "nm", text: c.nome }), el("div", { class: "ru", text: ALB_SIGLA[c.ruolo] }) ]); }
+  function libFig(c) { var el = window.SGCuore.el, f = el("div", { class: "lb-fig", style: "--r:" + (((c.num * 37) % 7 - 3) * 0.8).toFixed(1) + "deg" }, [ el("div", { class: "alb-attesa" }) ]); if (c.esce) f.appendChild(el("span", { class: "lb-raro", text: "💎 Introvabile" })); return f; }
+  function libVuoto(c) { var el = window.SGCuore.el; return el("div", { class: "lb-vuoto" + (c.esce ? " chiuso" : ""), html: LIB_SAGOMA }, [ el("div", { class: "n", text: c.num }), el("div", { class: "nm", text: c.nome }), el("div", { class: "ru", text: c.esce ? "🔒 Non più all'asta" : c.agg ? c.squadra : ALB_SIGLA[c.ruolo] }) ]); }
   function libAdatta(f) {   // la pagina intera nello spazio, con le figurine più grandi che ci stanno (e il prato libero in fondo)
     var gr = f.querySelector(".lb-gr"), n = gr.children.length, gap = 9, gw = gr.clientWidth || f.clientWidth - 28;
     var prato = Math.max(26, f.clientHeight * 0.06), gh = f.clientHeight - gr.offsetTop - prato - 16, best = null;
@@ -13618,6 +13649,8 @@
       if (nu) b.appendChild(el("span", { class: "nuove", text: "+" + nu }));
       return b;
     })));
+    var ia = libPrimaAgg();   // (gli «🆕 Aggiornamenti», se ci sono, in fondo all'indice)
+    if (ia > 0) { var oa = albConta(ab.agg), nua = libNuove(ab.agg).length, ba = el("button", { class: "agg", onclick: function () { if (!LIB.trascinato && !LIB.giro) libGira(ia); } }, [ el("span", { class: "scudetto agg", text: "🆕" }), el("div", { class: "lab" }, [ el("b", { text: "Aggiornamenti" }), el("i", { text: oa.p + "/" + oa.n }), el("i", { class: "pg", text: "pag. " + (ia + 1) }) ]) ]); if (nua) ba.appendChild(el("span", { class: "nuove", text: "+" + nua })); f.querySelector(".lb-ig").appendChild(ba); }
     f.appendChild(el("div", { class: "lb-pn", text: "1" }));
     return f;
   }
@@ -13649,6 +13682,17 @@
     var el = window.SGCuore.el; [].forEach.call(LIB.scena.querySelectorAll(".lb-fr"), function (x) { x.remove(); });
     if (LIB.i > 0) LIB.scena.appendChild(el("button", { class: "lb-fr su", text: "‹", "aria-label": "Pagina prima", onclick: function () { if (!LIB.giro) libGira(LIB.i - 1); } }));
     if (LIB.i < LIB.pag.length - 1) LIB.scena.appendChild(el("button", { class: "lb-fr giu", text: "›", "aria-label": "Pagina dopo", onclick: function () { if (!LIB.giro) libGira(LIB.i + 1); } }));
+  }
+  // 🌆 la città di una squadra da un file (carte/album/citta/<Squadra>.webp; le squadre che ce l'hanno sono in L2S.CITTA_FILE):
+  //  se c'è, prende il posto di quella disegnata dal codice; finché non arriva, la pagina usa quella del codice (o niente) e poi si ridisegna una volta
+  var LIB_CITTA = {};
+  function libCittaImg(sq, f) {
+    var lista = SF() && SF().CITTA_FILE; LIB.citta = LIB_CITTA; if (!lista || lista.indexOf(sq) < 0) return null;
+    var x = LIB_CITTA[sq];
+    if (!x) { x = LIB_CITTA[sq] = { img: new Image(), ok: false, aspetta: [] }; x.img.onload = function () { x.ok = true; x.aspetta.forEach(function (n) { if (n.isConnected && n.__sq === sq) SF().pagina(n.querySelector(".lb-sf"), sq, n.__pag, "B", { top: n.__top, pratoAlto: n.__prato, citta: x.img }); }); x.aspetta = []; }; x.img.src = (SF().CARTELLA || "carte/album/citta/") + encodeURIComponent(sq) + ".webp"; }
+    if (x.ok) return x.img;
+    if (f) x.aspetta.push(f);
+    return null;
   }
   function libOmbre(n, cls) { var x = n.querySelector("." + cls); if (!x) { x = window.SGCuore.el("div", { class: cls }); n.appendChild(x); } return x; }
   function libRetro(n) {
@@ -13723,7 +13767,7 @@
     var el = window.SGCuore.el, c = cas.__c;
     [].forEach.call(LIB.scena.querySelectorAll(".lb-fum"), function (x) { x.remove(); }); [].forEach.call(LIB.scena.querySelectorAll(".batte"), function (x) { x.classList.remove("batte"); });
     cas.classList.add("batte");
-    var fu = el("div", { class: "lb-fum", html: "<b>Non l'hai ancora preso…</b>" + escA(c.nome) + ": compralo all'asta e la figurina si attacca qui." }); cas.appendChild(fu);
+    var fu = el("div", { class: "lb-fum", html: c.esce ? "<b>🔒 Non più all'asta</b>" + escA(c.nome) + " è uscito dal listone: chi l'aveva preso ce l'ha «💎 Introvabile»." : "<b>Non l'hai ancora preso…</b>" + escA(c.nome) + ": compralo all'asta e la figurina si attacca qui." }); cas.appendChild(fu);
     var r = fu.getBoundingClientRect(), sr = (cas.closest(".due") || LIB.scena).getBoundingClientRect();
     if (r.top < sr.top + 4) fu.classList.add("giu");
     if (r.left < sr.left + 4) fu.style.marginLeft = (-75 + sr.left + 4 - r.left) + "px"; else if (r.right > sr.right - 4) fu.style.marginLeft = (-75 - (r.right - sr.right + 4)) + "px";
@@ -13732,11 +13776,11 @@
   }
   // ---- le figurine nuove volano e si attaccano; poi, se la squadra è appena completa, la festa ----
   function libFesteggia(f) {
-    if (!f.__sq) return Promise.resolve();
-    var sq = f.__sq, l = LIB.ab.per[sq], nuove = libNuove(l.filter(function (c) { return LIB_RUOLI[f.__pag].indexOf(c.ruolo) >= 0; })), festa = LIB.festa, p = Promise.resolve();
+    if (!f.__lista) return Promise.resolve();
+    var sq = f.__sq, l = sq ? LIB.ab.per[sq] : f.__lista, nuove = libNuove(f.__lista), festa = LIB.festa, p = Promise.resolve();
     nuove.forEach(function (c) { p = p.then(function () { if (festa !== LIB.festa || !f.isConnected) return; return libVola(f, c); }); });
     return p.then(function () {
-      if (festa !== LIB.festa || !f.isConnected) return; var o = albConta(l);
+      if (festa !== LIB.festa || !f.isConnected || !sq) return; var o = albConta(l);
       if (o.p === o.n && !LIB.viste.c[sq] && !libNuove(l).length) { LIB.viste.c[sq] = 1; libSalvaViste(); return libCompleta(f); }
     });
   }
@@ -13790,16 +13834,17 @@
   // ---- 📱↔️ col telefono girato: le due pagine della squadra affiancate, come un album aperto ----
   function libAperto(i) {
     var C = window.SGCuore, el = C.el, P = LIB.pag[i] || LIB.pag[0]; LIB.i = i;
-    var sq = P.sq, a = sq ? libDi(sq) : 0, vecchio = LIB.ov && LIB.ov.isConnected ? LIB.ov : null;
+    var sq = P.sq, ag = P.t === "agg", a = sq ? libDi(sq) : ag ? i : 0, vecchio = LIB.ov && LIB.ov.isConnected ? LIB.ov : null;
     var ov = el("div", { class: "lb-aperto" }), due = el("div", { class: "due" });
-    var prima = a > 0 ? a - (LIB.pag[a - 1].t === "ind" ? 1 : 2) : -1, dopo = sq ? a + 2 : 1;
+    function inizio(j) { var q = LIB.pag[j]; return !q ? -1 : q.t === "sq" && q.p === 2 ? j - 1 : j; }   // (la doppia pagina comincia dalla 1ª della squadra)
+    var prima = a > 0 ? inizio(a - 1) : -1, dopo = sq ? a + 2 : a + 1;
     ov.appendChild(el("div", { class: "bar" }, [ el("button", { text: "‹", "aria-label": "Esci", onclick: function () { libChiudiAperto(); var o = ALB.opz || {}; (o.indietro || C.tornaHome)(); } }),
-      el("b", { text: "Album" }), el("span", { text: sq ? sq + " · pagine " + (a + 1) + "-" + (a + 2) : "Indice · " + albNome(LIB.stag) }),
+      el("b", { text: "Album" }), el("span", { text: sq ? sq + " · pagine " + (a + 1) + "-" + (a + 2) : ag ? "Aggiornamenti · pagina " + (a + 1) : "Indice · " + albNome(LIB.stag) }),
       el("button", { class: "vai", text: "◀", style: prima < 0 ? "visibility:hidden" : "", onclick: function () { if (prima >= 0) libAperto(prima); } }),
       el("button", { text: "▶", style: dopo >= LIB.pag.length ? "visibility:hidden" : "", onclick: function () { if (dopo < LIB.pag.length) libAperto(dopo); } }) ]));
     ov.appendChild(due); document.body.appendChild(ov); LIB.ov = ov;
     LIB.coda = [];
-    if (sq) { libNodoIn(a, due); libNodoIn(a + 1, due); due.appendChild(el("div", { class: "dorso" })); } else libNodoIn(0, due);
+    if (sq) { libNodoIn(a, due); libNodoIn(a + 1, due); due.appendChild(el("div", { class: "dorso" })); } else libNodoIn(a, due);
     var d = null;
     due.addEventListener("pointerdown", function (e) { d = { x: e.clientX, y: e.clientY }; });
     due.addEventListener("pointerup", function (e) { if (!d) return; var dx = e.clientX - d.x, dy = e.clientY - d.y; d = null; if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) { LIB.trascinato = true; setTimeout(function () { LIB.trascinato = false; }, 60); if (dx < 0 && dopo < LIB.pag.length) libAperto(dopo); else if (dx > 0 && prima >= 0) libAperto(prima); } });

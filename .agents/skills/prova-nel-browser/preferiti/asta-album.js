@@ -1,6 +1,6 @@
 // PROVE DELL'ALBUM DELLE FIGURINE DELLA MINI ASTA (27 nov 2026; scelte del proprietario in D:/SG-album-prove/LEGGIMI.md).
 // Uso (dopo copione-prova.js): await COPIONE.carica("preferiti/asta.js"); await COPIONE.carica("preferiti/asta-album.js"); await COPIONE.prova("al1")
-// Con Edge invisibile: prova.js --porta 8998 --carica preferiti/asta.js,preferiti/asta-album.js --prova al1,al2,al3
+// Con Edge invisibile: prova.js --porta 8998 --carica preferiti/asta.js,preferiti/asta-album.js --prova al1,al2,al3,al4
 //
 // al1 La partita online di tf1 (preferiti/asta-trofei.js: in 3 + Bea che guarda col link) guardando anche l'album: i numeri «con te»
 //     (stat.astafanta.al_oggi.<calciatore>) si salvano SOLO sul podio, una volta, uno per calciatore della rosa (16 numeri, una partita,
@@ -11,6 +11,9 @@
 //     «Il tuo album» nella prima schermata della Mini Asta; niente scorre di lato.
 // al3 (il libro) La figurina nuova vola una volta sola e la squadra appena completa (il Lecce) si accende; «+1» nell'indice; il dito
 //     sfoglia avanti e indietro (il tiro corto torna); col telefono girato le due pagine affiancate.
+// al4 (l'album fisso) L'ordine per ruolo e numero di maglia; chi esce dal listone resta al suo posto («💎 Introvabile» se preso,
+//     «🔒 Non più all'asta» se no, e non conta più nel totale); chi entra dopo va negli «🆕 Aggiornamenti» col numero dopo l'ultimo;
+//     la città di una squadra presa da un file (carte/album/citta/<Squadra>.webp; qui l'immagine di prova in album/citta-prova/).
 (function () {
   "use strict";
   var W = window, A = COPIONE.aiuti, no = A.no;
@@ -199,6 +202,58 @@
       x.push("girato: «" + testo(P, ".lb-aperto .bar span") + "»");
       fr.style.width = w0; fr.style.height = h0;
       if (!await W.aspetta(function () { return !q(P, ".lb-aperto") && vista(P); }, 4000)) no("rigirando il telefono il libro non torna a una pagina");
+      var err = W.erroriTel(); if (err.length) no("errori: " + err.slice(0, 3).join(" | "));
+    } finally { W.__statFinte = null; }
+    return x.join(" · ");
+  } });
+
+  COPIONE.aggiungi("al4", { nome: "Album fisso: ordine per ruolo e numero di maglia, chi esce resta (💎 Introvabile o 🔒 Non più all'asta), chi entra va negli «🆕 Aggiornamenti», la città da un file", fai: async function () {
+    var x = [], stat = {};
+    W.__statFinte = function (nome, g) { return g === "astafanta" ? stat : {}; };
+    try {
+      var P = await W.apriTel("Paky", { x: 0 });
+      if (!P.SG_FANTA_IDS) await new Promise(function (ok) { P.SGCuore.caricaPezzo("asta").then(ok, ok); });
+      var d = datiFinti(P); stat.al_oggi = d.st.al_oggi; pulisciViste(P);
+      var FIS = P.SG_ALBUM_OGGI, DAT = P.SG_FANTA_CALCIATORI, NUM = P.SG_FANTA_NUMERI || {};
+      if (!FIS || Object.keys(FIS).length !== 20) no("non c'è l'album fisso di oggi (data/album-oggi.js)");
+      // 1. l'ordine: in ogni squadra P, D, C, A e dentro il ruolo per numero di maglia (chi non l'ha in fondo)
+      var male = [];
+      Object.keys(FIS).forEach(function (sq) { var l = FIS[sq], ru = "PDCA";
+        for (var i = 1; i < l.length; i++) { var a = l[i - 1].split("|"), b = l[i].split("|"); if (ru.indexOf(a[0]) > ru.indexOf(b[0])) male.push(sq + ": " + l[i]); else if (a[0] === b[0]) { var na = NUM[a[1] + " (" + sq + ")"], nb = NUM[b[1] + " (" + sq + ")"]; na = na == null ? 1e4 : (na[0] != null ? na[0] : na); nb = nb == null ? 1e4 : (nb[0] != null ? nb[0] : nb); if (na > nb) male.push(sq + ": " + a[1] + " (" + na + ") prima di " + b[1] + " (" + nb + ")"); } } });
+      if (male.length) no("ordine dell'album: " + male.slice(0, 4).join(" · "));
+      // 2. cambia il listone (come se arrivasse quello nuovo): escono Martinez L. (che hai: 💎) e Bisseck (che non hai: 🔒); Barella «entra dopo»
+      function togli(k) { ["P", "D", "C", "A"].forEach(function (r) { ["A", "B", "C"].forEach(function (f) { var l = (DAT[r] || {})[f]; if (l) { var j = l.indexOf(k); if (j >= 0) l.splice(j, 1); } }); }); }
+      var salvaD = JSON.stringify(DAT), salvaF = JSON.stringify(FIS);
+      togli("Martinez L. (Inter)"); togli("Bisseck (Inter)");
+      FIS.Inter = FIS.Inter.filter(function (v) { return v !== "C|Barella"; });
+      P.L2S.CITTA_FILE.push("Napoli"); P.L2S.CARTELLA = "/.agents/skills/prova-nel-browser/album/citta-prova/";
+      try {
+        P.SGCuore.apriAlbum(); if (!await W.aspetta(function () { return q(P, ".lb-cop canvas"); }, 20000)) no("la copertina non arriva");
+        await apriCopertina(P);
+        var ba = q(P, ".lb-ig button.agg"); if (!ba) no("nell'indice non ci sono gli «🆕 Aggiornamenti»");
+        else if (!/Aggiornamenti/.test(ba.textContent) || !/1\/1/.test(ba.textContent)) no("il riquadro degli aggiornamenti dice «" + ba.textContent + "»");
+        // la 1ª pagina dell'Inter: Bisseck 🔒 al suo posto; la 2ª: Martinez L. 💎 al suo posto, Barella non c'è più
+        await vai(P, ".lb-ig button[data-sq=Inter]", "Inter 1");
+        var bis = qa(P, ".lb-cas").filter(function (b) { return vista(P).contains(b) && b.__c.nome === "Bisseck"; })[0];
+        if (!bis || !/Non più all'asta/.test(bis.textContent)) no("Bisseck (uscito, non preso) non dice «🔒 Non più all'asta»");
+        bis.click(); await W.dorme(200); if (!/Non più all'asta/.test(testo(P, ".lb-fum"))) no("il fumetto di Bisseck non dice «Non più all'asta»");
+        var nI = testo(P, ".lb-t1 .lb-conto .n"); x.push("Inter «" + nI + "» (Bisseck non conta più)");
+        await vai(P, ".lb-fr.giu", "Inter 2");
+        var f2 = vista(P), mar = qa(P, ".lb-cas").filter(function (b) { return f2.contains(b) && b.__c.nome === "Martinez L."; })[0];
+        if (!mar || !mar.querySelector(".lb-fig") || !/Introvabile/.test(mar.textContent)) no("Martinez L. (uscito, preso) non ha «💎 Introvabile»");
+        if (qa(P, ".lb-cas").some(function (b) { return f2.contains(b) && b.__c.nome === "Barella"; })) no("Barella è ancora nella pagina dell'Inter");
+        // gli aggiornamenti: Barella, figurina attaccata (l'avevi già), col numero dopo l'ultimo
+        var ia = qa(P, ".lb-ig button.agg").length; P.SGCuore.apriAlbum(); await W.aspetta(function () { return q(P, ".lb-cop canvas"); }, 8000); await apriCopertina(P);
+        q(P, ".lb-ig button.agg").click(); if (!await W.aspetta(function () { var f = vista(P); return f && f.classList.contains("lb-agg") && !libro(P).giro; }, 6000)) no("la pagina degli aggiornamenti non si apre");
+        var fa = vista(P), bar = qa(P, ".lb-cas").filter(function (b) { return fa.contains(b) && b.__c.nome === "Barella"; })[0];
+        if (!bar) no("negli aggiornamenti non c'è Barella"); else if (bar.__c.num !== 280) no("Barella negli aggiornamenti ha il numero " + bar.__c.num + " (voluto 280: dopo le 279 figurine fisse della prova)");
+        x.push("aggiornamenti: Barella n. " + (bar && bar.__c.num) + ", Martinez L. 💎, Bisseck 🔒");
+        // la città del Napoli dal file: la pagina si disegna con l'immagine
+        P.SGCuore.apriAlbum(); await W.aspetta(function () { return q(P, ".lb-cop canvas"); }, 8000); await apriCopertina(P);
+        await vai(P, ".lb-ig button[data-sq=Napoli]", "Napoli 1");
+        if (!await W.aspetta(function () { var c = libro(P).citta; return c && c.Napoli && c.Napoli.ok; }, 6000)) no("la città del Napoli dal file non arriva");
+        x.push("città da file: il Napoli prende l'immagine (" + libro(P).citta.Napoli.img.naturalWidth + "x" + libro(P).citta.Napoli.img.naturalHeight + ")");
+      } finally { var D0 = JSON.parse(salvaD), F0 = JSON.parse(salvaF); Object.keys(D0).forEach(function (k) { DAT[k] = D0[k]; }); Object.keys(F0).forEach(function (k) { FIS[k] = F0[k]; }); P.L2S.CITTA_FILE.length = 0; P.L2S.CARTELLA = "carte/album/citta/"; }
       var err = W.erroriTel(); if (err.length) no("errori: " + err.slice(0, 3).join(" | "));
     } finally { W.__statFinte = null; }
     return x.join(" · ");

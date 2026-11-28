@@ -18,6 +18,7 @@ window.SG_NOVITA = [
       "🌆 Ogni squadra ha due pagine con i suoi colori e la sua città dietro: il Vesuvio, il Colosseo, il Duomo, la Mole… Nella prima portieri e difensori, nella seconda centrocampisti e attaccanti.",
       "👆 Le pagine si sfogliano col dito, con il fruscio della carta. Le figurine che ti mancano hanno il bordo d'oro: toccale e sai chi ti manca.",
       "✨ La figurina nuova vola e si attacca da sola la prima volta che apri l'album. Quando completi una squadra, la pagina fa festa.",
+      "🔢 Ogni figurina ha il suo numero per sempre, in ordine di ruolo e di maglia. Se un calciatore esce dal listone resta al suo posto: chi l'ha preso ce l'ha «💎 Introvabile». Chi entra dopo va nelle pagine «🆕 Aggiornamenti» in fondo.",
       "📱 Gira il telefono di lato e vedi le due pagine della squadra affiancate."
     ]
   },

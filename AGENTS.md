@@ -309,7 +309,12 @@ Lista `TROFEI` in js/cuore/trofei.js (`{ gioco, livello, icona, nome, desc, stat
   - La pagina segue il dito e gira solo con transform e opacity. Le pagine vicine e il retro si preparano a pagina ferma (`libVicine`), le figurine una per fotogramma.
   - La figurina nuova vola e la squadra appena completa fa festa una volta sola. Cosa è già visto sta sul telefono in `sg-alb-viste-<uid>`; la prima volta tutto conta come visto.
   - Col telefono girato (`libOrizz`) le due pagine della squadra si vedono affiancate (`.lb-aperto`).
-  - Prove al2 e al3 in `preferiti/asta-album.js`.
+  - **L'album è FISSO** (il proprietario, 28 nov 2026). Quello di oggi è `data/album-oggi.js`: il listone del 28 nov, fatto UNA volta con `album/fai-album-fisso.js`, MAI rifatto per aggiornarlo. Le stagioni passate non cambiano mai.
+    - Ordine: ruolo P, D, C, A, poi numero di maglia; chi non ce l'ha in fondo, per nome. Il posto non dipende mai dal metallo e il numero è per sempre.
+    - Chi esce dal listone resta al suo posto (`c.esce`): «💎 Introvabile» se l'hai, se no «🔒 Non più all'asta», e non conta più nel totale della squadra (scelta da confermare).
+    - Chi entra dopo va nelle pagine «🆕 Aggiornamenti» in fondo (`ab.agg`): non sposta nessuno e non toglie l'oro.
+  - **Le città da file** (per Gemini): `carte/album/citta/<Squadra>.webp` (1080×720, notte, città nella metà di sotto) e il nome in `CITTA_FILE` in `js/album-sfondi.js`. Se c'è, prende il posto di quella del codice; le regole sono nel LEGGIMI di D:/SG-album-prove/libro2.
+  - Prove al2, al3 e al4 (album fisso e città da file) in `preferiti/asta-album.js`.
   - Foto del gioco vero: `album/libro-vero-foto.js` (anche la misura ×4). Le proposte A/B/C: `album/libro2.js` e `album/libro2-foto.js`.
 
 ## Procedure dettagliate (skill)

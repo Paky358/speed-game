@@ -141,6 +141,20 @@
     }
   }
 
+  // ---- 🌆 la città da un file (per i disegni di Gemini: regole nel LEGGIMI di D:/SG-album-prove/libro2) ----
+  // L'immagine (larga 1080, alta 720: 3 a 2) si appoggia in fondo, sopra il prato, larga quanto la pagina; in cima sfuma nel cielo della
+  // pagina (così il suo cielo non si vede mai come un rettangolo) e si scurisce un poco, perché le figurine restino le più luminose.
+  // Nella 2ª pagina della squadra è più bassa e più spenta (la parte più ricca è la 1ª).
+  function cittaFoto(x, img, w, h, base, T, dpr, ricco) {
+    var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height; if (!iw || !ih) return;
+    var dh = Math.min(w * ih / iw, h * (ricco ? 0.55 : 0.32)), dw = dh * iw / ih, dx = (w - dw) / 2, dy = base - dh;
+    if (dw < w) { dw = w; dh = w * ih / iw; dx = 0; dy = base - dh; }   // (sempre larga quanto la pagina: se serve, la cima esce di sopra)
+    var t = tela(w, h, dpr); t.x.drawImage(img, dx, dy, dw, dh);
+    t.x.globalCompositeOperation = "destination-in"; var g = t.x.createLinearGradient(0, base - Math.min(dh, h * (ricco ? 0.55 : 0.32)), 0, base);
+    g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(0.35, "rgba(0,0,0,.85)"); g.addColorStop(1, "rgba(0,0,0,1)"); t.x.fillStyle = g; t.x.fillRect(0, 0, w, h);
+    t.x.globalCompositeOperation = "source-atop"; t.x.fillStyle = "rgba(6,8,22," + (ricco ? 0.22 : 0.45) + ")"; t.x.fillRect(0, 0, w, h);
+    x.save(); x.globalAlpha = ricco ? 0.95 : 0.7; x.drawImage(t.c, 0, 0, w, h); x.restore();
+  }
   // ---- la trama col segno della squadra ----
   function trama(x, sq, w, h, alfa, T, dpr) {
     var t = tela(w, h, dpr), c = t.x, tipo = TRAMA[sq] || "righe", col = mix(T.l1, "#ffffff", 0.25), i, j;
@@ -243,7 +257,8 @@
     var hb = base - (liv === "C" ? Math.round(w * 0.06) : 0), alone = x.createLinearGradient(0, hb - w * (ricco ? 0.42 : 0.22), 0, hb);   // (il chiarore dietro la città: le sagome scure si staccano)
     alone.addColorStop(0, rgba(T.l1, 0)); alone.addColorStop(1, rgba(T.l1, liv === "A" ? 0.14 : (ricco ? 0.3 : 0.16))); x.fillStyle = alone; x.fillRect(0, hb - w * 0.42, w, w * 0.42);
     var k = liv === "A" ? 0.75 : (ricco ? 1 : 0.6), tb = liv === "C" ? Math.round(w * 0.06) : 0;
-    disegnaCitta(x, sq, w, base - tb, k, T, { dpr: P.dpr, alfaFar: liv === "A" ? 0.45 : (ricco ? 0.75 : 0.5), soloFar: liv !== "A" && !ricco, finestre: liv !== "A", mare: liv === "A" ? false : true });
+    if (opz.citta) cittaFoto(x, opz.citta, w, h, base - tb, T, P.dpr, ricco);
+    else disegnaCitta(x, sq, w, base - tb, k, T, { dpr: P.dpr, alfaFar: liv === "A" ? 0.45 : (ricco ? 0.75 : 0.5), soloFar: liv !== "A" && !ricco, finestre: liv !== "A", mare: liv === "A" ? false : true });
     if (liv === "C") tribuna(x, w, base - tb, tb, T, r);
     prato(x, w, h, alto, liv, r);
     if (liv === "C") cornice(x, w, h);
@@ -320,5 +335,7 @@
     return cv;
   }
   // la doppia pagina col telefono girato (il dorso in mezzo)
-  window.L2S = { pagina: pagina, retro: retro, copertina: copertina, indice: indice, tinte: tinte, rgba: rgba, mix: mix, luce: luce, CITTA: CITTA };
+  // le squadre che hanno la città in un file (carte/album/citta/<Squadra>.webp): si aggiunge qui il nome quando arriva il disegno
+  var CITTA_FILE = [];
+  window.L2S = { CITTA_FILE: CITTA_FILE, CARTELLA: "carte/album/citta/", pagina: pagina, retro: retro, copertina: copertina, indice: indice, tinte: tinte, rgba: rgba, mix: mix, luce: luce, CITTA: CITTA };
 })();
