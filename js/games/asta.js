@@ -8687,7 +8687,7 @@
   //  mettendo il file in ALB_IMG.cartella e il suo nome qui (true, o la squadra nella lista festa); se manca, resta il disegno del codice.
   //  copertina: il nome del file (29 nov 2026: «copertina-stadio», di Gemini; c'è anche «copertina-viola»), lo sfondo uguale per tutte le stagioni; pacchetto: pacchetto.webp (o pacchetto-<stagione>.webp
   //  se c'è in pacchettiStagione); festa: festa/<Squadra>.webp (la squadra completa). Niente dorso: le carte escono di faccia (29 nov 2026).
-  var ALB_IMG = { cartella: "carte/album/", copertina: "copertina-stadio", pacchetto: true, pacchettiStagione: [], festa: [] };
+  var ALB_IMG = { cartella: "carte/album/", copertina: "copertina-stadio", pacchetto: true, pacchettiStagione: [], festa: ["Napoli"] };   // (festa: le città di Gemini già arrivate, carte/album/festa/<Squadra>.webp)
   function albImg(nome) { return ALB_IMG.cartella + nome + ".webp"; }
   function metalloDi(f) { return METALLI[ALB_SPECIALI[f] || f] || null; }
   function luce(x) { var s = String(x), m = s.indexOf("rgb") === 0 ? s.replace(/[^0-9,]/g, "").split(",") : null, n = m ? 0 : parseInt(s.slice(1), 16) || 0, v = m ? [+m[0], +m[1], +m[2]] : [n >> 16, n >> 8 & 255, n & 255]; v = v.map(function (y) { y /= 255; return y <= 0.03928 ? y / 12.92 : Math.pow((y + 0.055) / 1.055, 2.4); }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; }
@@ -13575,7 +13575,8 @@
       ".lb-cs-n b{font-size:.68rem;font-weight:900;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.lb-cs-n span{font-size:.56rem;font-weight:800;color:#ffe28a;white-space:nowrap}",
       ".lb-cs-p.campione .lb-cs-n b{font-size:.86rem}.lb-cs-p.campione .lb-cs-n span{font-size:.66rem}.lb-cs-p.su{align-items:flex-start}.lb-cs-p .bu{-webkit-mask-image:linear-gradient(#000 80%,transparent);mask-image:linear-gradient(#000 80%,transparent)}.lb-cs-p.su .lb-cs-n{position:absolute;top:-15px;margin:0;padding:1px 5px}",
       ".pk-fronte.img{background-size:cover;background-position:center}.pk-fronte.img:before{display:none}",
-      ".lb-festa-img{position:fixed;inset:0;z-index:66;opacity:0;background-size:cover;background-position:center bottom;pointer-events:none}.lb-festa-img .lb-banda{top:30%}",
+      ".lb-festa-img{position:fixed;inset:0;z-index:66;opacity:0;background-size:cover;background-position:center bottom;pointer-events:none;overflow:hidden}.lb-festa-img .lb-banda{top:22%}",
+      ".lb-festa-fig{position:absolute;left:50%;top:31%;opacity:0;will-change:transform,opacity}.lb-festa-img .lb-cori{position:absolute;top:-4%}",
       ".pk-luce2{position:absolute;inset:-38%;border-radius:50%;opacity:0;pointer-events:none}",
       ".pk-pila{position:relative;width:min(56vw,220px);aspect-ratio:1/1.45}.pk-pila .pk-busta{position:absolute;inset:0;width:auto}",
       ".pk-fila{position:relative;width:min(46vw,180px);aspect-ratio:1/1.45;margin-left:-24%}.pk-busta.in-fila{position:absolute;inset:0;width:auto;will-change:transform,opacity}",
@@ -13863,7 +13864,8 @@
     var C = window.SGCuore, el = C.el, l = LIB.ab.per[sq] || [], lista = l.slice((pag - 1) * LIB_PAG, pag * LIB_PAG), b0 = LIB.ab.squadre.indexOf(sq) * ALB_POSTI + (pag - 1) * LIB_PAG;
     for (var p = lista.length; p < LIB_PAG; p++) lista.push({ libero: true, num: b0 + p + 1 });   // (i posti liberi: per chi arriverà)
     var f = el("div", { class: "lb-foglio lb-pag" }), cont = el("div", { class: "lb-cont" }); f.appendChild(el("canvas", { class: "lb-sf" })); f.appendChild(cont); f.__sq = sq; f.__pag = pag; f.__lista = lista;
-    var oc = albConta(l); if (oc.n && oc.p === oc.n && !libNuove(l).length) f.classList.add("completa");   // 🏆 (29 nov 2026) la cornice d'oro: la squadra è completa (le nuove la accendono con la festa)
+    var oc = albConta(l); if (oc.n && oc.p === oc.n && !libNuove(l).length) f.classList.add("completa");
+    else if (oc.n - oc.p <= 1 && ALB_IMG.festa.indexOf(sq) >= 0) { var pre = new Image(); pre.src = albImg("festa/" + sq); }   // 🌆 (la città della festa: si scarica solo quando serve)   // 🏆 (29 nov 2026) la cornice d'oro: la squadra è completa (le nuove la accendono con la festa)
     f.appendChild(el("div", { class: "lb-cornice" }));
     cont.appendChild(libGriglia(lista));   // (squadra, scudetto e conto stanno nella riga sottile in alto: libBarra) f.appendChild(el("div", { class: "lb-pn", text: String(i + 1) }));
     return f;
@@ -14118,18 +14120,29 @@
       anello = el("div", { style: "position:absolute;inset:-12%;border-radius:50%;border:3px solid rgba(255,214,90,.95);opacity:0" }); box.appendChild(anello); }
     var cols = [T.c1, T.c2, "#ffd84a", "#ffffff"], cori = [];
     for (var i = 0; i < 44; i++) { var c = el("div", { class: "lb-cori", style: "left:" + (4 + (i * 37 % 92)) + "%;background:" + cols[i % 4] + ";" + (i % 3 ? "" : "width:5px;height:5px;border-radius:50%") }); f.appendChild(c); cori.push({ n: c, d: (i * 13 % 20) / 100, x: ((i * 29) % 21 - 10) * 2.2, rot: (i * 47) % 360, v: 0.8 + (i * 7 % 5) / 10 }); }
-    var banda = el("div", { class: "lb-banda", text: "⭐ " + sq + " completa!" }), grande = null;
-    if (ALB_IMG.festa.indexOf(sq) >= 0) { grande = el("div", { class: "lb-festa-img", style: "background-image:url(" + albImg("festa/" + sq) + ")" }, [ banda ]); document.body.appendChild(grande); } else f.appendChild(banda);
+    var banda = el("div", { class: "lb-banda", text: "⭐ " + sq + " completa!" }), grande = null, ventaglio = [];
+    if (ALB_IMG.festa.indexOf(sq) >= 0) {   // 🌆 (29 nov 2026) la città di Gemini a tutto schermo: nel cielo la scritta e un ventaglio delle figurine più belle, i coriandoli sopra
+      grande = el("div", { class: "lb-festa-img", style: "background-image:url(" + albImg("festa/" + sq) + ")" }, [ banda ]); document.body.appendChild(grande);
+      cori.forEach(function (c) { grande.appendChild(c.n); });
+      var belle = [].slice.call(LIB.scena.querySelectorAll(".lb-pag")).filter(function (g) { return g.__sq === sq; }).reduce(function (a, g) { return a.concat([].slice.call(g.querySelectorAll(".lb-cas"))); }, [])
+        .filter(function (b) { return b.__c && b.querySelector(".lb-fig canvas"); }).sort(function (a, b) { return ALB_METALLI.indexOf(b.__c.met) - ALB_METALLI.indexOf(a.__c.met); }).slice(0, 5);
+      var wv = Math.round(Math.min(window.innerWidth * 0.22, 96));
+      belle.forEach(function (b, i) { var src = b.querySelector(".lb-fig canvas"), cv = document.createElement("canvas"); cv.width = src.width; cv.height = src.height; cv.getContext("2d").drawImage(src, 0, 0);
+        cv.style.cssText = "width:" + wv + "px;height:auto;display:block;border-radius:6px;box-shadow:0 10px 22px -8px #000"; var n = belle.length, a = (i - (n - 1) / 2);
+        var v = el("div", { class: "lb-festa-fig", style: "width:" + wv + "px;margin-left:" + (-wv / 2) + "px" }, [ cv ]); v.__a = a; grande.appendChild(v); ventaglio.push(v); });
+    } else f.appendChild(banda);
     try { if (navigator.vibrate) navigator.vibrate([20, 50, 30]); } catch (e) {}
     var H = f.clientHeight, fs = LIB.festa;
-    return libTempo(2200, function (k) {
+    return (grande ? new Promise(function (ok) { var im = new Image(), t = setTimeout(ok, 900); im.onload = im.onerror = function () { clearTimeout(t); ok(); }; im.src = albImg("festa/" + sq); }) : Promise.resolve()).then(function () { return libTempo(grande ? 3600 : 2200, function (k) {
       if (fs !== LIB.festa) k = 1;
       festa.style.opacity = (k < 0.15 ? k / 0.15 : Math.max(0, 1 - (k - 0.15) * 1.2)).toFixed(3);
-      if (grande) grande.style.opacity = (k < 0.12 ? k / 0.12 : k > 0.85 ? (1 - k) / 0.15 : 1).toFixed(3);
+      if (grande) grande.style.opacity = (k < 0.1 ? k / 0.1 : k > 0.88 ? (1 - k) / 0.12 : 1).toFixed(3);
+      ventaglio.forEach(function (v) { var t = Math.max(0, Math.min(1, (k - 0.22 - Math.abs(v.__a) * 0.04) / 0.2)), e = 1 - Math.pow(1 - t, 3);   // (le figurine salgono e si aprono a ventaglio nel cielo)
+        v.style.opacity = (k > 0.88 ? (1 - k) / 0.12 : t).toFixed(3); v.style.transform = "translate(" + (v.__a * 54 * e).toFixed(1) + "px," + ((1 - e) * 80 + Math.abs(v.__a) * 10 * e).toFixed(1) + "px) rotate(" + (v.__a * 8 * e).toFixed(2) + "deg)"; });
       if (oro) { var s = Math.min(1, k / 0.18); oro.style.opacity = s.toFixed(3); oro.style.transform = "scale(" + (1.3 - 0.3 * s).toFixed(3) + ")"; var g = Math.max(0, (k - 0.12) / 0.4); anello.style.opacity = (k < 0.12 ? 0 : Math.max(0, 1 - g)).toFixed(3); anello.style.transform = "scale(" + (0.9 + g).toFixed(3) + ")"; }
       cori.forEach(function (c) { var t = Math.max(0, (k - c.d) / (0.85 * c.v)); c.n.style.opacity = (t <= 0 ? 0 : t > 0.85 ? Math.max(0, (1 - t) / 0.15) : 1).toFixed(3); c.n.style.transform = "translate(" + (Math.sin(t * 6 + c.rot) * 10 + c.x * t).toFixed(1) + "px," + (t * H * 1.02).toFixed(1) + "px) rotate(" + (c.rot + t * 540).toFixed(0) + "deg)"; });
       var b = k < 0.2 ? 0 : Math.min(1, (k - 0.2) / 0.12); banda.style.opacity = (k > 0.85 ? (1 - k) / 0.15 : b).toFixed(3); banda.style.transform = "translate(-50%,-50%) scale(" + (0.6 + 0.4 * (1 - Math.pow(1 - b, 3))).toFixed(4) + ")";
-    }).then(function () { festa.remove(); banda.remove(); if (grande) grande.remove(); cori.forEach(function (c) { c.n.remove(); }); libBarra(LIB.i); });
+    }); }).then(function () { festa.remove(); banda.remove(); if (grande) grande.remove(); cori.forEach(function (c) { c.n.remove(); }); libBarra(LIB.i); });
   }
   // =========================================================
   // 📦 I PACCHETTI (28-29 nov 2026, il proprietario: «apri i pacchetti per trovare le pippe… li mettiamo accumulabili»; l'apertura «come in

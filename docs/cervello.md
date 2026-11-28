@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 29 nov 2026 notte (8) · 📖 Album · salvato, NON pubblicato · la festa «Napoli completa!» con la città di Gemini a tutto schermo (122 KB, scaricata solo quando serve) e il ventaglio delle figurine più belle nel cielo; foglio 26 · ramo album-libro
 - 29 nov 2026 notte (7) · 📖 Album · salvato, NON pubblicato · la pagina della squadra: griglia più al centro sui telefoni alti, posti liberi appena accennati, cornice d'oro della squadra completa; foglio 25 (Napoli completo) rifatto · ramo album-libro
 - 29 nov 2026 notte (6) · 📖 Album · salvato, NON pubblicato · il petto del mezzo busto come nelle maglie vere (scudetto a destra per chi guarda, numero a sinistra, controllate le 7 pose); fogli 23-24 · ramo album-libro
 - 29 nov 2026 notte (5) · 📖 Album · salvato, NON pubblicato · editor delle facce: il filtro «❓ A caso» (per stagione e squadra, il conto, «📷 nessuna foto libera» per i 45 senza foto degli aiutanti); con le fatte a mano del 18 nov sono 12; prova sy6, sy1-sy5 OK; foglio 22 · ramo album-libro
