@@ -13322,7 +13322,7 @@
   //  nessuno e non toglie l'oro a una squadra già completa. (Il metallo: quello migliore che hai preso, c.metFisso; vedi albVoce.)
   function albLista(stag) {
     return conStag(stag, function () {
-      var D = window.SG_FANTA_CALCIATORI || {}, ora = {}, per = {}, tutte = [], agg = [], miei = albMiei(stag), fisso = !stag ? window.SG_ALBUM_OGGI : null;
+      var D = window.SG_FANTA_CALCIATORI || {}, ora = {}, per = {}, tutte = [], agg = [], miei = albMiei(stag), fisso = !stag ? window.SG_ALBUM_OGGI : (window.SG_ALBUM_STAGIONI || {})[stag] || null;   // (29 nov 2026: anche le stagioni passate hanno il loro file fisso, data/album-<anno>.js)
       ALB_RUOLI.forEach(function (r) { ["A", "B", "C"].forEach(function (f) { ((D[r] || {})[f] || []).forEach(function (k) {
         var m = /^(.*) \((.*)\)$/.exec(k); if (m) ora[k] = { nome: m[1], squadra: m[2], ruolo: r };
       }); }); });
