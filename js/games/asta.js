@@ -8656,7 +8656,7 @@
   //  mettendo il file in ALB_IMG.cartella e il suo nome qui (true, o la squadra nella lista festa); se manca, resta il disegno del codice.
   //  copertina: il nome del file (29 nov 2026: «copertina-stadio», di Gemini; c'è anche «copertina-viola»), lo sfondo uguale per tutte le stagioni; pacchetto: pacchetto.webp (o pacchetto-<stagione>.webp
   //  se c'è in pacchettiStagione); festa: festa/<Squadra>.webp (la squadra completa). Niente dorso: le carte escono di faccia (29 nov 2026).
-  var ALB_IMG = { cartella: "carte/album/", copertina: "copertina-stadio", pacchetto: false, pacchettiStagione: [], festa: [] };
+  var ALB_IMG = { cartella: "carte/album/", copertina: "copertina-stadio", pacchetto: true, pacchettiStagione: [], festa: [] };
   function albImg(nome) { return ALB_IMG.cartella + nome + ".webp"; }
   function metalloDi(f) { return METALLI[ALB_SPECIALI[f] || f] || null; }
   function luce(x) { var s = String(x), m = s.indexOf("rgb") === 0 ? s.replace(/[^0-9,]/g, "").split(",") : null, n = m ? 0 : parseInt(s.slice(1), 16) || 0, v = m ? [+m[0], +m[1], +m[2]] : [n >> 16, n >> 8 & 255, n & 255]; v = v.map(function (y) { y /= 255; return y <= 0.03928 ? y / 12.92 : Math.pow((y + 0.055) / 1.055, 2.4); }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; }
@@ -13527,6 +13527,15 @@
       ".lb-img{background-size:cover;background-position:center 62%}.lb-buio{position:absolute;inset:0;background:#05061a;opacity:.62;z-index:1;pointer-events:none}",
       ".pk-anno{font-family:var(--o-tit);font-weight:800;font-size:2.15rem;line-height:1;color:#fff;letter-spacing:.02em;text-shadow:0 3px 0 rgba(0,0,0,.35)}.pk-bu{position:relative;display:block;margin:2px 0 -6px}.pk-bu .bu{position:absolute;inset:0}.cop-st{position:absolute;left:58%;top:60%;opacity:0;transition:opacity .35s;pointer-events:none}.pk-bu.vuoto{height:40%}",
       ".pk-fronte .pk-num{margin-top:0;position:relative;z-index:1}",
+      ".lb-pk.img .pk-busta,.lb-pk.img .pk-fila{aspect-ratio:1/var(--pk-r,1.544)}.pk-busta.img .pk-strappo,.pk-busta.img .pk-fronte{background-color:transparent;box-shadow:none;border-radius:0;background-repeat:no-repeat}",
+      ".pk-busta.img .pk-strappo{height:7%;background-size:100% 1428.6%;background-position:0 0}.pk-busta.img .pk-fronte{top:7%;background-size:100% 107.53%;background-position:0 100%;display:block}.pk-busta.img .pk-fronte:before{display:none}.pk-busta.img .pk-taglio{top:6.8%;left:3%;right:3%}",
+      ".pk-busta.img .pk-anno{position:absolute;left:0;right:0;top:24%;text-align:center;font-size:2rem;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.45),0 0 14px rgba(0,0,0,.35)}.pk-busta.img .pk-bu{position:absolute;left:50%;top:37%;margin:0;transform:translateX(-50%)}",
+      ".pk-busta.img .pk-num{position:absolute;left:50%;bottom:8%;transform:translateX(-50%);white-space:nowrap}.pk-busta.img .pk-luce{inset:-30%}",
+      ".pk-lampo{position:absolute;left:3%;right:3%;top:7%;bottom:5%;overflow:hidden;pointer-events:none;z-index:4;border-radius:4px}.pk-lampo i{position:absolute;top:-10%;bottom:-10%;left:0;width:38%;background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.42) 50%,rgba(255,255,255,0));transform:translateX(-160%) skewX(-16deg);animation:pkLampo 5.2s ease-in-out infinite 1s;will-change:transform}",
+      "@keyframes pkLampo{0%,58%{transform:translateX(-160%) skewX(-16deg)}84%,100%{transform:translateX(330%) skewX(-16deg)}}",
+      ".pk-sc{position:absolute;z-index:5;width:20px;height:20px;margin:-10px 0 0 -10px;pointer-events:none;opacity:0;transform:scale(.2);background:radial-gradient(circle,#fff 0 18%,rgba(255,255,255,0) 22%),linear-gradient(0deg,rgba(255,255,255,0) 44%,#fff 50%,rgba(255,255,255,0) 56%),linear-gradient(90deg,rgba(255,255,255,0) 44%,#fff 50%,rgba(255,255,255,0) 56%);animation:pkSc 3.4s ease-in-out infinite;will-change:transform,opacity}",
+      "@keyframes pkSc{0%,70%,100%{opacity:0;transform:scale(.2) rotate(0deg)}80%{opacity:1;transform:scale(1) rotate(45deg)}90%{opacity:0;transform:scale(.4) rotate(90deg)}}",
+      ".pk-busta.in-fila .pk-lampo,.pk-busta.in-fila .pk-sc,.lb-pk.poco .pk-lampo,.lb-pk.poco .pk-sc{display:none}",
       ".lb-cs{position:absolute;left:5%;right:5%;z-index:3;pointer-events:none}.lb-cs-p{position:absolute;display:flex;align-items:flex-end;justify-content:center}",
       ".lb-cs-p .bu{position:absolute;inset:0;opacity:0;transition:opacity .35s}.lb-cs-p.campione{z-index:2}.lb-cs-p.campione:before{content:'';position:absolute;inset:-12% -18% 0;border-radius:50%;background:radial-gradient(circle at 50% 60%,rgba(255,216,74,.38),rgba(0,0,0,0) 66%)}",
       ".lb-cs-n{position:relative;z-index:1;margin-bottom:4%;display:flex;flex-direction:column;align-items:center;background:rgba(6,8,22,.78);border-radius:8px;padding:2px 6px;max-width:100%;line-height:1.1}",
@@ -13751,7 +13760,21 @@
   }
   var ALB_COLORI = { "2015-16": "#e03a3a", "2016-17": "#f27a1c", "2017-18": "#8cc63f", "2018-19": "#22a35a", "2019-20": "#12b5a6", "2020-21": "#22c3e6",
     "2021-22": "#3d8bf0", "2022-23": "#2340b8", "2023-24": "#d23ad0", "2024-25": "#ff6fa5", "2025-26": "#9a1d3f", "oggi": "#4a6274" };
-  var COP_BUSTI = {};
+  var COP_BUSTI = {}, PK_TINTE = {}, PK_BASE = null;
+  function pkBase() {   // la bustina d'argento di Gemini (carte/album/pacchetto.webp, ritagliata coi dentelli): una volta sola
+    if (!PK_BASE) PK_BASE = new Promise(function (ok, no) { var im = new Image(); im.onload = function () { ok(im); }; im.onerror = no; im.src = albImg("pacchetto"); });
+    return PK_BASE;
+  }
+  function pkTinta(stag) {   // la bustina col colore della stagione, metallizzata: moltiplica il colore, rimette i riflessi d'argento, ritaglia la forma
+    var k = stag || "oggi"; if (PK_TINTE[k]) return Promise.resolve(PK_TINTE[k]);
+    return pkBase().then(function (im) {
+      var w = im.naturalWidth, h = im.naturalHeight, c = document.createElement("canvas"); c.width = w; c.height = h; var x = c.getContext("2d");
+      x.drawImage(im, 0, 0); x.globalCompositeOperation = "multiply"; x.fillStyle = copColore(stag); x.fillRect(0, 0, w, h); x.fillRect(0, 0, w, h);   // (due volte: il colore pieno)
+      x.globalCompositeOperation = "screen"; x.globalAlpha = 0.2; x.drawImage(im, 0, 0);   // (i riflessi dell'argento)
+      x.globalAlpha = 1; x.globalCompositeOperation = "destination-in"; x.drawImage(im, 0, 0);
+      return (PK_TINTE[k] = { url: c.toDataURL("image/webp", 0.9), r: h / w });
+    });
+  }
   function copLista(stag) { return (window.SG_ALBUM_COPERTINE || {})[stag || "oggi"] || null; }
   function copColore(stag) { return ALB_COLORI[stag || "oggi"] || "#4a6274"; }
   function copMix(h, a, k) {   // (un colore schiarito o scurito: a = "#fff" o "#000", k da 0 a 1)
@@ -14174,12 +14197,19 @@
     function casa() {   // la pila dei pacchetti chiusi e i due tasti
       pulisci(); var n = quanti();
       if (!n) { scena.appendChild(el("p", { class: "pk-vuoto", text: "Hai aperto tutti i pacchetti. Ne arriva uno a ogni partita di Mini Asta online." })); tasti(false); return; }
-      var pila = el("div", { class: "pk-pila" }); for (var i = Math.min(n, 4) - 1; i >= 0; i--) { var b = bustaNodo(); b.style.transform = "translate(" + (i * 7) + "px," + (-i * 7) + "px) rotate(" + (i * 2.5) + "deg)"; pila.appendChild(b); }
+      var pila = el("div", { class: "pk-pila" }); for (var i = Math.min(n, 4) - 1; i >= 0; i--) { var b = bustaNodo(i === 0); b.style.transform = "translate(" + (i * 7) + "px," + (-i * 7) + "px) rotate(" + (i * 2.5) + "deg)"; pila.appendChild(b); }
       scena.appendChild(pila); scena.appendChild(el("p", { class: "pk-dito", text: n === 1 ? "Hai 1 pacchetto da aprire" : "Hai " + n + " pacchetti da aprire" })); tasti(false);
     }
-    function bustaNodo() {
+    function bustaNodo(luci) {
       var imP = ALB_IMG.pacchettiStagione.indexOf(stag) >= 0 ? albImg("pacchetto-" + stag) : ALB_IMG.pacchetto ? albImg("pacchetto") : null;
       var col = copColore(stag), anno = stag || ALB_ANNO_OGGI, L = copLista(stag), wb = Math.round(Math.min(220, scena.clientWidth * 0.56) * 0.62);
+      if (tinta) {   // (🖼️ la bustina di Gemini col colore della stagione)
+        var bt = L && L[0] ? copBusto(stag, L[0], wb) : null, bb = null; if (bt) { var stt = copStemma(L[0][0], wb); bt.className = "bu"; bb = el("div", { class: "pk-bu", style: "width:" + wb + "px;height:" + wb + "px" }, [ bt ]); if (stt) { stt.style.opacity = "1"; bb.appendChild(stt); } }
+        var nb = el("div", { class: "pk-busta img", style: "--pk-col:" + col }, [ el("div", { class: "pk-luce" }), el("div", { class: "pk-strappo", style: "background-image:url(" + tinta.url + ")" }),
+          el("div", { class: "pk-fronte", style: "background-image:url(" + tinta.url + ")" }, [ el("div", { class: "pk-anno", text: anno }), bb || el("div", { class: "pk-bu vuoto" }), el("div", { class: "pk-num", text: PK_CARTE + " figurine" }) ]), el("div", { class: "pk-taglio" }, [ el("i") ]) ]);
+        if (luci && !poco) { var lp = el("div", { class: "pk-lampo" }, [ el("i") ]); nb.appendChild(lp); [[18, 30, 0], [80, 22, 1.1], [70, 62, 2.3], [24, 70, 0.6], [52, 14, 1.7]].forEach(function (p) { nb.appendChild(el("i", { class: "pk-sc", style: "left:" + p[0] + "%;top:" + p[1] + "%;animation-delay:" + p[2] + "s" })); }); }
+        return nb;
+      }
       var sfondo = (imP ? "background-image:url(" + imP + ");background-color:" + col + ";background-blend-mode:multiply;" : "background:linear-gradient(160deg," + copMix(col, "#ffffff", 0.32) + "," + col + " 45%," + copMix(col, "#000000", 0.55) + ");");
       var bu = L && L[0] ? copBusto(stag, L[0], wb) : null; if (bu) { var st0 = copStemma(L[0][0], wb); bu.className = "bu"; bu = el("div", { class: "pk-bu", style: "width:" + wb + "px;height:" + wb + "px" }, [ bu ]); if (st0) { st0.style.opacity = "1"; bu.appendChild(st0); } }
       return el("div", { class: "pk-busta", style: "--pk-col:" + col }, [ el("div", { class: "pk-luce" }), el("div", { class: "pk-strappo", style: "background:linear-gradient(180deg," + copMix(col, "#ffffff", 0.45) + "," + copMix(col, "#000000", 0.25) + ")" }),
@@ -14194,7 +14224,7 @@
       libPrendi(stag, 1).then(function (e) { if (!vivo()) return; if (!e) return casa(); quanti(); striscia(e.pacchi[0], e); }, function (er) { if (vivo()) errore(er); });
     }
     function striscia(carte, e) {
-      pulisci(); var b = bustaNodo(), m = migliore(carte), luce = b.querySelector(".pk-luce"), linea = b.querySelector(".pk-taglio i");
+      pulisci(); var b = bustaNodo(true), m = migliore(carte), luce = b.querySelector(".pk-luce"), linea = b.querySelector(".pk-taglio i");
       var sp = speciale(carte), lu2 = luceSpeciale(b, sp); b.__sp = sp;
       if (m) b.classList.add(["", "argento", "oro"][m]); scena.appendChild(b); scena.appendChild(el("p", { class: "pk-dito", text: "👉 Striscia sul pacchetto per aprirlo" }));   // (col bronzo nessuna classe: mai un nome vuoto)
       prepara(carte, largaMazzo());   // (le 3 figurine si disegnano adesso, a pacchetto chiuso: quando si apre sono pronte)
@@ -14359,8 +14389,15 @@
     }
     // l'ultimo pacchetto aperto e non finito di guardare (la pagina si è ricaricata a metà): si ritrova uguale
     var ult = libUltimo(stag);
-    if (ult && ult.uscite.length) { quanti(); if (ult.pacchi.length === 1) mazzetto(ult.pacchi[0], ult); else scorri(ult); scena.insertBefore(el("p", { class: "pk-dito pk-ritrovato", text: "📦 Ecco il pacchetto che stavi aprendo" }), scena.firstChild); return; }
-    if (modo === "tutti") tutti(); else if (modo === "uno") uno(); else casa();
+    var tinta = null;
+    function via() {
+      if (!vivo()) return;
+      if (ult && ult.uscite.length) { quanti(); if (ult.pacchi.length === 1) mazzetto(ult.pacchi[0], ult); else scorri(ult); scena.insertBefore(el("p", { class: "pk-dito pk-ritrovato", text: "📦 Ecco il pacchetto che stavi aprendo" }), scena.firstChild); return; }
+      if (modo === "tutti") tutti(); else if (modo === "uno") uno(); else casa();
+    }
+    if (ALB_IMG.pacchetto) { var fatto = false, t0 = setTimeout(function () { if (!fatto) { fatto = true; via(); } }, 1500);   // (la bustina colorata; se tarda più di 1,5 s, il pacchetto disegnato)
+      pkTinta(stag).then(function (tt) { if (fatto) return; fatto = true; clearTimeout(t0); tinta = tt; ov.classList.add("img"); ov.style.setProperty("--pk-r", tt.r.toFixed(4)); via(); }, function () { if (!fatto) { fatto = true; clearTimeout(t0); via(); } }); }
+    else via();
   }
   // ---- 📱↔️ col telefono girato: le due pagine della squadra affiancate, come un album aperto ----
   function libAperto(i) {
