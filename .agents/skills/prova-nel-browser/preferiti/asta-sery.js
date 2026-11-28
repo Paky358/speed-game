@@ -194,4 +194,28 @@
     if (ko.length) no(ko.join(" | ") + " · copiato: " + String(preso).slice(0, 200));
     return "copiati 4: Barella (Paky), Thuram (Sery), Lautaro (faccia vecchia col nome → " + pL + "), Dimarco solo 2017-18; niente tolti né proposte 🤖";
   } });
+
+  // sy6 (29 nov 2026, il proprietario: «è brutto non farlo preciso») il filtro «❓ A caso»: tutti i calciatori senza faccia vera né proposta
+  //     🤖, per stagione e squadra (le righe di sezione), col conto «❓ N da fare» in alto; «📷 nessuna foto libera» per chi è nell'elenco
+  //     degli aiutanti; si apre uno, «Salva e avanti» lo salva e sparisce dall'elenco (il conto scende di 1)
+  COPIONE.aggiungi("sy6", { nome: "Facce: il filtro «❓ A caso» (per stagione e squadra, il conto, 📷 nessuna foto libera), salvato sparisce", fai: async function () {
+    var ko = []; W.BR.pubblici = {};
+    var w = await apri("IL PAPPONE", 0); await w.SG.scaricaGioco("asta"); var S = w.SGAstaAspetto, M = S.mappe(); M.p = {}; M.s = {}; S.unisci();
+    var e = await editor(w); if (e) no(e);
+    var tCa = w.document.querySelector(".fa-ed-schede .fa-ed-caso"); if (!tCa) no("manca la scheda «❓ A caso»");
+    var n0 = +tCa.textContent.replace(/\./g, "").replace(/^\D*/, ""); if (!(n0 > 0)) ko.push("la scheda dice «" + tCa.textContent + "»");
+    tCa.click(); await W.dorme(300);
+    var conta = (w.document.querySelector(".fa-ed-conta") || {}).textContent || ""; if (conta.replace(/\./g, "").indexOf("❓ " + n0 + " da fare") < 0) ko.push("in alto «" + conta + "» (voluto «❓ " + n0 + " da fare»)");
+    var sez = qa(w, ".fa-ed-lista .fa-ed-sez").map(function (x) { return x.textContent; }); if (!sez.length || !/^(Oggi|20\d\d-\d\d) · /.test(sez[0])) ko.push("le sezioni: " + sez.slice(0, 3).join(" / "));
+    var righe = qa(w, ".fa-ed-lista .fa-ed-r"); if (!righe.length || !righe.every(function (r) { return /❓ a caso|📷 nessuna foto libera/.test(r.textContent); })) ko.push("righe senza il segno: " + righe.slice(0, 2).map(function (r) { return r.textContent; }).join(" / "));
+    var noF = Object.keys(w.SG_FANTA_SENZA_FOTO || {}).length; if (!noF) ko.push("manca l'elenco dei senza foto");
+    righe[0].click(); await W.dorme(250); var chi = (w.document.querySelector(".fa-ed-info b") || {}).textContent;
+    if (!/a caso/.test(scritta(w))) ko.push("nella scheda: «" + scritta(w) + "»");
+    var av = qa(w, ".fa-ed-tasti button").filter(function (b) { return /Salva e avanti/.test(b.textContent); })[0]; if (av) { av.click(); await W.dorme(300); }
+    var n1 = +w.document.querySelector(".fa-ed-schede .fa-ed-caso").textContent.replace(/\./g, "").replace(/^\D*/, ""); if (n1 !== n0 - 1) ko.push("dopo il salvataggio «❓ A caso» è " + n1 + " (prima " + n0 + ")");
+    if (qa(w, ".fa-ed-lista .fa-ed-r").some(function (r) { return r.querySelector("b").textContent === chi; })) ko.push(chi + " è ancora nell'elenco");
+    M.p = {}; S.unisci();
+    if (ko.length) no(ko.join(" | "));
+    return "❓ A caso · " + n0 + ", per stagione e squadra (" + sez[0] + "…), il segno su ogni riga, " + noF + " senza foto libera; salvato " + chi + ": " + n1;
+  } });
 })();

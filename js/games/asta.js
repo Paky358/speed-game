@@ -725,7 +725,7 @@
     ".fa-ovunque .fa-ed-tasti .btn-primario{flex:1;min-height:48px;font-size:1rem;}",
 
         ".fa-ed-cerca{width:100%;box-sizing:border-box;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:#151a2e;color:#fff;font-size:1rem;}",
-    ".fa-ed-schede{display:flex;gap:6px;margin:10px 0;}.fa-ed-schede button{flex:1;padding:9px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#a6acc8;font-weight:800;font-size:.85rem;}",
+    ".fa-ed-schede{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;}.fa-ed-schede button.fa-ed-caso{flex-basis:100%;}.fa-ed-schede button{flex:1;padding:9px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#a6acc8;font-weight:800;font-size:.85rem;}",
     ".fa-ed-schede button.on{background:rgba(224,34,90,.18);color:#fff;border-color:#e0225a;}",
     ".fa-ed-liste{display:flex;gap:6px;margin:10px 0 0;}.fa-ed-liste button{flex:1;padding:8px 4px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#a6acc8;font-weight:800;font-size:.78rem;line-height:1.2;}.fa-ed-liste button.on{background:rgba(79,216,255,.16);color:#fff;border-color:#4fd8ff;}",
     ".fa-ed-lista{display:flex;flex-direction:column;gap:4px;}",
@@ -7642,7 +7642,10 @@
     // 📷 (18 nov 2026, il proprietario: una faccia presa dalla foto e non ancora confermata va in «Da controllare», non in «Da fare») c._foto: "bot"
     // (proposta degli aiutanti, data/fanta-facce-bot.js) o "dati" (dalle foto di prima, data/fanta-aspetto.js, senza dubbi); si calcola una volta
     if (ovunque) tutti.forEach(function (c) { var d = (window.SG_FANTA_ASPETTO || {})[c.k]; if (!(d && d.p)) d = datiAspettoAltrove(personaDi(c.k)) || d;
-      c._foto = facciaBot(c.k) ? "bot" : d && d.p && !(d.dc || !d.c || !d.t || !d.b) ? "dati" : null; });
+      c._foto = facciaBot(c.k) ? "bot" : d && d.p && !(d.dc || !d.c || !d.t || !d.b) ? "dati" : null;
+      c._caso = !facciaBot(c.k) && !(d && d.p);   // ❓ (29 nov 2026) niente faccia vera né proposta: disegnato a caso
+      var sf = window.SG_FANTA_SENZA_FOTO; c._noFoto = !!(sf && sf[personaDi(c.k)]); });   // 📷 gli aiutanti non hanno trovato una foto libera
+    function aCaso(c) { return !!c._caso && !fatta(c); }
     function daControllare() { return tutti.filter(function (c) { return ovunque ? !fatta(c) && !c._foto && passaFiltri(c) && inLista(c) : aspettoVero(c.k).dc; }); }   // (🎨: «Da fare» = non ancora sistemati da nessuno dei due)
     // 📋 (18 nov 2026, il proprietario: «quelle che ho già fatto io non ricontrollarle neanche») copia negli appunti i numeri fantacalcio.it
     // (fc<numero>, con «|stagione» se è una faccia solo per quell'anno) dei calciatori che hanno una faccia fatta a mano da Paky o da Sery
@@ -7675,13 +7678,14 @@
         bListe[x[0]] = b; b.dataset.lista = x[0]; b._t = x[1]; rl.appendChild(b); });
       R.appendChild(rl); R.appendChild(copiaFatti);   // 📋 (subito sotto le liste)
     }
-    var schede = nd("div", "fa-ed-schede"), tTu = nd("button", ovunque ? "" : "on"), tDc = nd("button", ovunque ? "on" : ""), tFa = nd("button"), tBo = nd("button");
-    if (ovunque) { schede.appendChild(tDc); schede.appendChild(tFa); schede.appendChild(tTu); schede.appendChild(tBo); }   // (🤖 18 nov: le facce proposte dalle foto, da controllare) else { schede.appendChild(tTu); schede.appendChild(tDc); }
+    var schede = nd("div", "fa-ed-schede"), tTu = nd("button", ovunque ? "" : "on"), tDc = nd("button", ovunque ? "on" : ""), tFa = nd("button"), tBo = nd("button"), tCa = nd("button", "fa-ed-caso");
+    if (ovunque) { schede.appendChild(tDc); schede.appendChild(tFa); schede.appendChild(tTu); schede.appendChild(tBo); schede.appendChild(tCa); }   // (❓ 29 nov 2026: i calciatori a caso, di tutte e due le liste)   // (🤖 18 nov: le facce proposte dalle foto, da controllare) else { schede.appendChild(tTu); schede.appendChild(tDc); }
     R.appendChild(schede);
     var lista = nd("div", "fa-ed-lista"); R.appendChild(lista);
     document.body.appendChild(R);
     chiudi.onclick = function () { if (R.parentNode) R.parentNode.removeChild(R); };
-    function schedaOn(m) { modo = m; tDc.className = m === "dc" ? "on" : ""; tTu.className = m === "tu" ? "on" : ""; tFa.className = m === "fa" ? "on" : ""; tBo.className = m === "bo" ? "on" : ""; elenco(); }
+    function schedaOn(m) { modo = m; tDc.className = m === "dc" ? "on" : ""; tTu.className = m === "tu" ? "on" : ""; tFa.className = m === "fa" ? "on" : ""; tBo.className = m === "bo" ? "on" : ""; tCa.className = "fa-ed-caso" + (m === "ca" ? " on" : ""); elenco(); }
+    tCa.onclick = function () { schedaOn("ca"); var l = visibili(); if (l.length && l.indexOf(sel) < 0) { sel = l[0]; disegnaScheda(); } };
     tDc.onclick = function () { schedaOn("dc"); };
     tTu.onclick = function () { schedaOn("tu"); };
     tFa.onclick = function () { schedaOn("fa"); };
@@ -7690,9 +7694,15 @@
     cerca.oninput = function () { filtro = cerca.value.trim().toLowerCase(); if (filtro && modo === "dc" && !ovunque) tTu.onclick(); else elenco(); };
     function prossimo() {   // il prossimo della lista che si sta guardando (Tutti o Da controllare), dopo quello di adesso
       var l = modo === "dc" ? daControllare() : visibili(), i = sel ? tutti.indexOf(sel) : -1;
+      if (modo === "ca") { var j = l.indexOf(sel); return l[j + 1] || l[0] || sel; }   // (❓ nell'ordine dell'elenco: stagione e squadra)
       return l.filter(function (c) { return tutti.indexOf(c) > i; })[0] || (ovunque && (modo === "dc" || modo === "bo") ? l[0] : null) || sel;
     }
-    function visibili() { return tutti.filter(function (c) { return ovunque ? passaFiltri(c) && inLista(c) && (modo !== "fa" || fatta(c)) && (modo !== "bo" || daBot(c)) :!filtro || (c.nome + " " + c.sq).toLowerCase().indexOf(filtro) >= 0; }); }
+    function ordineCaso(l) {   // ❓ per stagione (dalla più recente: «Oggi» prima) e squadra, poi dal più importante
+      var st = ["Oggi"].concat(ELENCO_STAGIONI.slice().sort().reverse());
+      return l.sort(function (a, b) { return st.indexOf(a.stagioni[0]) - st.indexOf(b.stagioni[0]) || (a.sq < b.sq ? -1 : a.sq > b.sq ? 1 : 0) || b.q - a.q; });
+    }
+    function visibili() { if (ovunque && modo === "ca") return ordineCaso(tutti.filter(function (c) { return aCaso(c) && passaFiltri(c); }));
+      return tutti.filter(function (c) { return ovunque ? passaFiltri(c) && inLista(c) && (modo !== "fa" || fatta(c)) && (modo !== "bo" || daBot(c)) :!filtro || (c.nome + " " + c.sq).toLowerCase().indexOf(filtro) >= 0; }); }
     function scegli(c) { sel = c; disegnaScheda(); elenco(); }
     // 🧑 (16 nov 2026) si salva sul calciatore (fc<numero>: vale in tutte le stagioni) o, con «📅 Solo nel …», solo per quest'anno
     function chiaveSalva() { var pid = personaDi(sel.k); return pid ? (soloAnno && STAG_ATT ? pid + "|" + STAG_ATT : pid) : sel.k; }
@@ -7749,13 +7759,16 @@
         var tl = tutti.filter(inLista), nF = tl.filter(fatta).length; conta.textContent = "fatte " + cifreA(nF) + " su " + cifreA(tl.length);   // (📋 nella lista che guardi)
         for (var q in bListe) { var lq = tutti.filter(function (c) { return q === "t" || LISTE[q][c.pid]; }); bListe[q].textContent = bListe[q]._t + " · " + cifreA(lq.filter(fatta).length) + "/" + cifreA(lq.length); }
         tDc.textContent = "Da fare · " + cifreA(dc.length); tFa.textContent = "Fatte · " + cifreA(nF); tTu.textContent = "Tutti · " + cifreA(tl.length); tBo.textContent = "📷 Da controllare · " + cifreA(tl.filter(daBot).length);
+        var nCa = tutti.filter(aCaso).length; tCa.textContent = "❓ A caso · " + cifreA(nCa); if (modo === "ca") conta.textContent = "❓ " + cifreA(nCa) + " da fare";
       } else { tDc.textContent = "Da controllare · " + dc.length; tTu.textContent = "Tutti · " + tutti.length; }
       var l = modo === "dc" ? dc : visibili(), sez = false;
       if (l.length > MAX_RIGHE) { var resto = l.length - MAX_RIGHE; l = l.slice(0, MAX_RIGHE); setTimeout(function () { lista.appendChild(nd("div", "fa-ed-sez", "… e altri " + cifreA(resto) + ": usa la ricerca o i filtri")); }, 0); }
+      var gr = "";
       l.forEach(function (c) {
+        if (modo === "ca" && ovunque) { var g = c.stagioni[0] + " · " + c.sq; if (g !== gr) { gr = g; lista.appendChild(nd("div", "fa-ed-sez", g)); } }   // ❓ (le stagioni e le squadre)
         if (c.campo && !sez) { sez = true; lista.appendChild(nd("div", "fa-ed-sez", "➕ Giocatori aggiunti solo per il campo")); }   // (11 nov 2026: mai all'asta, solo in campo con faccia e numero)
         var r = nd("button", "fa-ed-r" + (c === sel ? " on" : "")), cv = nd("canvas"), a = aspettoVero(c.k); cv.setAttribute("width", 34); cv.style.width = cv.style.height = "34px";
-        r.appendChild(cv); r.appendChild(nd("b", "", c.nome)); r.appendChild(nd("span", "", (ovunque && fSq ? fSq : c.sq) + " · " + c.q + (a.dc && !ovunque ? " · da controllare" : "") + (ovunque && !fatta(c) && c._foto ? (c._foto === "bot" ? " · 🤖" : " · 📷") : "")));
+        r.appendChild(cv); r.appendChild(nd("b", "", c.nome)); r.appendChild(nd("span", "", (ovunque && fSq ? fSq : c.sq) + " · " + c.q + (a.dc && !ovunque ? " · da controllare" : "") + (ovunque && !fatta(c) && c._foto ? (c._foto === "bot" ? " · 🤖" : " · 📷") : "") + (ovunque && aCaso(c) ? (c._noFoto ? " · 📷 nessuna foto libera" : " · ❓ a caso") : "")));
         r.onclick = function () { scegli(c); R.scrollTop = 0; }; lista.appendChild(r);
         disegnaTestina(cv, a, true);
       });
