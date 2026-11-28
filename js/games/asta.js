@@ -13502,7 +13502,7 @@
       ".lb-foglio{position:absolute;inset:0;border-radius:5px 14px 14px 5px;overflow:hidden;transform-origin:0 50%;backface-visibility:hidden;-webkit-backface-visibility:hidden;will-change:transform;background:#0d1022;box-shadow:0 18px 30px -16px #000;contain:layout paint}",
       ".lb-sf{position:absolute;inset:0;width:100%;height:100%;display:block}",
       ".lb-cont{position:absolute;inset:0;display:flex;flex-direction:column;padding:10px 10px 0 14px}",
-      ".lb-posto{position:absolute;inset:0;border-radius:7px;border:1.2px dashed rgba(255,255,255,.16);display:flex;flex-direction:column;align-items:center;justify-content:center}.lb-posto .n{font-weight:800;font-size:calc(var(--fw,90px)*.2);color:rgba(255,255,255,.25)}.lb-posto .ru{font-size:calc(var(--fw,90px)*.085 + 2px);font-weight:700;color:rgba(255,255,255,.22)}",
+      ".lb-posto{position:absolute;inset:0;border-radius:7px;border:1px dashed rgba(255,255,255,.07);display:flex;flex-direction:column;align-items:center;justify-content:center}.lb-posto .n{font-weight:800;font-size:calc(var(--fw,90px)*.2);color:rgba(255,255,255,.25)}.lb-posto .ru{font-size:calc(var(--fw,90px)*.085 + 2px);font-weight:700;color:rgba(255,255,255,.22)}",
       // la riga sottile in alto (al posto del titolo, della riga sotto e delle linguette): ‹, lo scudetto, la squadra, il conto
       ".lb>.testa,.lb .testa{display:none}.lb-riga{flex:0 0 auto;display:flex;align-items:center;gap:8px;height:40px;margin:0 -2px 6px;min-width:0}",
       ".lb-riga .ind{font:inherit;font-weight:900;font-size:1.3rem;width:36px;height:36px;border-radius:50%;border:1px solid var(--o-filo);background:var(--o-carta);color:var(--o-testo);flex:0 0 auto}",
@@ -13515,6 +13515,8 @@
       ".lb-conto{display:flex;align-items:center;gap:8px;margin-top:5px;min-width:0}.lb-conto .n{font-weight:900;font-size:1rem;color:#fff;white-space:nowrap}",
       ".lb-barra{flex:1;height:7px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden;max-width:150px;min-width:30px}.lb-barra i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#f2c230,#fff0a8)}",
       ".lb-chip{font-size:.72rem;font-weight:900;padding:3px 9px;border-radius:99px;white-space:nowrap;color:#0b0f26}",
+      ".lb-cornice{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:6;opacity:0;transition:opacity .6s;box-shadow:inset 0 0 0 3px #f2c230,inset 0 0 0 5px rgba(90,58,6,.55),inset 0 0 22px rgba(255,216,74,.55)}.lb-pag.completa .lb-cornice{opacity:1}",
+      ".lb-chip.tutta{box-shadow:0 0 14px rgba(255,216,74,.85),0 0 0 1.5px #fff3b8}",
       ".lb-chip.manca{background:linear-gradient(180deg,#fff3b8,#f2c230);box-shadow:0 0 12px rgba(242,194,48,.55)}.lb-chip.tutta{background:linear-gradient(180deg,#fff3b8,#f2c230 50%,#c99a26)}",
       ".lb-t2{display:flex;align-items:center;gap:9px;margin:0 0 6px;min-width:0}.lb-t2 .scudetto{width:28px;height:auto;flex:0 0 auto}",
       ".lb-t2 b{font-family:var(--o-tit);font-weight:800;font-size:1.1rem;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.lb-t2 .lb-conto{margin:0 0 0 auto}",
@@ -13861,13 +13863,15 @@
     var C = window.SGCuore, el = C.el, l = LIB.ab.per[sq] || [], lista = l.slice((pag - 1) * LIB_PAG, pag * LIB_PAG), b0 = LIB.ab.squadre.indexOf(sq) * ALB_POSTI + (pag - 1) * LIB_PAG;
     for (var p = lista.length; p < LIB_PAG; p++) lista.push({ libero: true, num: b0 + p + 1 });   // (i posti liberi: per chi arriverà)
     var f = el("div", { class: "lb-foglio lb-pag" }), cont = el("div", { class: "lb-cont" }); f.appendChild(el("canvas", { class: "lb-sf" })); f.appendChild(cont); f.__sq = sq; f.__pag = pag; f.__lista = lista;
+    var oc = albConta(l); if (oc.n && oc.p === oc.n && !libNuove(l).length) f.classList.add("completa");   // 🏆 (29 nov 2026) la cornice d'oro: la squadra è completa (le nuove la accendono con la festa)
+    f.appendChild(el("div", { class: "lb-cornice" }));
     cont.appendChild(libGriglia(lista));   // (squadra, scudetto e conto stanno nella riga sottile in alto: libBarra) f.appendChild(el("div", { class: "lb-pn", text: String(i + 1) }));
     return f;
   }
   function libGriglia(lista) {
     var el = window.SGCuore.el, gr = el("div", { class: "lb-gr" });
     lista.forEach(function (c) {
-      if (c.libero) { var pl = el("div", { class: "lb-cas libero" }, [ el("div", { class: "lb-posto" }, [ el("div", { class: "n", text: c.num }), el("div", { class: "ru", text: "posto libero" }) ]) ]); pl.__c = c; gr.appendChild(pl); return; }
+      if (c.libero) { var pl = el("div", { class: "lb-cas libero" }, [ el("div", { class: "lb-posto" }) ]); pl.__c = c; gr.appendChild(pl); return; }   // (29 nov 2026: appena accennato, senza numero né scritta, finché non arriva un calciatore)
       var cas = el("button", { class: "lb-cas" + (c.esce ? " esce" : "") + (albCopie(c.x) >= 2 ? " doppia" : "") }); cas.__c = c;
       if (c.x && LIB.viste.f[c.id]) cas.appendChild(libFig(c));
       else cas.appendChild(libVuoto(c));
@@ -13886,7 +13890,7 @@
     if (c.esce) f.appendChild(el("span", { class: "lb-raro", text: "💎 Introvabile" })); else if (c.sale) f.appendChild(el("span", { class: "lb-ora " + c.sale, text: "⬆ ora è " + c.sale })); return f; }
   function libVuoto(c) { var el = window.SGCuore.el; return el("div", { class: "lb-vuoto" + (c.esce ? " chiuso" : ""), html: LIB_SAGOMA }, [ el("div", { class: "n", text: c.num }), el("div", { class: "nm", text: c.nome }), el("div", { class: "ru", text: c.esce || c.met === "rara" ? "📦 Solo nei pacchetti" : c.agg ? c.squadra : ALB_SIGLA[c.ruolo] }) ]); }
   function libAdatta(f) {   // la pagina intera nello spazio, con le figurine più grandi che ci stanno (e il prato libero in fondo; 16 posti = 4×4)
-    var gr = f.querySelector(".lb-gr"), n = gr.children.length, gap = 7, gw = gr.clientWidth || f.clientWidth - 28;
+    var gr = f.querySelector(".lb-gr"), n = gr.children.length, gap = 7; gr.style.marginTop = ""; gr.style.rowGap = ""; var gw = gr.clientWidth || f.clientWidth - 28;
     var prato = Math.max(26, f.clientHeight * 0.06), gh = f.clientHeight - gr.offsetTop - prato - 16, best = null;
     for (var col = Math.min(Math.max(n, 1), 2); col <= 6; col++) {
       if (col < 3 && n > 4) continue; if (n === LIB_PAG && col !== LIB_COL) continue;   // (16 posti: sempre 4 per riga; 15: 3 per riga)
@@ -13895,6 +13899,10 @@
       if (!best || w > best.w + 0.5) best = { col: col, w: Math.max(20, Math.floor(w)) };
     }
     gr.style.gridTemplateColumns = "repeat(" + best.col + "," + best.w + "px)"; gr.style.setProperty("--fw", best.w + "px"); gr.style.setProperty("--gap", gap + "px");
+    // (29 nov 2026: sui telefoni alti le figurine sono già larghe quanto possono e sotto restava un buco fino al prato: le righe si allargano
+    //  un poco, poi la griglia scende verso il centro dello spazio)
+    var rr = Math.ceil(n / best.col), alto = rr * best.w * 1.36 + (rr - 1) * gap, resto = gh - alto;
+    if (resto > 8) { var rg = gap + Math.min(16, resto / (rr + 1)); gr.style.rowGap = rg.toFixed(1) + "px"; alto += (rr - 1) * (rg - gap); gr.style.marginTop = Math.max(0, Math.floor((gh - alto) * 0.35)) + "px"; }   // (un po' più su del centro: sotto si vede la città)
     f.__top = gr.offsetTop; f.__prato = prato;
   }
   function libFoglioInd() {
@@ -14100,6 +14108,7 @@
     }).then(function () { lampo.remove(); pill.remove(); stelle.forEach(function (x) { x.remove(); }); var o = cas.querySelector(".lb-ora"); if (o) o.remove(); });
   }
   function libCompleta(f) {
+    [].forEach.call(LIB.scena.querySelectorAll(".lb-pag"), function (g) { if (g.__sq === f.__sq) g.classList.add("completa"); });   // 🏆 (la cornice d'oro si accende)
     var el = window.SGCuore.el, sq = f.__sq, T = SF() ? SF().tinte(sq) : { c1: "#f2c230", c2: "#fff", l1: "#f2c230" }, rgba = SF() ? SF().rgba : function () { return "rgba(242,194,48,.4)"; };
     var sc = LIB.su ? LIB.su.querySelector(".sc") : null, vec = sc && sc.querySelector("svg");
     var festa = el("div", { class: "lb-festa", style: "background:radial-gradient(120% 70% at 50% 18%," + rgba(T.l1, 0.55) + "," + rgba(T.l1, 0.12) + " 45%,rgba(0,0,0,0) 75%)" }); f.appendChild(festa);

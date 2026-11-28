@@ -149,6 +149,7 @@ Grandezza: 🟢 piccola · 🟡 media · 🔴 grande.
 ## 5. 🗒️ Diario delle chat
 
 Una riga per ogni lavoro finito, salvato o pubblicato. **La più recente in cima.** Formato: `data ora · chat · salvato / PUBBLICATO · cosa (novità vN) · salvataggio`.
+- 29 nov 2026 notte (7) · 📖 Album · salvato, NON pubblicato · la pagina della squadra: griglia più al centro sui telefoni alti, posti liberi appena accennati, cornice d'oro della squadra completa; foglio 25 (Napoli completo) rifatto · ramo album-libro
 - 29 nov 2026 notte (6) · 📖 Album · salvato, NON pubblicato · il petto del mezzo busto come nelle maglie vere (scudetto a destra per chi guarda, numero a sinistra, controllate le 7 pose); fogli 23-24 · ramo album-libro
 - 29 nov 2026 notte (5) · 📖 Album · salvato, NON pubblicato · editor delle facce: il filtro «❓ A caso» (per stagione e squadra, il conto, «📷 nessuna foto libera» per i 45 senza foto degli aiutanti); con le fatte a mano del 18 nov sono 12; prova sy6, sy1-sy5 OK; foglio 22 · ramo album-libro
 - 29 nov 2026 notte (4) · 📖 Album: il libro in tema stadio · salvato, NON pubblicato · le facce: il conto giusto (col file delle fatte a mano del 18 nov restano 13 calciatori senza niente in tutto l'album; copertine e pacchetti tutti fatti, 3 col Bot da confermare), le facce vere del 2017-18 ora valgono in tutte le stagioni (data/fanta-aspetto-pid.js: Kolarov, Fazio, Praet… uscivano a caso), Bani dal Bot (unico famoso senza niente); foglio 21 · ramo album-libro
