@@ -13357,16 +13357,7 @@
     s.classList.add("alb"); if (o.menu) s._menu = o.menu; if (o.tabs) o.tabs(s);
     return s;
   }
-  function albStemma(col) { return window.SGCuore.el("div", { class: "alb-stemma", style: "background:linear-gradient(90deg," + col[0] + " 50%," + (col[1] || col[0]) + " 50%)" }); }
-  function albTestata(l) {
-    var el = window.SGCuore.el, o = albConta(l), pc = Math.round(o.p * 100 / Math.max(1, o.n));
-    return el("div", { class: "alb-testa" }, [
-      el("div", { class: "alb-tot" }, [ el("b", { text: o.p + " / " + o.n }), el("span", { text: "figurine" }) ]),
-      el("div", { class: "alb-barra" }, [ el("i", { style: "width:" + pc + "%" }) ]),
-      el("div", { class: "alb-met" }, ["oro", "argento", "bronzo"].map(function (m) { return el("span", { class: m, text: { oro: "🥇", argento: "🥈", bronzo: "🥉" }[m] + " " + o[m][0] + "/" + o[m][1] }); }))
-    ]);
-  }
-  function apriAlbum(opz) { ALB.opz = opz || ALB.opz || {}; albStile(); albIndice(ALB.stag); }
+  function apriAlbum(opz) { ALB.opz = opz || ALB.opz || {}; albStile(); libro(ALB.stag, 0, true); }   // (📖 il libro: si apre dalla copertina)
   // ⏳ una stagione passata che il telefono non ha ancora: si scarica (come quando si gioca)
   function albPronta(stag, fn) {
     if (stagionePronta(stag)) return fn();
@@ -13379,52 +13370,463 @@
       s._piede.appendChild(C.el("button", { class: "btn btn-primario", text: "↻ Riprova", onclick: function () { albPronta(stag, fn); } }));
     });
   }
-  // l'album di una stagione: le squadre (si tocca una squadra per aprire la sua pagina)
-  function albIndice(stag) {
+  // l'album di una stagione: l'indice del libro; la pagina di una squadra: la sua prima pagina (28 nov 2026: il libro qui sotto)
+  function albIndice(stag) { libro(stag, 0); }
+  function albSquadra(stag, sq) { libro(stag, -1, false, sq); }
+  // =========================================================
+  // 📖🏟️ IL LIBRO DA SFOGLIARE «IN TEMA STADIO» (28 nov 2026, novità v463; il proprietario: «deve essere proprio una soddisfazione per
+  //  chi lo apre»; ha scelto la versione B «Stadio» sulle foto di D:/SG-album-prove/libro2, e «se il telefono si gira in orizzontale si
+  //  vedono tutte e due le pagine»). La copertina è lo stadio di notte: al tocco i riflettori si accendono uno dopo l'altro e il libro si
+  //  apre sull'indice (il campo visto dall'alto con gli scudetti, d'argento, d'oro a squadra completa). Ogni squadra ha DUE pagine: la 1ª
+  //  con la testata grande, la sua città e portieri e difensori; la 2ª con centrocampisti e attaccanti. Gli sfondi (js/album-sfondi.js)
+  //  si disegnano UNA volta quando la pagina nasce e restano fermi; le pagine vicine si preparano mentre guardi; le figurine una per
+  //  fotogramma. La pagina segue il dito (rotateY: solo transform e opacity), fruscia, si posa con un colpetto e un riflesso lucido.
+  //  La figurina presa da poco vola e si attacca la prima volta che la vedi; la squadra appena completata si accende coi coriandoli.
+  //  Cosa hai già visto sta sul telefono (sg-alb-viste-<profilo>): la prima volta tutto conta come già visto (niente voli di massa).
+  // =========================================================
+  var LIB = { stag: null, ab: null, pag: [], i: 0, nodi: {}, s: null, scena: null, giro: null, coda: [], raf: 0, prep: 0, ov: null, viste: null, dito: null, festa: 0 };
+  var LIB_RUOLI = { 1: ["P", "D"], 2: ["C", "A"] }, LIB_SEZ = { 1: "Portieri e difensori", 2: "Centrocampisti e attaccanti" };
+  var LIB_SAGOMA = '<svg viewBox="0 0 40 46" xmlns="http://www.w3.org/2000/svg"><circle cx="20" cy="14" r="9"/><path d="M3 46 C4 32 11 26.5 20 26.5 C29 26.5 36 32 37 46 Z"/></svg>';
+  var LIB_STELLA = '<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path d="M10 0 L12 8 L20 10 L12 12 L10 20 L8 12 L0 10 L8 8 Z" fill="#fff6cf"/></svg>';
+  function SF() { return window.L2S; }
+  function libStile() {
+    if (document.getElementById("lb-stile")) return;
+    var s = document.createElement("style"); s.id = "lb-stile";
+    s.textContent = [
+      ".lb .contenuto{display:flex;flex-direction:column}",
+      ".lb-scena{position:relative;flex:1;min-height:0;perspective:1500px;margin:0 -4px;touch-action:none;-webkit-user-select:none;user-select:none}",
+      ".lb-foglio{position:absolute;inset:0;border-radius:5px 14px 14px 5px;overflow:hidden;transform-origin:0 50%;backface-visibility:hidden;-webkit-backface-visibility:hidden;will-change:transform;background:#0d1022;box-shadow:0 18px 30px -16px #000;contain:layout paint}",
+      ".lb-sf{position:absolute;inset:0;width:100%;height:100%;display:block}",
+      ".lb-cont{position:absolute;inset:0;display:flex;flex-direction:column;padding:12px 12px 0 16px}",
+      ".lb-pn{position:absolute;bottom:5px;left:0;right:0;text-align:center;font-size:.7rem;font-weight:800;color:rgba(255,255,255,.75);text-shadow:0 1px 2px #000;pointer-events:none}",
+      ".lb-t1{display:flex;align-items:center;gap:12px;margin:2px 0 8px}.lb-t1 .scudetto{width:62px;height:auto;flex:0 0 auto;filter:drop-shadow(0 6px 8px rgba(0,0,0,.55))}",
+      ".lb-t1 .nm{min-width:0;flex:1}.lb-t1 b{display:block;font-family:var(--o-tit);font-weight:800;font-size:1.75rem;line-height:1.05;color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:.14em;margin-bottom:-.14em}",
+      ".lb-conto{display:flex;align-items:center;gap:8px;margin-top:5px;min-width:0}.lb-conto .n{font-weight:900;font-size:1rem;color:#fff;white-space:nowrap}",
+      ".lb-barra{flex:1;height:7px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden;max-width:150px;min-width:30px}.lb-barra i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#f2c230,#fff0a8)}",
+      ".lb-chip{font-size:.72rem;font-weight:900;padding:3px 9px;border-radius:99px;white-space:nowrap;color:#0b0f26}",
+      ".lb-chip.manca{background:linear-gradient(180deg,#fff3b8,#f2c230);box-shadow:0 0 12px rgba(242,194,48,.55)}.lb-chip.tutta{background:linear-gradient(180deg,#fff3b8,#f2c230 50%,#c99a26)}",
+      ".lb-t2{display:flex;align-items:center;gap:9px;margin:0 0 6px;min-width:0}.lb-t2 .scudetto{width:28px;height:auto;flex:0 0 auto}",
+      ".lb-t2 b{font-family:var(--o-tit);font-weight:800;font-size:1.1rem;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.lb-t2 .lb-conto{margin:0 0 0 auto}",
+      "@media (max-height:700px){.lb-t1{margin:0 0 5px;gap:10px}.lb-t1 .scudetto{width:50px}.lb-t1 b{font-size:1.5rem}.lb-sez{margin:0 0 6px}.lb-cont{padding-top:9px}}",
+      ".lb-sez{display:flex;align-items:center;gap:8px;font-size:.68rem;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#ffe28a;margin:2px 0 8px;text-shadow:0 1px 3px rgba(0,0,0,.7)}",
+      ".lb-sez:after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(242,194,48,.6),rgba(242,194,48,0))}",
+      ".lb-gr{display:grid;gap:var(--gap,9px);justify-content:center;align-content:start}",
+      ".lb-cas{position:relative;aspect-ratio:1/1.36;min-width:0;font:inherit;padding:0;border:0;background:none;color:inherit}",
+      ".lb-vuoto{position:absolute;inset:0;border-radius:7px;border:1.6px dashed rgba(242,194,48,.62);background:radial-gradient(110% 80% at 50% 30%,rgba(255,255,255,.08),rgba(4,6,18,.62));display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}",
+      ".lb-vuoto svg{width:52%;height:auto;fill:rgba(255,255,255,.13);position:absolute;top:22%}",
+      ".lb-vuoto .n{position:relative;font-family:var(--o-tit);font-weight:800;font-size:calc(var(--fw,90px)*.3);line-height:1;color:#ffd979;text-shadow:0 2px 6px rgba(0,0,0,.8);margin-top:8%}",
+      ".lb-vuoto .nm{position:relative;font-size:calc(var(--fw,90px)*.118 + 2px);font-weight:800;color:#fff;text-shadow:0 1px 3px #000;text-align:center;padding:0 3px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3%;padding-bottom:.2em;margin-bottom:-.2em}",
+      ".lb-vuoto .ru{position:relative;font-size:calc(var(--fw,90px)*.085 + 2px);font-weight:900;letter-spacing:.08em;color:rgba(255,226,138,.75)}",
+      ".lb-fig{position:absolute;inset:-1.5%;transform:rotate(var(--r,0deg))}.lb-fig canvas{width:100%;height:100%;display:block;filter:drop-shadow(1px 4px 3px rgba(0,0,0,.6))}",
+      ".lb-fig .alb-attesa{border-radius:7px}",
+      ".lb-lc{position:absolute;inset:2.5%;border-radius:6%/4.5%;overflow:hidden;pointer-events:none}.lb-lc i{position:absolute;top:-20%;bottom:-20%;left:0;width:45%;opacity:0;background:linear-gradient(100deg,rgba(255,255,255,0),rgba(255,255,255,.55) 45%,rgba(255,255,255,.8) 50%,rgba(255,255,255,.55) 55%,rgba(255,255,255,0));transform:translateX(-120%) skewX(-12deg);will-change:transform,opacity}",
+      ".lb-lc.oro i{background:linear-gradient(100deg,rgba(255,240,170,0),rgba(255,236,150,.75) 45%,rgba(255,255,230,1) 50%,rgba(255,236,150,.75) 55%,rgba(255,240,170,0))}",
+      ".lb-fum{position:absolute;z-index:8;left:50%;bottom:calc(100% + 8px);width:150px;margin-left:-75px;padding:8px 10px;border-radius:12px;background:#151a2e;border:1px solid rgba(242,194,48,.55);color:#fff;font-size:.74rem;font-weight:700;line-height:1.25;text-align:center;box-shadow:0 10px 20px -8px #000;pointer-events:none}",
+      ".lb-fum.giu{bottom:auto;top:calc(100% + 8px)}.lb-fum b{display:block;color:#ffd979;font-size:.8rem;margin-bottom:2px}",
+      ".lb-cas.batte .lb-vuoto{border-color:#ffd979;box-shadow:0 0 0 2px rgba(255,217,121,.25),inset 0 0 18px rgba(255,217,121,.25)}",
+      ".lb-retro{position:absolute;inset:0;transform:rotateY(180deg);backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:14px 5px 5px 14px;overflow:hidden}",
+      ".lb-ombra{position:absolute;inset:0;background:linear-gradient(270deg,rgba(0,0,0,.65),rgba(0,0,0,.15) 40%,rgba(255,255,255,.06) 70%,rgba(0,0,0,0));opacity:0;pointer-events:none;z-index:6;will-change:opacity}",
+      ".lb-sotto{position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,.7),rgba(0,0,0,.35));opacity:0;pointer-events:none;z-index:6;will-change:opacity}",
+      ".lb-fr{position:absolute;z-index:7;bottom:4px;width:34px;height:30px;border-radius:99px;border:1px solid rgba(255,255,255,.25);background:rgba(6,8,22,.55);color:#fff;font:inherit;font-weight:900;font-size:1.05rem;line-height:1}.lb-fr.su{left:8px}.lb-fr.giu{right:8px}",
+      // la copertina
+      ".lb-cop .lb-luce{position:absolute;inset:0;width:100%;height:100%;opacity:0}",
+      ".lb-cop .tx{position:absolute;left:0;right:0;top:8%;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;z-index:3}",
+      ".lb-cop .an{font-family:var(--o-tit);font-weight:800;letter-spacing:.22em;font-size:.72rem;color:#ffe28a}",
+      ".lb-cop .ti{font-family:var(--o-tit);font-weight:800;font-size:3rem;line-height:1;background:linear-gradient(180deg,#fffbe0,#ffd84a 40%,#c98a1a 75%,#ffe9a0);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 rgba(90,50,0,.6));padding-bottom:.1em}",
+      ".lb-cop .st{font-weight:800;font-size:1.05rem;color:#e8ecff;letter-spacing:.06em}",
+      ".lb-cop .pc{font-weight:900;font-size:.92rem;color:#0b0f26;background:linear-gradient(180deg,#fff3b8,#f2c230);border-radius:99px;padding:4px 14px;margin-top:6px}",
+      ".lb-cop .met{display:flex;gap:6px;margin-top:4px}.lb-cop .met span{font-size:.74rem;font-weight:800;padding:2px 8px;border-radius:99px;background:rgba(6,8,22,.6);color:#e8ecff}",
+      ".lb-cop .scaf{font:inherit;font-weight:800;font-size:.8rem;color:#fff;background:rgba(6,8,22,.6);border:1px solid rgba(242,194,48,.55);border-radius:99px;padding:5px 12px;margin-top:6px}",
+      ".lb-cop .tc{position:absolute;left:0;right:0;bottom:4.5%;text-align:center;font-size:.85rem;font-weight:800;color:#fff;z-index:3;text-shadow:0 1px 4px #000;pointer-events:none}",
+      ".lb-cop .cor{position:absolute;inset:10px 10px 10px 18px;border:1.5px solid rgba(242,194,48,.7);border-radius:8px;z-index:2;pointer-events:none}",
+      // l'indice
+      ".lb-ind .lb-cont{padding:14px 14px 10px 18px}",
+      ".lb-it{display:flex;align-items:center;gap:10px;margin:0 0 8px;padding:6px 10px;border-radius:12px;background:rgba(6,8,22,.72)}.lb-it b{font-family:var(--o-tit);font-weight:800;font-size:1.25rem;color:#fff}",
+      ".lb-it .lb-conto{margin:0;flex:1}.lb-it button{font:inherit;font-size:.78rem;font-weight:800;color:#fff;background:none;border:1px solid rgba(242,194,48,.5);border-radius:99px;padding:3px 9px;white-space:nowrap}",
+      ".lb-ig{display:grid;grid-template-columns:repeat(var(--col,4),minmax(0,1fr));gap:6px 4px;flex:1;align-content:space-evenly}",
+      ".lb-ig button{position:relative;font:inherit;border:0;background:none;color:#fff;display:flex;flex-direction:column;align-items:center;gap:2px;padding:0;min-width:0}",
+      ".lb-ig .scudetto{width:var(--sw,40px);height:auto;filter:drop-shadow(0 4px 4px rgba(0,0,0,.5))}",
+      ".lb-ig .lab{display:flex;flex-direction:column;align-items:center;max-width:100%;background:rgba(6,8,22,.78);border-radius:8px;padding:1px 6px 2px}",
+      ".lb-ig .lab b{font-size:.7rem;font-weight:800;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-bottom:.15em;margin-bottom:-.15em}.lb-ig .lab i{font-style:normal;font-size:.62rem;font-weight:800;color:#c9cfe6}",
+      ".lb-ig .lab i.tutta{color:#ffd979}.lb-ig .lab i.pg{font-size:.56rem;color:#ffe28a;opacity:.85}.lb-ig.compatto .lab i.pg{display:none}.lb-ig.compatto .lab{padding:1px 4px 2px}.lb-ig.compatto .lab b{font-size:.62rem;letter-spacing:-.01em}",
+      ".lb-ig .nuove{position:absolute;top:-4px;right:2px;font-size:.6rem;font-weight:900;color:#0b0f26;background:linear-gradient(180deg,#fff3b8,#f2c230);border-radius:99px;padding:1px 5px;box-shadow:0 0 8px rgba(242,194,48,.7)}",
+      // la figurina che vola, il lampo, le stelline, la squadra completa
+      ".lb-vola{position:fixed;z-index:60;pointer-events:none;will-change:transform;transform-origin:0 0}.lb-vola canvas{width:100%;height:auto;display:block;filter:drop-shadow(0 18px 22px rgba(0,0,0,.55))}",
+      ".lb-lampo{position:absolute;inset:-25%;border-radius:50%;background:radial-gradient(circle,rgba(255,236,160,.9),rgba(255,214,90,.35) 40%,rgba(255,214,90,0) 70%);opacity:0;pointer-events:none;z-index:4}",
+      ".lb-stella{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;opacity:0;pointer-events:none;z-index:5}.lb-stella svg{width:100%;height:100%;display:block}",
+      ".lb-festa{position:absolute;inset:0;opacity:0;pointer-events:none;z-index:4}",
+      ".lb-cori{position:absolute;top:-12px;width:7px;height:11px;border-radius:2px;opacity:0;pointer-events:none;z-index:7}",
+      ".lb-banda{position:absolute;left:50%;top:44%;z-index:8;transform:translate(-50%,-50%) scale(.6);opacity:0;font-family:var(--o-tit);font-weight:800;font-size:1.25rem;color:#0b0f26;background:linear-gradient(180deg,#fff7cc,#f2c230 55%,#c99a26);padding:9px 20px;border-radius:99px;white-space:nowrap;box-shadow:0 12px 30px -8px rgba(0,0,0,.7),0 0 30px rgba(255,210,80,.55);pointer-events:none}",
+      // col telefono girato: le due pagine affiancate
+      ".lb-aperto{position:fixed;inset:0;z-index:70;background:#060816;display:flex;flex-direction:column}",
+      ".lb-aperto .bar{flex:0 0 auto;display:flex;align-items:center;gap:10px;height:40px;padding:0 10px;color:#fff;font-weight:800}.lb-aperto .bar span{color:#a6acc8;font-weight:700;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}",
+      ".lb-aperto .bar button{font:inherit;font-weight:900;color:#fff;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:99px;min-width:36px;height:30px}.lb-aperto .bar .vai{margin-left:auto}",
+      ".lb-aperto .due{flex:1;min-height:0;display:flex;padding:0 12px 10px;position:relative;touch-action:none;will-change:transform,opacity}",
+      ".lb-aperto .due>.lb-foglio{position:relative;inset:auto;flex:1}.lb-aperto .due>.lb-foglio:first-child:not(:last-child){border-radius:14px 4px 4px 14px}",
+      ".lb-aperto ~ .alb-velo{z-index:80}",
+      ".lb-aperto .dorso{position:absolute;left:50%;top:0;bottom:10px;width:30px;margin-left:-15px;background:linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,.55) 45%,rgba(255,255,255,.08) 50%,rgba(0,0,0,.45) 55%,rgba(0,0,0,0));pointer-events:none;z-index:5}"
+    ].join("\n");
+    document.head.appendChild(s);
+  }
+  // ---- quello che hai già visto (per far volare solo le figurine nuove e festeggiare solo le squadre appena complete) ----
+  function libChiaveViste() { var u = window.SGNube && SGNube.utente ? SGNube.utente() : null; return "sg-alb-viste-" + (u && u.uid ? u.uid : "x"); }
+  function libViste(stag, ab) {
+    var tutte = {}; try { tutte = JSON.parse(localStorage.getItem(libChiaveViste()) || "{}") || {}; } catch (e) {}
+    var k = chiaveStag(stag), v = tutte[k];
+    if (!v) {   // la prima volta: tutto quello che c'è già conta come visto
+      v = { f: {}, c: {} }; ab.tutte.forEach(function (c) { if (c.x) v.f[c.id] = 1; }); ab.squadre.forEach(function (sq) { var o = albConta(ab.per[sq]); if (o.p === o.n) v.c[sq] = 1; });
+      tutte[k] = v; try { localStorage.setItem(libChiaveViste(), JSON.stringify(tutte)); } catch (e) {}
+    }
+    return v;
+  }
+  function libSalvaViste() { if (!LIB.viste) return; var tutte = {}; try { tutte = JSON.parse(localStorage.getItem(libChiaveViste()) || "{}") || {}; } catch (e) {} tutte[chiaveStag(LIB.stag)] = LIB.viste; try { localStorage.setItem(libChiaveViste(), JSON.stringify(tutte)); } catch (e) {} }
+  function libNuove(l) { return l.filter(function (c) { return c.x && !LIB.viste.f[c.id]; }); }
+  // ---- le pagine: 0 = l'indice, poi due per squadra ----
+  function libPagine(ab) { var p = [{ t: "ind" }]; ab.squadre.forEach(function (sq) { p.push({ t: "sq", sq: sq, p: 1 }, { t: "sq", sq: sq, p: 2 }); }); return p; }
+  function libDi(sq) { for (var i = 0; i < LIB.pag.length; i++) if (LIB.pag[i].sq === sq) return i; return 0; }
+  function libOrizz() { return window.innerWidth > window.innerHeight && window.innerHeight < 560 && window.innerWidth >= 560; }
+  function libBordo(l) { var o = albConta(l); return o.p === o.n ? "oro" : "argento"; }
+  function libConto(l, piccolo) {
+    var el = window.SGCuore.el, o = albConta(l), kids = [ el("span", { class: "n", text: o.p + " / " + o.n }) ];
+    if (!piccolo) kids.push(el("div", { class: "lb-barra" }, [ el("i", { style: "width:" + Math.round(o.p / Math.max(1, o.n) * 100) + "%" }) ]));
+    if (o.n - o.p === 1) kids.push(el("span", { class: "lb-chip manca", text: "Ne manca 1!" }));
+    else if (o.n && o.p === o.n) kids.push(el("span", { class: "lb-chip tutta", text: "✓ Completa" }));
+    return el("div", { class: "lb-conto" }, kids);
+  }
+  function libScudetto(sq, l) { return window.SG_SCUDETTI ? SG_SCUDETTI.svg(sq, { bordo: libBordo(l) }) : ""; }
+  // la schermata del libro (con le linguette dei Trofei, se si arriva da lì)
+  function libSchermata() {
+    var C = window.SGCuore, s = albSchermata("Mini Asta · " + albNome(LIB.stag));
+    s.classList.remove("alb"); s.classList.add("lb");
+    var sc = C.el("div", { class: "lb-scena" }); s._contenuto.appendChild(sc);
+    LIB.s = s; LIB.scena = sc; LIB.nodi = {}; LIB.coda = []; LIB.giro = null; LIB.festa++;
+    libDito(sc);
+    return s;
+  }
+  // l'album di una stagione: con la copertina (cop) o dritto alla pagina i
+  function libro(stag, i, cop, sq) {
     albPronta(stag, function () {
-      ALB.stag = stag;
-      var C = window.SGCuore, el = C.el, ab = albLista(stag), s = albSchermata("Mini Asta · " + albNome(stag));
-      s._contenuto.appendChild(el("button", { class: "alb-stag", onclick: albScaffale }, [ el("b", { text: "📚 " + albNome(stag) }), el("span", { text: "Tutti gli album ›" }) ]));
-      s._contenuto.appendChild(albTestata(ab.tutte));
-      s._contenuto.appendChild(el("div", { class: "alb-sq" }, ab.squadre.map(function (sq) {
-        var o = albConta(ab.per[sq]);
-        return el("button", { class: "alb-tess" + (o.p === o.n ? " piena" : ""), onclick: function () { albSquadra(stag, sq); } }, [ albStemma(ab.colori[sq]),
-          el("div", { class: "tx" }, [ el("b", { text: sq }), el("span", { text: o.p + " / " + o.n }), el("div", { class: "mini" }, [ el("i", { style: "width:" + Math.round(o.p * 100 / o.n) + "%" }) ]) ]) ]);
-      })));
-      C.mostra(s);
+      libStile(); ALB.stag = LIB.stag = stag; LIB.ab = albLista(stag); LIB.pag = libPagine(LIB.ab); LIB.viste = libViste(stag, LIB.ab); if (sq) i = libDi(sq);
+      var s = libSchermata(); window.SGCuore.mostra(s);
+      if (cop) libCopertina(); else libMostra(i || 0, true);
     });
   }
-  // la pagina di una squadra: le figurine in ordine di numero; quelle prese si disegnano quando si vedono, una per fotogramma
-  function albSquadra(stag, sq) {
-    albPronta(stag, function () {
-      var C = window.SGCuore, el = C.el, ab = albLista(stag), l = ab.per[sq] || [], o = albConta(l), col = ab.colori[sq];
-      var s = albSchermata(sq + " · " + albNome(stag), function () { albIndice(stag); });
-      var gr = el("div", { class: "alb-gr", style: "--col:" + (window.innerWidth >= 400 ? 4 : 3) });
-      if (ALB.oss) ALB.oss.disconnect(); ALB.coda = [];
-      ALB.oss = window.IntersectionObserver ? new IntersectionObserver(function (v) { v.forEach(function (e) { if (e.isIntersecting) { ALB.oss.unobserve(e.target); albAccoda(e.target); } }); }, { rootMargin: "160px" }) : null;
-      l.forEach(function (c) {
-        var b = el("button", { class: "alb-slot", onclick: function () { albScheda(c); } }); b.__c = c;
-        if (c.x) { b.appendChild(el("div", { class: "alb-attesa" })); if (ALB.oss) ALB.oss.observe(b); else albAccoda(b); }
-        else b.appendChild(el("div", { class: "alb-vuota", html: ALB_OMBRA }, [ el("div", { class: "num", text: c.num }), el("div", { class: "nm", text: c.nome }), el("div", { class: "ru", text: ALB_SIGLA[c.ruolo] }) ]));
-        gr.appendChild(b);
-      });
-      s._contenuto.appendChild(el("div", { class: "alb-pag", style: "background:linear-gradient(180deg," + col[0] + "88,rgba(13,16,32,.2) 120px),var(--o-carta)" }, [
-        el("div", { class: "alb-pag-t" }, [ albStemma(col), el("b", { text: sq }), el("span", { text: o.p + "/" + o.n }) ]), gr ]));
-      C.mostra(s);
+  // ---- la copertina: lo stadio di notte; al tocco i riflettori si accendono uno dopo l'altro e il libro si apre ----
+  function libCopertina() {
+    var C = window.SGCuore, el = C.el, ab = LIB.ab, o = albConta(ab.tutte), f = el("div", { class: "lb-foglio lb-cop" }), base = el("canvas", { class: "lb-sf" });
+    f.appendChild(base);
+    var luci = [0, 1, 2, 3, "campo"].map(function () { var c = el("canvas", { class: "lb-luce" }); f.appendChild(c); return c; });
+    f.appendChild(el("div", { class: "cor" }));
+    var scaf = el("button", { class: "scaf", text: "📚 Tutti gli album ›", onclick: function (e) { e.stopPropagation(); albScaffale(); } });
+    f.appendChild(el("div", { class: "tx" }, [ el("div", { class: "an", text: "ALBUM DELLA MINI ASTA" }), el("div", { class: "ti", text: "Serie A" }), el("div", { class: "st", text: LIB.stag ? LIB.stag : "di oggi" }),
+      el("div", { class: "pc", text: o.p + " / " + o.n + " figurine" }),
+      el("div", { class: "met" }, ["oro", "argento", "bronzo"].map(function (m) { return el("span", { text: { oro: "🥇", argento: "🥈", bronzo: "🥉" }[m] + " " + o[m][0] + "/" + o[m][1] }); })), scaf ]));
+    f.appendChild(el("div", { class: "tc", text: "👆 Tocca per accendere le luci" }));
+    LIB.scena.appendChild(f);
+    if (SF()) { SF().copertina(base, "B", null); luci.forEach(function (c, i) { SF().copertina(c, "B", i < 4 ? i : "campo"); }); }
+    var via = false, festa = LIB.festa;
+    f.addEventListener("click", function () {
+      if (via) { if (LIB.giro) LIB.giro.presto = true; return; } via = true;
+      try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {}
+      LIB.giro = { presto: false };
+      libTempo(1150, function (k) { luci.forEach(function (c, i) { var da = i < 4 ? 0.04 + [0, 2, 1, 3][i] * 0.17 : 0.7, v = Math.max(0, Math.min(1, (k - da) / 0.13)); c.style.opacity = v.toFixed(3); }); }).then(function () {
+        if (festa !== LIB.festa) return;
+        var ind = libNodo(0); ind.style.visibility = "visible"; ind.style.zIndex = 1;
+        var sotto = libOmbre(ind, "lb-sotto"); sotto.style.opacity = ".7"; f.style.zIndex = 5; libFruscio();
+        return libTempo(700, function (k) { var e = libMorbido(k); f.style.transform = "rotateY(" + (-178 * e).toFixed(2) + "deg)"; f.style.opacity = e > 0.56 ? "0" : "1"; sotto.style.opacity = (0.7 * (1 - e)).toFixed(3); });
+      }).then(function () { if (festa !== LIB.festa) return; f.remove(); LIB.giro = null; libMostra(0, true); });
     });
   }
-  function albAccoda(b) { ALB.coda.push(b); if (!ALB.raf) ALB.raf = requestAnimationFrame(albProssima); }
-  function albProssima() {
-    ALB.raf = 0; var b;
-    while ((b = ALB.coda.shift()) && !b.isConnected) {}
-    if (!b) return;
-    var c = b.__c, w = Math.max(40, Math.round(b.clientWidth || 100));
+  function libTempo(ms, fn) {   // un'animazione da 0 a 1 in ms (LIB.giro.presto: finisce subito)
+    return new Promise(function (ok) {
+      var t0 = performance.now();
+      (function passo(t) { var k = Math.min(1, (t - t0) / ms); if (LIB.giro && LIB.giro.presto) k = 1; fn(k); if (k >= 1) return ok(); requestAnimationFrame(passo); })(t0);
+    });
+  }
+  function libMorbido(k) { return k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; }
+  function libFruscio() {   // il rumore della carta: un soffio filtrato
     try {
-      var src = conStag(c.stag, function () { return figurinaCanvas(c, null, w, false); });
-      if (src) { var cv = document.createElement("canvas"); cv.width = src.width; cv.height = src.height; cv.getContext("2d").drawImage(src, 0, 0); var a = b.querySelector(".alb-attesa"); if (a) a.remove(); b.appendChild(cv); }
+      var ctx = window.SGCuore.audioCtx && window.SGCuore.audioCtx(); if (!ctx) return;
+      var n = Math.round(ctx.sampleRate * 0.3), b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0);
+      for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 1.5) * (0.5 + 0.5 * Math.sin(i / n * Math.PI));
+      var s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain(); s.buffer = b; f.type = "bandpass"; f.frequency.value = 2400; f.Q.value = 0.6; g.gain.value = 0.2;
+      s.connect(f); f.connect(g); g.connect(ctx.destination); s.start();
     } catch (e) {}
-    if (ALB.coda.length) ALB.raf = requestAnimationFrame(albProssima);
   }
+  // ---- una pagina: nasce nascosta nella scena, prende la misura, disegna lo sfondo una volta, poi le figurine in coda ----
+  function libNodo(i, dove) {
+    var n = LIB.nodi[i]; if (n && n.isConnected && !dove) return n;
+    var P = LIB.pag[i], f = P.t === "ind" ? libFoglioInd() : libFoglioSq(P.sq, P.p, i);
+    f.style.visibility = "hidden"; (dove || LIB.scena).appendChild(f);
+    if (P.t === "ind") libAdattaInd(f); else libAdatta(f);
+    if (SF()) { if (P.t === "ind") SF().indice(f.querySelector(".lb-sf"), "B"); else SF().pagina(f.querySelector(".lb-sf"), P.sq, P.p, "B", { top: f.__top, pratoAlto: f.__prato }); }
+    [].forEach.call(f.querySelectorAll(".lb-fig"), function (x) { LIB.coda.push(x); });
+    if (!LIB.raf) LIB.raf = requestAnimationFrame(libFigura);
+    if (!dove) LIB.nodi[i] = f;
+    return f;
+  }
+  function libFigura() {   // una figurina per fotogramma: prima quelle della pagina che si vede
+    LIB.raf = 0; LIB.coda = LIB.coda.filter(function (x) { return x.isConnected && !x.__ok; });
+    var cur = LIB.nodi[LIB.i], x = null;
+    for (var j = 0; j < LIB.coda.length; j++) if (cur && cur.contains(LIB.coda[j])) { x = LIB.coda.splice(j, 1)[0]; break; }
+    if (!x) x = LIB.coda.shift();
+    if (x) {
+      var c = x.parentNode.__c, w = Math.max(40, Math.round(x.parentNode.clientWidth || 90));
+      try { var src = conStag(c.stag, function () { return figurinaCanvas(c, null, w, false); }); if (src) { var cv = document.createElement("canvas"); cv.width = src.width; cv.height = src.height; cv.getContext("2d").drawImage(src, 0, 0); var a = x.querySelector(".alb-attesa"); if (a) a.remove(); x.insertBefore(cv, x.firstChild); } } catch (e) {}
+      x.__ok = true; libLc(x);
+    }
+    if (LIB.coda.length) LIB.raf = requestAnimationFrame(libFigura);
+  }
+  function libFoglioSq(sq, pag, i) {
+    var C = window.SGCuore, el = C.el, l = LIB.ab.per[sq] || [], lista = l.filter(function (c) { return LIB_RUOLI[pag].indexOf(c.ruolo) >= 0; });
+    var f = el("div", { class: "lb-foglio lb-pag" }), cont = el("div", { class: "lb-cont" }); f.appendChild(el("canvas", { class: "lb-sf" })); f.appendChild(cont); f.__sq = sq; f.__pag = pag;
+    if (pag === 1) cont.appendChild(el("div", { class: "lb-t1" }, [ el("span", { class: "sc", html: libScudetto(sq, l) }), el("div", { class: "nm" }, [ el("b", { text: sq }), libConto(l) ]) ]));
+    else cont.appendChild(el("div", { class: "lb-t2" }, [ el("span", { class: "sc", html: libScudetto(sq, l) }), el("b", { text: sq }), libConto(l, true) ]));
+    cont.appendChild(el("div", { class: "lb-sez", text: LIB_SEZ[pag] }));
+    var gr = el("div", { class: "lb-gr" });
+    lista.forEach(function (c) {
+      var cas = el("button", { class: "lb-cas" }); cas.__c = c;
+      if (c.x && LIB.viste.f[c.id]) cas.appendChild(libFig(c));
+      else cas.appendChild(libVuoto(c));
+      cas.addEventListener("click", function () { if (LIB.trascinato || LIB.giro) return; if (c.x && cas.querySelector(".lb-fig")) albScheda(c); else if (!c.x) libFumetto(cas); });
+      gr.appendChild(cas);
+    });
+    cont.appendChild(gr); f.appendChild(el("div", { class: "lb-pn", text: String(i + 1) }));
+    return f;
+  }
+  function libFig(c) { var el = window.SGCuore.el; return el("div", { class: "lb-fig", style: "--r:" + (((c.num * 37) % 7 - 3) * 0.8).toFixed(1) + "deg" }, [ el("div", { class: "alb-attesa" }) ]); }
+  function libVuoto(c) { var el = window.SGCuore.el; return el("div", { class: "lb-vuoto", html: LIB_SAGOMA }, [ el("div", { class: "n", text: c.num }), el("div", { class: "nm", text: c.nome }), el("div", { class: "ru", text: ALB_SIGLA[c.ruolo] }) ]); }
+  function libAdatta(f) {   // la pagina intera nello spazio, con le figurine più grandi che ci stanno (e il prato libero in fondo)
+    var gr = f.querySelector(".lb-gr"), n = gr.children.length, gap = 9, gw = gr.clientWidth || f.clientWidth - 28;
+    var prato = Math.max(26, f.clientHeight * 0.06), gh = f.clientHeight - gr.offsetTop - prato - 16, best = null;
+    for (var col = Math.min(Math.max(n, 1), 2); col <= 6; col++) {
+      if (col < 3 && n > 4) continue;
+      var rows = Math.ceil(n / col), w = Math.min((gw - gap * (col - 1)) / col, gw * 0.34), need = rows * w * 1.36 + (rows - 1) * gap;
+      if (need > gh) w = (gh - (rows - 1) * gap) / rows / 1.36;
+      if (!best || w > best.w + 0.5) best = { col: col, w: Math.max(20, Math.floor(w)) };
+    }
+    gr.style.gridTemplateColumns = "repeat(" + best.col + "," + best.w + "px)"; gr.style.setProperty("--fw", best.w + "px"); gr.style.setProperty("--gap", gap + "px");
+    f.__top = gr.offsetTop; f.__prato = prato;
+  }
+  function libFoglioInd() {
+    var C = window.SGCuore, el = C.el, ab = LIB.ab, f = el("div", { class: "lb-foglio lb-ind" }), cont = el("div", { class: "lb-cont" });
+    f.appendChild(el("canvas", { class: "lb-sf" })); f.appendChild(cont);
+    cont.appendChild(el("div", { class: "lb-it" }, [ el("b", { text: "Indice" }), libConto(ab.tutte), el("button", { text: "📚", "aria-label": "Tutti gli album", onclick: function () { if (!LIB.trascinato) albScaffale(); } }) ]));
+    cont.appendChild(el("div", { class: "lb-ig" }, ab.squadre.map(function (sq) {
+      var l = ab.per[sq], o = albConta(l), tutta = o.p === o.n, nu = libNuove(l).length, b = el("button", { "data-sq": sq, html: libScudetto(sq, l), onclick: function () { if (!LIB.trascinato && !LIB.giro) libGira(libDi(sq)); } }, [
+        el("div", { class: "lab" }, [ el("b", { text: sq }), el("i", { class: tutta ? "tutta" : "", text: (tutta ? "✓ " : "") + o.p + "/" + o.n }), el("i", { class: "pg", text: "pag. " + (libDi(sq) + 1) }) ]) ]);
+      if (nu) b.appendChild(el("span", { class: "nuove", text: "+" + nu }));
+      return b;
+    })));
+    f.appendChild(el("div", { class: "lb-pn", text: "1" }));
+    return f;
+  }
+  function libAdattaInd(f) {
+    var g = f.querySelector(".lb-ig"), cont = f.querySelector(".lb-cont"), tent = [[4, 50], [4, 46], [4, 42], [4, 38], [4, 34], [5, 40, 1], [5, 36, 1], [5, 32, 1], [5, 28, 1], [5, 24, 1]];
+    for (var j = 0; j < tent.length; j++) { g.style.setProperty("--col", tent[j][0]); g.style.setProperty("--sw", tent[j][1] + "px"); g.classList.toggle("compatto", !!tent[j][2]); if (cont.scrollHeight <= f.clientHeight + 1) break; }
+  }
+  // ---- la pagina che si vede: le altre nascoste; poi si preparano le vicine e si festeggia quello che è nuovo ----
+  function libMostra(i, subito) {
+    if (libOrizz()) return libAperto(i);
+    LIB.i = i; var f = libNodo(i);
+    Object.keys(LIB.nodi).forEach(function (k) {
+      var n = LIB.nodi[k]; if (+k === i) { n.style.visibility = "visible"; n.style.zIndex = 2; n.style.transform = ""; n.style.opacity = ""; [].forEach.call(n.querySelectorAll(".lb-sotto,.lb-ombra"), function (x) { x.style.opacity = "0"; }); return; }
+      n.style.visibility = "hidden"; n.style.zIndex = 0; if (Math.abs(+k - i) > 1) n.__via = true;   // (le pagine lontane si buttano dopo, a pagina ferma)
+    });
+    libFrecce();
+    if (!subito) { try { if (navigator.vibrate) navigator.vibrate(9); } catch (e) {} libLucida(f); }
+    clearTimeout(LIB.prep); if (window.cancelIdleCallback) cancelIdleCallback(LIB.prep); var festa = LIB.festa;
+    LIB.prep = setTimeout(function () { if (festa !== LIB.festa) return; libFesteggia(f).then(function () { if (festa !== LIB.festa) return; libVicine(i); }); }, subito ? 250 : 120);
+  }
+  function libVicine(i) {   // le pagine vicine pronte prima del dito (una alla volta, con calma)
+    var festa = LIB.festa, q = [i + 1, i - 1].filter(function (j) { return j >= 0 && j < LIB.pag.length && !(LIB.nodi[j] && LIB.nodi[j].isConnected); }).map(function (j) { return function () { libNodo(j); }; });
+    q.unshift(function () { Object.keys(LIB.nodi).forEach(function (k) { var n = LIB.nodi[k]; if (n.__via && Math.abs(+k - LIB.i) > 1) { n.remove(); delete LIB.nodi[k]; } }); });
+    q.push(function () { var c = LIB.nodi[i], p = LIB.nodi[i - 1]; if (c) libRetro(c); if (p) libRetro(p); });   // (anche il retro della pagina che girerà: pronto prima del dito)
+    var dopo = window.requestIdleCallback ? function (f) { LIB.prep = requestIdleCallback(f, { timeout: 400 }); } : function (f) { LIB.prep = setTimeout(f, 160); };
+    (function uno() { if (festa !== LIB.festa || LIB.i !== i || !q.length) return; q.shift()(); if (q.length) dopo(uno); })();
+  }
+  function libFrecce() {
+    var el = window.SGCuore.el; [].forEach.call(LIB.scena.querySelectorAll(".lb-fr"), function (x) { x.remove(); });
+    if (LIB.i > 0) LIB.scena.appendChild(el("button", { class: "lb-fr su", text: "‹", "aria-label": "Pagina prima", onclick: function () { if (!LIB.giro) libGira(LIB.i - 1); } }));
+    if (LIB.i < LIB.pag.length - 1) LIB.scena.appendChild(el("button", { class: "lb-fr giu", text: "›", "aria-label": "Pagina dopo", onclick: function () { if (!LIB.giro) libGira(LIB.i + 1); } }));
+  }
+  function libOmbre(n, cls) { var x = n.querySelector("." + cls); if (!x) { x = window.SGCuore.el("div", { class: cls }); n.appendChild(x); } return x; }
+  function libRetro(n) {
+    if (!n.querySelector(".lb-retro")) { var re = window.SGCuore.el("div", { class: "lb-retro" }, [ window.SGCuore.el("canvas", { class: "lb-sf" }) ]); n.appendChild(re); if (SF()) SF().retro(re.firstChild, n.__sq || "Inter"); }
+    return libOmbre(n, "lb-ombra");
+  }
+  // ---- si sfoglia: avanti, la pagina di sopra gira a sinistra e scopre quella dopo; indietro, quella prima torna sopra ----
+  // giro = { j, avanti, sopra, sotto, om, so }: pronto per il dito (angolo da 0 a -178 della pagina di sopra)
+  function libPreparaGiro(j) {
+    var i = LIB.i, avanti = j > i, cur = libNodo(i), alt = libNodo(j);
+    var sopra = avanti ? cur : alt, sotto = avanti ? alt : cur;
+    var om = libRetro(sopra), so = libOmbre(sotto, "lb-sotto");
+    sotto.style.visibility = "visible"; sotto.style.zIndex = 1; sopra.style.visibility = "visible"; sopra.style.zIndex = 3;
+    LIB.giro = { j: j, avanti: avanti, sopra: sopra, sotto: sotto, om: om, so: so, ang: avanti ? 0 : -178 };
+    libPosa(LIB.giro.ang); libFruscio();
+    return LIB.giro;
+  }
+  function libPosa(ang) {
+    var g = LIB.giro; g.ang = ang; var s = Math.sin(Math.min(90, -ang) * Math.PI / 180);
+    g.sopra.style.transform = "rotateY(" + ang.toFixed(2) + "deg)"; g.sopra.style.opacity = ang < -100 ? "0" : "1";   // (oltre il dorso esce dallo schermo: spenta)
+    g.om.style.opacity = (0.75 * s).toFixed(3); g.so.style.opacity = (0.75 * (1 - Math.min(1, -ang / 178))).toFixed(3);
+  }
+  function libFinisci(fatto, ms) {   // dall'angolo di adesso alla fine (fatto) o di nuovo indietro
+    var g = LIB.giro, da = g.ang, a = (g.avanti === fatto) ? -178 : 0;
+    var dur = ms || Math.max(170, 620 * Math.abs(a - da) / 178);
+    return libTempo(dur, function (k) { var e = 1 - Math.pow(1 - k, 2.2); libPosa(da + (a - da) * e); }).then(function () {
+      if (LIB.giro !== g) return;
+      g.sopra.style.transform = ""; g.sopra.style.opacity = ""; LIB.giro = null;
+      libMostra(fatto ? g.j : LIB.i, !fatto);
+    });
+  }
+  function libGira(j) { if (LIB.giro || j < 0 || j >= LIB.pag.length || j === LIB.i) return; libPreparaGiro(j); libFinisci(true, 620); }
+  // il dito: la pagina lo segue; lasciata oltre un terzo (o con uno slancio) gira, se no torna
+  function libDito(sc) {
+    var d = null;
+    sc.addEventListener("pointerdown", function (e) { if (LIB.giro || e.button > 0) return; d = { x: e.clientX, y: e.clientY, id: e.pointerId, su: false, p: [[e.clientX, performance.now()]] }; });
+    sc.addEventListener("pointermove", function (e) {
+      if (!d || e.pointerId !== d.id) return;
+      var dx = e.clientX - d.x, dy = e.clientY - d.y, W = sc.clientWidth || 300;
+      d.p.push([e.clientX, performance.now()]); if (d.p.length > 6) d.p.shift();
+      if (!d.su) {
+        if (Math.abs(dx) < 12 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+        var j = dx < 0 ? LIB.i + 1 : LIB.i - 1; if (j < 0 || j >= LIB.pag.length || !LIB.nodi[LIB.i]) { d = null; return; }
+        d.su = true; LIB.trascinato = true; try { sc.setPointerCapture(e.pointerId); } catch (er) {}
+        libPreparaGiro(j);
+      }
+      var g = LIB.giro; if (!g) return;
+      if (g.avanti) libPosa(Math.max(-178, Math.min(0, (dx + 12) / W * 200))); else libPosa(Math.max(-178, Math.min(0, -178 + (dx - 12) / W * 200)));
+    });
+    function su(e) {
+      if (!d || e.pointerId !== d.id) return; var x = d; d = null;
+      if (!x.su) return;
+      setTimeout(function () { LIB.trascinato = false; }, 60);
+      var g = LIB.giro; if (!g) return;
+      var a = x.p[0], b = x.p[x.p.length - 1], v = (b[0] - a[0]) / Math.max(1, b[1] - a[1]);   // (px al millisecondo)
+      var fatto = g.avanti ? (g.ang < -60 || v < -0.35) && v < 0.3 : (g.ang > -118 || v > 0.35) && v > -0.3;
+      libFinisci(fatto);
+    }
+    sc.addEventListener("pointerup", su); sc.addEventListener("pointercancel", su);
+  }
+  // il riflesso lucido che passa una volta sulle figurine attaccate quando la pagina si posa (più forte sull'oro)
+  function libLc(x) { var lc = x.querySelector(".lb-lc"); if (!lc) { var el = window.SGCuore.el; lc = el("div", { class: "lb-lc" + (x.parentNode.__c.met === "oro" ? " oro" : "") }, [ el("i") ]); x.appendChild(lc); } return lc; }   // (pronto quando si disegna la figurina: al riflesso si muove e basta)
+  function libLucida(f) {
+    var figs = [].slice.call(f.querySelectorAll(".lb-fig")); if (!figs.length) return;
+    var raggi = figs.map(function (x, i) { var oro = x.parentNode.__c.met === "oro", lc = libLc(x); return { i: lc.firstChild, d: i * 0.045, oro: oro }; });
+    var festa = LIB.festa, t0 = performance.now(), ms = 900 + figs.length * 40;
+    (function passo(t) { if (festa !== LIB.festa) return; var k = Math.min(1, (t - t0) / ms);
+      raggi.forEach(function (r) { var q = Math.max(0, Math.min(1, (k - r.d) / 0.55)); r.i.style.transform = "translateX(" + (-120 + 360 * q).toFixed(1) + "%) skewX(-12deg)"; r.i.style.opacity = (q > 0 && q < 1 ? (r.oro ? 1 : 0.6) : 0).toString(); });
+      if (k < 1) requestAnimationFrame(passo); })(t0);
+  }
+  function libFumetto(cas) {
+    var el = window.SGCuore.el, c = cas.__c;
+    [].forEach.call(LIB.scena.querySelectorAll(".lb-fum"), function (x) { x.remove(); }); [].forEach.call(LIB.scena.querySelectorAll(".batte"), function (x) { x.classList.remove("batte"); });
+    cas.classList.add("batte");
+    var fu = el("div", { class: "lb-fum", html: "<b>Non l'hai ancora preso…</b>" + escA(c.nome) + ": compralo all'asta e la figurina si attacca qui." }); cas.appendChild(fu);
+    var r = fu.getBoundingClientRect(), sr = (cas.closest(".due") || LIB.scena).getBoundingClientRect();
+    if (r.top < sr.top + 4) fu.classList.add("giu");
+    if (r.left < sr.left + 4) fu.style.marginLeft = (-75 + sr.left + 4 - r.left) + "px"; else if (r.right > sr.right - 4) fu.style.marginLeft = (-75 - (r.right - sr.right + 4)) + "px";
+    try { if (navigator.vibrate) navigator.vibrate(10); } catch (e) {}
+    var festa = LIB.festa; setTimeout(function () { if (festa === LIB.festa && fu.isConnected) { fu.remove(); cas.classList.remove("batte"); } }, 3200);
+  }
+  // ---- le figurine nuove volano e si attaccano; poi, se la squadra è appena completa, la festa ----
+  function libFesteggia(f) {
+    if (!f.__sq) return Promise.resolve();
+    var sq = f.__sq, l = LIB.ab.per[sq], nuove = libNuove(l.filter(function (c) { return LIB_RUOLI[f.__pag].indexOf(c.ruolo) >= 0; })), festa = LIB.festa, p = Promise.resolve();
+    nuove.forEach(function (c) { p = p.then(function () { if (festa !== LIB.festa || !f.isConnected) return; return libVola(f, c); }); });
+    return p.then(function () {
+      if (festa !== LIB.festa || !f.isConnected) return; var o = albConta(l);
+      if (o.p === o.n && !LIB.viste.c[sq] && !libNuove(l).length) { LIB.viste.c[sq] = 1; libSalvaViste(); return libCompleta(f); }
+    });
+  }
+  function libVola(f, c) {
+    var el = window.SGCuore.el, cas = [].filter.call(f.querySelectorAll(".lb-cas"), function (x) { return x.__c === c; })[0]; if (!cas) return Promise.resolve();
+    LIB.viste.f[c.id] = 1; libSalvaViste();
+    var vu = cas.querySelector(".lb-vuoto"), fg = libFig(c); fg.style.opacity = "0"; cas.insertBefore(fg, cas.firstChild);
+    var r = cas.getBoundingClientRect(), w = Math.round(Math.min(window.innerWidth * 0.52, 240)), x0 = (window.innerWidth - w) / 2, y0 = window.innerHeight * 0.16;
+    var src = conStag(c.stag, function () { return figurinaCanvas(c, null, w, false); }), cv = null;
+    if (src) { cv = document.createElement("canvas"); cv.width = src.width; cv.height = src.height; cv.getContext("2d").drawImage(src, 0, 0); }
+    var cw = Math.max(40, Math.round(cas.clientWidth)), s2 = conStag(c.stag, function () { return figurinaCanvas(c, null, cw, false); });
+    if (s2) { var c2 = document.createElement("canvas"); c2.width = s2.width; c2.height = s2.height; c2.getContext("2d").drawImage(s2, 0, 0); var a = fg.querySelector(".alb-attesa"); if (a) a.remove(); fg.insertBefore(c2, fg.firstChild); fg.__ok = true; libLc(fg); }
+    var v = el("div", { class: "lb-vola", style: "left:" + x0 + "px;top:" + y0 + "px;width:" + w + "px" }); if (cv) v.appendChild(cv); document.body.appendChild(v);
+    var lampo = el("div", { class: "lb-lampo" }); cas.appendChild(lampo);
+    var stelle = [0, 1, 2, 3, 4, 5].map(function (i) { var an = i / 6 * Math.PI * 2 + 0.4, s = el("div", { class: "lb-stella", html: LIB_STELLA, style: "left:" + (50 + Math.cos(an) * 62) + "%;top:" + (50 + Math.sin(an) * 52) + "%" }); cas.appendChild(s); return s; });
+    var dx = r.left - x0, dy = r.top - y0, sc = r.width / w, colpo = false, rot = ((c.num * 37) % 7 - 3) * 0.8, festa = LIB.festa;
+    var giro = LIB.giro; LIB.giro = { presto: false, vola: true };
+    return libTempo(1350, function (k) {
+      if (festa !== LIB.festa) k = 1;
+      var kv = Math.min(1, k / 0.62), e = 1 - Math.pow(1 - kv, 3), su = Math.sin(kv * Math.PI) * -46;
+      var sq = k > 0.62 && k < 0.78 ? Math.sin((k - 0.62) / 0.16 * Math.PI) * 0.07 : 0;   // (il colpetto quando si attacca)
+      var z = 1 + (sc - 1) * e;
+      v.style.transform = "translate(" + (dx * e).toFixed(1) + "px," + (dy * e + su).toFixed(1) + "px) scale(" + (z * (1 + sq)).toFixed(4) + "," + (z * (1 - sq)).toFixed(4) + ") rotate(" + (-16 + (16 + rot) * e).toFixed(1) + "deg)";
+      if (k >= 0.62 && !colpo) { colpo = true; if (vu) vu.style.opacity = "0"; try { if (navigator.vibrate) navigator.vibrate(14); } catch (er) {} }
+      if (k >= 0.8) { fg.style.opacity = "1"; v.style.opacity = "0"; }
+      lampo.style.opacity = (k < 0.6 ? 0 : k < 0.68 ? (k - 0.6) / 0.08 : Math.max(0, 1 - (k - 0.68) / 0.25)).toFixed(3);
+      stelle.forEach(function (s, i) { var t = (k - 0.64 - i * 0.02) / 0.3; s.style.opacity = (t <= 0 || t >= 1 ? 0 : Math.sin(t * Math.PI)).toFixed(3); s.style.transform = "scale(" + (t <= 0 ? 0.2 : 0.4 + t * 0.9).toFixed(3) + ") rotate(" + (t * 90).toFixed(0) + "deg)"; });
+    }).then(function () { v.remove(); fg.style.opacity = "1"; if (vu) vu.remove(); lampo.remove(); stelle.forEach(function (s) { s.remove(); }); if (LIB.giro && LIB.giro.vola) LIB.giro = giro; });
+  }
+  function libCompleta(f) {
+    var el = window.SGCuore.el, sq = f.__sq, T = SF() ? SF().tinte(sq) : { c1: "#f2c230", c2: "#fff", l1: "#f2c230" }, rgba = SF() ? SF().rgba : function () { return "rgba(242,194,48,.4)"; };
+    var sc = f.querySelector(".lb-t1 .sc, .lb-t2 .sc"), vec = sc && sc.querySelector("svg");
+    var festa = el("div", { class: "lb-festa", style: "background:radial-gradient(120% 70% at 50% 18%," + rgba(T.l1, 0.55) + "," + rgba(T.l1, 0.12) + " 45%,rgba(0,0,0,0) 75%)" }); f.appendChild(festa);
+    var oro = null, anello = null;
+    if (vec && window.SG_SCUDETTI) { var box = el("div", { style: "position:absolute;inset:0;pointer-events:none" }); sc.style.position = "relative"; sc.style.display = "inline-block"; sc.appendChild(box);
+      oro = el("div", { style: "position:absolute;inset:0;opacity:0", html: SG_SCUDETTI.svg(sq, { bordo: "oro" }) }); oro.firstChild.style.cssText = "width:100%;height:auto;display:block"; box.appendChild(oro);
+      anello = el("div", { style: "position:absolute;inset:-12%;border-radius:50%;border:3px solid rgba(255,214,90,.95);opacity:0" }); box.appendChild(anello); }
+    var cols = [T.c1, T.c2, "#ffd84a", "#ffffff"], cori = [];
+    for (var i = 0; i < 44; i++) { var c = el("div", { class: "lb-cori", style: "left:" + (4 + (i * 37 % 92)) + "%;background:" + cols[i % 4] + ";" + (i % 3 ? "" : "width:5px;height:5px;border-radius:50%") }); f.appendChild(c); cori.push({ n: c, d: (i * 13 % 20) / 100, x: ((i * 29) % 21 - 10) * 2.2, rot: (i * 47) % 360, v: 0.8 + (i * 7 % 5) / 10 }); }
+    var banda = el("div", { class: "lb-banda", text: "⭐ " + sq + " completa!" }); f.appendChild(banda);
+    try { if (navigator.vibrate) navigator.vibrate([20, 50, 30]); } catch (e) {}
+    var H = f.clientHeight, fs = LIB.festa;
+    return libTempo(2200, function (k) {
+      if (fs !== LIB.festa) k = 1;
+      festa.style.opacity = (k < 0.15 ? k / 0.15 : Math.max(0, 1 - (k - 0.15) * 1.2)).toFixed(3);
+      if (oro) { var s = Math.min(1, k / 0.18); oro.style.opacity = s.toFixed(3); oro.style.transform = "scale(" + (1.3 - 0.3 * s).toFixed(3) + ")"; var g = Math.max(0, (k - 0.12) / 0.4); anello.style.opacity = (k < 0.12 ? 0 : Math.max(0, 1 - g)).toFixed(3); anello.style.transform = "scale(" + (0.9 + g).toFixed(3) + ")"; }
+      cori.forEach(function (c) { var t = Math.max(0, (k - c.d) / (0.85 * c.v)); c.n.style.opacity = (t <= 0 ? 0 : t > 0.85 ? Math.max(0, (1 - t) / 0.15) : 1).toFixed(3); c.n.style.transform = "translate(" + (Math.sin(t * 6 + c.rot) * 10 + c.x * t).toFixed(1) + "px," + (t * H * 1.02).toFixed(1) + "px) rotate(" + (c.rot + t * 540).toFixed(0) + "deg)"; });
+      var b = k < 0.2 ? 0 : Math.min(1, (k - 0.2) / 0.12); banda.style.opacity = (k > 0.85 ? (1 - k) / 0.15 : b).toFixed(3); banda.style.transform = "translate(-50%,-50%) scale(" + (0.6 + 0.4 * (1 - Math.pow(1 - b, 3))).toFixed(4) + ")";
+    }).then(function () { festa.remove(); banda.remove(); cori.forEach(function (c) { c.n.remove(); }); });
+  }
+  // ---- 📱↔️ col telefono girato: le due pagine della squadra affiancate, come un album aperto ----
+  function libAperto(i) {
+    var C = window.SGCuore, el = C.el, P = LIB.pag[i] || LIB.pag[0]; LIB.i = i;
+    var sq = P.sq, a = sq ? libDi(sq) : 0, vecchio = LIB.ov && LIB.ov.isConnected ? LIB.ov : null;
+    var ov = el("div", { class: "lb-aperto" }), due = el("div", { class: "due" });
+    var prima = a > 0 ? a - (LIB.pag[a - 1].t === "ind" ? 1 : 2) : -1, dopo = sq ? a + 2 : 1;
+    ov.appendChild(el("div", { class: "bar" }, [ el("button", { text: "‹", "aria-label": "Esci", onclick: function () { libChiudiAperto(); var o = ALB.opz || {}; (o.indietro || C.tornaHome)(); } }),
+      el("b", { text: "Album" }), el("span", { text: sq ? sq + " · pagine " + (a + 1) + "-" + (a + 2) : "Indice · " + albNome(LIB.stag) }),
+      el("button", { class: "vai", text: "◀", style: prima < 0 ? "visibility:hidden" : "", onclick: function () { if (prima >= 0) libAperto(prima); } }),
+      el("button", { text: "▶", style: dopo >= LIB.pag.length ? "visibility:hidden" : "", onclick: function () { if (dopo < LIB.pag.length) libAperto(dopo); } }) ]));
+    ov.appendChild(due); document.body.appendChild(ov); LIB.ov = ov;
+    LIB.coda = [];
+    if (sq) { libNodoIn(a, due); libNodoIn(a + 1, due); due.appendChild(el("div", { class: "dorso" })); } else libNodoIn(0, due);
+    var d = null;
+    due.addEventListener("pointerdown", function (e) { d = { x: e.clientX, y: e.clientY }; });
+    due.addEventListener("pointerup", function (e) { if (!d) return; var dx = e.clientX - d.x, dy = e.clientY - d.y; d = null; if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) { LIB.trascinato = true; setTimeout(function () { LIB.trascinato = false; }, 60); if (dx < 0 && dopo < LIB.pag.length) libAperto(dopo); else if (dx > 0 && prima >= 0) libAperto(prima); } });
+    if (vecchio) {   // la doppia pagina nuova scivola dentro (solo transform e opacity)
+      var verso = i > (vecchio.__i || 0) ? 1 : -1; ov.__i = i; ov.style.background = "transparent";
+      libTempo(320, function (k) { var e = 1 - Math.pow(1 - k, 3); due.style.transform = "translateX(" + ((1 - e) * 40 * verso).toFixed(1) + "%)"; due.style.opacity = e.toFixed(3); vecchio.style.opacity = (1 - e).toFixed(3); }).then(function () { vecchio.remove(); ov.style.background = ""; });
+      libFruscio();
+    } else ov.__i = i;
+    ov.__i = i;
+  }
+  function libNodoIn(i, dove) {
+    var f = libNodo(i, dove); f.style.visibility = "visible";
+    f.addEventListener("click", function () {}, true);
+    return f;
+  }
+  function libChiudiAperto() { if (LIB.ov) LIB.ov.remove(); LIB.ov = null; }
+  window.addEventListener("resize", function () {
+    clearTimeout(LIB.tRes);
+    LIB.tRes = setTimeout(function () {
+      if (!LIB.s || !LIB.s.isConnected) { libChiudiAperto(); return; }
+      if (LIB.giro || LIB.scena.querySelector(".lb-cop")) return;
+      var o = libOrizz();
+      if (o) libAperto(LIB.i);
+      else { libChiudiAperto(); Object.keys(LIB.nodi).forEach(function (k) { LIB.nodi[k].remove(); }); LIB.nodi = {}; LIB.coda = []; libMostra(LIB.i, true); }
+    }, 220);
+  });
+
   // lo scaffale: un album per stagione (quelle mai giocate spente col lucchetto)
   function albScaffale() {
     var C = window.SGCuore, el = C.el, st = albStat(), s = albSchermata("Mini Asta · i tuoi album", function () { albIndice(ALB.stag); });
@@ -13432,7 +13834,7 @@
     var lista = [null].concat(ELENCO_STAGIONI.slice().reverse());
     s._contenuto.appendChild(el("div", { class: "alb-scaff" }, lista.map(function (id, i) {
       var p = Object.keys(st[chiaveAlbum(id)] || {}).length, tot = stagionePronta(id) ? albLista(id).tutte.length : 0, cc = ALB_COP[i % ALB_COP.length];
-      return el("button", { class: "alb-cop" + (p ? "" : " chiuso") + (id === ALB.stag ? " ora" : ""), style: "--c1:" + cc[0] + ";--c2:" + cc[1], onclick: function () { albIndice(id); } }, [
+      return el("button", { class: "alb-cop" + (p ? "" : " chiuso") + (id === ALB.stag ? " ora" : ""), style: "--c1:" + cc[0] + ";--c2:" + cc[1], onclick: function () { libro(id, 0, true); } }, [
         el("small", { text: "Serie A" }), el("b", { text: id || "Oggi" }), el("span", { class: "pc", text: p ? (tot ? p + "/" + tot : p + " prese") : (tot ? "🔒 " + tot : "🔒") })
       ]);
     })));
@@ -13480,6 +13882,7 @@
   }
   function escA(s) { return String(s).replace(/[&<>"]/g, function (ch) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]; }); }
   giocoFanta.album = apriAlbum;   // (lo usa la pagina dei Trofei: SGCuore.apriAlbum)
+  giocoFanta.libro = function () { return LIB; };   // (per le prove: lo stato del libro)
 
   SG.registra(gioco);
   SG.registra(giocoFanta);   // (dopo L'Asta: nella lista dei giochi arriva in fondo)

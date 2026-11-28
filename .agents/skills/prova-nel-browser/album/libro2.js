@@ -99,7 +99,7 @@
   L2.prepara = async function () {
     await W.ALB.prepara(); P = W.ALB.P(); A = W.ALB.A(); C = P.SGCuore; el = C.el; stile();
     if (!P.SG_SCUDETTI) await carica("scudetti.js");
-    await carica("libro2-sfondi.js");
+    P.eval(await (await fetch("/js/album-sfondi.js?" + Date.now())).text());
     if (!W.LIB) await new Promise(function (ok) { var sc = document.createElement("script"); sc.src = "/.agents/skills/prova-nel-browser/album/libro.js?" + Date.now(); sc.onload = ok; document.head.appendChild(sc); });
     ICONA = W.LIB.ICONA;
   };

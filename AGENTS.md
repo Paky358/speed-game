@@ -300,6 +300,18 @@ Lista `TROFEI` in js/cuore/trofei.js (`{ gioco, livello, icona, nome, desc, stat
     - tf3: la pagina.
     - Senza browser: `D:/SG-asta-prove/trofei/prova-conta.js`.
 
+- **📖 L'album della Mini Asta è un LIBRO da sfogliare** (28 nov 2026, novità v463, ramo `album-libro`, NON pubblicato; il proprietario ha scelto la versione B «Stadio» sulle foto di D:/SG-album-prove/libro2, LEGGIMI lì).
+  - Copertina: lo stadio di notte. Al tocco i riflettori si accendono, poi il libro si apre sull'indice: un campo visto dall'alto coi 20 scudetti (`js/album-scudetti.js`, forma A, bordo d'argento e d'oro a squadra completa).
+  - **Due pagine per squadra**: la 1ª con la testata grande, la città, portieri e difensori; la 2ª con centrocampisti e attaccanti.
+  - Gli sfondi li disegna `js/album-sfondi.js` (`window.L2S`) UNA volta, quando nasce la pagina: i colori e il segno della squadra, i riflettori, la filigrana del campo, il prato.
+  - Le città sono disegnate da noi solo per le 20 di oggi. Le squadre delle stagioni passate per ora non hanno la città: le farà Gemini (il proprietario: «non disegnarli per il resto»).
+  - Tutto il libro è in `js/games/asta.js`: `libro()`, `LIB`, le classi `lb-*`.
+  - La pagina segue il dito e gira solo con transform e opacity. Le pagine vicine e il retro si preparano a pagina ferma (`libVicine`), le figurine una per fotogramma.
+  - La figurina nuova vola e la squadra appena completa fa festa una volta sola. Cosa è già visto sta sul telefono in `sg-alb-viste-<uid>`; la prima volta tutto conta come visto.
+  - Col telefono girato (`libOrizz`) le due pagine della squadra si vedono affiancate (`.lb-aperto`).
+  - Prove al2 e al3 in `preferiti/asta-album.js`.
+  - Foto del gioco vero: `album/libro-vero-foto.js` (anche la misura ×4). Le proposte A/B/C: `album/libro2.js` e `album/libro2-foto.js`.
+
 ## Procedure dettagliate (skill)
 In `.agents/skills/` ci sono le procedure passo passo: leggi quella giusta prima di cominciare.
 - `nuovo-gioco`: creare un gioco nuovo o portarlo all'online (file da toccare, contratto, controlli finali).

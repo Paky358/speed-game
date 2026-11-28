@@ -1,4 +1,5 @@
-// 🏟️ GLI SFONDI DEL LIBRO «IN TEMA STADIO» (28 nov 2026, PROPOSTA per l'album della Mini Asta; il gioco NON cambia).
+// 🏟️ GLI SFONDI DEL LIBRO DELL'ALBUM «IN TEMA STADIO» (28 nov 2026, novità v463; il proprietario ha scelto la versione B «Stadio»; le prove
+// A e C restano qui per le foto: .agents/skills/prova-nel-browser/album/libro2-foto.js).
 // Tutto disegnato dal codice su una tela, UNA volta sola quando la pagina nasce: poi resta ferma (niente si muove mentre si sfoglia).
 // window.L2S.pagina(cv, sq, pag, liv)  → lo sfondo della pagina 1 o 2 di una squadra (liv "A" sobria, "B" stadio, "C" gran galà)
 // window.L2S.copertina(cv, liv, luce)  → lo stadio di notte della copertina (luce: null = spenta, 0-3 = un riflettore, "campo" = il prato acceso)
@@ -116,10 +117,10 @@
     Venezia: { far: function (m) { m.r(0.78, 0.16, 0.08); m.d(0.86, 0.075, 0.12, 0.08); m.r(0.855, 0.01, 0.04, 0.2); },
       near: function (m) { campanile(m, 0.28, 0.06, 0.36, "piramide"); m.r(0.38, 0.3, 0.08); [0.44, 0.53, 0.62].forEach(function (c) { m.o(c, 0.035, 0.07, 0.08); m.r(c - 0.003, 0.006, 0.02, 0.15); }); m.fori(0.38, 0.3, 0.06, 0, 5, 0.95); m.p([[0.04, -0.01], [0.05, 0.01], [0.2, 0.004], [0.22, 0.02], [0.215, -0.005], [0.18, -0.012], [0.06, -0.012]]); }, mare: 1 }
   };
-  function cittaGenerica(m) { m.colle(-0.1, 0.6, 0.12); m.colle(0.4, 1.1, 0.09); m.case(0.1, 0.9, 0.03, 0.08, m.__r); campanile(m, 0.55, 0.05, 0.25, "piramide"); }
   // la città: far (lontana, più chiara e trasparente) e near (vicina, scura col filo di luce del colore della squadra sopra)
   function disegnaCitta(x, sq, w, base, k, T, opz) {
-    var def = CITTA[sq] || { far: cittaGenerica, near: function () {} }, dpr = opz.dpr, r = rnd("citta|" + sq);
+    if (!CITTA[sq]) return;   // (le squadre senza città, per ora quelle delle stagioni passate: le disegnerà Gemini; il proprietario, 28 nov 2026)
+    var def = CITTA[sq], dpr = opz.dpr, r = rnd("citta|" + sq);
     function strato(fn, colore, filo, alfa) {
       var t = tela(w, base + 4, dpr), m = M(t.x, w, base, k); m.__x = t.x; m.__r = r; t.x.fillStyle = "#000"; fn(m);
       var sag = t.c, c2 = tela(w, base + 4, dpr);
