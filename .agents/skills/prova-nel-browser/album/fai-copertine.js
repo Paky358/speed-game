@@ -6,7 +6,9 @@
 //  - se no la STELLA (mai chi sarà capitano della stessa squadra in una stagione dopo: la sua copertina arriva lì) di quella stagione non ancora uscita (chi ha meno calciatori del suo ruolo davanti in tutta la Serie A, i portieri un po' indietro; poi la quotazione);
 //  - ruoli mescolati: tra le prime 4 al massimo 2 attaccanti, tra le prime 6 al massimo 3 (si cambia la stella attaccante delle squadre più
 //    in basso col miglior centrocampista, difensore o portiere non ancora uscito; i capitani restano).
-//  - la stagione di oggi (in corso): le 6 squadre con l'overall più alto (i migliori 11, 1-4-3-3) e solo stelle.
+//  - la stagione di oggi (in corso): le 6 squadre con l'overall più alto (i migliori 11, 1-4-3-3).
+//  - LA CAMPIONE e TUTTE le squadre di OGGI (29 nov 2026, il proprietario): la STELLA VERA, anche se è già uscita: la più quotata della squadra;
+//    se il capitano (oggi: quello della stagione prima) è quotato almeno il 90% di lei, il capitano (Lautaro, non Thuram).
 // Il file che esce si può cambiare a mano (poi NON rifarlo, se no le mani si perdono). Uso: node fai-copertine.js [--oggi Inter,Napoli,…]
 global.window = global; const fs = require("fs"), D = "D:/SG-album-libro/data/";
 const RIC = require("D:/SG-album-prove/libro2/copertine/ricerca-capitani.json");
@@ -46,9 +48,15 @@ function poiCapitano(s, sq, nome) {   // (è il capitano della stessa squadra in
 for (const s of STAG.concat(["oggi"])) {
   const per = stagione(s), R = RIC[s] || {};
   let cl = s === "oggi" ? (arg > 0 ? process.argv[arg + 1].split(",") : Object.keys(per).sort((a, b) => ovrSq(per[b]) - ovrSq(per[a])).slice(0, 6)) : R.classifica.slice(0, 6);
-  const scelte = cl.map(sq => {
+  const scelte = cl.map((sq, iSq) => {
     const l = per[sq] || [], u = usati[sq] = usati[sq] || {}, cap = (R.capitani || {})[sq], alt = ALT[s + "|" + sq];
     let c = null, tipo = "stella", nota = "";
+    if (s === "oggi" || iSq === 0) {   // (29 nov 2026, il proprietario: la CAMPIONE e le squadre di OGGI hanno sempre la loro stella vera, anche se è già uscita)
+      const capN = s === "oggi" ? ((((RIC["2025-26"] || {}).capitani || {})[sq] || {}).nostro) : cap && !cap.dubbio ? cap.nostro : null;
+      const top = l.slice().sort((a, b) => b.q - a.q)[0], cp = capN && l.find(x => x.nome === capN);
+      c = cp && top && cp.q >= top.q * 0.9 ? cp : top; tipo = "stella vera"; nota = cp && c === cp ? "la stella, ed è il capitano" : "la più quotata della squadra";
+      return { sq, c, tipo, nota, fissa: true };
+    }
     if (cap && cap.nostro && !cap.dubbio && !u[cap.nostro]) { c = l.find(x => x.nome === cap.nostro); tipo = "capitano"; if (cap.una_sola_fonte) nota = "capitano trovato con una fonte sola: da controllare"; }
     if (!c && alt && !u[alt[0]]) { c = l.find(x => x.nome === alt[0]); tipo = "capitano"; nota = alt[1] + ": da controllare"; }
     if (!c && cap && cap.capitano) nota = (u[cap.nostro] ? cap.capitano + " è già uscito" : "il capitano " + cap.capitano + (cap.nostro ? " (dubbio)" : " non è nei nostri dati")) + ": c'è la stella";
@@ -59,7 +67,7 @@ for (const s of STAG.concat(["oggi"])) {
   [[4, 2], [6, 3]].forEach(([n, max]) => {
     while (scelte.slice(0, n).filter(x => x.c.r === "A").length > max) {   // (si cambia dove si perde meno: la stella attaccante col sostituto più vicino)
       let best = null;
-      scelte.slice(0, n).forEach(x => { if (x.tipo !== "stella" || x.c.r !== "A") return; const al = (per[x.sq] || []).filter(y => y.r !== "A" && !usati[x.sq][y.nome] && !poiCapitano(s, x.sq, y.nome)).sort(ordine)[0]; if (!al) return; const perde = al.pc - x.c.pc; if (!best || perde < best.perde) best = { x, al, perde }; });
+      scelte.slice(0, n).forEach(x => { if (x.fissa || x.tipo !== "stella" || x.c.r !== "A") return; const al = (per[x.sq] || []).filter(y => y.r !== "A" && !usati[x.sq][y.nome] && !poiCapitano(s, x.sq, y.nome)).sort(ordine)[0]; if (!al) return; const perde = al.pc - x.c.pc; if (!best || perde < best.perde) best = { x, al, perde }; });
       if (!best) break; best.x.nota = "al posto di " + best.x.c.nome + " (troppi attaccanti)"; best.x.c = best.al;
     }
   });

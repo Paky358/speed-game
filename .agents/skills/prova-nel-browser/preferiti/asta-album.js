@@ -166,7 +166,7 @@
     return x.join(" · ");
   } });
 
-  COPIONE.aggiungi("al3", { nome: "Album (il libro): la figurina nuova vola una volta sola, la squadra appena completa si accende, il dito sfoglia, col telefono girato due pagine", fai: async function () {
+  COPIONE.aggiungi("al3", { nome: "Album (il libro): la figurina nuova vola una volta sola, la squadra appena completa si accende, il dito sfoglia, col telefono girato la pagina sola del Lecce", fai: async function () {
     var x = [], stat = {};
     W.__statFinte = function (nome, g) { return g === "astafanta" ? stat : {}; };
     try {
@@ -198,20 +198,21 @@
       nu = qa(P, ".lb-ig .nuove").length; if (nu !== 1) no("riaprendo, «nuove» nell'indice " + nu + " (voluto 1: Dimarco non ancora visto)");
       q(P, ".lb-ig button[data-sq=Lecce]").click(); await W.aspetta(function () { return fermo(P, "Lecce 1"); }, 5000); await W.dorme(1500);
       if (q(P, ".lb-vola") || q(P, ".lb-banda")) no("riaprendo il Lecce vola o festeggia di nuovo");
-      // 5. il dito: si trascina la pagina a sinistra (Lecce 1 → Lecce 2) e poi a destra (torna)
+      // 5. il dito: si trascina la pagina a sinistra (il Lecce ha 13 calciatori: UNA pagina sola, poi il Milan) e poi a destra (torna)
       var sc = q(P, ".lb-scena"), r = sc.getBoundingClientRect();
       async function tira(da, a) { var id = 7; sc.dispatchEvent(new P.PointerEvent("pointerdown", { bubbles: true, pointerId: id, clientX: r.left + r.width * da, clientY: r.top + r.height * 0.5, button: 0 }));
         for (var k = 1; k <= 8; k++) { await W.dorme(30); sc.dispatchEvent(new P.PointerEvent("pointermove", { bubbles: true, pointerId: id, clientX: r.left + r.width * (da + (a - da) * k / 8), clientY: r.top + r.height * 0.5 })); }
         await W.dorme(120);
         sc.dispatchEvent(new P.PointerEvent("pointerup", { bubbles: true, pointerId: id, clientX: r.left + r.width * a, clientY: r.top + r.height * 0.5 })); }
-      await tira(0.85, 0.2); if (!await W.aspetta(function () { return fermo(P, "Lecce 2"); }, 4000)) no("trascinando a sinistra non si va alla 2ª pagina (" + sqVista(P) + ")");
+      await tira(0.85, 0.2); if (!await W.aspetta(function () { return fermo(P, "Milan 1"); }, 4000)) no("trascinando a sinistra dal Lecce (una pagina sola) non si va al Milan (" + sqVista(P) + ")");
       await tira(0.15, 0.9); if (!await W.aspetta(function () { return fermo(P, "Lecce 1"); }, 4000)) no("trascinando a destra non si torna (" + sqVista(P) + ")");
       await tira(0.85, 0.75); await W.dorme(900); if (sqVista(P) !== "Lecce 1") no("un tiro corto gira la pagina (" + sqVista(P) + ")");
       x.push("il dito: avanti, indietro, il tiro corto torna");
-      // 6. il telefono girato: le due pagine affiancate; dritto di nuovo: una
+      // 6. il telefono girato: il Lecce ha una pagina sola («pagina N»); dritto di nuovo: una
       var fr = W.document.getElementById("tel-Paky"), w0 = fr.style.width, h0 = fr.style.height;
       fr.style.width = "640px"; fr.style.height = "360px";
-      if (!await W.aspetta(function () { return q(P, ".lb-aperto .due") && q(P, ".lb-aperto .due").querySelectorAll(".lb-foglio").length === 2; }, 4000)) no("col telefono girato non ci sono le due pagine");
+      if (!await W.aspetta(function () { return q(P, ".lb-aperto .due") && q(P, ".lb-aperto .due").querySelectorAll(".lb-foglio").length === 1; }, 4000)) no("col telefono girato il Lecce non ha la sua pagina sola");
+      if (!/Lecce · pagina [0-9]+$/.test(testo(P, ".lb-aperto .bar span"))) no("girato: «" + testo(P, ".lb-aperto .bar span") + "» (voluto «Lecce · pagina N»)");
       x.push("girato: «" + testo(P, ".lb-aperto .bar span") + "»");
       fr.style.width = w0; fr.style.height = h0;
       if (!await W.aspetta(function () { return !q(P, ".lb-aperto") && vista(P); }, 4000)) no("rigirando il telefono il libro non torna a una pagina");

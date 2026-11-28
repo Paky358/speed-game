@@ -13,7 +13,7 @@ window.SG_NOVITA = [
     data: "28 novembre 2026",
     titolo: "Mini Asta: l'album diventa un libro da sfogliare 📖",
     descrizione: [
-      "🏟️ La copertina è uno stadio di notte con le prime squadre di quella stagione in posa, la campione davanti: toccala e i riflettori si accendono uno dopo l'altro, poi il libro si apre. Ogni stagione ha la sua.",
+      "🏟️ La copertina è uno stadio di notte con le prime 4 di quella stagione in posa, la campione davanti: toccala e i riflettori si accendono uno dopo l'altro, poi il libro si apre. Ogni stagione ha la sua.",
       "🛡️ L'indice è un campo visto dall'alto con gli scudetti delle squadre: d'argento, e d'oro quando una squadra è completa.",
       "🌆 Ogni squadra ha due pagine con i suoi colori e la sua città dietro: il Vesuvio, il Colosseo, il Duomo, la Mole… Nella prima portieri e difensori, nella seconda centrocampisti e attaccanti.",
       "👆 Le pagine si sfogliano col dito, con il fruscio della carta. Le figurine che ti mancano hanno il bordo d'oro: toccale e sai chi ti manca.",
