@@ -4597,3 +4597,7 @@ html.gettoni .tl-gradino.p1 .fac, html.gettoni .oro.tl-fine .tl-gradino.p1 .fac{
 .alb-tab button.on{background:var(--o-scuro);color:var(--o-scuro-testo)}
 .alb-entra{display:flex;align-items:center;gap:12px;width:100%;margin:12px 0 0;padding:12px 14px;border-radius:16px;border:1px solid rgba(242,194,48,.45);background:linear-gradient(135deg,rgba(92,74,12,.5),rgba(30,36,62,.6));color:var(--o-testo);font:inherit;text-align:left;cursor:pointer}
 .alb-entra .ic{font-size:1.8rem}.alb-entra b{display:block;font-family:var(--o-tit);font-size:1.05rem}.alb-entra span{font-size:.82rem;color:var(--o-tenue)}.alb-entra .fr{margin-left:auto;font-size:1.4rem;color:var(--o-tenue)}
+
+/* 📦 (28 nov 2026) il pallino dei pacchetti da aprire sull'album (linguetta dei Trofei e riga «Il tuo album» della Mini Asta) */
+.alb-tab button{position:relative}.alb-entra .ic{position:relative}
+.alb-pallino{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;padding:0 5px;border-radius:99px;background:#e0225a;color:#fff;font-size:.72rem;font-weight:900;line-height:20px;text-align:center;box-shadow:0 0 0 2px var(--o-fondo,#0d1020)}

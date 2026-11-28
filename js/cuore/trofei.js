@@ -757,8 +757,13 @@
   function tabTrofei(s, quale) {
     s._contenuto.appendChild(el("div", { class: "alb-tab" }, [
       el("button", { class: quale === "trofei" ? "on" : "", text: "🏆 Trofei", onclick: function () { if (quale !== "trofei") schermataSfide(); } }),
-      el("button", { class: quale === "album" ? "on" : "", text: "📒 Album", onclick: function () { if (quale !== "album") apriAlbum(); } })
+      el("button", { class: quale === "album" ? "on" : "", text: "📒 Album", onclick: function () { if (quale !== "album") apriAlbum(); } }, pacchiAlbum() ? [ el("span", { class: "alb-pallino", text: String(pacchiAlbum()) }) ] : null)
     ]));
+  }
+  // 📦 (28 nov 2026) i pacchetti da aprire, di tutte le stagioni (stat.astafanta.pk.<stagione>): il pallino sull'album
+  function pacchiAlbum() {
+    var p = (window.SGNube && SGNube.disponibile && SGNube.disponibile()) ? SGNube.profilo() : null; if (!p) return 0;
+    var pk = ((SGNube.statGioco ? SGNube.statGioco(GIOCO_ALBUM) : null) || {}).pk || {}, n = 0; Object.keys(pk).forEach(function (k) { n += Math.max(0, +pk[k] || 0); }); return n;
   }
   function giocoAlbum() { var g = null; giochi.forEach(function (x) { if (x.id === GIOCO_ALBUM) g = x; }); return g; }
   function apriAlbum(opz) {
@@ -773,7 +778,7 @@
     var p = (window.SGNube && SGNube.disponibile && SGNube.disponibile()) ? SGNube.profilo() : null; if (!p) return null;
     var st = SGNube.statGioco ? (SGNube.statGioco(GIOCO_ALBUM) || {}) : {}, n = Object.keys(st.al_oggi || {}).length;
     return el("button", { class: "alb-entra", onclick: function () { apriAlbum({ menu: null, tabs: null, indietro: function () { cuore.schermataModo(g); } }); } }, [
-      el("div", { class: "ic", text: "📒" }), el("div", {}, [ el("b", { text: "Il tuo album" }), el("span", { text: n ? (n === 1 ? "1 figurina" : n + " figurine") + " nella Serie A di oggi" : "Compra i calciatori e attacca le figurine" }) ]), el("div", { class: "fr", text: "›" })
+      el("div", { class: "ic", text: "📒" }, pacchiAlbum() ? [ el("span", { class: "alb-pallino", text: String(pacchiAlbum()) }) ] : null), el("div", {}, [ el("b", { text: "Il tuo album" }), el("span", { text: pacchiAlbum() ? "📦 " + (pacchiAlbum() === 1 ? "1 pacchetto" : pacchiAlbum() + " pacchetti") + " da aprire" : n ? (n === 1 ? "1 figurina" : n + " figurine") + " nella Serie A di oggi" : "Compra i calciatori e attacca le figurine" }) ]), el("div", { class: "fr", text: "›" })
     ]);
   }
   // schermata di un singolo gioco: platino in cima + trofei per livello

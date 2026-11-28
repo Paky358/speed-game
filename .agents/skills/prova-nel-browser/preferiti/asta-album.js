@@ -1,16 +1,20 @@
 // PROVE DELL'ALBUM DELLE FIGURINE DELLA MINI ASTA (27 nov 2026; scelte del proprietario in D:/SG-album-prove/LEGGIMI.md).
 // Uso (dopo copione-prova.js): await COPIONE.carica("preferiti/asta.js"); await COPIONE.carica("preferiti/asta-album.js"); await COPIONE.prova("al1")
-// Con Edge invisibile: prova.js --porta 8998 --carica preferiti/asta.js,preferiti/asta-album.js --prova al1,al2,al3,al4
+// Con Edge invisibile: prova.js --porta 8998 --carica preferiti/asta.js,preferiti/asta-album.js --prova al1,al2,al3,al4,al5
 //
 // al1 La partita online di tf1 (preferiti/asta-trofei.js: in 3 + Bea che guarda col link) guardando anche l'album: i numeri «con te»
-//     (stat.astafanta.al_oggi.<calciatore>) si salvano SOLO sul podio, una volta, uno per calciatore della rosa (16 numeri, una partita,
-//     comprato all'asta o d'ufficio, i d'ufficio quanti dice il gioco); Bea niente; dopo il podio l'avviso «📒 Nell'album».
+//     (stat.astafanta.al_oggi.<calciatore>) si salvano SOLO sul podio, una volta, uno per calciatore della rosa (18 numeri: dal 28 nov 2026 anche il metallo preso e i pacchetti; una partita,
+//     comprato all'asta o d'ufficio, i d'ufficio quanti dice il gioco); 📦 +1 pacchetto sul podio (pk.oggi); Bea niente; dopo il podio l'avviso «📒 Nell'album».
 // al2 (il libro, 28 nov 2026, novità v463) Dai Trofei la copertina («3 / N figurine»), l'indice sul campo coi 20 scudetti, le due pagine
 //     dell'Inter (1ª portieri e difensori, 2ª con le 3 prese e le sagome, tutto dentro la pagina), la scheda «con te» (Martinez L., Barella
 //     in due stagioni), il fumetto di chi manca, ‹ indietro, lo scaffale dalla copertina, la 2017-18; la prima volta niente voli; la riga
 //     «Il tuo album» nella prima schermata della Mini Asta; niente scorre di lato.
 // al3 (il libro) La figurina nuova vola una volta sola e la squadra appena completa (il Lecce) si accende; «+1» nell'indice; il dito
 //     sfoglia avanti e indietro (il tiro corto torna); col telefono girato le due pagine affiancate.
+// al5 (i pacchetti e il metallo, 28 nov 2026) 3 pacchetti nel profilo: il pallino sui Trofei, «Apri i pacchetti 3» sulla copertina; si apre:
+//     4 carte, la 1ª nuova, si girano una alla volta; nel profilo subito le carte (voce di 18 numeri, 17 = volte nel pacchetto, 16 = il
+//     metallo che sale) e pk.oggi −1; «Aprili tutti» (8 carte, pk −2); la scheda di una trovata nel pacchetto (niente numeri, «Compralo
+//     all'asta»); il metallo preso resta: bronzo preso e oggi oro = carta bronzo con «⬆ ora è oro»; salito = la festa «⬆ Oro!» una volta.
 // al4 (l'album fisso) L'ordine per ruolo e numero di maglia; chi esce dal listone resta al suo posto («💎 Introvabile» se preso,
 //     «🔒 Non più all'asta» se no, e non conta più nel totale); chi entra dopo va negli «🆕 Aggiornamenti» col numero dopo l'ultimo;
 //     la città di una squadra presa da un file (carte/album/citta/<Squadra>.webp; qui l'immagine di prova in album/citta-prova/).
@@ -22,12 +26,13 @@
   function testo(w, s) { var e = q(w, s); return e ? e.textContent.replace(/\s+/g, " ").trim() : ""; }
 
   COPIONE.aggiungi("al1", { nome: "Album: i numeri «con te» salvati solo sul podio, una volta, uno per calciatore; Bea niente; l'avviso «📒 Nell'album»", fai: async function () {
-    var cap = {}, orig = COPIONE.aggiungi, salvati = {}, avvisi = {}, interno = null;
+    var cap = {}, orig = COPIONE.aggiungi, salvati = {}, pacchi = {}, avvisi = {}, interno = null;
     COPIONE.aggiungi = function (n, s) { cap[n] = s; return orig(n, s); };
     try { await COPIONE.carica("preferiti/asta-trofei.js"); } finally { COPIONE.aggiungi = orig; }
     if (!cap.tf1) no("non trovo la prova tf1");
     // la spia di tf1 resta la sua: qui si guardano in più i salvataggi dell'album (e chi li fa)
     Object.defineProperty(W, "__spiaProgressi", { configurable: true, get: function () { return interno && function (nome, a, w) {
+      [].slice.call(a[2] || []).forEach(function (kv) { if (kv[0] === "pk.oggi") (pacchi[nome] = pacchi[nome] || []).push({ n: kv[1], podio: !!(w && w.document && w.document.querySelector(".st-gradini")) }); });
       [].slice.call(a[4] || []).forEach(function (kv) { if (/^al_/.test(kv[0])) { (salvati[nome] = salvati[nome] || []).push({ k: kv[0], x: kv[1], podio: !!(w && w.document && w.document.querySelector(".st-gradini")) }); } });
       return interno(nome, a, w);
     }; }, set: function (f) { interno = f; } });
@@ -42,12 +47,15 @@
         l.forEach(function (s) {
           if (!s.podio) no(n + ": album salvato prima del podio (" + s.k + ")");
           if (!/^al_oggi\.(fc\d+|k[A-Za-z]+)$/.test(s.k)) no(n + ": chiave strana " + s.k);
-          if (!s.x || s.x.length !== 16) no(n + ": la voce " + s.k + " non ha 16 numeri");
+          if (!s.x || s.x.length !== 18) no(n + ": la voce " + s.k + " non ha 18 numeri");
+          else if ([0, 1, 2].indexOf(s.x[16]) < 0 || s.x[17] !== 0) no(n + ": la voce " + s.k + " ha metallo/pacchetti " + s.x[16] + "/" + s.x[17]);
           else { if (s.x[6] !== 1) no(n + ": " + s.k + " partite " + s.x[6]); if (s.x[0] + s.x[4] + s.x[5] !== 1) no(n + ": " + s.k + " comprato/ufficio/scambio " + s.x.slice(0, 6)); if (s.x[0] && (s.x[2] !== s.x[1] || s.x[3] !== s.x[1])) no(n + ": " + s.k + " prezzo più basso e più alto sbagliati " + s.x.slice(0, 4)); }
         });
+        var pk = pacchi[n] || []; if (pk.length !== 1 || pk[0].n !== 1 || !pk[0].podio) no(n + ": pacchetti salvati " + JSON.stringify(pk) + " (voluto uno, +1, sul podio)");
         if (!avvisi[n] && n !== "Giulia") no(n + ": niente avviso «📒 Nell'album» dopo il podio");   // (Giulia in tf1 ricarica sul podio prima del suo avviso: le figurine restano salvate una volta, l'avviso non torna)
       });
       if (salvati.Bea) no("Bea guarda e salva l'album");
+      if (pacchi.Bea) no("Bea guarda e prende un pacchetto");
       var uff = 0; ["Paky", "Giulia", "Luca"].forEach(function (n) { (salvati[n] || []).forEach(function (s) { uff += s.x[4]; }); });
       if (uff < 3) no("d'ufficio nell'album " + uff + " (tf1 ne conta almeno uno per ruolo)");
       x.push("tf1: " + String(r).slice(0, 90) + "…");
@@ -256,6 +264,68 @@
       } finally { var D0 = JSON.parse(salvaD), F0 = JSON.parse(salvaF); Object.keys(D0).forEach(function (k) { DAT[k] = D0[k]; }); Object.keys(F0).forEach(function (k) { FIS[k] = F0[k]; }); P.L2S.CITTA_FILE.length = 0; P.L2S.CARTELLA = "carte/album/citta/"; }
       var err = W.erroriTel(); if (err.length) no("errori: " + err.slice(0, 3).join(" | "));
     } finally { W.__statFinte = null; }
+    return x.join(" · ");
+  } });
+
+  COPIONE.aggiungi("al5", { nome: "Pacchetti: il pallino, «Apri i pacchetti», 4 carte (la 1ª nuova), salvate subito, «Aprili tutti»; il metallo preso resta e quando sale fa festa", fai: async function () {
+    var x = [], stat = { al_oggi: {}, pk: { oggi: 3 } }, salvate = [];
+    function metti(kv, somma) { var k = kv[0].split("."), o = stat; for (var i = 0; i < k.length - 1; i++) o = o[k[i]] = o[k[i]] || {}; o[k[k.length - 1]] = somma ? (o[k[k.length - 1]] || 0) + kv[1] : kv[1]; }
+    W.__statFinte = function (nome, g) { return g === "astafanta" ? stat : {}; };
+    W.__spiaProgressi = function (nome, a) { salvate.push({ incr: a[2] || [], set: a[4] || [] }); (a[2] || []).forEach(function (kv) { metti(kv, true); }); (a[4] || []).forEach(function (kv) { metti(kv, false); }); };
+    try {
+      var P = await W.apriTel("Paky", { x: 0 });
+      if (!P.SG_FANTA_IDS) await new Promise(function (ok) { P.SGCuore.caricaPezzo("asta").then(ok, ok); });
+      pulisciViste(P);
+      var id = function (k) { return "fc" + P.SG_FANTA_IDS[k]; };
+      // un oro preso quando era bronzo (voce di prima: metallo 0) e un calciatore preso con la voce vecchia da 16 numeri
+      var oro = null; P.SG_ALBUM_OGGI.Inter.forEach(function (v) { var c = { nome: v.slice(2), squadra: "Inter", ruolo: v[0] }; if (!oro && P.__FASCIA(c) === "oro") oro = c; });
+      if (!oro) no("non trovo un oro dell'Inter");
+      stat.al_oggi[id(oro.nome + " (Inter)")] = [1, 20, 20, 20, 0, 0, 1, 60, 60, 0, 0, 0, 0, 0, 60, "2026-11-20|Lecce|0", 0, 0];
+      stat.al_oggi[id("Thuram (Inter)")] = [0, 0, 0, 0, 1, 0, 1, 60, 60, 0, 0, 0, 0, 0, 60, "2026-11-21|Torino|0"];
+      // 1. il pallino sui Trofei e la copertina
+      P.SGCuore.schermataSfide(); await W.dorme(300);
+      if (testo(P, ".alb-tab .alb-pallino") !== "3") no("il pallino dei pacchetti sui Trofei dice «" + testo(P, ".alb-tab .alb-pallino") + "»");
+      P.SGCuore.apriAlbum(); if (!await W.aspetta(function () { return q(P, ".lb-cop canvas"); }, 20000)) no("la copertina non arriva");
+      if (!/Apri i pacchetti/.test(testo(P, ".lb-cop .pk-apri")) || testo(P, ".lb-cop .pk-n") !== "3") no("sulla copertina: «" + testo(P, ".lb-cop .pk-apri") + "»");
+      // 2. il metallo preso resta: la carta dell'oro è bronzo con «⬆ ora è oro»
+      await apriCopertina(P); await vai(P, ".lb-ig button[data-sq=Inter]", "Inter 1");
+      var trova = function (nome) { return qa(P, ".lb-cas").filter(function (b) { return vista(P) && vista(P).contains(b) && b.__c.nome === nome; })[0]; };
+      if (oro.ruolo === "C" || oro.ruolo === "A") await vai(P, ".lb-fr.giu", "Inter 2");
+      var co = trova(oro.nome); if (!co || co.__c.metFisso !== "bronzo" || !/ora è oro/.test(co.textContent)) no(oro.nome + ": la carta non è bronzo con «⬆ ora è oro» (" + (co && co.__c.metFisso) + ")");
+      x.push(oro.nome + ": bronzo, «⬆ ora è oro»");
+      // 3. si apre un pacchetto
+      P.SGCuore.apriAlbum(); await W.aspetta(function () { return q(P, ".lb-cop .pk-apri"); }, 8000);
+      q(P, ".lb-cop .pk-apri").click(); if (!await W.aspetta(function () { return q(P, ".pk-busta"); }, 4000)) no("la bustina non arriva");
+      if (!/3 da aprire/.test(testo(P, ".pk-quanti"))) no("in alto: «" + testo(P, ".pk-quanti") + "»");
+      var prima = salvate.length; q(P, ".pk-busta").click();
+      if (!await W.aspetta(function () { return qa(P, ".pk-carta").length === 4 && qa(P, ".pk-carta.girata").length === 4; }, 9000)) no("le 4 carte non si girano tutte (" + qa(P, ".pk-carta.girata").length + ")");
+      var sv = salvate.slice(prima); if (sv.length !== 1) no("salvataggi del pacchetto " + sv.length + " (voluto 1)");
+      else { var ik = sv[0].incr.filter(function (kv) { return kv[0] === "pk.oggi"; })[0]; if (!ik || ik[1] !== -1) no("il pacchetto non scende di 1: " + JSON.stringify(sv[0].incr));
+        sv[0].set.forEach(function (kv) { if (!/^al_oggi\./.test(kv[0]) || kv[1].length !== 18 || kv[1][17] < 1) no("carta salvata male: " + JSON.stringify(kv)); }); }
+      var c0 = qa(P, ".pk-carta")[0]; if (!c0.classList.contains("nuova") || !/NUOVA/.test(c0.textContent)) no("la 1ª carta del pacchetto non è «NUOVA!»");
+      if (stat.pk.oggi !== 2) no("pacchetti dopo il primo: " + stat.pk.oggi);
+      x.push("pacchetto: " + qa(P, ".pk-carta").map(function (n) { return n.className.replace("pk-carta ", "").replace(/ pronta| girata/g, ""); }).join(", "));
+      // 4. «Aprili tutti»: gli altri 2 (8 carte), poi niente
+      var b = null; await W.aspetta(function () { b = qa(P, ".pk-piede button").filter(function (y) { return /tutti/i.test(y.textContent); })[0]; return b; }, 4000); if (!b) no("non c'è «Aprili tutti»"); b.click();
+      if (!await W.aspetta(function () { return /nessuno da aprire/.test(testo(P, ".pk-quanti")) && qa(P, ".pk-piede button").length; }, 15000)) no("«Aprili tutti» non finisce");
+      if (stat.pk.oggi !== 0) no("pacchetti alla fine: " + stat.pk.oggi);
+      x.push("«Aprili tutti»: " + qa(P, ".pk-carta").length + " carte in vista, pacchetti 0");
+      // 5. torna all'album: niente pallino; una carta trovata nel pacchetto ha la scheda senza numeri
+      qa(P, ".pk-piede button").pop().click(); await W.dorme(600);
+      if (q(P, ".lb-pk")) no("il pacchetto non si chiude");
+      var trovata = Object.keys(stat.al_oggi).filter(function (k) { var v = stat.al_oggi[k]; return v.length === 18 && v[17] >= 1 && !v[0] && !v[4] && !v[5]; })[0];
+      if (!trovata) no("nessuna carta solo dal pacchetto");
+      P.SGCuore.schermataSfide(); await W.dorme(300); if (q(P, ".alb-tab .alb-pallino")) no("il pallino resta dopo aver aperto tutto");
+      // 6. il metallo che sale: l'oro preso bronzo ora è oro (come ricomprato) → la festa «⬆ Oro!» una volta
+      stat.al_oggi[id(oro.nome + " (Inter)")][16] = 2;
+      P.SGCuore.apriAlbum(); await W.aspetta(function () { return q(P, ".lb-cop canvas"); }, 8000); await apriCopertina(P);
+      q(P, ".lb-ig button[data-sq=Inter]").click(); await W.aspetta(function () { return fermo(P, "Inter 1"); }, 6000);
+      if (oro.ruolo === "C" || oro.ruolo === "A") { await W.dorme(2500); await vai(P, ".lb-fr.giu", "Inter 2"); }
+      if (!await W.aspetta(function () { return /Oro!/.test(testo(P, ".lb-su")); }, 6000)) no("niente festa «⬆ Oro!» quando il metallo sale");
+      await W.dorme(1600); co = trova(oro.nome); if (!co || /ora è oro/.test(co.textContent) || co.__c.metFisso !== "oro") no("dopo la festa la carta non è d'oro senza «⬆»");
+      x.push("il metallo sale: «⬆ Oro!»");
+      var err = W.erroriTel(); if (err.length) no("errori: " + err.slice(0, 3).join(" | "));
+    } finally { W.__statFinte = null; W.__spiaProgressi = null; }
     return x.join(" · ");
   } });
 })();
