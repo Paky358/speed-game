@@ -8642,8 +8642,23 @@
   var METALLI = {
     oro: { fondo: [[0, "#fff1b0"], [0.35, "#f2c94c"], [0.55, "#fff4c4"], [0.8, "#d4a032"], [1, "#f7dc7a"]], filo: "#9a6b12", stella: "#b8860b", bordo: "#fff4c4", riflesso: 0.1, ovr: "#ffe9a6", medio: "#f0cf6a", inchiostro: "#5b3c06" },
     argento: { fondo: [[0, "#f9fbfe"], [0.33, "#b9c2d0"], [0.54, "#ffffff"], [0.78, "#8b95a8"], [1, "#e3e8f0"]], filo: "#4e596c", stella: "#66717f", bordo: "#ffffff", riflesso: 0.16, ovr: "#f1f5fc", medio: "#d4dae4", inchiostro: "#1f2632" },
-    bronzo: { fondo: [[0, "#f4cba7"], [0.33, "#b96d3c"], [0.54, "#f0c29b"], [0.78, "#81441f"], [1, "#d99b6f"]], filo: "#552810", stella: "#8a461c", bordo: "#fde3cb", riflesso: 0.1, ovr: "#ffe4cc", medio: "#cf9466", inchiostro: "#3a1806" }
+    bronzo: { fondo: [[0, "#f4cba7"], [0.33, "#b96d3c"], [0.54, "#f0c29b"], [0.78, "#81441f"], [1, "#d99b6f"]], filo: "#552810", stella: "#8a461c", bordo: "#fde3cb", riflesso: 0.1, ovr: "#ffe4cc", medio: "#cf9466", inchiostro: "#3a1806" },
+    // 📦 (29 nov 2026) i colori delle due carte speciali, che si trovano SOLO nei pacchetti (quale colore a quale carta: ALB_SPECIALI)
+    viola: { fondo: [[0, "#e7d4ff"], [0.33, "#8a4fd8"], [0.54, "#d9bfff"], [0.78, "#5a259e"], [1, "#b58cf0"]], filo: "#3a1270", stella: "#6b2fc0", bordo: "#f1e6ff", riflesso: 0.16, ovr: "#f0e4ff", medio: "#a97de8", inchiostro: "#24074d" },
+    nero: { fondo: [[0, "#5a6070"], [0.3, "#181b24"], [0.52, "#3c414f"], [0.78, "#0b0d13"], [1, "#2b2f3b"]], filo: "#d7dde8", stella: "#c3cad6", bordo: "#eef2f8", riflesso: 0.22, ovr: "#eef2f8", medio: "#2a2e3a", inchiostro: "#eef2f8" },
+    turchese: { fondo: [[0, "#c8fbf4"], [0.33, "#1fb8b0"], [0.54, "#b2f5ee"], [0.78, "#0d7a78"], [1, "#5fd8cf"]], filo: "#064a49", stella: "#0e8c86", bordo: "#e6fffb", riflesso: 0.14, ovr: "#e2fffb", medio: "#4cc9c0", inchiostro: "#043332" },
+    arancione: { fondo: [[0, "#ffe0c2"], [0.33, "#f07a1e"], [0.54, "#ffd2a8"], [0.78, "#b34f08"], [1, "#f9a55c"]], filo: "#5c2400", stella: "#c45a0c", bordo: "#fff0e2", riflesso: 0.12, ovr: "#fff0e2", medio: "#f39a55", inchiostro: "#3b1700" }
   };
+  // le due carte speciali dei pacchetti: «RARA» = chi non è mai andato all'asta (gruppo X, solo per il campo); «EX» = chi è uscito dal listone.
+  // Il colore di ognuna si sceglie qui (il proprietario sulle foto): viola, nero (nero lucido col filo d'argento), turchese, arancione.
+  var ALB_SPECIALI = { rara: "viola", ex: "nero" }, ALB_NOME_SPECIALE = { rara: "RARA", ex: "EX" };
+  // 🖼️ LE IMMAGINI DELL'ALBUM DA FILE (le disegna Gemini; misure e regole nel LEGGIMI di D:/SG-album-prove/libro2). Un'immagine si accende
+  //  mettendo il file in ALB_IMG.cartella e il suo nome qui (true, o la squadra nella lista festa); se manca, resta il disegno del codice.
+  //  copertina: copertina.webp (lo stadio di notte, uguale per tutte le stagioni); pacchetto: pacchetto.webp (o pacchetto-<stagione>.webp
+  //  se c'è in pacchettiStagione); dorso: dorso.webp (il dorso delle carte coperte); festa: festa/<Squadra>.webp (la squadra completa).
+  var ALB_IMG = { cartella: "carte/album/", copertina: false, pacchetto: false, pacchettiStagione: [], dorso: false, festa: [] };
+  function albImg(nome) { return ALB_IMG.cartella + nome + ".webp"; }
+  function metalloDi(f) { return METALLI[ALB_SPECIALI[f] || f] || null; }
   function luce(x) { var s = String(x), m = s.indexOf("rgb") === 0 ? s.replace(/[^0-9,]/g, "").split(",") : null, n = m ? 0 : parseInt(s.slice(1), 16) || 0, v = m ? [+m[0], +m[1], +m[2]] : [n >> 16, n >> 8 & 255, n & 255]; v = v.map(function (y) { y /= 255; return y <= 0.03928 ? y / 12.92 : Math.pow((y + 0.055) / 1.055, 2.4); }); return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; }
   function contrasto(a, b) { var x = luce(a), y = luce(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
   function sogliaFascia(l, voluti) {   // (l in ordine dalla quotazione più alta; a pari distanza vince la quotazione più alta)
@@ -8674,7 +8689,7 @@
   window.__FASCIA = fasciaDi;   // (per le prove)
   function valoreMostrato(c) { return OVR.on ? overallDi(c) : valoreCalc(c); }   // (quello che si vede e che fa il valore della rosa)
   function albumNuovo(cx, w, h, c, kit, col, ca, mg, ruolo, prezzo, d, tondo, nomeIn, fascia, coperto) {   // 🃏 la figurina nuova da album (fascia: 🥇🥈🥉 oro, argento o bronzo, da fasciaDi)
-    var MT = METALLI[fascia] || null;
+    var MT = metalloDi(fascia);
     var m = w * 0.045, iw = w - 2 * m, ih = h * 0.76, PI = Math.PI, c0 = col[0], c1 = col[1] || "#ffffff";
     cx.shadowColor = "rgba(0,0,0,.45)"; cx.shadowBlur = w * 0.06; cx.shadowOffsetY = w * 0.02; tondo(0, 0, w, h, w * 0.07);
     if (MT) { var go = cx.createLinearGradient(0, 0, w, h); MT.fondo.forEach(function (s) { go.addColorStop(s[0], s[1]); }); cx.fillStyle = go; } else cx.fillStyle = "#f6f1e3";
@@ -8715,6 +8730,11 @@
     if (MT) {   // ⭐ la stellina del metallo e il riflesso olografico (fermo: quello che passa lo fa il volo)
       cx.font = "900 " + Math.round(w * 0.06) + "px system-ui,sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; var stx = m + w * 0.035 + w * 0.075, sty = m + w * 0.035 + w * 0.18 + w * 0.075 + ovOff; cx.beginPath(); cx.arc(stx, sty, w * 0.055, 0, Math.PI * 2); cx.fillStyle = MT.stella; cx.fill(); cx.lineWidth = Math.max(1, w * 0.01); cx.strokeStyle = MT.bordo; cx.stroke(); cx.fillStyle = "#fff"; cx.fillText("★", stx, sty + w * 0.004);   // (la stellina sotto lo scudetto)
       cx.save(); tondo(0, 0, w, h, w * 0.07); cx.clip(); cx.globalAlpha = MT.riflesso; cx.fillStyle = "#fff"; [0.18, 0.62].forEach(function (p, i) { cx.beginPath(); cx.moveTo(w * (p - 0.3), h); cx.lineTo(w * (p - 0.3 + (i ? 0.1 : 0.18)), h); cx.lineTo(w * (p + 0.5 + (i ? 0.1 : 0.18)), 0); cx.lineTo(w * (p + 0.5), 0); cx.closePath(); cx.fill(); }); cx.restore();
+    }
+    if (ALB_NOME_SPECIALE[fascia] && MT) {   // 📦 la carta speciale: il suo nome corto in un nastrino in alto a destra («RARA», «EX»)
+      var nt = ALB_NOME_SPECIALE[fascia], fs2 = Math.round(w * 0.075); cx.save(); cx.font = "900 " + fs2 + "px system-ui,sans-serif"; var tw = cx.measureText(nt).width + w * 0.07, tx = w - m - w * 0.03 - tw, ty = m + w * 0.03, th = fs2 * 1.35;
+      tondo(tx, ty, tw, th, th / 2); cx.fillStyle = MT.filo; cx.fill(); cx.lineWidth = Math.max(1, w * 0.008); cx.strokeStyle = MT.bordo; cx.stroke();
+      cx.fillStyle = MT.bordo; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(nt, tx + tw / 2, ty + th / 2 + 0.5); cx.restore();
     }
     if (prezzo != null) cartellino(cx, w, prezzo);
   }
@@ -13246,7 +13266,7 @@
 // 17 le volte che l'hai trovato in un pacchetto]
   // Il prezzo (il proprietario tramite il Cervello): comprato a 1 all'asta = nella media; d'ufficio e scambio = fuori, scritti a parte.
   function chiaveAlbum(stag) { return "al_" + chiaveStag(stag); }
-  var ALB_METALLI = ["bronzo", "argento", "oro"];
+  var ALB_METALLI = ["bronzo", "argento", "oro", "rara", "ex"];   // (29 nov 2026: dopo l'oro le due carte speciali dei pacchetti; la carta tiene la migliore presa)
   function albVoce(v) {   // la voce di sempre, allungata a 18 numeri (le voci di prima del 28 nov 2026 ne hanno 16: il metallo è «non si sa», -1)
     var x = v && v.length >= 16 ? v.slice() : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, ""];
     if (x.length < 17 || typeof x[16] !== "number") x[16] = -1; if (x.length < 18 || typeof x[17] !== "number") x[17] = 0;
@@ -13346,8 +13366,8 @@
         });
       }
       function metti(c, num) {
-        c.num = num; c.met = fasciaDi(c); c.id = idAlbum(c); c.x = miei[c.id] ? albVoce(miei[c.id]) : null; c.stag = stag; tutte.push(c);
-        if (c.x) { var ora2 = ALB_METALLI.indexOf(c.met); c.metPreso = c.x[16] >= 0 ? c.x[16] : ora2; c.metFisso = ALB_METALLI[c.metPreso]; if (ora2 > c.metPreso) c.sale = ALB_METALLI[ora2]; }   // (la carta resta col metallo preso; se oggi vale di più: «⬆ ora è oro»)
+        c.num = num; c.met = c.esce ? "ex" : !c.asta ? "rara" : fasciaDi(c); c.id = idAlbum(c); c.x = miei[c.id] ? albVoce(miei[c.id]) : null; c.stag = stag; tutte.push(c);   // (📦 chi è uscito: «EX»; chi non è mai andato all'asta: «RARA»; solo nei pacchetti)
+        if (c.x) { var ora2 = ALB_METALLI.indexOf(c.met); c.metPreso = c.x[16] >= 0 ? c.x[16] : ora2; c.metFisso = ALB_METALLI[c.metPreso]; if (ora2 > c.metPreso && ora2 <= 2) c.sale = ALB_METALLI[ora2]; }   // (la carta resta col metallo preso; se oggi vale di più: «⬆ ora è oro»)
       }
       squadre.forEach(function (sq, i) { per[sq].forEach(function (c, j) { metti(c, i * ALB_POSTI + j + 1); }); });
       agg.forEach(function (c, j) { c.agg = true; metti(c, squadre.length * ALB_POSTI + j + 1); });
@@ -13355,7 +13375,7 @@
     });
   }
   // il conto (29 nov 2026: chi è uscito dal listone si trova nei pacchetti, quindi conta come tutti gli altri)
-  function albConta(l) { var o = { n: 0, p: 0, oro: [0, 0], argento: [0, 0], bronzo: [0, 0] }; l.forEach(function (c) { o.n++; if (c.x) o.p++; var y = o[c.met]; if (y) { y[1]++; if (c.x) y[0]++; } }); return o; }
+  function albConta(l) { var o = { n: 0, p: 0, oro: [0, 0], argento: [0, 0], bronzo: [0, 0], rara: [0, 0], ex: [0, 0] }; l.forEach(function (c) { o.n++; if (c.x) o.p++; var y = o[c.met]; if (y) { y[1]++; if (c.x) y[0]++; } }); return o; }
   function albStile() {
     if (document.getElementById("alb-stile")) return;
     var s = document.createElement("style"); s.id = "alb-stile";
@@ -13504,6 +13524,10 @@
       ".pk-busta.scuoti{animation:pkNo .45s}@keyframes pkNo{20%{transform:rotate(-4deg)}45%{transform:rotate(4deg)}70%{transform:rotate(-2deg)}100%{transform:none}}",
       ".pk-marca{font-family:var(--o-tit);font-weight:800;letter-spacing:.2em;font-size:.72rem;color:#ffe28a}.pk-tit{font-family:var(--o-tit);font-weight:800;font-size:1.9rem;line-height:1;color:#fff;text-shadow:0 3px 0 rgba(60,0,30,.6)}",
       ".pk-stag{font-weight:800;font-size:.85rem;color:#ffe3ee}.pk-num{margin-top:10px;font-weight:900;font-size:.8rem;color:#0b0f26;background:linear-gradient(180deg,#fff3b8,#f2c230);border-radius:99px;padding:3px 10px}",
+      ".lb-img{background-size:cover;background-position:center}.lb-buio{position:absolute;inset:0;background:#05061a;opacity:.62;z-index:1;pointer-events:none}",
+      ".pk-fronte.img,.pk-dorso.img{background-size:cover;background-position:center}.pk-fronte.img:before{display:none}",
+      ".lb-festa-img{position:fixed;inset:0;z-index:66;opacity:0;background-size:cover;background-position:center bottom;pointer-events:none}.lb-festa-img .lb-banda{top:30%}",
+      ".pk-luce2{position:absolute;inset:-38%;border-radius:50%;opacity:0;pointer-events:none}",
       ".pk-pila{position:relative;width:min(56vw,220px);aspect-ratio:1/1.45}.pk-pila .pk-busta{position:absolute;inset:0;width:auto}",
       ".pk-fila{position:relative;width:min(46vw,180px);aspect-ratio:1/1.45;margin-left:-24%}.pk-busta.in-fila{position:absolute;inset:0;width:auto;will-change:transform,opacity}",
       ".pk-dito,.pk-vuoto{text-align:center;color:#c9cfe6;font-weight:700;font-size:.9rem;margin:14px 0 0}.pk-ritrovato{color:#ffe28a;margin:0 0 10px}",
@@ -13516,6 +13540,8 @@
       ".pk-faccia canvas{width:100%;height:100%;display:block}",
       ".pk-dorso{transform:rotateY(180deg);background:repeating-linear-gradient(45deg,#3a1f6e 0 8px,#2c1758 8px 16px);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 4px #b9774a,inset 0 0 0 6px rgba(0,0,0,.35)}",
       ".pk-carta.argento .pk-dorso{box-shadow:inset 0 0 0 4px #d7def0,inset 0 0 0 6px rgba(0,0,0,.35)}.pk-carta.oro .pk-dorso{box-shadow:inset 0 0 0 4px #ffd84a,inset 0 0 0 6px rgba(0,0,0,.35),inset 0 0 18px rgba(255,216,74,.45)}",
+      ".pk-carta.rara .pk-dorso{box-shadow:inset 0 0 0 4px var(--pk-rara,#a97de8),inset 0 0 0 6px rgba(0,0,0,.35),inset 0 0 18px var(--pk-rara,#a97de8)}.pk-carta.ex .pk-dorso{box-shadow:inset 0 0 0 4px var(--pk-ex,#d7dde8),inset 0 0 0 6px rgba(0,0,0,.5),inset 0 0 18px var(--pk-ex,#d7dde8)}",
+      ".pk-carta.rara.girata .pk-raggi,.pk-carta.ex.girata .pk-raggi{opacity:1;transition:opacity .4s;background:radial-gradient(circle,var(--pk-luce,#c9a8ff),rgba(0,0,0,0) 66%)}",
       ".pk-dorso-in{font-family:var(--o-tit);font-weight:800;font-size:.7rem;letter-spacing:.15em;color:#ffe28a;transform:rotate(-30deg)}",
       ".pk-luccica{position:absolute;inset:0;overflow:hidden;pointer-events:none}.pk-luccica i{position:absolute;top:-20%;bottom:-20%;left:25%;width:50%;opacity:0;transform:skewX(-14deg);background:linear-gradient(100deg,rgba(255,255,255,0),rgba(255,255,255,.45) 50%,rgba(255,255,255,0))}",
       ".pk-carta.oro .pk-luccica i{background:linear-gradient(100deg,rgba(255,236,150,0),rgba(255,240,170,.85) 50%,rgba(255,236,150,0))}",
@@ -13551,7 +13577,7 @@
       ".lb-cop .ti{font-family:var(--o-tit);font-weight:800;font-size:3rem;line-height:1;background:linear-gradient(180deg,#fffbe0,#ffd84a 40%,#c98a1a 75%,#ffe9a0);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 3px 0 rgba(90,50,0,.6));padding-bottom:.1em}",
       ".lb-cop .st{font-weight:800;font-size:1.05rem;color:#e8ecff;letter-spacing:.06em}",
       ".lb-cop .pc{font-weight:900;font-size:.92rem;color:#0b0f26;background:linear-gradient(180deg,#fff3b8,#f2c230);border-radius:99px;padding:4px 14px;margin-top:6px}",
-      ".lb-cop .met{display:flex;gap:6px;margin-top:4px}.lb-cop .met span{font-size:.74rem;font-weight:800;padding:2px 8px;border-radius:99px;background:rgba(6,8,22,.6);color:#e8ecff}",
+      ".lb-cop .met{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:4px}.lb-cop .met span{font-size:.74rem;font-weight:800;padding:2px 8px;border-radius:99px;background:rgba(6,8,22,.6);color:#e8ecff}",
       ".lb-cop .scaf{font:inherit;font-weight:800;font-size:.8rem;color:#fff;background:rgba(6,8,22,.6);border:1px solid rgba(242,194,48,.55);border-radius:99px;padding:5px 12px;margin-top:6px}",
       ".lb-cop .tc{position:absolute;left:0;right:0;bottom:4.5%;text-align:center;font-size:.85rem;font-weight:800;color:#fff;z-index:3;text-shadow:0 1px 4px #000;pointer-events:none}",
       ".lb-cop .cor{position:absolute;inset:10px 10px 10px 18px;border:1.5px solid rgba(242,194,48,.7);border-radius:8px;z-index:2;pointer-events:none}",
@@ -13645,18 +13671,22 @@
     var scaf = el("button", { class: "scaf", text: "📚 Tutti gli album ›", onclick: function (e) { e.stopPropagation(); albScaffale(); } });
     f.appendChild(el("div", { class: "tx" }, [ el("div", { class: "an", text: "ALBUM DELLA MINI ASTA" }), el("div", { class: "ti", text: "Serie A" }), el("div", { class: "st", text: LIB.stag ? LIB.stag : "di oggi" }),
       el("div", { class: "pc", text: o.p + " / " + o.n + " figurine" }),
-      el("div", { class: "met" }, ["oro", "argento", "bronzo"].map(function (m) { return el("span", { text: { oro: "🥇", argento: "🥈", bronzo: "🥉" }[m] + " " + o[m][0] + "/" + o[m][1] }); })), scaf ]));
+      el("div", { class: "met" }, ["oro", "argento", "bronzo", "rara", "ex"].filter(function (m) { return o[m][1]; }).map(function (m) { return el("span", { class: "m-" + m, text: ({ oro: "🥇", argento: "🥈", bronzo: "🥉" }[m] || ALB_NOME_SPECIALE[m]) + " " + o[m][0] + "/" + o[m][1] }); })), scaf ]));
     f.appendChild(el("div", { class: "tc", text: "👆 Tocca per accendere le luci" }));
     var npk = libPacchi(LIB.stag) || (libUltimo(LIB.stag) ? "…" : 0);   // (anche un pacchetto rimasto a metà: si ritrova)
     if (npk) f.appendChild(el("button", { class: "pk-apri", onclick: function (e) { e.stopPropagation(); libPacchetti(); } }, [ el("span", { class: "pk-ic", text: "📦" }), el("b", { text: "Apri i pacchetti" }), el("span", { class: "pk-n", text: String(npk) }) ]));
     LIB.scena.appendChild(f); libBarra(null);
-    if (SF()) { SF().copertina(base, "B", null); luci.forEach(function (c, i) { SF().copertina(c, "B", i < 4 ? i : "campo"); }); }
+    var buio = null;
+    if (ALB_IMG.copertina) {   // (🖼️ l'immagine di Gemini: si vede sotto un velo scuro che si toglie al tocco, al posto dei riflettori disegnati)
+      var im = el("div", { class: "lb-sf lb-img", style: "background-image:url(" + albImg("copertina") + ")" }); f.insertBefore(im, base); base.remove(); luci.forEach(function (c) { c.remove(); }); luci = [];
+      buio = el("div", { class: "lb-buio" }); f.insertBefore(buio, im.nextSibling);
+    } else if (SF()) { SF().copertina(base, "B", null); luci.forEach(function (c, i) { SF().copertina(c, "B", i < 4 ? i : "campo"); }); }
     var via = false, festa = LIB.festa;
     f.addEventListener("click", function () {
       if (via) { if (LIB.giro) LIB.giro.presto = true; return; } via = true;
       try { if (navigator.vibrate) navigator.vibrate(12); } catch (e) {}
       LIB.giro = { presto: false };
-      libTempo(1150, function (k) { luci.forEach(function (c, i) { var da = i < 4 ? 0.04 + [0, 2, 1, 3][i] * 0.17 : 0.7, v = Math.max(0, Math.min(1, (k - da) / 0.13)); c.style.opacity = v.toFixed(3); }); }).then(function () {
+      libTempo(1150, function (k) { if (buio) buio.style.opacity = (0.62 * (1 - k)).toFixed(3); luci.forEach(function (c, i) { var da = i < 4 ? 0.04 + [0, 2, 1, 3][i] * 0.17 : 0.7, v = Math.max(0, Math.min(1, (k - da) / 0.13)); c.style.opacity = v.toFixed(3); }); }).then(function () {
         if (festa !== LIB.festa) return;
         var ind = libNodo(0); ind.style.visibility = "visible"; ind.style.zIndex = 1;
         var sotto = libOmbre(ind, "lb-sotto"); sotto.style.opacity = ".7"; f.style.zIndex = 5; libFruscio();
@@ -13704,7 +13734,7 @@
     }
     if (LIB.coda.length) LIB.raf = requestAnimationFrame(libFigura);
   }
-  var LIB_PAG = 16;   // (il proprietario, 29 nov 2026: 4×4 = 16 figurine per pagina, 32 per squadra su 2 pagine)
+  var LIB_PAG = 16, LIB_COL = 4;   // (il proprietario, 29 nov 2026: 4×4 = 16 figurine per pagina, 32 per squadra su 2 pagine)
   function libFoglioSq(sq, pag, i) {
     var C = window.SGCuore, el = C.el, l = LIB.ab.per[sq] || [], lista = l.slice((pag - 1) * LIB_PAG, pag * LIB_PAG), b0 = LIB.ab.squadre.indexOf(sq) * ALB_POSTI + (pag - 1) * LIB_PAG;
     for (var p = lista.length; p < LIB_PAG; p++) lista.push({ libero: true, num: b0 + p + 1 });   // (i posti liberi: per chi arriverà)
@@ -13732,12 +13762,12 @@
   }
   function libFig(c) { var el = window.SGCuore.el, cp = albCopie(c.x), f = el("div", { class: "lb-fig", style: "--r:" + (((c.num * 37) % 7 - 3) * 0.8).toFixed(1) + "deg" }, [ el("div", { class: "alb-attesa" }) ]); if (cp >= 2) f.appendChild(el("span", { class: "lb-copie", text: "×" + cp }));
     if (c.esce) f.appendChild(el("span", { class: "lb-raro", text: "💎 Introvabile" })); else if (c.sale) f.appendChild(el("span", { class: "lb-ora " + c.sale, text: "⬆ ora è " + c.sale })); return f; }
-  function libVuoto(c) { var el = window.SGCuore.el; return el("div", { class: "lb-vuoto" + (c.esce ? " chiuso" : ""), html: LIB_SAGOMA }, [ el("div", { class: "n", text: c.num }), el("div", { class: "nm", text: c.nome }), el("div", { class: "ru", text: c.esce ? "📦 Solo nei pacchetti" : c.agg ? c.squadra : ALB_SIGLA[c.ruolo] }) ]); }
+  function libVuoto(c) { var el = window.SGCuore.el; return el("div", { class: "lb-vuoto" + (c.esce ? " chiuso" : ""), html: LIB_SAGOMA }, [ el("div", { class: "n", text: c.num }), el("div", { class: "nm", text: c.nome }), el("div", { class: "ru", text: c.esce || c.met === "rara" ? "📦 Solo nei pacchetti" : c.agg ? c.squadra : ALB_SIGLA[c.ruolo] }) ]); }
   function libAdatta(f) {   // la pagina intera nello spazio, con le figurine più grandi che ci stanno (e il prato libero in fondo; 16 posti = 4×4)
     var gr = f.querySelector(".lb-gr"), n = gr.children.length, gap = 7, gw = gr.clientWidth || f.clientWidth - 28;
     var prato = Math.max(26, f.clientHeight * 0.06), gh = f.clientHeight - gr.offsetTop - prato - 16, best = null;
     for (var col = Math.min(Math.max(n, 1), 2); col <= 6; col++) {
-      if (col < 3 && n > 4) continue; if (n === LIB_PAG && col !== 4) continue;   // (16 posti: sempre 4 per riga)
+      if (col < 3 && n > 4) continue; if (n === LIB_PAG && col !== LIB_COL) continue;   // (16 posti: sempre 4 per riga; 15: 3 per riga)
       var rows = Math.ceil(n / col), w = Math.min((gw - gap * (col - 1)) / col, gw * 0.34), need = rows * w * 1.36 + (rows - 1) * gap;
       if (need > gh) w = (gh - (rows - 1) * gap) / rows / 1.36;
       if (!best || w > best.w + 0.5) best = { col: col, w: Math.max(20, Math.floor(w)) };
@@ -13888,7 +13918,7 @@
     var el = window.SGCuore.el, c = cas.__c;
     [].forEach.call(LIB.scena.querySelectorAll(".lb-fum"), function (x) { x.remove(); }); [].forEach.call(LIB.scena.querySelectorAll(".batte"), function (x) { x.classList.remove("batte"); });
     cas.classList.add("batte");
-    var fu = el("div", { class: "lb-fum", html: c.esce ? "<b>📦 Solo nei pacchetti</b>" + escA(c.nome) + " è uscito dal listone: all'asta non c'è più, ma si trova ancora nei pacchetti." : "<b>Non l'hai ancora preso…</b>" + escA(c.nome) + ": compralo all'asta e la figurina si attacca qui." }); cas.appendChild(fu);
+    var fu = el("div", { class: "lb-fum", html: c.esce ? "<b>📦 Solo nei pacchetti</b>" + escA(c.nome) + " è uscito dal listone: all'asta non c'è più. Si trova nei pacchetti, carta «" + ALB_NOME_SPECIALE.ex + "»: la più rara." : c.met === "rara" ? "<b>📦 Solo nei pacchetti</b>" + escA(c.nome) + " non va all'asta: si trova solo nei pacchetti, carta «" + ALB_NOME_SPECIALE.rara + "»." : "<b>Non l'hai ancora preso…</b>" + escA(c.nome) + ": compralo all'asta e la figurina si attacca qui." }); cas.appendChild(fu);
     var r = fu.getBoundingClientRect(), sr = (cas.closest(".due") || LIB.scena).getBoundingClientRect();
     if (r.top < sr.top + 4) fu.classList.add("giu");
     if (r.left < sr.left + 4) fu.style.marginLeft = (-75 + sr.left + 4 - r.left) + "px"; else if (r.right > sr.right - 4) fu.style.marginLeft = (-75 - (r.right - sr.right + 4)) + "px";
@@ -13957,16 +13987,18 @@
       anello = el("div", { style: "position:absolute;inset:-12%;border-radius:50%;border:3px solid rgba(255,214,90,.95);opacity:0" }); box.appendChild(anello); }
     var cols = [T.c1, T.c2, "#ffd84a", "#ffffff"], cori = [];
     for (var i = 0; i < 44; i++) { var c = el("div", { class: "lb-cori", style: "left:" + (4 + (i * 37 % 92)) + "%;background:" + cols[i % 4] + ";" + (i % 3 ? "" : "width:5px;height:5px;border-radius:50%") }); f.appendChild(c); cori.push({ n: c, d: (i * 13 % 20) / 100, x: ((i * 29) % 21 - 10) * 2.2, rot: (i * 47) % 360, v: 0.8 + (i * 7 % 5) / 10 }); }
-    var banda = el("div", { class: "lb-banda", text: "⭐ " + sq + " completa!" }); f.appendChild(banda);
+    var banda = el("div", { class: "lb-banda", text: "⭐ " + sq + " completa!" }), grande = null;
+    if (ALB_IMG.festa.indexOf(sq) >= 0) { grande = el("div", { class: "lb-festa-img", style: "background-image:url(" + albImg("festa/" + sq) + ")" }, [ banda ]); document.body.appendChild(grande); } else f.appendChild(banda);
     try { if (navigator.vibrate) navigator.vibrate([20, 50, 30]); } catch (e) {}
     var H = f.clientHeight, fs = LIB.festa;
     return libTempo(2200, function (k) {
       if (fs !== LIB.festa) k = 1;
       festa.style.opacity = (k < 0.15 ? k / 0.15 : Math.max(0, 1 - (k - 0.15) * 1.2)).toFixed(3);
+      if (grande) grande.style.opacity = (k < 0.12 ? k / 0.12 : k > 0.85 ? (1 - k) / 0.15 : 1).toFixed(3);
       if (oro) { var s = Math.min(1, k / 0.18); oro.style.opacity = s.toFixed(3); oro.style.transform = "scale(" + (1.3 - 0.3 * s).toFixed(3) + ")"; var g = Math.max(0, (k - 0.12) / 0.4); anello.style.opacity = (k < 0.12 ? 0 : Math.max(0, 1 - g)).toFixed(3); anello.style.transform = "scale(" + (0.9 + g).toFixed(3) + ")"; }
       cori.forEach(function (c) { var t = Math.max(0, (k - c.d) / (0.85 * c.v)); c.n.style.opacity = (t <= 0 ? 0 : t > 0.85 ? Math.max(0, (1 - t) / 0.15) : 1).toFixed(3); c.n.style.transform = "translate(" + (Math.sin(t * 6 + c.rot) * 10 + c.x * t).toFixed(1) + "px," + (t * H * 1.02).toFixed(1) + "px) rotate(" + (c.rot + t * 540).toFixed(0) + "deg)"; });
       var b = k < 0.2 ? 0 : Math.min(1, (k - 0.2) / 0.12); banda.style.opacity = (k > 0.85 ? (1 - k) / 0.15 : b).toFixed(3); banda.style.transform = "translate(-50%,-50%) scale(" + (0.6 + 0.4 * (1 - Math.pow(1 - b, 3))).toFixed(4) + ")";
-    }).then(function () { festa.remove(); banda.remove(); cori.forEach(function (c) { c.n.remove(); }); libBarra(LIB.i); });
+    }).then(function () { festa.remove(); banda.remove(); if (grande) grande.remove(); cori.forEach(function (c) { c.n.remove(); }); libBarra(LIB.i); });
   }
   // =========================================================
   // 📦 I PACCHETTI (28-29 nov 2026, il proprietario: «apri i pacchetti per trovare le pippe… li mettiamo accumulabili»; l'apertura «come in
@@ -13983,26 +14015,31 @@
   //  MAI a pagamento. I doppioni si contano (copie = asta + ufficio + scambio + pacchetti), per ora non servono a niente.
   //  Numeri dalla simulazione in D:/SG-album-prove/libro2/pacchetti.
   // =========================================================
-  var PK_CARTE = 3, PK_PESI = [0.7, 0.24, 0.06], PK_AIUTO = 2, PK_USCITO = 0.5, PK_PANCHINA = 0.3;   // (29 nov 2026: con tutta la rosa, chi va all'asta esce più spesso dei panchinari, e in ogni pacchetto almeno uno all'asta)
+  // ⚙️ I NUMERI DEI PACCHETTI, tutti qui (il proprietario, 29 nov 2026: «sì» a questo punto di partenza; si ritoccano guardando la tabella
+  //  della simulazione nel LEGGIMI di D:/SG-album-prove/libro2, programma pacchetti/sim5.js):
+  //  PK_CARTE carte per pacchetto; PK_PESI la probabilità di ogni carta per categoria (bronzo, argento, oro: chi va all'asta; rara: chi non
+  //  c'è mai andato; ex: chi è uscito dal listone); PK_MANCA quante volte in più esce, dentro la sua categoria, chi ti manca; PK_AIUTO quanto
+  //  la carta «sempre nuova» preferisce le squadre quasi finite. In ogni pacchetto: almeno una che manca e almeno una di un calciatore all'asta.
+  var PK_CARTE = 3, PK_PESI = { bronzo: 0.55, argento: 0.28, oro: 0.10, rara: 0.06, ex: 0.01 }, PK_MANCA = 3, PK_AIUTO = 2;
   function libPacchi(stag) { var pk = albStat().pk || {}; return Math.max(0, Math.round(+pk[chiaveStag(stag)] || 0)); }
   function albCopie(x) { return x ? (x[0] || 0) + (x[4] || 0) + (x[5] || 0) + (x[17] || 0) : 0; }   // (🔁 le copie che hai avuto: asta, ufficio, scambio, pacchetti)
   function libPocoMoto() { try { return window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } }
   function libMescola(l) { for (var i = l.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)), t = l[i]; l[i] = l[j]; l[j] = t; } return l; }
   function libPesca(l, peso) { var tot = 0; l.forEach(function (c) { tot += peso(c); }); var x = Math.random() * tot; for (var i = 0; i < l.length; i++) { x -= peso(l[i]); if (x <= 0) return l[i]; } return l[l.length - 1]; }
   function libPescaPacchetto(ab, presi) {   // presi: id → metallo che hai (cambia anche con le carte appena trovate)
-    var tutte = ab.tutte, carte = [], per = {}, R = Math.random, pu = function (c) { return (c.esce ? PK_USCITO : 1) * (c.asta || c.esce ? 1 : PK_PANCHINA); };
-    ab.squadre.forEach(function (sq) { per[sq] = ab.per[sq]; });
-    var tot = 0, pesi = ab.squadre.map(function (sq) { var l = per[sq], h = l.filter(function (c) { return presi[c.id] != null; }).length, m = l.length - h; var p = m ? Math.pow(h / l.length, PK_AIUTO) + 0.05 : 0; tot += p; return p; });
-    if (tot) {   // la carta nuova «mirata»: di una squadra (più spesso quelle quasi finite), dentro bronzo più facile dell'oro
-      var x = R() * tot, sq = ab.squadre[0]; for (var j = 0; j < pesi.length; j++) { x -= pesi[j]; if (x <= 0) { sq = ab.squadre[j]; break; } }
-      var PM = { bronzo: 1, argento: 0.6, oro: 0.25 }; carte.push(libPesca(per[sq].filter(function (c) { return presi[c.id] == null; }), function (c) { return PM[c.met] * pu(c); }));
-    } else { var ma = tutte.filter(function (c) { return presi[c.id] == null; }); if (ma.length) carte.push(ma[Math.floor(R() * ma.length)]); }
-    var perMet = { bronzo: [], argento: [], oro: [] }; tutte.forEach(function (c) { perMet[c.met].push(c); });
-    while (carte.length < PK_CARTE) { var z = R(), m = z < PK_PESI[0] ? "bronzo" : z < PK_PESI[0] + PK_PESI[1] ? "argento" : "oro"; carte.push(libPesca(perMet[m].length ? perMet[m] : tutte, pu)); }
-    if (!carte.some(function (c) { return c.asta; })) {   // (almeno uno all'asta in ogni pacchetto: mai un pacchetto di soli panchinari)
-      var z2 = R(), m2 = z2 < PK_PESI[0] ? "bronzo" : z2 < PK_PESI[0] + PK_PESI[1] ? "argento" : "oro", la = perMet[m2].filter(function (c) { return c.asta; }); if (!la.length) la = tutte.filter(function (c) { return c.asta; });
-      if (la.length) carte[carte.length - 1] = libPesca(la, function () { return 1; });
-    }
+    var tutte = ab.tutte, carte = [], R = Math.random, cat = {}, CATS = Object.keys(PK_PESI);
+    CATS.forEach(function (k) { cat[k] = []; }); tutte.forEach(function (c) { if (cat[c.met]) cat[c.met].push(c); });
+    function categoria(soloAsta) { var tot = 0; CATS.forEach(function (k) { if (cat[k].length && (!soloAsta || k === "bronzo" || k === "argento" || k === "oro")) tot += PK_PESI[k]; }); var x = R() * tot; for (var i = 0; i < CATS.length; i++) { var k = CATS[i]; if (!cat[k].length || (soloAsta && k !== "bronzo" && k !== "argento" && k !== "oro")) continue; x -= PK_PESI[k]; if (x <= 0) return k; } return "bronzo"; }
+    function dentro(l) { return libPesca(l, function (c) { return presi[c.id] == null ? PK_MANCA : 1; }); }   // (chi manca esce PK_MANCA volte più spesso)
+    // 1. la carta «sempre nuova»: una squadra (più spesso quelle quasi finite), dentro, chi manca col peso della sua categoria
+    var tot = 0, pesi = ab.squadre.map(function (sq) { var l = ab.per[sq], h = l.filter(function (c) { return presi[c.id] != null; }).length, m = l.length - h; var p = m ? Math.pow(h / l.length, PK_AIUTO) + 0.05 : 0; tot += p; return p; });
+    if (tot) { var x = R() * tot, sq = ab.squadre[0]; for (var j = 0; j < pesi.length; j++) { x -= pesi[j]; if (x <= 0) { sq = ab.squadre[j]; break; } }
+      carte.push(libPesca(ab.per[sq].filter(function (c) { return presi[c.id] == null; }), function (c) { return PK_PESI[c.met] || 0.01; })); }
+    else { var ma = tutte.filter(function (c) { return presi[c.id] == null; }); if (ma.length) carte.push(ma[Math.floor(R() * ma.length)]); }
+    // 2. le altre: categoria coi pesi, dentro chi manca più spesso
+    while (carte.length < PK_CARTE) carte.push(dentro(cat[categoria(false)]));
+    // 3. almeno un calciatore dell'asta (bronzo, argento, oro) in ogni pacchetto
+    if (!carte.some(function (c) { return c.met === "bronzo" || c.met === "argento" || c.met === "oro"; })) carte[carte.length - 1] = dentro(cat[categoria(true)]);
     return libMescola(carte.map(function (c) { var mt = ALB_METALLI.indexOf(c.met), prima = presi[c.id]; var o = { c: c, id: c.id, nuova: prima == null, sale: prima != null && mt > prima, met: c.met }; presi[c.id] = Math.max(prima == null ? -1 : prima, mt); return o; }));
   }
   // prende n pacchetti: decide le carte e le scrive nel profilo IN UNA VOLTA (le carte, i pacchetti in meno, l'ultimo aperto). Torna
@@ -14054,7 +14091,7 @@
   // ---- 📦 la schermata dei pacchetti ----
   function libPacchetti(modo) {
     var C = window.SGCuore, el = C.el, stag = LIB.stag, festa = ++LIB.festa, poco = libPocoMoto();
-    var ov = el("div", { class: "lb-pk" + (poco ? " poco" : "") }), scena = el("div", { class: "pk-scena" }), piede = el("div", { class: "pk-piede" }), vass = el("div", { class: "pk-vassoio" });
+    var ov = el("div", { class: "lb-pk" + (poco ? " poco" : ""), style: "--pk-rara:" + metalloDi("rara").medio + ";--pk-ex:" + metalloDi("ex").filo }), scena = el("div", { class: "pk-scena" }), piede = el("div", { class: "pk-piede" }), vass = el("div", { class: "pk-vassoio" });
     ov.appendChild(el("div", { class: "pk-testa" }, [ el("b", { text: "📦 Pacchetti" }), el("span", { class: "pk-quanti" }), el("button", { class: "pk-chiudi", text: "✕", "aria-label": "Chiudi", onclick: chiudi }) ]));
     ov.appendChild(scena); ov.appendChild(vass); ov.appendChild(piede); document.body.appendChild(ov); LIB.pk = ov;
     function vivo() { return festa === LIB.festa && ov.isConnected; }
@@ -14074,9 +14111,12 @@
       scena.appendChild(pila); scena.appendChild(el("p", { class: "pk-dito", text: n === 1 ? "Hai 1 pacchetto da aprire" : "Hai " + n + " pacchetti da aprire" })); tasti(false);
     }
     function bustaNodo() {
-      return el("div", { class: "pk-busta" }, [ el("div", { class: "pk-luce" }), el("div", { class: "pk-strappo" }), el("div", { class: "pk-fronte" }, [ el("div", { class: "pk-marca", text: "MINI ASTA" }), el("div", { class: "pk-tit", text: "Figurine" }), el("div", { class: "pk-stag", text: "📦 " + (stag || "Serie A di oggi") }), el("div", { class: "pk-num", text: PK_CARTE + " figurine" }) ]), el("div", { class: "pk-taglio" }, [ el("i") ]) ]);
+      var imP = ALB_IMG.pacchettiStagione.indexOf(stag) >= 0 ? albImg("pacchetto-" + stag) : ALB_IMG.pacchetto ? albImg("pacchetto") : null;
+      return el("div", { class: "pk-busta" }, [ el("div", { class: "pk-luce" }), el("div", { class: "pk-strappo" }), el("div", { class: "pk-fronte" + (imP ? " img" : ""), style: imP ? "background-image:url(" + imP + ")" : null }, [ el("div", { class: "pk-marca", text: "MINI ASTA" }), el("div", { class: "pk-tit", text: "Figurine" }), el("div", { class: "pk-stag", text: "📦 " + (stag || "Serie A di oggi") }), el("div", { class: "pk-num", text: PK_CARTE + " figurine" }) ]), el("div", { class: "pk-taglio" }, [ el("i") ]) ]);
     }
-    function migliore(l) { var m = 0; l.forEach(function (o) { m = Math.max(m, ALB_METALLI.indexOf(o.met)); }); return m; }
+    function migliore(l) { var m = 0; l.forEach(function (o) { var i = ALB_METALLI.indexOf(o.met); if (i <= 2) m = Math.max(m, i); }); return m; }   // (il metallo più alto: 0 bronzo, 1 argento, 2 oro)
+    function speciale(l) { var sp = null; l.forEach(function (o) { if (o.met === "ex") sp = "ex"; else if (o.met === "rara" && !sp) sp = "rara"; }); return sp; }   // (📦 la carta speciale più rara del pacchetto)
+    function luceSpeciale(b, sp) { if (!sp) return null; var MT = metalloDi(sp), lu = el("div", { class: "pk-luce2", style: "background:radial-gradient(circle," + MT.ovr + "," + MT.fondo[1][1] + "88 35%,rgba(0,0,0,0) 66%)" }); b.insertBefore(lu, b.firstChild); return lu; }
     // ---- «📦 Apri 1»: si decide e si salva, poi si striscia il pacchetto ----
     function uno() {
       pulisci(); scena.appendChild(el("p", { class: "pk-dito", text: "⏳ Prendo il pacchetto…" }));
@@ -14084,10 +14124,11 @@
     }
     function striscia(carte, e) {
       pulisci(); var b = bustaNodo(), m = migliore(carte), luce = b.querySelector(".pk-luce"), linea = b.querySelector(".pk-taglio i");
+      var sp = speciale(carte), lu2 = luceSpeciale(b, sp); b.__sp = sp;
       if (m) b.classList.add(["", "argento", "oro"][m]); scena.appendChild(b); scena.appendChild(el("p", { class: "pk-dito", text: "👉 Striscia sul pacchetto per aprirlo" }));   // (col bronzo nessuna classe: mai un nome vuoto)
       prepara(carte, largaMazzo());   // (le 3 figurine si disegnano adesso, a pacchetto chiuso: quando si apre sono pronte)
       var d = null, aperto = false;
-      function prog(p) { linea.style.transform = "scaleX(" + p.toFixed(3) + ")"; if (m) luce.style.opacity = (Math.min(1, p * 1.6) * (m === 2 ? 1 : 0.55)).toFixed(3); }
+      function prog(p) { linea.style.transform = "scaleX(" + p.toFixed(3) + ")"; if (m) luce.style.opacity = (Math.min(1, p * 1.6) * (m === 2 ? 1 : 0.55)).toFixed(3); if (lu2) lu2.style.opacity = Math.min(1, p * 1.6).toFixed(3); }
       G.giu = function (ev) { if (aperto) return; d = { x: ev.clientX, y: ev.clientY, id: ev.pointerId }; try { scena.setPointerCapture(ev.pointerId); } catch (er) {} };
       G.muovi = function (ev) { if (!d || aperto) return; var dx = ev.clientX - d.x, dy = ev.clientY - d.y; if (Math.abs(dx) < Math.abs(dy)) return; prog(Math.max(0, Math.min(1, Math.abs(dx) / (b.clientWidth * 0.8)))); };
       G.su = function (ev) {
@@ -14097,15 +14138,17 @@
       };
     }
     function apri(b, carte, m) {   // lo strappo; con un oro il pacchetto si accende e butta fuori raggi e scintille
-      var str = b.querySelector(".pk-strappo"), fr = b.querySelector(".pk-fronte"), luce = b.querySelector(".pk-luce");
+      var str = b.querySelector(".pk-strappo"), fr = b.querySelector(".pk-fronte"), luce = b.querySelector(".pk-luce"), lu2 = b.querySelector(".pk-luce2"), sp = b.__sp;
+      if (sp) { if (sp === "ex") libSuono("oro"); else libSuono("argento"); libVibra([16, 40, 24]); }
       libSuono("carta"); libVibra(m === 2 ? [20, 40, 30] : 14); if (m === 2) libSuono("oro"); else if (m === 1) libSuono("argento");
-      var scint = []; if (m && !poco) for (var i = 0; i < (m === 2 ? 14 : 6); i++) { var a = (i / (m === 2 ? 14 : 6)) * Math.PI * 2, s = el("div", { class: "pk-scint " + (m === 2 ? "oro" : "argento") }); s.__a = a; b.appendChild(s); scint.push(s); }
+      var scint = [], nS = sp ? 14 : m === 2 ? 14 : m ? 6 : 0; if (!poco) for (var i = 0; i < nS; i++) { var a = (i / nS) * Math.PI * 2, s = el("div", { class: "pk-scint " + (sp && i % 2 === 0 ? "sp" : m === 2 ? "oro" : "argento") }); if (sp && i % 2 === 0) s.style.background = "radial-gradient(circle,#fff," + metalloDi(sp).ovr + " 45%,rgba(0,0,0,0) 70%)"; s.__a = a; b.appendChild(s); scint.push(s); }
       if (m === 2 && !poco) b.appendChild(el("div", { class: "pk-raggi2" }));
       var rg = b.querySelector(".pk-raggi2");
       return libTempo(m === 2 ? 1100 : m === 1 ? 800 : 600, function (k) {
         var e1 = 1 - Math.pow(1 - Math.min(1, k / 0.55), 3);
         str.style.transform = "translate(" + (50 * e1).toFixed(1) + "px," + (-110 * e1).toFixed(1) + "px) rotate(" + (22 * e1).toFixed(1) + "deg)"; str.style.opacity = (1 - e1).toFixed(3);
         if (m) luce.style.opacity = (k < 0.6 ? 1 : (1 - k) / 0.4 * (m === 2 ? 1 : 0.55)).toFixed(3);
+        if (lu2) { lu2.style.opacity = (k < 0.6 ? 1 : (1 - k) / 0.4).toFixed(3); lu2.style.transform = "scale(" + (1 + k * 0.4).toFixed(3) + ")"; }
         if (rg) { rg.style.opacity = (k < 0.25 ? k / 0.25 : Math.max(0, 1 - (k - 0.25) / 0.75)).toFixed(3); rg.style.transform = "scale(" + (0.6 + k * 0.9).toFixed(3) + ") rotate(" + (k * 40).toFixed(1) + "deg)"; }
         scint.forEach(function (s, i) { var t = Math.max(0, (k - 0.08) / 0.8), r = t * (90 + (i % 3) * 30); s.style.transform = "translate(" + (Math.cos(s.__a) * r).toFixed(1) + "px," + (Math.sin(s.__a) * r - 40 * t).toFixed(1) + "px) scale(" + (1 - t * 0.6).toFixed(3) + ")"; s.style.opacity = (t <= 0 ? 0 : 1 - t).toFixed(3); });
         var e2 = Math.max(0, (k - 0.45) / 0.55); fr.style.transform = "translateY(" + (70 * e2).toFixed(1) + "px) scale(" + (1 - 0.15 * e2).toFixed(3) + ")"; fr.style.opacity = (1 - e2).toFixed(3);
@@ -14122,16 +14165,16 @@
     }
     function cartaNodo(o, w, coperta, daW) {
       var src = sorgente(o, daW || w);
-      var dorso = el("div", { class: "pk-dorso" }, [ el("div", { class: "pk-dorso-in", text: "MINI ASTA" }) ]), fronte = el("div", { class: "pk-faccia" }, [ el("div", { class: "pk-luccica" }, [ el("i") ]) ]);
+      var dorso = ALB_IMG.dorso ? el("div", { class: "pk-dorso img", style: "background-image:url(" + albImg("dorso") + ")" }) : el("div", { class: "pk-dorso" }, [ el("div", { class: "pk-dorso-in", text: "MINI ASTA" }) ]), fronte = el("div", { class: "pk-faccia" }, [ el("div", { class: "pk-luccica" }, [ el("i") ]) ]);
       if (src) { var cv = document.createElement("canvas"); cv.width = src.width; cv.height = src.height; cv.getContext("2d").drawImage(src, 0, 0); fronte.insertBefore(cv, fronte.firstChild); }
-      var gira = el("div", { class: "pk-gira", style: coperta ? "" : "transform:none" }, [ dorso, fronte ]), n = el("div", { class: "pk-carta " + o.met + (o.nuova ? " nuova" : o.sale ? " sale" : " doppia") + (coperta ? "" : " girata"), style: "width:" + w + "px" }, [ el("div", { class: "pk-raggi" }), gira ]);
+      var gira = el("div", { class: "pk-gira", style: coperta ? "" : "transform:none" }, [ dorso, fronte ]), MTo = metalloDi(o.met), n = el("div", { class: "pk-carta " + o.met + (o.nuova ? " nuova" : o.sale ? " sale" : " doppia") + (coperta ? "" : " girata"), style: "width:" + w + "px" + (ALB_NOME_SPECIALE[o.met] && MTo ? ";--pk-luce:" + MTo.ovr : "") }, [ el("div", { class: "pk-raggi" }), gira ]);
       n.appendChild(el("span", { class: "pk-tag", text: o.nuova ? "NUOVA!" : o.sale ? "⬆ " + o.met.toUpperCase() + "!" : "Ce l'hai già" }));
       if (o.copie >= 2) n.appendChild(el("span", { class: "pk-copie", text: "×" + o.copie }));
       n.__gira = gira; n.__o = o; return n;
     }
     function rivela(n) {   // la carta si gira: «ding», l'argento un po' di più, l'oro col colpo e la vibrazione
       var o = n.__o; n.classList.add("pronta");
-      if (o.met === "oro") { libSuono("oro"); libVibra([18, 40, 26]); } else if (o.met === "argento") libSuono("argento"); else libSuono("ding");
+      if (o.met === "oro" || o.met === "ex" || o.met === "rara") { libSuono("oro"); libVibra([18, 40, 26]); } else if (o.met === "argento") libSuono("argento"); else libSuono("ding");
       if (o.nuova && o.met !== "oro") libVibra(10);
       return libTempo(poco ? 1 : 420, function (k) { var e = 1 - Math.pow(1 - k, 2.5); n.__gira.style.transform = "rotateY(" + (180 - 180 * e).toFixed(1) + "deg) scale(" + (1 + Math.sin(k * Math.PI) * 0.08).toFixed(3) + ")"; })
         .then(function () { n.classList.add("girata"); });
@@ -14201,12 +14244,12 @@
       function via(i) {   // il pacchetto i si apre (l'oro si accende senza fermare la fila), la fila avanza
         if (!vivo()) return;
         if (i >= P.length || salta) return scorri(e);
-        var b = nodi.shift(), m = migliore(P[i]), luce = b.querySelector(".pk-luce"), str = b.querySelector(".pk-strappo");
+        var b = nodi.shift(), m = migliore(P[i]), luce = b.querySelector(".pk-luce"), str = b.querySelector(".pk-strappo"), lu2 = luceSpeciale(b, speciale(P[i]));
         if (m === 2) { libSuono("oro", 700); libVibra(16); } else libSuono("carta", 380);
         var dur = Math.max(140, passo);
         libTempo(poco ? 1 : dur, function (k) {
           str.style.transform = "translateY(" + (-80 * k).toFixed(1) + "px) rotate(" + (18 * k).toFixed(1) + "deg)"; str.style.opacity = (1 - k).toFixed(3);
-          if (m) luce.style.opacity = (Math.sin(k * Math.PI) * (m === 2 ? 1 : 0.55)).toFixed(3);
+          if (m) luce.style.opacity = (Math.sin(k * Math.PI) * (m === 2 ? 1 : 0.55)).toFixed(3); if (lu2) lu2.style.opacity = Math.sin(k * Math.PI).toFixed(3);
           b.style.transform = "translate(" + (-30 * k).toFixed(1) + "%," + (-18 * k).toFixed(1) + "%) scale(" + (1 + 0.1 * k).toFixed(3) + ")"; b.style.opacity = (1 - k * k).toFixed(3);
           nodi.forEach(function (n, j) { var pos = j + 1 - k; n.style.transform = "translateX(" + (pos * 34).toFixed(1) + "%) scale(" + (1 - pos * 0.06).toFixed(3) + ")"; });
         }).then(function () { b.remove(); var nx = i + VIS; if (nx < P.length) nodi.push(metti(nx)); passo = Math.max(140, passo * 0.86); via(i + 1); });
@@ -14341,7 +14384,8 @@
   function escA(s) { return String(s).replace(/[&<>"]/g, function (ch) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]; }); }
   giocoFanta.album = apriAlbum;   // (lo usa la pagina dei Trofei: SGCuore.apriAlbum)
   giocoFanta.libro = function () { return LIB; };   // (per le prove: lo stato del libro)
-  giocoFanta.provaAlbum = { pacchettoDiOggi: pacchettoDiOggi, dataOggi: dataOggi, PK_GIORNO: PK_GIORNO, lista: albLista };   // (per le prove: il tetto del giorno)
+  giocoFanta.provaAlbum = { pacchettoDiOggi: pacchettoDiOggi, dataOggi: dataOggi, PK_GIORNO: PK_GIORNO, lista: albLista, speciali: ALB_SPECIALI, img: ALB_IMG,
+    formato: function (n) { LIB_PAG = n; ALB_POSTI = n * 2; LIB_COL = n === 15 ? 3 : 4; } };   // (per le foto: 16 = 4×4, 15 = 3×5)   // (per le prove: il tetto del giorno)
 
   SG.registra(gioco);
   SG.registra(giocoFanta);   // (dopo L'Asta: nella lista dei giochi arriva in fondo)

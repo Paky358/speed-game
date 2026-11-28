@@ -350,7 +350,7 @@
       P.SGCuore.apriAlbum(); await W.aspetta(function () { return q(P, ".lb-cop canvas"); }, 8000); await apriCopertina(P);
       q(P, ".lb-ig button[data-sq=Inter]").click(); await W.aspetta(function () { return fermo(P, "Inter 1"); }, 6000);
       if (oro.ruolo === "C" || oro.ruolo === "A") { await W.dorme(3500); await vai(P, ".lb-fr.giu", "Inter 2"); }
-      if (!await W.aspetta(function () { return /Oro!/.test(testo(P, ".lb-su")); }, 12000)) no("niente festa «⬆ Oro!» quando il metallo sale");
+      if (!await W.aspetta(function () { return /Oro!/.test(testo(P, ".lb-su")); }, 45000)) no("niente festa «⬆ Oro!» quando il metallo sale");   // (prima volano le figurine nuove dei 60 pacchetti)
       // 9. il filtro doppioni: le carte restano al loro posto, si spengono le altre
       P.SGCuore.apriAlbum(); await W.aspetta(function () { return q(P, ".lb-cop canvas"); }, 8000); await apriCopertina(P);
       q(P, ".lb-it .lb-doppi").click(); await W.dorme(200); if (!q(P, ".lb-scena.doppi") || !q(P, ".lb-filtro")) no("il filtro «🔁 Doppioni» non si accende");
